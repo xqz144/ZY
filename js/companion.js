@@ -1,0 +1,257 @@
+(function() {
+    'use strict';
+    const CompanionApp = {
+        state: {
+            mode: null,
+            projectName: '',
+            running: false,
+            paused: false,
+            startTime: 0,
+            elapsed: 0,
+            totalDuration: 0,
+            timerId: null,
+            selectedMode: 'stopwatch'
+        },
+        defaultAvatars: {
+            me: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><circle cx="40" cy="40" r="38" fill="#e0e0e0"/><text x="40" y="48" font-size="28" text-anchor="middle" fill="#999">我</text></svg>'),
+            partner: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><circle cx="40" cy="40" r="38" fill="#e0e0e0"/><text x="40" y="48" font-size="20" text-anchor="middle" fill="#999">梦角</text></svg>')
+        },
+        show: function() {
+            this.syncAvatarsAndNames();
+            const container = document.getElementById('companion-container');
+            if (container) container.style.display = 'flex';
+            if (this.state.running && !this.state.paused) this.startTimerLoop();
+        },
+        hide: function() {
+            const container = document.getElementById('companion-container');
+            if (container) container.style.display = 'none';
+        },
+        syncAvatarsAndNames: function() {
+            var myName = '我', partnerName = '梦角';
+            var myAvatar = this.defaultAvatars.me, partnerAvatar = this.defaultAvatars.partner;
+            if (window.settings) {
+                if (window.settings.myName) myName = window.settings.myName;
+                if (window.settings.partnerName) partnerName = window.settings.partnerName;
+                if (window.settings.myAvatar) myAvatar = window.settings.myAvatar;
+                if (window.settings.partnerAvatar) partnerAvatar = window.settings.partnerAvatar;
+            }
+            if (typeof profileData !== 'undefined') {
+                if (profileData.me && profileData.me.name) myName = profileData.me.name;
+                if (profileData.me && profileData.me.avatar) myAvatar = profileData.me.avatar;
+                if (profileData.partner && profileData.partner.name) partnerName = profileData.partner.name;
+                if (profileData.partner && profileData.partner.avatar) partnerAvatar = profileData.partner.avatar;
+            }
+            var nameEl1 = document.getElementById('companion-my-name');
+            var nameEl2 = document.getElementById('companion-partner-name');
+            var avatarEl1 = document.getElementById('companion-my-avatar');
+            var avatarEl2 = document.getElementById('companion-partner-avatar');
+            if (nameEl1) nameEl1.textContent = myName;
+            if (nameEl2) nameEl2.textContent = partnerName;
+            if (avatarEl1) avatarEl1.src = myAvatar;
+            if (avatarEl2) avatarEl2.src = partnerAvatar;
+        },
+        showSetup: function() {
+            var overlay = document.getElementById('companion-setup-overlay');
+            if (overlay) overlay.style.display = 'flex';
+            this.selectMode(this.state.selectedMode || 'stopwatch');
+            setTimeout(function() {
+                var input = document.getElementById('companion-project-input');
+                if (input) input.focus();
+            }, 200);
+        },
+        hideSetup: function() {
+            var overlay = document.getElementById('companion-setup-overlay');
+            if (overlay) overlay.style.display = 'none';
+        },
+        selectMode: function(mode) {
+            this.state.selectedMode = mode;
+            var countdownCard = document.getElementById('companion-mode-countdown');
+            var stopwatchCard = document.getElementById('companion-mode-stopwatch');
+            var durationField = document.getElementById('companion-duration-field');
+            if (countdownCard) countdownCard.classList.toggle('active', mode === 'countdown');
+            if (stopwatchCard) stopwatchCard.classList.toggle('active', mode === 'stopwatch');
+            if (durationField) durationField.style.display = (mode === 'countdown') ? 'block' : 'none';
+        },
+        startCompanion: function() {
+            var projectName = (document.getElementById('companion-project-input') || {}).value || '';
+            projectName = projectName.trim();
+            if (!projectName) {
+                if (typeof showNotification === 'function') showNotification('请输入陪伴项目', 'warning', 2000);
+                return;
+            }
+            var mode = this.state.selectedMode || 'stopwatch';
+            this.state.mode = mode;
+            this.state.projectName = projectName;
+            this.state.running = true;
+            this.state.paused = false;
+            this.state.elapsed = 0;
+            if (mode === 'countdown') {
+                var h = parseInt((document.getElementById('companion-hours') || {}).value) || 0;
+                var m = parseInt((document.getElementById('companion-minutes') || {}).value) || 0;
+                var s = parseInt((document.getElementById('companion-seconds') || {}).value) || 0;
+                this.state.totalDuration = (h * 3600 + m * 60 + s) * 1000;
+                if (this.state.totalDuration <= 0) {
+                    if (typeof showNotification === 'function') showNotification('请设置倒计时时长', 'warning', 2000);
+                    return;
+                }
+            }
+            this.state.startTime = Date.now();
+            this.hideSetup();
+            this.updateDisplay();
+            this.updateActions();
+            this.startTimerLoop();
+            if (typeof showNotification === 'function') showNotification('陪伴开始 ♡', 'success', 2000);
+        },
+        startTimerLoop: function() {
+            if (this.state.timerId) clearInterval(this.state.timerId);
+            this.state.timerId = setInterval(() => {
+                if (this.state.running && !this.state.paused) {
+                    if (this.state.mode === 'countdown') {
+                        this.state.elapsed = Date.now() - this.state.startTime;
+                        var remaining = this.state.totalDuration - this.state.elapsed;
+                        if (remaining <= 0) {
+                            this.state.elapsed = this.state.totalDuration;
+                            this.finishCompanion();
+                            return;
+                        }
+                    } else {
+                        this.state.elapsed = Date.now() - this.state.startTime;
+                    }
+                    this.updateDisplay();
+                }
+            }, 200);
+        },
+        togglePause: function() {
+            if (!this.state.running) return;
+            if (this.state.paused) {
+                this.state.paused = false;
+                this.state.startTime = Date.now() - this.state.elapsed;
+                this.startTimerLoop();
+            } else {
+                this.state.paused = true;
+                if (this.state.timerId) { clearInterval(this.state.timerId); this.state.timerId = null; }
+            }
+            this.updateActions();
+            this.updateDisplay();
+        },
+        finishCompanion: function() {
+            if (this.state.timerId) { clearInterval(this.state.timerId); this.state.timerId = null; }
+            this.state.running = false;
+            this.state.paused = false;
+            var timeEl = document.getElementById('companion-time-display');
+            if (timeEl) { timeEl.classList.add('finished'); timeEl.classList.remove('pulsing', 'warning'); }
+            if (typeof showNotification === 'function') {
+                var duration = this.formatTime(this.state.elapsed);
+                showNotification('陪伴完成！时长：' + duration + ' ♡', 'success', 4000);
+            }
+            this.sendNotification('陪伴完成 ♡', '陪伴项目「' + this.state.projectName + '」已完成，时长 ' + this.formatTime(this.state.elapsed));
+            this.updateActions();
+        },
+        updateDisplay: function() {
+            var timeEl = document.getElementById('companion-time-display');
+            var nameEl = document.getElementById('companion-project-name');
+            var labelEl = document.getElementById('companion-project-label');
+            if (nameEl) nameEl.textContent = this.state.projectName || '未设置';
+            var displayTime = '00:00:00';
+            if (this.state.running) {
+                if (this.state.mode === 'countdown') {
+                    var remaining = this.state.totalDuration - this.state.elapsed;
+                    if (remaining < 0) remaining = 0;
+                    displayTime = this.formatTime(remaining);
+                    if (timeEl) {
+                        if (remaining <= 10000 && remaining > 0) { timeEl.classList.add('warning'); timeEl.classList.remove('pulsing'); }
+                        else { timeEl.classList.remove('warning'); if (this.state.paused) timeEl.classList.remove('pulsing'); }
+                    }
+                } else {
+                    displayTime = this.formatTime(this.state.elapsed);
+                    if (timeEl) timeEl.classList.remove('warning', 'pulsing');
+                }
+            }
+            if (timeEl) timeEl.textContent = displayTime;
+            if (timeEl) {
+                if (this.state.paused) timeEl.classList.add('pulsing');
+                else if (!this.state.running && this.state.elapsed > 0) {}
+                else timeEl.classList.remove('pulsing');
+            }
+        },
+        updateActions: function() {
+            var actionsEl = document.getElementById('companion-actions');
+            if (!actionsEl) return;
+            if (!this.state.running) {
+                actionsEl.innerHTML = '<button class="companion-btn companion-btn-primary" onclick="CompanionApp.showSetup()"><i class="fas fa-play"></i><span>开始陪伴</span></button>';
+            } else if (this.state.paused) {
+                actionsEl.innerHTML = '<button class="companion-btn companion-btn-primary" onclick="CompanionApp.togglePause()"><i class="fas fa-play"></i><span>继续</span></button><button class="companion-btn companion-btn-cancel" onclick="CompanionApp.confirmExit()"><i class="fas fa-stop"></i><span>结束</span></button>';
+            } else {
+                actionsEl.innerHTML = '<button class="companion-btn companion-btn-primary paused" onclick="CompanionApp.togglePause()"><i class="fas fa-pause"></i><span>暂停</span></button><button class="companion-btn companion-btn-cancel" onclick="CompanionApp.confirmExit()"><i class="fas fa-stop"></i><span>结束</span></button>';
+            }
+        },
+        formatTime: function(ms) {
+            if (ms < 0) ms = 0;
+            var totalSec = Math.floor(ms / 1000);
+            var h = Math.floor(totalSec / 3600);
+            var m = Math.floor((totalSec % 3600) / 60);
+            var s = totalSec % 60;
+            return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        },
+        confirmExit: function() {
+            var overlay = document.getElementById('companion-exit-overlay');
+            var subtext = document.getElementById('companion-exit-subtext');
+            if (!overlay) return;
+            if (this.state.running) {
+                var elapsed = this.formatTime(this.state.elapsed);
+                if (subtext) subtext.textContent = '当前已陪伴 ' + elapsed;
+            } else {
+                if (subtext) subtext.textContent = '';
+            }
+            overlay.style.display = 'flex';
+        },
+        cancelExit: function() {
+            var overlay = document.getElementById('companion-exit-overlay');
+            if (overlay) overlay.style.display = 'none';
+        },
+        doExit: function() {
+            this.cancelExit();
+            if (this.state.timerId) { clearInterval(this.state.timerId); this.state.timerId = null; }
+            if (this.state.running && this.state.elapsed > 0) this.saveRecord();
+            this.state.running = false;
+            this.state.paused = false;
+            this.state.elapsed = 0;
+            this.state.projectName = '';
+            var timeEl = document.getElementById('companion-time-display');
+            if (timeEl) { timeEl.textContent = '00:00:00'; timeEl.classList.remove('pulsing', 'warning', 'finished'); }
+            var nameEl = document.getElementById('companion-project-name');
+            if (nameEl) nameEl.textContent = '未设置';
+            this.updateActions();
+            this.hide();
+            if (typeof window.showHomePage === 'function') window.showHomePage();
+        },
+        saveRecord: function() {
+            try {
+                var key = 'companion_records';
+                var records = JSON.parse(localStorage.getItem(key) || '[]');
+                records.push({
+                    project: this.state.projectName,
+                    mode: this.state.mode,
+                    duration: this.state.elapsed,
+                    date: new Date().toISOString()
+                });
+                if (records.length > 100) records = records.slice(-100);
+                localStorage.setItem(key, JSON.stringify(records));
+            } catch(e) { console.warn('保存陪伴记录失败:', e); }
+        },
+        sendNotification: function(title, body) {
+            try {
+                if (!('Notification' in window)) return;
+                if (Notification.permission !== 'granted') return;
+                new Notification(title, { body: body, tag: 'companion-finish' });
+            } catch(e) {}
+        }
+    };
+    window.CompanionApp = CompanionApp;
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            var container = document.getElementById('companion-container');
+            if (container && container.style.display !== 'none') CompanionApp.syncAvatarsAndNames();
+        }
+    });
+})();
