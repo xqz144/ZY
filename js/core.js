@@ -608,13 +608,21 @@ const LIBRARY_CONFIG = {
             { id: 'moyuLocations', name: '工作地点', mode: 'list' }
         ]
     },
-    atmosphere: {
+            atmosphere: {
         title: "氛围感配置",
         tabs: [
             { id: 'pokes', name: '拍一拍', mode: 'list' },
             { id: 'statuses', name: '对方状态', mode: 'list' },
             { id: 'mottos', name: '顶部格言', mode: 'list' },
             { id: 'intros', name: '开场动画', mode: 'list' }
+        ]
+    },
+    moments: {
+        title: "朋友圈内容",
+        tabs: [
+            { id: 'momentText', name: '文字', mode: 'list' },
+            { id: 'momentImage', name: '图片', mode: 'grid' },
+            { id: 'momentMixed', name: '文字+图片', mode: 'list' }
         ]
     }
 };
