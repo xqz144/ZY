@@ -14,6 +14,47 @@
     padding: 14px 16px;
     padding-top: max(14px, env(safe-area-inset-top));
     flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.companion-header-right {
+    display: flex;
+    gap: 8px;
+}
+.companion-bg-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+.companion-bg-btn:active {
+    background: rgba(255,255,255,0.35);
+}
+.companion-container.has-custom-bg::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 0;
+}
+.companion-container.has-custom-bg > * {
+    position: relative;
+    z-index: 1;
+}
+.companion-container.has-custom-bg {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 .companion-exit-btn {
     background: rgba(255,255,255,0.2);
