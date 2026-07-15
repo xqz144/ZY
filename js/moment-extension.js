@@ -589,4 +589,10 @@
         post.comments.push(newComment);
     }
     // 页面加载完成后初始化
-    if 
+        if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+})();
