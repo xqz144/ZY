@@ -617,18 +617,29 @@
             if (p.avatar) partnerAvatar = p.avatar;
         } catch (e) {}
         // 可自行扩充人设回复文案
-        const replyPool = [
-            "看到你的评论啦",
-            "你这么说我很开心",
-            "还有什么想跟我说的吗",
-            "一直在等你找我说话",
-            "刚刚还在想你",
-            "下次再多跟我讲讲好不好",
-            "很在意你的想法",
-            "原来你是这么想的"
-        ];
-        const randomText = replyPool[Math.floor(Math.random() * replyPool.length)];
-        const newSubReply = {
+        // 读取你页面上的回复库全部主字卡
+function getAllReplyLibraryTexts() {
+    try {
+        // 读取网站存储的完整回复库数据（对应你截图里的回复库）
+        const rawLib = localStorage.getItem("reply_library_main");
+        if (!rawLib) return [];
+        const libData = JSON.parse(rawLib);
+        // 提取所有分组里的全部文字内容
+        let allTexts = [];
+        libData.groups.forEach(group => {
+            group.cards.forEach(card => {
+                if (card.text && card.text.trim()) allTexts.push(card.text.trim());
+            })
+        })
+        return allTexts;
+    } catch (e) {
+        // 读取失败兜底，保留几句备用话术
+        return ["嗯？", "我在", "想和你多说说话"];
+    }
+}
+// 从你的回复库里随机抽一条
+const allReplyTexts = getAllReplyLibraryTexts();
+const randomText = allReplyTexts[Math.floor(Math.random() * allReplyTexts.length)];
             id: Date.now() + Math.random(),
             nickname: partnerName,
             avatar: partnerAvatar,
