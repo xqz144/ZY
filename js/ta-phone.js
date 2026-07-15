@@ -1,563 +1,516 @@
-/**
- * TA的手机 - 系统自动收藏用户发过的朋友圈和聊天内容
- */
+/* ============================================
+ *  TA的手机 - 梦角手机模拟模块
+ * 版本：1.0
+ * ============================================ */
 (function() {
     'use strict';
-
-    const STORAGE_KEY = 'ta_phone_collections';
-    const CHAT_CHANCE = 0.02;     // 聊天实时收藏概率 2%
-    const MOMENTS_CHANCE = 0.10;  // 朋友圈实时收藏概率 10%
-    const CHAT_HISTORY_CHANCE = 0.03;    // 历史聊天收藏概率 3%
-    const MOMENTS_HISTORY_CHANCE = 0.05; // 历史朋友圈收藏概率 5%
-
-    let collections = { chat: [], moments: [] };
-    let chatSortMode = 'collected'; // 'collected' 按收藏时间, 'original-asc' 按发言时间正序, 'original-desc' 按发言时间倒序
-
-    // 加载收藏数据
-    function loadCollections() {
+    /* ---------- 存储键 ---------- */
+    var STORAGE = {
+        DIARIES: 'ta_phone_diaries',
+        MUSIC: 'ta_phone_music',
+        MUSIC_STATE: 'ta_phone_music_state',
+        BROWSER: 'ta_phone_browser',
+        PROFILE: 'profile_partner'
+    };
+    /* ---------- 日记模板 ---------- */
+    var DIARY_TEMPLATES = [
+        '今天一直在想一个问题。「{content}」',
+        '看到了一句话，觉得很适合我们。「{content}」',
+        '不知道为什么，突然想起了「{content}」，忍不住笑了笑。',
+        '今天好像特别想和你说……「{content}」',
+        '翻到了一条消息，又看了一遍。「{content}」'
+    ];
+    /* ---------- 默认浏览器历史 ---------- */
+    var DEFAULT_BROWSER_HISTORY = [
+        { query: '怎么哄人开心', time: '3天前' },
+        { query: '情侣周年纪念日礼物', time: '5天前' },
+        { query: '今天天气怎么样', time: '昨天' },
+        { query: '异地恋怎么维持', time: '2天前' },
+        { query: '好吃的甜品店推荐', time: '今天' }
+    ];
+    /* ---------- 预设歌曲 ---------- */
+    var PRESET_SONGS = [
+        { name: '遗失の心跳', url: '' },
+        { name: '慢慢喜欢你', url: '' },
+        { name: '小幸运', url: '' }
+    ];
+    /* ---------- 状态 ---------- */
+    var partnerName = '梦角';
+    var currentPage = 'desktop';
+    var audioEl = null;
+    var musicList = [];
+    var currentSongIndex = 0;
+    var isPlaying = false;
+    var rotationId = null;
+    var clockTimer = null;
+    var pageStack = [];
+    /* ---------- 工具函数 ---------- */
+    function getPartnerName() {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (parsed.chat) collections.chat = parsed.chat;
-                if (parsed.moments) collections.moments = parsed.moments;
+            var raw = localStorage.getItem(STORAGE.PROFILE);
+            if (raw) {
+                var p = JSON.parse(raw);
+                if (p.name) return p.name;
             }
-        } catch(e) {}
+        } catch (e) {}
+        return '梦角';
     }
-
-    // 保存收藏数据
-    function saveCollections() {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(collections));
-        } catch(e) {
-            console.warn('[TA的手机] 保存收藏失败:', e);
-        }
-    }
-
-    // 添加收藏
-    function addCollection(type, content, originalTime, extra) {
-        const item = {
-            id: Date.now() + Math.random(),
-            content: content,
-            originalTime: originalTime || Date.now(),
-            collectedTime: Date.now()
-        };
-        if (extra) {
-            if (extra.msgType) item.msgType = extra.msgType;
-            if (extra.shareData) item.shareData = extra.shareData;
-        }
-        collections[type].unshift(item);
-        saveCollections();
-    }
-
-    // 删除收藏（带确认提示）
-    function deleteCollection(type, id) {
-        if (!confirm('是否要偷偷取消他的收藏？')) return;
-        collections[type] = collections[type].filter(item => item.id !== id);
-        saveCollections();
-        renderList(type);
-    }
-
-    // 尝试收藏聊天消息（返回是否收藏成功）
-    function tryCollectChat(text, timestamp, msgRef) {
-        if (!text || text.trim().length === 0) return false;
-        if (Math.random() < CHAT_CHANCE) {
-            var extra = null;
-            if (msgRef && typeof msgRef === 'object') {
-                msgRef.taPhoneCollected = true;
-                if (msgRef.type === 'share' && msgRef.shareData) {
-                    extra = { msgType: msgRef.type, shareData: msgRef.shareData };
-                }
-            }
-            addCollection('chat', text.trim(), timestamp, extra);
-            return true;
-        }
-        return false;
-    }
-
-    // 尝试收藏朋友圈（返回是否收藏成功）
-    function tryCollectMoment(text, timestamp, momentRef) {
-        if (!text || text.trim().length === 0) return false;
-        if (Math.random() < MOMENTS_CHANCE) {
-            addCollection('moments', text.trim(), timestamp);
-            // 在原始朋友圈上打标记
-            if (momentRef && typeof momentRef === 'object') {
-                momentRef.taPhoneCollected = true;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    // 扫描历史内容（只扫描未标记的消息）
-    function scanHistory() {
-        if (typeof messages !== 'undefined' && Array.isArray(messages)) {
-            messages.forEach(msg => {
-                // 跳过已标记的消息
-                if (msg.taPhoneCollected) return;
-                if (msg.sender === 'user' && msg.text && msg.text.trim()) {
-                    const alreadyCollected = collections.chat.some(c =>
-                        c.content === msg.text.trim() && c.originalTime === msg.timestamp.getTime()
-                    );
-                    if (!alreadyCollected && Math.random() < CHAT_HISTORY_CHANCE) {
-                        var extra = null;
-                        if (msg.type === 'share' && msg.shareData) {
-                            extra = { msgType: msg.type, shareData: msg.shareData };
-                        }
-                        addCollection('chat', msg.text.trim(), msg.timestamp.getTime(), extra);
-                        // 打标记
-                        msg.taPhoneCollected = true;
-                    }
-                }
-            });
-        }
-
-        if (typeof momentsData !== 'undefined' && Array.isArray(momentsData)) {
-            momentsData.forEach(moment => {
-                // 跳过已标记的朋友圈
-                if (moment.taPhoneCollected) return;
-                if (moment.text && moment.text.trim()) {
-                    const alreadyCollected = collections.moments.some(c =>
-                        c.content === moment.text.trim() && c.originalTime === moment.time
-                    );
-                    if (!alreadyCollected && Math.random() < MOMENTS_HISTORY_CHANCE) {
-                        addCollection('moments', moment.text.trim(), moment.time);
-                        // 打标记
-                        moment.taPhoneCollected = true;
-                    }
-                }
-            });
-        }
-    }
-
-    // 格式化时间
-    function formatTime(timestamp) {
-        const date = new Date(timestamp);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hour = String(date.getHours()).padStart(2, '0');
-        const minute = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day} ${hour}:${minute}`;
-    }
-
-    // 渲染列表
-    function renderList(type) {
-        const listEl = document.getElementById('ta-phone-list');
-        if (!listEl) return;
-
-        let items = collections[type];
-        if (items.length === 0) {
-            listEl.innerHTML = '<div class="ta-phone-empty">TA还没有收藏任何内容...</div>';
-            return;
-        }
-
-        // 聊天支持排序
-        if (type === 'chat' && chatSortMode === 'original-asc') {
-            items = [...items].sort((a, b) => (a.originalTime || 0) - (b.originalTime || 0));
-        } else if (type === 'chat' && chatSortMode === 'original-desc') {
-            items = [...items].sort((a, b) => (b.originalTime || 0) - (a.originalTime || 0));
-        } else {
-            items = [...items].sort((a, b) => (b.collectedTime || 0) - (a.collectedTime || 0));
-        }
-
-        listEl.innerHTML = items.map(item => {
-            const meta = `发送于: ${formatTime(item.originalTime)} | 收藏于: ${formatTime(item.collectedTime)}`;
-            // 商品消息显示为【商品：xxx】
-            var displayText = item.content;
-            if (item.msgType === 'share' && item.shareData && item.shareData.name) {
-                displayText = '【商品：' + item.shareData.name + '】';
-            }
-            return `
-                <div class="ta-phone-item">
-                    <button class="ta-phone-item-delete" onclick="window.TaPhoneApp.deleteCollection('${type}', ${item.id})" title="删除">×</button>
-                    <div class="ta-phone-item-time">${formatTime(item.originalTime)}</div>
-                    <div class="ta-phone-item-text">${escapeHtml(displayText)}</div>
-                    <div class="ta-phone-item-meta">${meta}</div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function setChatSortMode(mode) {
-        chatSortMode = mode;
-        // 更新按钮样式
-        document.querySelectorAll('#ta-phone-sort-bar button').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.sort === mode);
-        });
-        renderList('chat');
-    }
-
     function escapeHtml(text) {
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-
-    // 渲染礼物柜
-    function renderGiftCabinet() {
-        const listEl = document.getElementById('ta-phone-list');
-        if (!listEl) return;
-
-        // 优先从 ShopApp 获取（IndexedDB 数据）
-        let gifts = [];
-        if (window.ShopApp && typeof window.ShopApp.getGiftCabinet === 'function') {
-            gifts = window.ShopApp.getGiftCabinet();
-        }
-        // 兜底从 localStorage 读取
-        if (!gifts || gifts.length === 0) {
-            try {
-                const saved = localStorage.getItem('shop_gift_cabinet');
-                if (saved) gifts = JSON.parse(saved);
-            } catch(e) {}
-        }
-
-        if (!gifts || gifts.length === 0) {
-            listEl.innerHTML = '<div class="ta-phone-empty">礼物柜还是空的，快去商城给TA买礼物吧~</div>';
-            return;
-        }
-
-        listEl.innerHTML = gifts.map((item, idx) => {
-            const replyPreview = item.replies && item.replies.length > 0
-                ? `<div style="margin-top:8px;padding:8px;background:rgba(233,69,96,0.08);border-radius:8px;font-size:0.78rem;color:#c0392b;line-height:1.4;">${item.replies[0].text}</div>`
-                : '';
-            return `
-                <div class="ta-phone-item">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-                        <span style="font-size:1.5rem;">${item.icon || '📦'}</span>
-                        <div style="flex:1;">
-                            <div style="font-weight:600;font-size:0.9rem;">${item.name}</div>
-                            <div style="font-size:0.72rem;color:var(--text-light);">¥${item.price} x ${item.qty}</div>
-                        </div>
-                    </div>
-                    <div class="ta-phone-item-time">${formatTime(item.time)}</div>
-                    ${item.remark ? `<div style="font-size:0.78rem;color:#b37400;margin-top:4px;">备注: ${escapeHtml(item.remark)}</div>` : ''}
-                    ${replyPreview}
-                    ${item.replies && item.replies.length > 1 ? `<button style="margin-top:8px;background:none;border:none;color:var(--accent-color);font-size:0.75rem;cursor:pointer;" onclick="window.TaPhoneApp.showGiftReplies(${idx})">查看全部回复 (${item.replies.length}条)</button>` : ''}
-                </div>
-            `;
-        }).join('');
+    function getWeekDay(date) {
+        var days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        return days[date.getDay()];
     }
-
-    // 显示礼物柜中的回复
-    function showGiftReplies(idx) {
-        // 隐藏排序栏（礼物柜回复页面不需要）
-        const sortBar = document.getElementById('ta-phone-sort-bar');
-        if (sortBar) sortBar.style.display = 'none';
-
-        let gifts = [];
-        // 优先从 ShopApp 获取（与 renderGiftCabinet 保持一致）
-        if (window.ShopApp && typeof window.ShopApp.getGiftCabinet === 'function') {
-            gifts = window.ShopApp.getGiftCabinet();
+    function formatDateCN(date) {
+        return (date.getMonth() + 1) + '月' + date.getDate() + '日';
+    }
+    function formatDateTimeCN(date) {
+        var h = date.getHours();
+        var m = date.getMinutes();
+        return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+    }
+    function getCurrentTimeStr() {
+        var now = new Date();
+        return formatDateTimeCN(now);
+    }
+    /* ---------- 数据读写 ---------- */
+    function loadDiaries() {
+        try {
+            var raw = localStorage.getItem(STORAGE.DIARIES);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) { return []; }
+    }
+    function saveDiaries(diaries) {
+        localStorage.setItem(STORAGE.DIARIES, JSON.stringify(diaries));
+    }
+    function loadMusic() {
+        try {
+            var raw = localStorage.getItem(STORAGE.MUSIC);
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return PRESET_SONGS.slice();
+    }
+    function saveMusic(list) {
+        localStorage.setItem(STORAGE.MUSIC, JSON.stringify(list));
+    }
+    function loadMusicState() {
+        try {
+            var raw = localStorage.getItem(STORAGE.MUSIC_STATE);
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return { index: 0, playing: false };
+    }
+    function saveMusicState() {
+        localStorage.setItem(STORAGE.MUSIC_STATE, JSON.stringify({
+            index: currentSongIndex,
+            playing: isPlaying
+        }));
+    }
+    function loadBrowserHistory() {
+        try {
+            var raw = localStorage.getItem(STORAGE.BROWSER);
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return null;
+    }
+    function saveBrowserHistory(list) {
+        localStorage.setItem(STORAGE.BROWSER, JSON.stringify(list));
+    }
+    function ensureBrowserHistory() {
+        var list = loadBrowserHistory();
+        if (!list || list.length === 0) {
+            list = DEFAULT_BROWSER_HISTORY.slice();
+            var name = getPartnerName();
+            list.push({ query: name + '的喜好', time: '昨天' });
+            saveBrowserHistory(list);
         }
-        if (!gifts || gifts.length === 0) {
-            try {
-                const saved = localStorage.getItem('shop_gift_cabinet');
-                if (saved) gifts = JSON.parse(saved);
-            } catch(e) {}
-        }
-        const item = gifts[idx];
-        if (!item || !item.replies) return;
-
-        const listEl = document.getElementById('ta-phone-list');
-        listEl.innerHTML = `
-            <div style="margin-bottom:12px;">
-                <button class="ta-phone-back" onclick="window.TaPhoneApp.showTaPhoneTab('gifts')" style="margin-bottom:10px;">← 返回礼物柜</button>
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:2rem;">${item.icon || '📦'}</span>
-                    <div>
-                        <div style="font-weight:700;">${item.name}</div>
-                        <div style="font-size:0.8rem;color:var(--text-light);">¥${item.price} x ${item.qty}</div>
-                    </div>
-                </div>
-            </div>
-            ${item.replies.map(r => `
-                <div style="background:var(--primary-bg);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--border-color);">
-                    <div style="font-size:0.72rem;color:var(--text-light);margin-bottom:6px;">${r.time || ''}</div>
-                    <div style="font-size:0.88rem;line-height:1.5;">${r.text || ''}</div>
-                    ${r.img ? `<img src="${r.img}" style="max-width:100%;border-radius:8px;margin-top:6px;">` : ''}
-                </div>
-            `).join('')}
-        `;
+        return list;
     }
-
-    // 显示TA的手机弹窗
-    function showTaPhone() {
-        const container = document.getElementById('ta-phone-container');
-        if (!container) return;
-        // 确保容器在 body 下
-        if (container.parentElement !== document.body) {
-            document.body.appendChild(container);
-        }
-        container.style.display = 'flex';
-        showDesktop();
-    }
-
-    // 隐藏TA的手机弹窗
-    function hideTaPhone() {
-        const container = document.getElementById('ta-phone-container');
-        if (container) {
-            container.style.display = 'none';
-        }
-        showDesktop();
-    }
-
-    // 显示桌面
-    function showDesktop() {
-        const desktop = document.querySelector('.ta-phone-desktop');
-        const content = document.getElementById('ta-phone-content');
-        if (desktop) desktop.style.display = 'flex';
-        if (content) content.style.display = 'none';
-        updateTitle('TA的手机');
-    }
-
-    // 一级级返回
-    function goBack() {
-        const content = document.getElementById('ta-phone-content');
-        if (content && content.style.display !== 'none') {
-            // 当前在内容列表，返回桌面
-            showDesktop();
-        } else {
-            // 当前在桌面，关闭弹窗
-            hideTaPhone();
-        }
-    }
-
-    // 更新标题
-    function updateTitle(text) {
-        const titleEl = document.getElementById('ta-phone-header-title');
-        if (titleEl) titleEl.textContent = text;
-    }
-
-    // 显示标签内容
-    function showTaPhoneTab(type) {
-        const desktop = document.querySelector('.ta-phone-desktop');
-        const content = document.getElementById('ta-phone-content');
-        if (desktop) desktop.style.display = 'none';
-        if (content) content.style.display = 'flex';
-
-        document.querySelectorAll('.ta-phone-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.tab === type);
-        });
-
-        if (type === 'gifts') {
-            updateTitle('礼物柜');
-            renderGiftCabinet();
-            const sortBar = document.getElementById('ta-phone-sort-bar');
-            if (sortBar) sortBar.style.display = 'none';
-        } else {
-            updateTitle(type === 'chat' ? '聊天' : '朋友圈');
-            renderList(type);
-            // 聊天页显示排序选项
-            const sortBar = document.getElementById('ta-phone-sort-bar');
-            if (sortBar) {
-                sortBar.style.display = type === 'chat' ? 'flex' : 'none';
+    /* ---------- 生成自动日记 ---------- */
+    function generateAutoDiaries(existingCount) {
+        var need = 3 - existingCount;
+        if (need <= 0) return [];
+        var replies = [];
+        try {
+            if (Array.isArray(window._customReplies)) {
+                replies = window._customReplies;
             }
+        } catch (e) {}
+        if (replies.length === 0) {
+            replies = [
+                '你今天过得好吗',
+                '好想见你',
+                '什么时候才能再见呢',
+                '想和你一起看日落',
+                '你笑起来真好看'
+            ];
         }
+        var result = [];
+        for (var i = 0; i < need; i++) {
+            var daysAgo = i + 1;
+            var d = new Date();
+            d.setDate(d.getDate() - daysAgo);
+            var dateStr = formatDateCN(d) + ' ' + getWeekDay(d);
+            var reply = replies[Math.floor(Math.random() * replies.length)];
+            var template = DIARY_TEMPLATES[Math.floor(Math.random() * DIARY_TEMPLATES.length)];
+            var content = template.replace('{content}', reply);
+            result.push({ date: dateStr, content: content, source: 'auto' });
+        }
+        return result;
     }
-
-    // 动态注入 CSS
+    /* ---------- 注入样式 ---------- */
     function injectStyles() {
-        if (document.getElementById('ta-phone-styles')) return;
-        const style = document.createElement('style');
+        var style = document.createElement('style');
         style.id = 'ta-phone-styles';
-        style.textContent = `
-            /* 弹窗遮罩 + 居中弹窗 */
-            .ta-phone-container {
-                position: fixed !important;
-                top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-                z-index: 100000 !important;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: rgba(0,0,0,0.5) !important;
-            }
-            /* 弹窗卡片 */
-            .ta-phone-modal {
-                background: var(--primary-bg, #16213e);
-                border-radius: 16px;
-                width: 320px;
-                max-height: 70vh;
-                overflow: hidden;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-                display: flex;
-                flex-direction: column;
-            }
-            /* 弹窗主体 */
-            .ta-phone-header {
-                background: var(--primary-bg, #16213e);
-                border-radius: 16px 16px 0 0;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 14px 18px;
-                border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));
-            }
-            .ta-phone-back {
-                background: none;
-                border: none;
-                color: var(--accent-color, #e94560);
-                font-size: 0.9rem;
-                cursor: pointer;
-            }
-            .ta-phone-title {
-                font-weight: 700;
-                font-size: 1rem;
-                color: var(--text, #e0e0e0);
-            }
-            /* 桌面区域（弹窗内部） */
-            .ta-phone-desktop {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                gap: 36px;
-                padding: 50px 20px;
-                flex-shrink: 0;
-            }
-            .ta-phone-app {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 8px;
-                cursor: pointer;
-            }
-            .ta-phone-app:active {
-                opacity: 0.7;
-            }
-            .ta-phone-app-icon {
-                width: 56px;
-                height: 56px;
-                border-radius: 14px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: var(--border-color, rgba(255,255,255,0.08));
-                color: var(--text, #e0e0e0);
-            }
-            .ta-phone-app-icon svg {
-                width: 28px;
-                height: 28px;
-            }
-            .ta-phone-app-name {
-                font-size: 0.8rem;
-                color: var(--text-light, #a0a0a0);
-            }
-            /* 内容列表区域 */
-            .ta-phone-content {
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-            .ta-phone-tabs {
-                display: flex;
-                border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));
-                flex-shrink: 0;
-            }
-            .ta-phone-tab {
-                flex: 1;
-                padding: 10px;
-                background: none;
-                border: none;
-                border-bottom: 2px solid transparent;
-                color: var(--text-light, #a0a0a0);
-                font-size: 0.85rem;
-                cursor: pointer;
-            }
-            .ta-phone-tab.active {
-                color: var(--accent-color, #e94560);
-                border-bottom-color: var(--accent-color, #e94560);
-            }
-            .ta-phone-list {
-                flex: 1;
-                overflow-y: auto;
-                padding: 10px;
-            }
-            .ta-phone-item {
-                background: var(--secondary-bg, #1a1a2e);
-                border-radius: 10px;
-                padding: 12px;
-                margin-bottom: 8px;
-                position: relative;
-            }
-            .ta-phone-item-time {
-                font-size: 0.72rem;
-                color: var(--text-light, #a0a0a0);
-                margin-bottom: 4px;
-            }
-            .ta-phone-item-text {
-                font-size: 0.88rem;
-                color: #000000;
-                line-height: 1.5;
-                word-break: break-all;
-            }
-            html[data-theme="dark"] .ta-phone-item-text {
-                color: #ffffff;
-            }
-            .ta-phone-item-meta {
-                font-size: 0.72rem;
-                color: var(--text-light, #a0a0a0);
-                margin-top: 4px;
-            }
-            .ta-phone-sort-btn.active {
-                border-color: var(--accent-color, #e94560) !important;
-                color: var(--accent-color, #e94560) !important;
-            }
-            .ta-phone-item-delete {
-                position: absolute;
-                top: 8px;
-                right: 8px;
-                background: none;
-                border: none;
-                color: var(--text-light, #a0a0a0);
-                font-size: 1.1rem;
-                cursor: pointer;
-                opacity: 0.5;
-                line-height: 1;
-            }
-            .ta-phone-item-delete:hover {
-                opacity: 1;
-                color: #ef4444;
-            }
-            .ta-phone-empty {
-                text-align: center;
-                padding: 30px;
-                color: var(--text-light, #a0a0a0);
-                font-size: 0.85rem;
-            }
-        `;
+        style.textContent = [
+            /* ---- 手机壳容器 ---- */
+            '#ta-phone-container{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;z-index:99990;backdrop-filter:blur(4px);}',
+            '#ta-phone-container.active{display:flex;}',
+            '.ta-phone-wrapper{display:flex;flex-direction:column;align-items:center;}',
+            /* ---- 手机壳 ---- */
+            '.ta-phone-shell{width:320px;height:640px;background:#1a1014;border-radius:40px;padding:12px;box-shadow:0 0 0 3px #5c2030,0 0 0 6px #3a1520,0 20px 60px rgba(0,0,0,0.5);position:relative;}',
+            /* ---- 手机屏幕 ---- */
+            '.ta-phone-screen{width:100%;height:100%;background:var(--primary-bg,#fef6f0);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;position:relative;}',
+            /* ---- 刘海 ---- */
+            '.ta-phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:28px;background:#1a1014;border-radius:0 0 18px 18px;z-index:10;}',
+            /* ---- 状态栏 ---- */
+            '.ta-phone-statusbar{height:44px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:#1a1014;position:relative;z-index:5;flex-shrink:0;background:var(--primary-bg,#fef6f0);}',
+            '.ta-phone-statusbar .status-time{font-size:13px;letter-spacing:0.5px;}',
+            '.ta-phone-statusbar .status-icons{display:flex;align-items:center;gap:6px;font-size:11px;}',
+            /* ---- 内容区域 ---- */
+            '.ta-phone-body{flex:1;overflow:hidden;position:relative;background:var(--primary-bg,#fef6f0);}',
+            /* ---- 页面通用 ---- */
+            '.ta-phone-page{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}',
+            '.ta-phone-page::-webkit-scrollbar{width:2px;}',
+            '.ta-phone-page::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px;}',
+            /* ---- 桌面 ---- */
+            '.ta-phone-desktop{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 20px;gap:28px;}',
+            '.ta-phone-apps{display:flex;flex-direction:column;align-items:center;gap:24px;}',
+            '.ta-phone-app-icon{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform 0.2s ease;}',
+            '.ta-phone-app-icon:active{transform:scale(0.9);}',
+            '.ta-phone-app-icon .icon-box{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.15);}',
+            '.ta-phone-app-icon .icon-label{font-size:11px;color:var(--text-secondary,#666);white-space:nowrap;}',
+            /* ---- 底部 Home indicator ---- */
+            '.ta-phone-home-indicator{height:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--primary-bg,#fef6f0);}',
+            '.ta-phone-home-bar{width:120px;height:4px;background:var(--text-secondary,#999);border-radius:2px;opacity:0.5;}',
+            /* ---- 底部提示文字 ---- */
+            '.ta-phone-hint{text-align:center;color:rgba(255,255,255,0.5);font-size:12px;margin-top:14px;letter-spacing:1px;}',
+            /* ---- 页面切换动画 ---- */
+            '@keyframes taPhoneSlideIn{from{transform:translateX(100%);opacity:0.6;}to{transform:translateX(0);opacity:1;}}',
+            '@keyframes taPhoneSlideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(100%);opacity:0.6;}}',
+            '.ta-phone-slide-in{animation:taPhoneSlideIn 0.32s ease-out forwards;}',
+            '.ta-phone-slide-out{animation:taPhoneSlideOut 0.28s ease-in forwards;}',
+            /* ---- 功能页头部 ---- */
+            '.ta-phone-header{height:44px;display:flex;align-items:center;padding:0 12px;flex-shrink:0;background:var(--primary-bg,#fef6f0);border-bottom:1px solid var(--border-color,rgba(0,0,0,0.06));}',
+            '.ta-phone-header .back-btn{background:none;border:none;font-size:16px;color:var(--accent-color,#c0392b);cursor:pointer;padding:6px 10px;border-radius:8px;transition:background 0.2s;}',
+            '.ta-phone-header .back-btn:active{background:rgba(0,0,0,0.05);}',
+            '.ta-phone-header .header-title{flex:1;text-align:center;font-size:15px;font-weight:600;color:var(--text-primary,#333);margin-right:36px;}',
+            /* ---- 日记页 ---- */
+            '.ta-diary-list{padding:12px 14px 20px;display:flex;flex-direction:column;gap:10px;}',
+            '.ta-diary-card{display:flex;gap:12px;padding:12px 14px;background:rgba(255,255,255,0.6);border-radius:12px;border:1px solid var(--border-color,rgba(0,0,0,0.06));}',
+            '.ta-diary-date{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-width:52px;padding-top:2px;}',
+            '.ta-diary-date .day{font-size:22px;font-weight:700;color:var(--accent-color,#c0392b);line-height:1.1;}',
+            '.ta-diary-date .month{font-size:11px;color:var(--text-secondary,#888);margin-top:2px;}',
+            '.ta-diary-date .weekday{font-size:10px;color:var(--text-secondary,#aaa);margin-top:1px;}',
+            '.ta-diary-content{flex:1;font-size:13px;line-height:1.7;color:var(--text-primary,#444);}',
+            '.ta-diary-add-btn{display:block;margin:10px 14px 30px;padding:10px;background:var(--accent-color,#c0392b);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:opacity 0.2s;}',
+            '.ta-diary-add-btn:active{opacity:0.8;}',
+            /* ---- 弹窗/模态 ---- */
+            '.ta-phone-modal-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:20;padding:20px;box-sizing:border-box;}',
+            '.ta-phone-modal{background:var(--secondary-bg,#fff);border-radius:16px;width:100%;max-width:270px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.2);}',
+            '.ta-phone-modal-header{padding:14px 16px 10px;font-size:14px;font-weight:600;color:var(--text-primary,#333);border-bottom:1px solid var(--border-color,rgba(0,0,0,0.06));}',
+            '.ta-phone-modal-body{padding:12px 16px;}',
+            '.ta-phone-modal-footer{display:flex;border-top:1px solid var(--border-color,rgba(0,0,0,0.06));}',
+            '.ta-phone-modal-footer button{flex:1;padding:11px 0;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s;}',
+            '.ta-phone-modal-footer .modal-cancel{background:none;color:var(--text-secondary,#888);}',
+            '.ta-phone-modal-footer .modal-confirm{background:var(--accent-color,#c0392b);color:#fff;}',
+            '.ta-phone-modal-footer .modal-cancel:active{background:rgba(0,0,0,0.04);}',
+            '.ta-phone-modal-footer .modal-confirm:active{opacity:0.85;}',
+            '.ta-phone-input{width:100%;padding:10px 12px;border:1px solid var(--border-color,rgba(0,0,0,0.12));border-radius:8px;font-size:13px;color:var(--text-primary,#333);background:var(--primary-bg,#fef6f0);outline:none;box-sizing:border-box;resize:none;font-family:inherit;}',
+            '.ta-phone-input:focus{border-color:var(--accent-color,#c0392b);}',
+            '.ta-phone-select{width:100%;padding:10px 12px;border:1px solid var(--border-color,rgba(0,0,0,0.12));border-radius:8px;font-size:13px;color:var(--text-primary,#333);background:var(--primary-bg,#fef6f0);outline:none;box-sizing:border-box;margin-top:8px;appearance:auto;}',
+            /* ---- 音乐页 ---- */
+            '.ta-music-page{display:flex;flex-direction:column;height:100%;}',
+            '.ta-music-player{display:flex;flex-direction:column;align-items:center;padding:20px 16px 12px;flex-shrink:0;}',
+            '.ta-music-cover-wrap{width:160px;height:160px;border-radius:50%;padding:8px;background:linear-gradient(135deg,#f0c0c8,#e0a0b0);box-shadow:0 6px 24px rgba(0,0,0,0.12);margin-bottom:14px;position:relative;overflow:hidden;}',
+            '.ta-music-cover{width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#f5c6d0,#e8a4b8,#d4899e);display:flex;align-items:center;justify-content:center;font-size:48px;color:rgba(255,255,255,0.85);}',
+            '.ta-music-cover.spinning{animation:taPhoneCoverSpin 8s linear infinite;}',
+            '.ta-music-cover.paused{animation-play-state:paused;}',
+            '@keyframes taPhoneCoverSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}',
+            '.ta-music-cover-center{width:20px;height:20px;border-radius:50%;background:var(--primary-bg,#fef6f0);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;box-shadow:0 0 4px rgba(0,0,0,0.1);}',
+            '.ta-music-song-name{font-size:15px;font-weight:600;color:var(--text-primary,#333);margin-bottom:16px;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+            '.ta-music-controls{display:flex;align-items:center;gap:24px;margin-bottom:14px;}',
+            '.ta-music-ctrl-btn{background:none;border:none;font-size:18px;color:var(--text-primary,#555);cursor:pointer;padding:8px;border-radius:50%;transition:all 0.2s;}',
+            '.ta-music-ctrl-btn:active{transform:scale(0.9);}',
+            '.ta-music-ctrl-btn.play-btn{width:48px;height:48px;background:var(--accent-color,#c0392b);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 10px rgba(0,0,0,0.15);}',
+            '.ta-music-ctrl-btn.play-btn:active{opacity:0.85;}',
+            '.ta-music-volume{display:flex;align-items:center;gap:8px;width:100%;max-width:200px;margin-bottom:10px;}',
+            '.ta-music-volume i{font-size:12px;color:var(--text-secondary,#999);}',
+            '.ta-music-volume input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:4px;background:var(--border-color,rgba(0,0,0,0.1));border-radius:2px;outline:none;}',
+            '.ta-music-volume input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--accent-color,#c0392b);border-radius:50%;cursor:pointer;}',
+            /* ---- 播放列表 ---- */
+            '.ta-music-playlist{flex:1;overflow-y:auto;border-top:1px solid var(--border-color,rgba(0,0,0,0.06));padding:8px 14px 20px;-webkit-overflow-scrolling:touch;}',
+            '.ta-music-playlist::-webkit-scrollbar{width:2px;}',
+            '.ta-music-playlist::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.1);border-radius:2px;}',
+            '.ta-music-playlist-title{font-size:12px;font-weight:600;color:var(--text-secondary,#999);padding:8px 0 6px;letter-spacing:0.5px;}',
+            '.ta-music-song-item{display:flex;align-items:center;padding:10px 10px;border-radius:8px;cursor:pointer;transition:background 0.15s;gap:10px;}',
+            '.ta-music-song-item:active{background:rgba(0,0,0,0.04);}',
+            '.ta-music-song-item.active{background:rgba(0,0,0,0.04);}',
+            '.ta-music-song-item.active .song-item-name{color:var(--accent-color,#c0392b);}',
+            '.ta-music-song-item .song-item-icon{font-size:14px;color:var(--text-secondary,#bbb);width:20px;text-align:center;}',
+            '.ta-music-song-item.active .song-item-icon{color:var(--accent-color,#c0392b);}',
+            '.ta-music-song-item .song-item-name{flex:1;font-size:13px;color:var(--text-primary,#444);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+            '.ta-music-song-item .song-item-del{background:none;border:none;font-size:12px;color:var(--text-secondary,#ccc);cursor:pointer;padding:4px;opacity:0;transition:opacity 0.2s;}',
+            '.ta-music-song-item:hover .song-item-del{opacity:1;}',
+            '.ta-music-song-item .song-item-del:active{color:#e74c3c;}',
+            '.ta-music-add-btn{display:block;margin:8px 14px 10px;padding:8px;background:none;border:1px dashed var(--border-color,rgba(0,0,0,0.15));border-radius:8px;font-size:12px;color:var(--text-secondary,#999);cursor:pointer;text-align:center;transition:all 0.2s;}',
+            '.ta-music-add-btn:active{background:rgba(0,0,0,0.03);}',
+            /* ---- 浏览器页 ---- */
+            '.ta-browser-list{padding:8px 14px 20px;display:flex;flex-direction:column;gap:2px;}',
+            '.ta-browser-item{display:flex;align-items:center;padding:10px 10px;border-radius:10px;gap:10px;position:relative;overflow:hidden;transition:background 0.15s;cursor:default;}',
+            '.ta-browser-item:active{background:rgba(0,0,0,0.03);}',
+            '.ta-browser-item .browser-icon{font-size:14px;color:var(--text-secondary,#bbb);flex-shrink:0;width:20px;text-align:center;}',
+            '.ta-browser-item .browser-query{flex:1;font-size:13px;color:var(--text-primary,#444);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+            '.ta-browser-item .browser-time{font-size:11px;color:var(--text-secondary,#aaa);flex-shrink:0;}',
+            '.ta-browser-item .browser-delete{position:absolute;right:-70px;top:0;height:100%;width:70px;background:#e74c3c;color:#fff;border:none;font-size:12px;cursor:pointer;transition:right 0.25s ease;display:flex;align-items:center;justify-content:center;}',
+            '.ta-browser-item.show-delete .browser-delete{right:0;}',
+            '.ta-browser-item.show-delete .browser-query{margin-right:70px;}',
+            '.ta-browser-add-btn{display:block;margin:8px 14px 30px;padding:8px;background:none;border:1px dashed var(--border-color,rgba(0,0,0,0.15));border-radius:8px;font-size:12px;color:var(--text-secondary,#999);cursor:pointer;text-align:center;transition:all 0.2s;}',
+            '.ta-browser-add-btn:active{background:rgba(0,0,0,0.03);}',
+            /* ---- 空状态 ---- */
+            '.ta-phone-empty{text-align:center;padding:40px 20px;color:var(--text-secondary,#bbb);font-size:13px;}',
+            '.ta-phone-empty i{font-size:32px;margin-bottom:10px;display:block;opacity:0.3;}'
+        ].join('\n');
         document.head.appendChild(style);
     }
-
-    let _historyScanned = false;
-
-    // 初始化
-    function init() {
-        injectStyles();
-        loadCollections();
-        if (!_historyScanned) {
-            _historyScanned = true;
-            setTimeout(scanHistory, 2000);
+    /* ---------- 状态栏时钟 ---------- */
+    function startClock() {
+        stopClock();
+        updateClock();
+        clockTimer = setInterval(updateClock, 30000);
+    }
+    function stopClock() {
+        if (clockTimer) {
+            clearInterval(clockTimer);
+            clockTimer = null;
         }
     }
-
-    // 暴露到全局
-    window.TaPhoneApp = {
-        init,
-        showTaPhone,
-        hideTaPhone,
-        goBack,
-        showDesktop,
-        showTaPhoneTab,
-        deleteCollection,
-        tryCollectChat,
-        tryCollectMoment,
-        showGiftReplies,
-        setChatSortMode
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    function updateClock() {
+        var el = document.querySelector('#ta-phone-container .status-time');
+        if (el) el.textContent = getCurrentTimeStr();
     }
-})();
+    /* ---------- 获取容器 ---------- */
+    function getContainer() {
+        return document.getElementById('ta-phone-container');
+    }
+    /* ---------- 渲染整个手机界面 ---------- */
+    function renderPhone() {
+        var container = getContainer();
+        if (!container) return;
+        container.innerHTML = [
+            '<div class="ta-phone-wrapper">',
+            '  <div class="ta-phone-shell">',
+            '    <div class="ta-phone-screen">',
+            '      <div class="ta-phone-notch"></div>',
+            '      <div class="ta-phone-statusbar">',
+            '        <span class="status-time">' + getCurrentTimeStr() + '</span>',
+            '        <span class="status-icons">',
+            '          <i class="fas fa-wifi"></i>',
+            '          <i class="fas fa-battery-three-quarters"></i>',
+            '        </span>',
+            '      </div>',
+            '      <div class="ta-phone-body" id="ta-phone-body"></div>',
+            '      <div class="ta-phone-home-indicator"><div class="ta-phone-home-bar"></div></div>',
+            '    </div>',
+            '  </div>',
+            '  <div class="ta-phone-hint">偷看一眼就好——他不会知道的。</div>',
+            '</div>'
+        ].join('\n');
+        renderDesktop();
+    }
+    /* ---------- 渲染桌面 ---------- */
+    function renderDesktop() {
+        var body = document.getElementById('ta-phone-body');
+        if (!body) return;
+        body.innerHTML = [
+            '<div class="ta-phone-page" id="ta-phone-desktop">',
+            '  <div class="ta-phone-desktop">',
+            '    <div class="ta-phone-apps">',
+            '      <div class="ta-phone-app-icon" data-app="diary">',
+            '        <div class="icon-box" style="background:#E8A4B8;"><i class="fas fa-book-open"></i></div>',
+            '        <span class="icon-label">TA的日记</span>',
+            '      </div>',
+            '      <div class="ta-phone-app-icon" data-app="music">',
+            '        <div class="icon-box" style="background:#A8D8EA;"><i class="fas fa-music"></i></div>',
+            '        <span class="icon-label">TA的音乐</span>',
+            '      </div>',
+            '      <div class="ta-phone-app-icon" data-app="browser">',
+            '        <div class="icon-box" style="background:#C4B5FD;"><i class="fas fa-globe"></i></div>',
+            '        <span class="icon-label">TA的浏览器</span>',
+            '      </div>',
+            '    </div>',
+            '  </div>',
+            '</div>'
+        ].join('\n');
+        /* 绑定图标点击 */
+        body.querySelectorAll('.ta-phone-app-icon').forEach(function(icon) {
+            icon.addEventListener('click', function() {
+                var app = this.getAttribute('data-app');
+                openApp(app);
+            });
+        });
+        currentPage = 'desktop';
+    }
+    /* ---------- 打开 App ---------- */
+    function openApp(appName) {
+        pageStack.push(currentPage);
+        currentPage = appName;
+        var body = document.getElementById('ta-phone-body');
+        if (!body) return;
+        switch (appName) {
+            case 'diary': renderDiaryPage(body); break;
+            case 'music': renderMusicPage(body); break;
+            case 'browser': renderBrowserPage(body); break;
+        }
+    }
+    /* ---------- 返回上一级 ---------- */
+    function goBack() {
+        if (currentPage === 'desktop') return;
+        /* 检查是否有模态弹窗 */
+        var modal = document.querySelector('#ta-phone-body .ta-phone-modal-overlay');
+        if (modal) {
+            modal.remove();
+            return;
+        }
+        var body = document.getElementById('ta-phone-body');
+        if (!body) return;
+        var currentPageEl = body.querySelector('.ta-phone-page');
+        if (currentPageEl) {
+            currentPageEl.classList.add('ta-phone-slide-out');
+            currentPageEl.addEventListener('animationend', function() {
+                pageStack.pop();
+                renderDesktop();
+            }, { once: true });
+        } else {
+            pageStack.pop();
+            renderDesktop();
+        }
+        if (currentPage === 'music') {
+            stopAudioPlayback();
+        }
+        currentPage = 'desktop';
+    }
+    /* ==================== 日记页 ==================== */
+    function renderDiaryPage(body) {
+        var diaries = loadDiaries();
+        var autoDiaries = generateAutoDiaries(diaries.length);
+        var allDiaries = autoDiaries.concat(diaries);
+        var listHTML = '';
+        if (allDiaries.length === 0) {
+            listHTML = '<div class="ta-phone-empty"><i class="fas fa-book-open"></i>还没有日记</div>';
+        } else {
+            allDiaries.forEach(function(d) {
+                var parts = d.date.split(' ');
+                var dateParts = parts[0].split('月');
+                var day = dateParts[1] ? dateParts[1].replace('日', '') : '';
+                var month = dateParts[0] + '月';
+                var weekday = parts[1] || '';
+                listHTML += '<div class="ta-diary-card">' +
+                    '<div class="ta-diary-date">' +
+                    '  <span class="day">' + day + '</span>' +
+                    '  <span class="month">' + month + '</span>' +
+                    '  <span class="weekday">' + weekday + '</span>' +
+                    '</div>' +
+                    '<div class="ta-diary-content">' + escapeHtml(d.content) + '</div>' +
+                    '</div>';
+            });
+        }
+        body.innerHTML = [
+            '<div class="ta-phone-page ta-phone-slide-in" id="ta-phone-diary">',
+            '  <div class="ta-phone-header">',
+            '    <button class="back-btn" id="ta-diary-back"><i class="fas fa-chevron-left"></i></button>',
+            '    <span class="header-title">TA的日记</span>',
+            '  </div>',
+            '  <div class="ta-diary-list">' + listHTML + '</div>',
+            '  <button class="ta-diary-add-btn" id="ta-diary-add">+ 写日记</button>',
+            '</div>'
+        ].join('\n');
+        document.getElementById('ta-diary-back').addEventListener('click', goBack);
+        document.getElementById('ta-diary-add').addEventListener('click', showAddDiaryModal);
+    }
+    function showAddDiaryModal() {
+        var body = document.getElementById('ta-phone-body');
+        var page = document.getElementById('ta-phone-diary');
+        if (!page) return;
+        var overlay = document.createElement('div');
+        overlay.className = 'ta-phone-modal-overlay';
+        overlay.innerHTML = [
+            '<div class="ta-phone-modal">',
+            '  <div class="ta-phone-modal-header">写一条日记</div>',
+            '  <div class="ta-phone-modal-body">',
+            '    <textarea class="ta-phone-input" id="ta-diary-input" rows="4" placeholder="在这里写点什么……"></textarea>',
+            '  </div>',
+            '  <div class="ta-phone-modal-footer">',
+            '    <button class="modal-cancel" id="ta-diary-modal-cancel">取消</button>',
+            '    <button class="modal-confirm" id="ta-diary-modal-confirm">保存</button>',
+            '  </div>',
+            '</div>'
+        ].join('\n');
+        page.appendChild(overlay);
+        overlay.querySelector('#ta-diary-modal-cancel').addEventListener('click', function() {
+            overlay.remove();
+        });
+        overlay.querySelector('#ta-diary-modal-confirm').addEventListener('click', function() {
+            var input = document.getElementById('ta-diary-input');
+            var text = input ? input.value.trim() : '';
+            if (!text) return;
+            var now = new Date();
+            var dateStr = formatDateCN(now) + ' ' + getWeekDay(now);
+            var diaries = loadDiaries();
+            diaries.unshift({ date: dateStr, content: text, source: 'user' });
+            saveDiaries(diaries);
+            overlay.remove();
+            renderDiaryPage(document.getElementById('ta-phone-body'));
+        });
+        /* 点击遮罩关闭 */
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) overlay.remove();
+        });
+    }
+    /* ==================== 音乐页 ==================== */
+    function renderMusicPage(body) {
+        musicList = loadMusic();
+        var state = loadMusicState();
+        currentSongIndex = state.index || 0;
+        if (currentSongIndex >= musicList.length) currentSongIndex = 0;
+        var currentSong = musicList[currentSongIndex] || { name: '暂无歌曲' };
+        /* 播放列表 HTML */
+        var playlistHTML = '';
+        if (musicList.length === 0) {
+            playlistHTML = '<div class="ta-phone-empty"><i class="fas fa-music"></i>还没有歌曲</div>';
+        } else {
+            musicList.forEach(function(song, idx) {
+                var activeClass = idx === currentSongIndex ? ' active' : '';
+                playlistHTML += '<div class="ta-music-song-item' + activeClass + '" data-idx="' + idx + '">' +
+                    '<span class="song-item-icon"><i class="fas ' + (idx === currentSongIndex && isPlaying ? 'fa-volume-up' : 'fa-music') + '"></i></span>' +
+                    '<span class="song-item-name">' + escapeHtml(song.name) + '</span>' +
+                    '<button class="song-item-del" data-delidx="' + idx + '"><i class="fas fa-xmark"></i></button>' +
+                    '</div>';
+            });
+        }
+        var coverClass = 'ta-music-cover';
+        if (isPlaying) coverClass += ' spinning';
+        body.innerHTML = [
+            '<div class="ta-phone-page ta-phone-slide-in" id="ta-phone-music">',
+            '  <div class="ta-phone-header">',
+            '    <button class="back-btn" id="ta-music-back"><i class="fas fa-chevron-left"></i></button>',
+            '    <span class="header-title">音乐</span>',
+            '  </div>',
+            '  <div class="ta-music-page">',
+            '    <div class="ta-music-player">',
+            '      <div class="ta-music-cover-wrap">',
+            '        <div class="' + coverClass + '" id="ta-music-cover">',
+            '          <div class="ta-music-cover-cent
