@@ -1,6 +1,6 @@
 /* ============================================
  * 朋友圈扩展功能 - 梦角自动发朋友圈
- * 版本：1.2（修复弹窗显示bug + 支持多层循环评论回复）
+ * 版本：1.3（修复弹窗 + 无限循环评论回复 + 共用全局回复库字卡）
  * ============================================ */
 
 (function() {
@@ -47,7 +47,7 @@
                 restartAutoSendTimer();
             }
         });
-        console.log('[朋友圈扩展] 已加载完成，支持多层评论循环回复');
+        console.log('[朋友圈扩展] 加载完成，评论自动回复读取全局回复库');
     }
 
     function loadData() {
@@ -578,69 +578,65 @@
         console.log('[朋友圈扩展] 已触发测试发圈');
     };
 
-    // ========== 新增：多层评论无限回复逻辑 ==========
+    // 多层评论循环回复 + 直接读取全局回复库，无需二次修改
     function listenNewMomentComments() {
         setInterval(() => {
             if (!window.momentsData || !settings.enabled) return;
             window.momentsData.forEach(post => {
                 if (!post.isPartner) return;
-                const traverse = (commentList) => {
+                const traverseComments = (commentList) => {
                     commentList.forEach(comment => {
-                        // 不回复梦角自己的评论
                         if (comment.isPartnerComment) return;
-                        // 3秒冷却防刷屏
                         const now = Date.now();
                         if (comment.lastAutoReplyTime && now - comment.lastAutoReplyTime < 3000) return;
                         setTimeout(() => {
-                            genReply(post, comment);
+                            genAutoReply(post, comment);
                             comment.lastAutoReplyTime = Date.now();
-                            saveMomentsToStorageSync();
-                            renderMoments();
+                            if (typeof saveMomentsToStorageSync === 'function') saveMomentsToStorageSync();
+                            if (typeof renderMoments === 'function') renderMoments();
                         }, Math.floor(Math.random() * 1200 + 600));
-                        // 递归遍历子评论，支持多层对话
-                        if (comment.replies?.length) traverse(comment.replies);
-                    })
-                }
-                traverse(post.comments);
-            })
+                        if (comment.replies && comment.replies.length > 0) {
+                            traverseComments(comment.replies);
+                        }
+                    });
+                };
+                traverseComments(post.comments);
+            });
         }, 1500);
     }
 
-    function genReply(post, targetComment) {
+    function genAutoReply(post, targetComment) {
         let partnerName = '梦角';
         let partnerAvatar = '';
         try {
-            if (window.settings?.partnerName) partnerName = window.settings.partnerName;
-            if (window.settings?.partnerAvatar) partnerAvatar = window.settings.partnerAvatar;
-            const p = JSON.parse(localStorage.getItem('profile_partner') || '{}');
-            if (p.name) partnerName = p.name;
-            if (p.avatar) partnerAvatar = p.avatar;
-        } catch (e) {}
-        // 可自行扩充人设回复文案
-        const replyPool = [
-            "看到你的评论啦",
-            "你这么说我很开心",
-            "还有什么想跟我说的吗",
-            "一直在等你找我说话",
-            "刚刚还在想你",
-            "下次再多跟我讲讲好不好",
-            "很在意你的想法",
-            "原来你是这么想的"
-        ];
-        const randomText = replyPool[Math.floor(Math.random() * replyPool.length)];
-        const newSubReply = {
-            id: Date.now() + Math.random(),
-            nickname: partnerName,
-            avatar: partnerAvatar,
-            text: randomText,
-            time: formatTime(new Date()),
-            timestamp: Date.now(),
-            isPartnerComment: true,
-            replies: [],
-            replyToName: targetComment.nickname
-        };
-        targetComment.replies = targetComment.replies || [];
-        targetComment.replies.push(newSubReply);
-    }
+            const profileRaw = localStorage.getItem('profile_partner');
+            if (profileRaw) {
+                const pData = JSON.parse(profileRaw);
+                if (pData.name) partnerName = pData.name;
+                if (pData.avatar) partnerAvatar = pData.avatar;
+            }
+        } catch (err) {}
 
-    if (document.readyState ===
+        // 读取页面顶部回复库全部主字卡
+        function getAllMainReplyCards() {
+            try {
+                const storeRaw = localStorage.getItem('reply_library_main');
+                if (!storeRaw) return [];
+                const libData = JSON.parse(storeRaw);
+                let allTexts = [];
+                libData.groups.forEach(group => {
+                    group.cards.forEach(card => {
+                        const txt = card.text?.trim();
+                        if (txt) allTexts.push(txt);
+                    });
+                });
+                return allTexts;
+            } catch (e) {
+                return ["嗯？", "我在", "想和你多说说话"];
+            }
+        }
+
+        const cardList = getAllMainReplyCards();
+        const pickText = cardList[Math.floor(Math.random() * cardList.length)];
+
+        const newReplyItem = {
