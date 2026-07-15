@@ -1,6 +1,6 @@
 /* ============================================
  * 朋友圈扩展功能 - 梦角自动发朋友圈
- * 版本：1.0
+ * 版本：1.1（修复弹窗显示bug）
  * ============================================ */
 
 (function() {
@@ -313,8 +313,8 @@
     function createLibraryModal() {
         if (document.getElementById('moment-library-modal')) return;
         const modalHTML = `
-            <div class="modal" id="moment-library-modal" style="z-index:100001;">
-                <div class="modal-content" style="max-height:90vh; padding:0; overflow:hidden; display:flex; flex-direction:column;">
+            <div id="moment-library-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:100001; padding:20px; box-sizing:border-box;">
+                <div style="background:var(--secondary-bg,#fff); max-height:90vh; width:100%; max-width:500px; padding:0; overflow:hidden; display:flex; flex-direction:column; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
                     <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between;">
                         <div style="font-size:16px; font-weight:700; color:var(--text-primary);">
                             <i class="fas fa-images" style="color:var(--accent-color); margin-right:8px;"></i>
