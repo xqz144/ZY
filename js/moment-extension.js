@@ -1,6 +1,6 @@
 /* ============================================
  * 朋友圈扩展功能 - 梦角自动发朋友圈
- * 版本：1.1（修复弹窗显示bug）
+ * 版本：1.2（修复弹窗显示bug + 支持多层循环评论回复）
  * ============================================ */
 
 (function() {
@@ -38,14 +38,16 @@
     function init() {
         loadData();
         injectSettingsUI();
+        injectLibraryManager();
         startAutoSendTimer();
+        listenNewMomentComments();
         window.addEventListener('storage', (e) => {
             if (e.key === STORAGE_KEYS.SETTINGS) {
                 loadSettings();
                 restartAutoSendTimer();
             }
         });
-        console.log('[朋友圈扩展] 已加载完成');
+        console.log('[朋友圈扩展] 已加载完成，支持多层评论循环回复');
     }
 
     function loadData() {
@@ -227,7 +229,6 @@
 
     function doInject() {
         injectRhythmSettings();
-        injectLibraryManager();
         syncSettingsUI();
         bindSettingsEvents();
     }
@@ -577,10 +578,69 @@
         console.log('[朋友圈扩展] 已触发测试发圈');
     };
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    // ========== 新增：多层评论无限回复逻辑 ==========
+    function listenNewMomentComments() {
+        setInterval(() => {
+            if (!window.momentsData || !settings.enabled) return;
+            window.momentsData.forEach(post => {
+                if (!post.isPartner) return;
+                const traverse = (commentList) => {
+                    commentList.forEach(comment => {
+                        // 不回复梦角自己的评论
+                        if (comment.isPartnerComment) return;
+                        // 3秒冷却防刷屏
+                        const now = Date.now();
+                        if (comment.lastAutoReplyTime && now - comment.lastAutoReplyTime < 3000) return;
+                        setTimeout(() => {
+                            genReply(post, comment);
+                            comment.lastAutoReplyTime = Date.now();
+                            saveMomentsToStorageSync();
+                            renderMoments();
+                        }, Math.floor(Math.random() * 1200 + 600));
+                        // 递归遍历子评论，支持多层对话
+                        if (comment.replies?.length) traverse(comment.replies);
+                    })
+                }
+                traverse(post.comments);
+            })
+        }, 1500);
     }
 
-})();
+    function genReply(post, targetComment) {
+        let partnerName = '梦角';
+        let partnerAvatar = '';
+        try {
+            if (window.settings?.partnerName) partnerName = window.settings.partnerName;
+            if (window.settings?.partnerAvatar) partnerAvatar = window.settings.partnerAvatar;
+            const p = JSON.parse(localStorage.getItem('profile_partner') || '{}');
+            if (p.name) partnerName = p.name;
+            if (p.avatar) partnerAvatar = p.avatar;
+        } catch (e) {}
+        // 可自行扩充人设回复文案
+        const replyPool = [
+            "看到你的评论啦",
+            "你这么说我很开心",
+            "还有什么想跟我说的吗",
+            "一直在等你找我说话",
+            "刚刚还在想你",
+            "下次再多跟我讲讲好不好",
+            "很在意你的想法",
+            "原来你是这么想的"
+        ];
+        const randomText = replyPool[Math.floor(Math.random() * replyPool.length)];
+        const newSubReply = {
+            id: Date.now() + Math.random(),
+            nickname: partnerName,
+            avatar: partnerAvatar,
+            text: randomText,
+            time: formatTime(new Date()),
+            timestamp: Date.now(),
+            isPartnerComment: true,
+            replies: [],
+            replyToName: targetComment.nickname
+        };
+        targetComment.replies = targetComment.replies || [];
+        targetComment.replies.push(newSubReply);
+    }
+
+    if (document.readyState ===
