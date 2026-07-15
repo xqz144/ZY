@@ -639,4 +639,25 @@
         const cardList = getAllMainReplyCards();
         const pickText = cardList[Math.floor(Math.random() * cardList.length)];
 
-        const newReplyItem = {
+                const newReplyItem = {
+            nickname: partnerName,
+            avatar: partnerAvatar,
+            text: pickText || '嗯？',
+            time: formatTime(new Date()),
+            timestamp: Date.now(),
+            isPartnerComment: true,
+            replies: []
+        };
+
+        if (!targetComment.replies) targetComment.replies = [];
+        targetComment.replies.push(newReplyItem);
+    }
+
+    // 页面加载完成后初始化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+})();
