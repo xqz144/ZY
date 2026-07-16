@@ -126,14 +126,17 @@
         try{var r=localStorage.getItem('reply_library_main');if(r){var lib=JSON.parse(r);var t=[];if(lib.groups)lib.groups.forEach(function(g){if(g.cards)g.cards.forEach(function(c){if(c.text)t.push(c.text);});});if(t.length>0)return t;}}catch(e){}
         return DEF_CARDS;
     }
+    function ldCardsShuffled(seed){var cards=ldCards();return cards.length>1?shuffle2(cards,seed):cards;}
 
     /* ========== 日记生成 ========== */
     function genDia(key){
         var all=ldDia();if(all[key])return all[key];
-        var w=pick(WEATHERS);var card=pick(ldCards());
+        var w=pick(WEATHERS);var cards=ldCardsShuffled(key+'c');
         var cnt=4+Math.abs(hS(key+'cnt'))%3;var sh=shuffle2(DSEG,key+'seg');var pk=sh.slice(0,cnt);
-        var hasTpl=false;pk.forEach(function(s,i){if(s.indexOf('{content}')!==-1){pk[i]=s.replace('{content}',card);hasTpl=true;}});
-        if(!hasTpl){var ts=DSEG.filter(function(s){return s.indexOf('{content}')!==-1;});if(ts.length){var tp=pick(ts);pk[Math.abs(hS(key))%pk.length]=tp.replace('{content}',card);}}
+        var tplIdxs=[];pk.forEach(function(s,i){if(s.indexOf('{content}')!==-1)tplIdxs.push(i);});
+        /* 将每张模板替换为不同的字卡 */
+        tplIdxs.forEach(function(idx,ci){if(ci<cards.length)pk[idx]=pk[idx].replace('{content}',cards[ci]);});
+        if(tplIdxs.length===0){var ts=DSEG.filter(function(s){return s.indexOf('{content}')!==-1;});if(ts.length&&cards.length){var tp=pick(ts);pk[Math.abs(hS(key))%pk.length]=tp.replace('{content}',cards[0]);}}
         pk=shuffle2(pk,key+'ord');var mood=MOODS[Math.abs(hS(key+'mood'))%MOODS.length];
         var entry={date:kCN(key),weather:w.icon,weatherText:w.text,mood:mood,content:pk.join('\n\n'),source:'auto'};
         all[key]=entry;svDia(all);return entry;
@@ -175,7 +178,7 @@
             '@keyframes tpSlideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(100%);opacity:.6;}}',
             '.tp-sin{animation:tpSlideIn .32s ease-out forwards;}.tp-sout{animation:tpSlideOut .28s ease-in forwards;}',
             /* 桌面 */
-            '#ta-phone-desktop{display:flex;flex-direction:column;padding:16px 20px 8px;position:relative;}',
+            '#ta-phone-desktop{display:flex;flex-direction:column;padding:16px 20px 8px;}',
             '.td-wp{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;}',
             '.td-wp-mk{position:absolute;inset:0;background:rgba(254,246,240,0.55);z-index:1;}',
             '.td-clock{text-align:center;padding:8px 0 16px;position:relative;z-index:2;}',
@@ -247,10 +250,10 @@
             '.tm-plt{font-size:12px;font-weight:600;color:#999;padding:6px 0 4px;}',
             '.tm-si{display:flex;align-items:center;padding:8px;border-radius:8px;cursor:pointer;gap:8px;}.tm-si:active{background:rgba(0,0,0,0.04);}',
             '.tm-si.act{background:rgba(0,0,0,0.04);}.tm-si.act .si-n{color:'+C.btn+';}.tm-si.act .si-i{color:'+C.btn+';}',
-            '.si-i{font-size:13px;color:#bbb;width:18px;text-align:center;}.si-n{flex:1;font-size:13px;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+                        '.si-i{font-size:13px;color:#bbb;width:18px;text-align:center;}.si-n{flex:1;font-size:13px;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
             '.si-d{background:none;border:none;font-size:11px;color:#ccc;cursor:pointer;padding:4px;}.tm-ab{display:block;margin:6px 14px 8px;padding:7px;background:none;border:1px dashed rgba(0,0,0,0.15);border-radius:8px;font-size:12px;color:#999;cursor:pointer;text-align:center;}',
             /* 浏览器列表 */
-                      '.tb-bar{display:flex;align-items:center;gap:6px;padding:8px 14px;flex-shrink:0;}',
+            '.tb-bar{display:flex;align-items:center;gap:6px;padding:8px 14px;flex-shrink:0;}',
             '.tb-add{width:32px;height:32px;border-radius:50%;background:'+C.accent+';color:#fff;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}',
             '.tb-add:active{opacity:.8;}',
             '.tb-search{flex:1;padding:8px 12px;border:1px solid rgba(0,0,0,0.1);border-radius:10px;font-size:13px;color:#333;background:rgba(255,255,255,0.6);outline:none;box-sizing:border-box;}',
@@ -475,8 +478,15 @@
     function filterBL(kw){
         var el=document.getElementById('bl-list');if(!el)return;var items=gBD();
         var f=kw?items.filter(function(it){return it.t.indexOf(kw)!==-1||it.c.indexOf(kw)!==-1;}):items;
-        el.innerHTML=f.length?buildBListHTML(f):'<div style="text-align:center;padding:40px 20px;color:#bbb;font-size:13px;"><i class="fas fa-magnifying-glass" style="font-size:30px;display:block;margin-bottom:8px;opacity:.3"></i>\u6CA1\u6709\u5339\u914D\u7684\u8BB0\u5F55</div>';
-        el.querySelectorAll('.tbl-card').forEach(function(c){c.addEventListener('click',function(){showBDetail(parseInt(this.getAttribute('data-i')));});});
+        if(f.length){var html='<div class="tbl-grp">\u4ECA\u5929 \u00B7 '+f.length+'</div>';
+            f.forEach(function(it,fi){var cc=CAT_CLR[it.c]||'#aaa';var hr=it.time<10?'0'+it.time:it.time;
+                html+='<div class="tbl-card" data-orig="'+items.indexOf(it)+'"><span class="tbl-icon">'+esc(it.t.charAt(0))+'</span><div class="tbl-body">';
+                html+='<div class="tbl-title">'+esc(it.t)+'</div>';
+                html+='<div class="tbl-sub"><span>'+esc(it.p)+'</span><span class="tbl-cat" style="background:'+cc+'">'+esc(it.c)+'</span></div></div>';
+                html+='<span class="tbl-time">'+hr+':00</span></div>';});
+            el.innerHTML=html;
+        }else{el.innerHTML='<div style="text-align:center;padding:40px 20px;color:#bbb;font-size:13px;"><i class="fas fa-magnifying-glass" style="font-size:30px;display:block;margin-bottom:8px;opacity:.3"></i>\u6CA1\u6709\u5339\u914D\u7684\u8BB0\u5F55</div>';}
+        el.querySelectorAll('.tbl-card').forEach(function(c){c.addEventListener('click',function(){showBDetail(parseInt(this.getAttribute('data-orig')));});});
     }
 
     /* ========== 浏览器详情 ========== */
@@ -492,7 +502,7 @@
         h+='<div class="tbd-meta"><span class="tbd-mtag tbd-plat">'+esc(it.p)+'</span><span class="tbd-mtag tbd-cat" style="background:'+cc+'">'+esc(it.c)+'</span></div>';
         h+='<div class="tbd-note">'+esc(it.n)+'</div></div></div></div>';
         bd.innerHTML=h;document.getElementById('bd-bk').addEventListener('click',function(){renderBList(bd);});
-    }
+            }
 
     /* ========== 添加浏览器字卡 ========== */
     function showAddBC(){
@@ -502,7 +512,7 @@
         o.innerHTML='<div class="tp-md"><div class="tp-md-h">\u6DFB\u52A0\u641C\u7D22\u8BCD</div><div class="tp-md-b">'+
             '<input class="tp-in" id="bc-t" type="text" placeholder="\u641C\u7D22\u8BCD\u6761\uFF08\u6B63\u6807\u9898\uFF09">'+
             '<select class="tp-sel" id="bc-p">'+optP+'</select>'+
-                      '<select class="tp-sel" id="bc-c">'+optC+'</select>'+
+            '<select class="tp-sel" id="bc-c">'+optC+'</select>'+
             '<textarea class="tp-in" id="bc-n" rows="3" placeholder="\u68A6\u89D2\u5907\u6CE8\uFF08\u70B9\u5F00\u540E\u663E\u793A\u7684\u5185\u5BB9\uFF09" style="margin-top:8px"></textarea></div>'+
             '<div class="tp-md-f"><button class="mc" id="bc-ca">\u53D6\u6D88</button><button class="mk" id="bc-ok">\u6DFB\u52A0</button></div></div>';
         pg.appendChild(o);o.querySelector('#bc-ca').addEventListener('click',function(){o.remove();});
@@ -530,7 +540,8 @@
         var h='<div class="ta-phone-page tp-sin" id="tp-hl"><div class="tp-hd"><button class="bk" id="hl-bk"><i class="fas fa-chevron-left"></i></button><span class="ht">\u5065\u5EB7</span></div>';
         h+='<div class="th-pg"><div class="th-dates" id="hl-dates">';
         for(var i=6;i>=0;i--){var dk=shK(tK(),-i);var lb=i===0?'\u4ECA\u5929':i===1?'\u6628\u5929':kCN(dk).split(' ')[0];
-            h+='<div class="th-di'+(dk===selD?' act':'')+'" data-dk="'+dk+'"><div>'+lb.split('\u6708')[1]+'</div><div class="hdd">'+(i===0?wk(new Date()):kCN(dk).split(' ')[1])+'</div></div>';}
+            var dayNum=i<=1?lb:kCN(dk).split('\u6708')[1]||kCN(dk).split(' ')[0];
+            h+='<div class="th-di'+(dk===selD?' act':'')+'" data-dk="'+dk+'"><div>'+dayNum+'</div><div class="hdd">'+(i===0?wk(new Date()):kCN(dk).split(' ')[1])+'</div></div>';}
         h+='</div>';h+=buildHealthBody(selD);h+='</div></div>';bd.innerHTML=h;
         document.getElementById('hl-bk').addEventListener('click',goBack);
         bd.querySelectorAll('.th-di').forEach(function(el){el.addEventListener('click',function(){healthViewDate=this.getAttribute('data-dk');renderHlth(document.getElementById('tp-body'));});});
@@ -577,4 +588,3 @@
     function hideTP(){var ct=gCt();if(!ct)return;ct.classList.remove('active');ct.style.display='none';stopClk();if(curPage==='music')pauseMus();ct.querySelectorAll('.tp-mo').forEach(function(m){m.remove();});}
     window.TaPhoneApp={init:init,showTaPhone:showTP,hideTaPhone:hideTP,goBack:goBack};
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
