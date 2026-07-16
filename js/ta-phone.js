@@ -587,4 +587,4 @@
     function showTP(){var ct=gCt();if(!ct)return;renderPhone();ct.style.display='flex';ct.classList.add('active');startClk();var ms=ldMSt();isPlay=ms.playing||false;curSong=ms.index||0;healthViewDate=null;}
     function hideTP(){var ct=gCt();if(!ct)return;ct.classList.remove('active');ct.style.display='none';stopClk();if(curPage==='music')pauseMus();ct.querySelectorAll('.tp-mo').forEach(function(m){m.remove();});}
     window.TaPhoneApp={init:init,showTaPhone:showTP,hideTaPhone:hideTP,goBack:goBack};
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
