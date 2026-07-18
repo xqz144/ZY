@@ -7,7 +7,7 @@
 
     /* ========== 存储键 ========== */
     var STG = {
-        DIARIES:'ta_phone_diaries_v3', MUSIC:'ta_phone_music', MUSIC_ST:'ta_phone_music_state',
+        DIARIES:'ta_phone_diaries_v3', DCARDS:'ta_phone_diary_cards', MUSIC:'ta_phone_music', MUSIC_ST:'ta_phone_music_state',
         BCARDS:'ta_phone_browser_cards', BDAILY:'ta_phone_browser_daily',
         WALL:'ta_phone_wallpaper', PROFILE:'profile_partner'
     };
@@ -121,10 +121,24 @@
     function rmWp(){localStorage.removeItem(STG.WALL);}
 
     /* ========== 字卡（日记用） ========== */
+    var DEF_DC = ['你今天过得好吗','好想见你','什么时候才能再见呢','想和你一起看日落','你笑起来真好看',
+        '今天的晚霞很好看，拍给你了','看到一朵很可爱的云，像你','听到一首歌，歌词很像我们','忽然觉得好想你',
+        '今天吃到了好吃的东西，下次带你','路边的花开了，拍了照片','好像养成了一个习惯，什么事都想告诉你'];
+    function ldDCards(){
+        try{
+            var r=localStorage.getItem(STG.DCARDS);
+            if(r){var lib=JSON.parse(r);var t=[];
+                if(lib.groups)lib.groups.forEach(function(g){if(g.cards)g.cards.forEach(function(c){if(c.text)t.push(c.text);});});
+                if(t.length>0)return t;}
+        }catch(e){}
+        return DEF_DC.slice();
+    }
+    function svDCards(lib){localStorage.setItem(STG.DCARDS,JSON.stringify(lib));}
     function ldCards(){
+        var own=ldDCards();if(own.length>0)return own;
         try{if(Array.isArray(window._customReplies)&&window._customReplies.length>0)return window._customReplies;}catch(e){}
         try{var r=localStorage.getItem('reply_library_main');if(r){var lib=JSON.parse(r);var t=[];if(lib.groups)lib.groups.forEach(function(g){if(g.cards)g.cards.forEach(function(c){if(c.text)t.push(c.text);});});if(t.length>0)return t;}}catch(e){}
-        return DEF_CARDS;
+        return DEF_DC;
     }
     function ldCardsShuffled(seed){var cards=ldCards();return cards.length>1?shuffle2(cards,seed):cards;}
 
@@ -201,6 +215,13 @@
             '.tp-hd .hc{font-size:12px;color:'+C.tm+';margin-right:4px;}',
             /* 日记列表 */
             '.tdl-list{padding:6px 14px 20px;}',
+            '.tdl-add{background:none;border:none;font-size:16px;color:'+C.accent+';cursor:pointer;padding:6px 10px;border-radius:8px;}',
+            '.tdl-add:active{opacity:.7;}',
+            '.tdl-cg-list{max-height:160px;overflow-y:auto;padding:4px 0;}',
+            '.tdl-cg-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:13px;color:#444;}',
+            '.tdl-cg-item:active{background:rgba(0,0,0,0.04);}',
+            '.tdl-cg-name{flex:1;font-weight:500;}.tdl-cg-cnt{font-size:11px;color:#bbb;}',
+            '.tdl-cg-del{background:none;border:none;font-size:11px;color:#ccc;cursor:pointer;padding:4px;}',
             '.tdl-grp{font-size:12px;color:#999;font-weight:600;padding:10px 0 4px;}',
             '.tdl-card{display:flex;align-items:flex-start;gap:10px;padding:12px;background:#fff;border-radius:12px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.06);}',
             '.tdl-card:active{background:#f9f5f2;}',
@@ -229,7 +250,7 @@
             '.tp-md-f{display:flex;border-top:1px solid rgba(0,0,0,0.06);position:sticky;bottom:0;background:#fff;}',
             '.tp-md-f button{flex:1;padding:11px 0;border:none;font-size:13px;font-weight:600;cursor:pointer;}',
             '.tp-md-f .mc{background:none;color:#888;}.tp-md-f .mk{background:'+C.btn+';color:#fff;}',
-            '.tp-in{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,0.12);border-radius:8px;font-size:13px;color:#333;background:'+C.scr+';outline:none;box-sizing:border-box;resize:none;font-family:inherit;}',
+                        '.tp-in{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,0.12);border-radius:8px;font-size:13px;color:#333;background:'+C.scr+';outline:none;box-sizing:border-box;resize:none;font-family:inherit;}',
             '.tp-in:focus{border-color:'+C.btn+';}.tp-sel{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,0.12);border-radius:8px;font-size:13px;color:#333;background:'+C.scr+';outline:none;box-sizing:border-box;margin-top:8px;}',
             /* 音乐 */
             '.tm-pg{display:flex;flex-direction:column;height:100%;}',
@@ -250,7 +271,7 @@
             '.tm-plt{font-size:12px;font-weight:600;color:#999;padding:6px 0 4px;}',
             '.tm-si{display:flex;align-items:center;padding:8px;border-radius:8px;cursor:pointer;gap:8px;}.tm-si:active{background:rgba(0,0,0,0.04);}',
             '.tm-si.act{background:rgba(0,0,0,0.04);}.tm-si.act .si-n{color:'+C.btn+';}.tm-si.act .si-i{color:'+C.btn+';}',
-                        '.si-i{font-size:13px;color:#bbb;width:18px;text-align:center;}.si-n{flex:1;font-size:13px;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+            '.si-i{font-size:13px;color:#bbb;width:18px;text-align:center;}.si-n{flex:1;font-size:13px;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
             '.si-d{background:none;border:none;font-size:11px;color:#ccc;cursor:pointer;padding:4px;}.tm-ab{display:block;margin:6px 14px 8px;padding:7px;background:none;border:1px dashed rgba(0,0,0,0.15);border-radius:8px;font-size:12px;color:#999;cursor:pointer;text-align:center;}',
             /* 浏览器列表 */
             '.tb-bar{display:flex;align-items:center;gap:6px;padding:8px 14px;flex-shrink:0;}',
@@ -371,7 +392,7 @@
         for(var i=0;i<7;i++){var key=shK(today,-i);var entry=gDia(key);
             var label=i===0?'\u4ECA\u5929':i===1?'\u6628\u5929':kCN(key).split(' ')[0];
             groups.push({key:key,label:label,entry:entry});}
-        var h='<div class="ta-phone-page tp-sin" id="tp-dl"><div class="tp-hd"><button class="bk" id="dl-bk"><i class="fas fa-chevron-left"></i></button><span class="ht">\u65E5\u8BB0</span><span class="hc">'+groups.length+' \u7BC7</span></div><div class="tdl-list">';
+        var h='<div class="ta-phone-page tp-sin" id="tp-dl"><div class="tp-hd"><button class="bk" id="dl-bk"><i class="fas fa-chevron-left"></i></button><span class="ht">\u65E5\u8BB0</span><button class="tdl-add" id="dl-add"><i class="fas fa-plus"></i></button><span class="hc">'+groups.length+' \u7BC7</span></div><div class="tdl-list">';
         groups.forEach(function(g){var e=g.entry;var mood=e.mood||MOODS[0];var prev=e.content.replace(/\n/g,' ').substring(0,50);
             h+='<div class="tdl-grp">'+esc(g.label)+'</div>';
             h+='<div class="tdl-card" data-key="'+g.key+'"><div class="tdl-dot" style="background:'+(CAT_CLR['\u60C5\u611F']||'#E8A4B8')+'"></div><div class="tdl-body">';
@@ -380,7 +401,40 @@
             h+='<div class="tdl-meta"><span>'+esc(e.weather)+'</span><span>'+mood.e+' '+esc(mood.t)+'</span></div></div></div>';});
         h+='</div></div>';bd.innerHTML=h;
         document.getElementById('dl-bk').addEventListener('click',goBack);
+        document.getElementById('dl-add').addEventListener('click',showDCM);
         bd.querySelectorAll('.tdl-card').forEach(function(c){c.addEventListener('click',function(){showDiaDetail(this.getAttribute('data-key'));});});
+    }
+
+    /* ========== 日记字卡库管理 ========== */
+    function getDCLib(){
+        try{var r=localStorage.getItem(STG.DCARDS);if(r){var lib=JSON.parse(r);if(lib.groups&&lib.groups.length)return lib;}}catch(e){}
+        return{groups:[{name:'\u9ED8\u8BA4',cards:DEF_DC.map(function(t){return{text:t};})}]};
+    }
+    function showDCM(){
+        var pg=document.getElementById('tp-dl');if(!pg)return;var o=document.createElement('div');o.className='tp-mo';
+        var lib=getDCLib();
+        var gh='';
+        lib.groups.forEach(function(g,i){
+            gh+='<div class="tdl-cg-item" data-gi="'+i+'"><span class="tdl-cg-name">'+esc(g.name)+'</span><span class="tdl-cg-cnt">'+g.cards.length+' \u5F20</span><button class="tdl-cg-del" data-di="'+i+'"><i class="fas fa-xmark"></i></button></div>';
+        });
+        o.innerHTML='<div class="tp-md"><div class="tp-md-h">\u65E5\u8BB0\u5B57\u5361\u5E93</div><div class="tp-md-b"><div class="tdl-cg-list" id="dc-gl">'+(gh||'<div style="text-align:center;color:#ccc;padding:20px;font-size:13px">\u6682\u65E0\u5B57\u5361</div>')+'</div></div><div class="tp-md-f"><button class="mc" id="dc-ca">\u5173\u95ED</button><button class="mk" id="dc-add">\u65B0\u5EFA\u5206\u7EC4</button></div></div>';
+        pg.appendChild(o);
+        o.querySelector('#dc-ca').addEventListener('click',function(){o.remove();});
+        o.querySelector('#dc-add').addEventListener('click',function(){
+            var name=prompt('\u5206\u7EC4\u540D\u79F0');if(!name||!name.trim())return;
+            lib.groups.push({name:name.trim(),cards:[]});svDCards(lib);o.remove();showDCM();
+        });
+        o.querySelectorAll('.tdl-cg-del').forEach(function(b){b.addEventListener('click',function(e){
+            e.stopPropagation();var gi=parseInt(this.getAttribute('data-di'));
+            if(confirm('\u5220\u9664\u5206\u7EC4 \u300C'+lib.groups[gi].name+'\u300D\uFF1F')){lib.groups.splice(gi,1);svDCards(lib);o.remove();showDCM();}
+        });});
+        o.querySelectorAll('.tdl-cg-item').forEach(function(item){item.addEventListener('click',function(e){
+            if(e.target.closest('.tdl-cg-del'))return;var gi=parseInt(this.getAttribute('data-gi'));
+            var txt=prompt('\u6DFB\u52A0\u5B57\u5361\uFF08\u6BCF\u884C\u4E00\u5F20\uFF09');if(!txt||!txt.trim())return;
+            var lines=txt.trim().split('\n');lines.forEach(function(l){if(l.trim())lib.groups[gi].cards.push({text:l.trim()});});
+            svDCards(lib);o.remove();showDCM();
+        });});
+        o.addEventListener('click',function(e){if(e.target===o)o.remove();});
     }
 
     /* ========== 日记详情 ========== */
@@ -448,7 +502,7 @@
     function delMus(i){musicList.splice(i,1);svMus(musicList);if(curSong>=musicList.length)curSong=Math.max(0,musicList.length-1);if(i===curSong)pauseMus();renderMus(document.getElementById('tp-body'));}
     function showAddMus(){
         var pg=document.getElementById('tp-mus');if(!pg)return;var o=document.createElement('div');o.className='tp-mo';
-        o.innerHTML='<div class="tp-md"><div class="tp-md-h">\u6DFB\u52A0\u6B4C\u66F2</div><div class="tp-md-b"><input class="tp-in" id="mn" type="text" placeholder="\u6B4C\u66F2\u540D\u79F0" style="margin-bottom:8px"><input class="tp-in" id="mu" type="text" placeholder="\u97F3\u4E50 URL\uFF08https://...\uFF09"></div><div class="tp-md-f"><button class="mc" id="mm-ca">\u53D6\u6D88</button><button class="mk" id="mm-ok">\u6DFB\u52A0</button></div></div>';
+                o.innerHTML='<div class="tp-md"><div class="tp-md-h">\u6DFB\u52A0\u6B4C\u66F2</div><div class="tp-md-b"><input class="tp-in" id="mn" type="text" placeholder="\u6B4C\u66F2\u540D\u79F0" style="margin-bottom:8px"><input class="tp-in" id="mu" type="text" placeholder="\u97F3\u4E50 URL\uFF08https://...\uFF09"></div><div class="tp-md-f"><button class="mc" id="mm-ca">\u53D6\u6D88</button><button class="mk" id="mm-ok">\u6DFB\u52A0</button></div></div>';
         pg.appendChild(o);o.querySelector('#mm-ca').addEventListener('click',function(){o.remove();});
         o.querySelector('#mm-ok').addEventListener('click',function(){var n=(document.getElementById('mn')||{}).value;var u=(document.getElementById('mu')||{}).value;if(!n||!n.trim())return;musicList.push({name:n.trim(),url:u?u.trim():''});svMus(musicList);o.remove();renderMus(document.getElementById('tp-body'));});
         o.addEventListener('click',function(e){if(e.target===o)o.remove();});
@@ -502,7 +556,7 @@
         h+='<div class="tbd-meta"><span class="tbd-mtag tbd-plat">'+esc(it.p)+'</span><span class="tbd-mtag tbd-cat" style="background:'+cc+'">'+esc(it.c)+'</span></div>';
         h+='<div class="tbd-note">'+esc(it.n)+'</div></div></div></div>';
         bd.innerHTML=h;document.getElementById('bd-bk').addEventListener('click',function(){renderBList(bd);});
-            }
+    }
 
     /* ========== 添加浏览器字卡 ========== */
     function showAddBC(){
@@ -583,8 +637,9 @@
     }
 
     /* ========== API ========== */
-    function init(){injCSS();}
-    function showTP(){var ct=gCt();if(!ct)return;renderPhone();ct.style.display='flex';ct.classList.add('active');startClk();var ms=ldMSt();isPlay=ms.playing||false;curSong=ms.index||0;healthViewDate=null;}
-    function hideTP(){var ct=gCt();if(!ct)return;ct.classList.remove('active');ct.style.display='none';stopClk();if(curPage==='music')pauseMus();ct.querySelectorAll('.tp-mo').forEach(function(m){m.remove();});}
+    function init(){try{injCSS();}catch(e){console.warn('[TA Phone] init error:',e);}}
+    function showTP(){try{var ct=gCt();if(!ct)return;renderPhone();ct.style.display='flex';ct.classList.add('active');startClk();var ms=ldMSt();isPlay=ms.playing||false;curSong=ms.index||0;healthViewDate=null;}catch(e){console.warn('[TA Phone] showTP error:',e);}}
+    function hideTP(){try{var ct=gCt();if(!ct)return;ct.classList.remove('active');ct.style.display='none';stopClk();if(curPage==='music')pauseMus();ct.querySelectorAll('.tp-mo').forEach(function(m){m.remove();});}catch(e){}}
     window.TaPhoneApp={init:init,showTaPhone:showTP,hideTaPhone:hideTP,goBack:goBack};
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
+    try{if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();}catch(e){console.warn('[TA Phone] startup error:',e);}
+})();
