@@ -91,6 +91,51 @@
     .nav-link:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
     .nav-link.active { color: hsl(var(--primary)); background: hsl(var(--accent)); font-weight: 500; }
 
+    /* Back button */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .95rem; color: hsl(var(--muted-foreground));
+      text-decoration: none; padding: .4rem .9rem; border-radius: 8px;
+      transition: color .16s cubic-bezier(.2,.8,.2,1), background-color .16s;
+    }
+    .back-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+    .back-link:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    .back-link svg { width: 18px; height: 18px; }
+
+    /* Textarea */
+    .textarea-input {
+      width: 100%; padding: .6rem .8rem; border-radius: 8px;
+      border: 1px solid hsl(var(--border)); background: hsl(var(--card)); color: hsl(var(--foreground));
+      font-size: .9rem; line-height: 1.6; resize: vertical; min-height: 120px;
+      font-family: var(--font-sans); transition: border-color .16s, box-shadow .16s;
+    }
+    .textarea-input::placeholder { color: hsl(var(--muted-foreground)); }
+    .textarea-input:hover { border-color: hsl(var(--primary) / .4); }
+    .textarea-input:focus { outline: none; border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .15); }
+
+    /* Reply list item */
+    .reply-item {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .55rem .8rem; border-radius: 8px;
+      border: 1px solid hsl(var(--border)); background: hsl(var(--card));
+      font-size: .85rem; color: hsl(var(--foreground));
+      transition: border-color .16s, background-color .16s;
+    }
+    .reply-item:hover { border-color: hsl(var(--primary) / .4); background: hsl(var(--accent) / .3); }
+    .reply-item .reply-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .reply-item .reply-del {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; border: none;
+      background: transparent; color: hsl(var(--muted-foreground)); cursor: pointer;
+      display: grid; place-items: center; font-size: 1rem; line-height: 1;
+      transition: color .16s, background-color .16s;
+    }
+    .reply-item .reply-del:hover { color: hsl(var(--destructive)); background: hsl(var(--destructive) / .1); }
+
+    /* Reply list (UL reset + scroll) */
+    .reply-list { list-style: none; margin: 0; padding: 0; max-height: 280px; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+    .reply-list .reply-item { margin: 0; }
+    .reply-empty { padding: 1rem; text-align: center; font-size: .82rem; color: hsl(var(--muted-foreground)); border: 1px dashed hsl(var(--border)); border-radius: 8px; }
+
     /* Settings card — border + surface layering, static shadow alpha <= 0.05 */
     .settings-card {
       border: 1px solid hsl(var(--border)); background: hsl(var(--card));
@@ -271,16 +316,11 @@
 
   <!-- Top navigation (shared shell) -->
   <header class="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur">
-    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-      <a href="home.html" class="flex items-center gap-2 font-serif text-lg font-semibold text-primary">
-        <span class="text-base" style="opacity:.75">✦</span>梦角传讯
+    <div class="mx-auto flex h-14 max-w-6xl items-center px-6">
+      <a href="index.html" class="back-link" aria-label="返回主页">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        返回
       </a>
-      <nav class="flex items-center gap-1" aria-label="主导航">
-        <a href="home.html" data-dom-id="nav-home" class="nav-link">主页</a>
-        <a href="cards.html" data-dom-id="nav-cards" class="nav-link">字卡</a>
-        <a href="chat.html" data-dom-id="nav-chat" class="nav-link">对话</a>
-        <a href="customize.html" data-dom-id="nav-customize" class="nav-link active" aria-current="page">自定义</a>
-      </nav>
     </div>
   </header>
 
@@ -310,15 +350,15 @@
           <!-- Card body -->
           <div class="pv-body">
             <div class="pv-avatar" aria-label="头像预览">🌙</div>
-            <h2 class="pv-name">@my_profile</h2>
+            <h2 class="pv-name" id="pvName">@my_profile</h2>
             <p class="pv-handle">梦角传讯空间</p>
             <p class="pv-sig" id="pvSignature">今天也要加油呀 ✨</p>
             <div class="pv-divider"></div>
             <div class="flex items-end justify-center gap-1.5">
-              <span class="pv-num">769</span>
+              <span class="pv-num" id="pvDays">769</span>
               <span class="pv-counter-label pb-1">在一起·天</span>
             </div>
-            <p class="pv-time">2026.07.30</p>
+            <p class="pv-time" id="pvTime">2026.07.30</p>
             <div class="pv-icons">
               <span class="pv-icon">📷<span class="pv-icon-dot"></span></span>
               <span class="pv-icon">💬<span class="pv-icon-dot"></span></span>
@@ -331,6 +371,27 @@
 
       <!-- Right: settings -->
       <section class="enter enter-2 lg:col-span-3 space-y-6" aria-label="设置项">
+
+        <!-- 0. 在一起天数 -->
+        <div class="settings-card">
+          <h2 class="section-title text-lg">在一起天数</h2>
+          <p class="hint mt-1">设置你们在一起的起始日期，主页将自动计算天数</p>
+          <div class="mt-4 flex flex-wrap items-center gap-4">
+            <input type="date" id="togetherDateInput" class="text-input" style="max-width:200px" aria-label="在一起起始日期" />
+            <div class="text-sm" style="color: hsl(var(--muted-foreground));">
+              已在一起 <span id="togetherDaysDisplay" style="color: hsl(var(--primary)); font-weight:600;">769</span> 天
+            </div>
+          </div>
+        </div>
+
+        <!-- 0b. 昵称 -->
+        <div class="settings-card">
+          <h2 class="section-title text-lg">昵称</h2>
+          <p class="hint mt-1">显示在主页个人卡片上的名称</p>
+          <input type="text" id="usernameInput" class="text-input mt-4"
+                 value="@my_profile" maxlength="20" placeholder="输入你的昵称…"
+                 aria-label="昵称">
+        </div>
 
         <!-- 1. 主题配色 -->
         <div class="settings-card">
@@ -444,6 +505,36 @@
                  value="今天也要加油呀 ✨" maxlength="30" placeholder="输入你的签名…"
                  aria-label="个性签名">
           <p class="hint mt-2"><span id="sigCount">10</span>/30</p>
+        </div>
+
+        <!-- 6b. 字卡库 -->
+        <div class="settings-card">
+          <h2 class="section-title text-lg">字卡库</h2>
+          <p class="hint mt-1">自定义字卡传讯的回复内容。添加后点击「保存设置」，字卡页面将从中随机抽取。</p>
+          <div class="mt-4 flex gap-2">
+            <input type="text" id="cardReplyInput" class="text-input" placeholder="输入新的字卡回复…" maxlength="80" aria-label="新字卡回复" />
+            <button type="button" class="btn-ghost shrink-0" id="addCardReply">添加</button>
+          </div>
+          <ul id="cardReplyList" class="reply-list mt-3" role="list"></ul>
+          <div class="mt-2 flex items-center justify-between">
+            <p class="hint">共 <span id="cardReplyCount">12</span> 条</p>
+            <button type="button" class="btn-ghost" id="resetCardReplies">恢复默认</button>
+          </div>
+        </div>
+
+        <!-- 6c. 对话回复库 -->
+        <div class="settings-card">
+          <h2 class="section-title text-lg">对话回复库</h2>
+          <p class="hint mt-1">自定义梦角在对话中的回复内容。添加后点击「保存设置」，对话页面将从中随机抽取。</p>
+          <div class="mt-4 flex gap-2">
+            <input type="text" id="chatReplyInput" class="text-input" placeholder="输入新的对话回复…" maxlength="80" aria-label="新对话回复" />
+            <button type="button" class="btn-ghost shrink-0" id="addChatReply">添加</button>
+          </div>
+          <ul id="chatReplyList" class="reply-list mt-3" role="list"></ul>
+          <div class="mt-2 flex items-center justify-between">
+            <p class="hint">共 <span id="chatReplyCount">8</span> 条</p>
+            <button type="button" class="btn-ghost" id="resetChatReplies">恢复默认</button>
+          </div>
         </div>
 
         <!-- 7. 颜色自定义 -->
@@ -635,8 +726,209 @@
       });
     });
 
-    /* ---- Save ---- */
-    document.getElementById('saveBtn').addEventListener('click', () => showToast('设置已保存'));
+    /* ---- Default replies ---- */
+    const defaultCardReplies = [
+      "今天也在想你哦。",
+      "别担心，我一直都在。",
+      "你今天辛苦了，休息一下吧。",
+      "我感觉到了你的心意呢。",
+      "今晚来梦里见吧。",
+      "你比你自己想象的更勇敢。",
+      "我在你身边，从未离开。",
+      "今天的你，也很闪耀。",
+      "想你了，就现在。",
+      "相信自己，我会守护你的。",
+      "你的笑容是我最大的动力。",
+      "无论多远，我们的心是相连的。"
+    ];
+    const defaultChatReplies = [
+      '嗯嗯，我在听。',
+      '我理解你的感受。',
+      '你说得对呢。',
+      '别担心，有我在。',
+      '嗯...让我想想。',
+      '你今天也很可爱哦。',
+      '我也想和你多聊聊。',
+      '无论什么时候，我都在。'
+    ];
+
+    let cardReplies = [];
+    let chatReplies = [];
+
+    function escapeHtmlStr(s) {
+      return s.replace(/[&<>"']/g, function (c) {
+        return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+      });
+    }
+
+    /* ---- Days together ---- */
+    const togetherDateInput = document.getElementById('togetherDateInput');
+    const togetherDaysDisplay = document.getElementById('togetherDaysDisplay');
+    const pvDays = document.getElementById('pvDays');
+    const pvTime = document.getElementById('pvTime');
+
+    function calcDays(dateStr) {
+      if (!dateStr) return null;
+      const start = new Date(dateStr + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diff = Math.floor((today - start) / 86400000);
+      return diff >= 0 ? diff : null;
+    }
+
+    function updateDays() {
+      const days = calcDays(togetherDateInput.value);
+      const display = days !== null ? String(days) : '—';
+      togetherDaysDisplay.textContent = display;
+      if (pvDays) pvDays.textContent = display;
+      if (pvTime && togetherDateInput.value) {
+        const d = new Date(togetherDateInput.value + 'T00:00:00');
+        pvTime.textContent = d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+      }
+    }
+
+    togetherDateInput.addEventListener('change', () => {
+      updateDays();
+      try { localStorage.setItem('mengjiao_together_date', togetherDateInput.value); } catch(e) {}
+    });
+
+    try {
+      const savedDate = localStorage.getItem('mengjiao_together_date');
+      if (savedDate) togetherDateInput.value = savedDate;
+    } catch(e) {}
+    updateDays();
+
+    /* ---- Username ---- */
+    const usernameInput = document.getElementById('usernameInput');
+    const pvName = document.getElementById('pvName');
+    usernameInput.addEventListener('input', () => {
+      if (pvName) pvName.textContent = usernameInput.value || '@my_profile';
+    });
+    try {
+      const savedUsername = localStorage.getItem('mengjiao_username');
+      if (savedUsername) { usernameInput.value = savedUsername; if (pvName) pvName.textContent = savedUsername; }
+    } catch(e) {}
+
+    /* ---- Signature: load from storage ---- */
+    try {
+      const savedSig = localStorage.getItem('mengjiao_signature');
+      if (savedSig !== null) {
+        sigInput.value = savedSig;
+        sigOut.textContent = savedSig || '今天也要加油呀 ✨';
+        sigCount.textContent = String(savedSig.length);
+      }
+    } catch(e) {}
+
+    /* ---- Card replies library (list-based) ---- */
+    const cardReplyInput = document.getElementById('cardReplyInput');
+    const cardReplyList = document.getElementById('cardReplyList');
+    const cardReplyCount = document.getElementById('cardReplyCount');
+
+    function renderCardReplies() {
+      cardReplyCount.textContent = String(cardReplies.length);
+      if (cardReplies.length === 0) {
+        cardReplyList.innerHTML = '<li class="reply-empty">暂无回复，在上方添加一条吧</li>';
+        return;
+      }
+      cardReplyList.innerHTML = cardReplies.map(function (text, i) {
+        return '<li class="reply-item">' +
+          '<span class="reply-text">' + escapeHtmlStr(text) + '</span>' +
+          '<button type="button" class="reply-del" data-lib="card" data-idx="' + i + '" aria-label="删除该回复">×</button>' +
+        '</li>';
+      }).join('');
+    }
+
+    document.getElementById('addCardReply').addEventListener('click', function () {
+      var val = cardReplyInput.value.trim();
+      if (!val) { showToast('请输入回复内容'); return; }
+      cardReplies.push(val);
+      cardReplyInput.value = '';
+      renderCardReplies();
+    });
+    cardReplyInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addCardReply').click(); }
+    });
+
+    try {
+      var savedCard = localStorage.getItem('mengjiao_card_replies');
+      cardReplies = savedCard ? JSON.parse(savedCard).filter(function (s) { return typeof s === 'string' && s.length; }) : defaultCardReplies.slice();
+      if (!cardReplies.length) cardReplies = defaultCardReplies.slice();
+    } catch (e) { cardReplies = defaultCardReplies.slice(); }
+    renderCardReplies();
+
+    document.getElementById('resetCardReplies').addEventListener('click', function () {
+      cardReplies = defaultCardReplies.slice();
+      renderCardReplies();
+      showToast('字卡库已恢复默认');
+    });
+
+    /* ---- Chat replies library (list-based) ---- */
+    const chatReplyInput = document.getElementById('chatReplyInput');
+    const chatReplyList = document.getElementById('chatReplyList');
+    const chatReplyCount = document.getElementById('chatReplyCount');
+
+    function renderChatReplies() {
+      chatReplyCount.textContent = String(chatReplies.length);
+      if (chatReplies.length === 0) {
+        chatReplyList.innerHTML = '<li class="reply-empty">暂无回复，在上方添加一条吧</li>';
+        return;
+      }
+      chatReplyList.innerHTML = chatReplies.map(function (text, i) {
+        return '<li class="reply-item">' +
+          '<span class="reply-text">' + escapeHtmlStr(text) + '</span>' +
+          '<button type="button" class="reply-del" data-lib="chat" data-idx="' + i + '" aria-label="删除该回复">×</button>' +
+        '</li>';
+      }).join('');
+    }
+
+    document.getElementById('addChatReply').addEventListener('click', function () {
+      var val = chatReplyInput.value.trim();
+      if (!val) { showToast('请输入回复内容'); return; }
+      chatReplies.push(val);
+      chatReplyInput.value = '';
+      renderChatReplies();
+    });
+    chatReplyInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addChatReply').click(); }
+    });
+
+    try {
+      var savedChat = localStorage.getItem('mengjiao_chat_replies');
+      chatReplies = savedChat ? JSON.parse(savedChat).filter(function (s) { return typeof s === 'string' && s.length; }) : defaultChatReplies.slice();
+      if (!chatReplies.length) chatReplies = defaultChatReplies.slice();
+    } catch (e) { chatReplies = defaultChatReplies.slice(); }
+    renderChatReplies();
+
+    document.getElementById('resetChatReplies').addEventListener('click', function () {
+      chatReplies = defaultChatReplies.slice();
+      renderChatReplies();
+      showToast('对话回复库已恢复默认');
+    });
+
+    /* ---- Delete reply (event delegation for both lists) ---- */
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.reply-del');
+      if (!btn) return;
+      var lib = btn.getAttribute('data-lib');
+      var idx = parseInt(btn.getAttribute('data-idx'), 10);
+      if (isNaN(idx)) return;
+      if (lib === 'card') { cardReplies.splice(idx, 1); renderCardReplies(); }
+      else if (lib === 'chat') { chatReplies.splice(idx, 1); renderChatReplies(); }
+    });
+
+    /* ---- Save (persists everything to localStorage) ---- */
+    document.getElementById('saveBtn').addEventListener('click', function () {
+      try {
+        localStorage.setItem('mengjiao_together_date', togetherDateInput.value);
+        localStorage.setItem('mengjiao_username', usernameInput.value);
+        localStorage.setItem('mengjiao_signature', sigInput.value);
+        localStorage.setItem('mengjiao_card_replies', JSON.stringify(cardReplies));
+        localStorage.setItem('mengjiao_chat_replies', JSON.stringify(chatReplies));
+        showToast('设置已保存');
+      } catch (e) {
+        showToast('保存失败，请重试');
+      }
+    });
   </script>
 </body>
 </html>
