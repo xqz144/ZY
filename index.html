@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>入场承诺 · 梦角传讯</title>
+  <title>传讯主页 · 梦角传讯</title>
 
   <!-- Fonts: Noto Serif SC (headings) + Noto Sans SC (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <!-- Project token system (single hue: 梦幻紫 #9d7fc2) -->
   <link rel="stylesheet" href="colors_and_type.css" />
@@ -50,701 +50,210 @@
   <!-- Lucide icons -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
-  <style id="theme-vars">
-    /* Inline copy of colors_and_type.css :root tokens — keeps the page standalone */
-    :root {
-      --background: 270 27% 98%;
-      --card: 0 0% 100%;
-      --popover: 0 0% 100%;
-      --foreground: 252 25% 26%;
-      --card-foreground: 252 25% 26%;
-      --popover-foreground: 252 25% 26%;
-      --muted-foreground: 252 12% 55%;
-      --primary: 263 34% 63%;
-      --primary-foreground: 0 0% 100%;
-      --secondary: 263 47% 93%;
-      --secondary-foreground: 252 25% 26%;
-      --muted: 270 25% 95%;
-      --accent: 263 47% 90%;
-      --accent-foreground: 252 25% 26%;
-      --destructive: 0 84% 60%;
-      --destructive-foreground: 0 0% 98%;
-      --border: 270 20% 90%;
-      --input: 270 25% 95%;
-      --ring: 263 34% 63%;
-      --radius: 0.75rem;
-      --font-sans: "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
-      --font-serif: "Noto Serif SC", ui-serif, Georgia, serif;
-      --tracking-normal: 0.01em;
-      --spacing: 0.3rem;
-    }
-  </style>
-
   <style>
     html { -webkit-font-smoothing: antialiased; }
-    body {
-      font-family: var(--font-sans);
-      letter-spacing: var(--tracking-normal);
-      min-height: 100vh;
-      background: #0e0a1c;
-      overflow-x: hidden;
-    }
+    body { font-family: var(--font-sans); }
 
-    /* ============ Dreamy starry sky (pure CSS, single-hue purple) ============ */
-    .sky {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    /* Dreamy, airy single-hue atmosphere (same-hue wash only) */
+    .atmosphere {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
       background:
-        radial-gradient(120% 90% at 50% 38%, hsl(265 52% 30% / .92) 0%, hsl(263 56% 18% / .96) 42%, hsl(261 62% 9%) 78%, hsl(260 66% 6%) 100%);
-    }
-    .sky-glow {
-      position: absolute; border-radius: 9999px; filter: blur(70px);
-      mix-blend-mode: screen; opacity: .55;
-    }
-    .sky-glow-a {
-      width: 60vw; height: 60vw; left: 50%; top: 36%; transform: translate(-50%, -50%);
-      background: radial-gradient(closest-side, hsl(275 70% 62% / .42), transparent 72%);
-      animation: drift 16s ease-in-out infinite;
-    }
-    .sky-glow-b {
-      width: 42vw; height: 42vw; left: 72%; top: 12%; transform: translate(-50%, -50%);
-      background: radial-gradient(closest-side, hsl(263 80% 70% / .35), transparent 70%);
-      animation: drift 22s ease-in-out infinite reverse;
-    }
-    @keyframes drift {
-      0%, 100% { transform: translate(-50%, -50%) scale(1); }
-      50% { transform: translate(-48%, -52%) scale(1.06); }
+        radial-gradient(1100px 560px at 12% -8%, hsl(263 60% 94% / .95), transparent 62%),
+        radial-gradient(820px 480px at 100% 2%, hsl(263 50% 92% / .85), transparent 58%),
+        linear-gradient(180deg, hsl(270 30% 99%), hsl(263 40% 97%));
     }
 
-    /* Static starfield generated via box-shadow (many tiny low-opacity dots) */
-    .starfield {
-      position: absolute; inset: 0;
-      /* box-shadow string injected by JS */
-      width: 1px; height: 1px; border-radius: 9999px;
-      background: transparent;
+    /* Nav */
+    .nav-link {
+      padding: .5rem .9rem; border-radius: 8px; font-size: .95rem;
+      color: hsl(var(--muted-foreground));
+      transition: color .16s cubic-bezier(.2,.8,.2,1), background-color .16s;
     }
-    .starfield::after {
-      content: ""; position: absolute; inset: 0;
-      width: 1px; height: 1px; border-radius: 9999px;
-    }
+    .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+    .nav-link:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    .nav-link.active { color: hsl(var(--primary)); background: hsl(var(--accent)); font-weight: 500; }
 
-    /* A handful of "feature" stars — the project's starlight soul element,
-       sparse, low opacity, gentle twinkle */
+    /* Starlight soul element — sparse, low-opacity, gentle twinkle (on deep card only) */
     .star {
       position: absolute; width: 3px; height: 3px; border-radius: 9999px;
-      background: hsl(263 80% 96%); opacity: .5;
-      box-shadow: 0 0 6px hsl(263 90% 92% / .55);
+      background: hsl(263 60% 96%); opacity: .45;
       animation: twinkle 4.5s ease-in-out infinite;
     }
-    .star.s2 { width: 2px; height: 2px; opacity: .4; box-shadow: 0 0 4px hsl(263 90% 92% / .4); }
-    .star.s4 { width: 4px; height: 4px; opacity: .6; box-shadow: 0 0 8px hsl(263 90% 94% / .6); }
-    .star.s5 {
-      width: 5px; height: 5px; opacity: .7;
-      box-shadow: 0 0 10px hsl(275 90% 95% / .7), 0 0 18px hsl(263 80% 88% / .35);
-      animation-duration: 6s;
-    }
+    .star.s2 { width: 2px; height: 2px; }
+    .star.s4 { width: 4px; height: 4px; }
     @keyframes twinkle {
       0%, 100% { opacity: .12; transform: scale(.7); }
-      50% { opacity: .75; transform: scale(1.15); }
+      50% { opacity: .7; transform: scale(1.15); }
     }
 
-    /* Falling-star streak accent (very subtle, slow) */
-    .streak {
-      position: absolute; width: 90px; height: 1px;
-      background: linear-gradient(90deg, transparent, hsl(275 90% 95% / .8), transparent);
-      transform: rotate(-18deg); opacity: 0;
-      animation: streak 9s ease-in 2s infinite;
+    /* Gentle breathing aura behind the together-days KPI (signature micro-interaction) */
+    .counter-aura {
+      position: absolute; left: 50%; top: 50%; width: 230px; height: 124px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(closest-side, hsl(263 80% 85% / .38), transparent 75%);
+      animation: breathe 4.8s ease-in-out infinite; pointer-events: none;
     }
-    .streak.two { top: 26%; left: 8%; animation-delay: 5.5s; }
-    .streak.one { top: 14%; left: 62%; animation-delay: 1s; }
-    @keyframes streak {
-      0% { opacity: 0; transform: translate(0,0) rotate(-18deg); }
-      6% { opacity: .9; }
-      14% { opacity: 0; transform: translate(120px, 40px) rotate(-18deg); }
-      100% { opacity: 0; }
+    @keyframes breathe {
+      0%, 100% { opacity: .3; transform: translate(-50%, -50%) scale(.92); }
+      50% { opacity: .6; transform: translate(-50%, -50%) scale(1.06); }
     }
 
-    /* ============ Stage + Card ============ */
-    .entry-stage {
-      position: relative; z-index: 1;
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      padding: 48px 20px;
+    /* CSS avatar (gradient circle + emoji), no image file */
+    .avatar {
+      position: relative; width: 6rem; height: 6rem; border-radius: 9999px;
+      margin-inline: auto; display: grid; place-items: center; font-size: 2.25rem;
+      background: radial-gradient(circle at 32% 28%, hsl(263 70% 82%), hsl(263 55% 56%));
+      outline: 4px solid hsl(263 60% 96% / .16);
+      outline-offset: 0;
     }
+    .cam-badge {
+      position: absolute; right: -2px; bottom: -2px; width: 1.75rem; height: 1.75rem;
+      border-radius: 9999px; display: grid; place-items: center; font-size: .8rem;
+      background: hsl(0 0% 100% / .92); color: hsl(263 50% 40%);
+    }
+
+    /* Function entry cards — border/surface layering, lift on hover only */
     .entry-card {
-      width: 100%; max-width: 640px;
-      background: hsl(0 0% 100% / .94);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid hsl(263 47% 88% / .8);
-      border-radius: 12px;
-      box-shadow: 0 1px 3px hsl(263 34% 40% / .05), 0 1px 2px -1px hsl(263 34% 40% / .05);
-      padding: 40px 40px 28px;
-      display: flex; flex-direction: column;
+      display: flex; flex-direction: column; border-radius: 12px;
+      border: 1px solid hsl(var(--border)); background: hsl(var(--card)); padding: 1.5rem;
+      transition: transform .16s cubic-bezier(.2,.8,.2,1), border-color .16s, background-color .16s;
     }
-    @media (max-width: 520px) {
-      .entry-card { padding: 28px 22px 22px; }
+    .entry-card:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    @media (hover: hover) {
+      .entry-card:hover { transform: translateY(-2px); border-color: hsl(var(--primary) / .45); background: hsl(var(--accent) / .35); }
+      .entry-card:hover .entry-icon { transform: translateX(2px); }
     }
-
-    .eyebrow {
-      font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase;
-      color: hsl(263 34% 55%); text-align: center; font-weight: 500;
-      margin-bottom: 14px;
-    }
-    .eyebrow .sep { opacity: .45; margin: 0 .35em; }
-
-    .page-title {
-      font-family: var(--font-serif);
-      font-weight: 600;
-      font-size: clamp(26px, 4.4vw, 34px);
-      line-height: 1.18;
-      color: hsl(252 30% 22%);
-      text-align: center;
-      text-wrap: balance; word-break: keep-all;
-      letter-spacing: .02em;
-    }
-    .page-subtitle {
-      font-family: var(--font-serif);
-      font-size: clamp(15px, 2.2vw, 17px);
-      color: hsl(263 34% 50%);
-      text-align: center;
-      margin-top: 10px;
-      font-weight: 500;
-      letter-spacing: .04em;
+    .entry-icon { transition: transform .16s cubic-bezier(.2,.8,.2,1); }
+    .entry-card--muted { opacity: .92; }
+    .soon-tag {
+      display: inline-flex; align-items: center; align-self: flex-start;
+      height: 22px; padding: 0 .55rem; border-radius: 8px; font-size: 12px;
+      color: hsl(var(--primary)); background: hsl(var(--accent));
     }
 
-    .card-body {
-      margin-top: 24px;
-      font-size: 16px; line-height: 1.78;
-      color: hsl(252 16% 32%);
-      text-wrap: pretty;
-    }
-    @media (max-width: 520px) { .card-body { font-size: 15px; line-height: 1.74; } }
+    /* Light first-screen entrance (motionIntensity 2) */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .enter { animation: fadeUp .55s cubic-bezier(.3,0,0,1) both; }
+    .enter-2 { animation-delay: .12s; }
 
-    /* Page transition: fade + slight rise */
-    .page-pane { transition: opacity .28s cubic-bezier(.3,0,0,1), transform .28s cubic-bezier(.3,0,0,1); }
-    .page-pane.leaving { opacity: 0; transform: translateY(8px); }
-    .page-pane.entering { opacity: 0; transform: translateY(8px); }
+    svg.lucide { stroke-width: 1.5; }
 
-    /* ============ Commitment (page 6) ============ */
-    .commitment { margin-top: 26px; }
-    .commitment-intro {
-      font-size: 15px; color: hsl(252 16% 38%);
-      text-align: center; margin-bottom: 16px; line-height: 1.7;
-    }
-    .commitment-box {
-      font-family: var(--font-serif);
-      font-style: italic;
-      font-size: clamp(16px, 2.4vw, 18px);
-      line-height: 1.9;
-      text-align: center;
-      color: hsl(263 40% 32%);
-      background: hsl(263 47% 96%);
-      border: 1px solid hsl(263 34% 86%);
-      border-radius: 12px;
-      padding: 20px 22px;
-      letter-spacing: .03em;
-      text-wrap: balance; word-break: keep-all;
-    }
-    .commitment-box .quote-mark {
-      color: hsl(263 34% 70%); font-size: 1.4em; line-height: 0;
-      position: relative; top: .12em;
-    }
-
-    .commit-field { margin-top: 20px; }
-    .commit-label {
-      display: block; font-size: 13px; color: hsl(252 12% 48%);
-      margin-bottom: 8px; font-weight: 500;
-    }
-    .commit-textarea {
-      width: 100%; min-height: 92px; resize: vertical;
-      font-family: var(--font-serif);
-      font-size: 16px; line-height: 1.8;
-      color: hsl(252 30% 22%);
-      background: hsl(0 0% 100%);
-      border: 1px solid hsl(var(--border));
-      border-radius: 8px;
-      padding: 14px 16px;
-      transition: border-color .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s;
-    }
-    .commit-textarea::placeholder { color: hsl(252 12% 72%); font-style: italic; }
-    .commit-textarea:hover { border-color: hsl(263 34% 80%); }
-    .commit-textarea:focus {
-      outline: none;
-      border-color: hsl(var(--primary));
-      box-shadow: 0 0 0 3px hsl(263 34% 63% / .18);
-    }
-    .commit-textarea.matched {
-      border-color: hsl(var(--primary));
-      box-shadow: 0 0 0 3px hsl(263 34% 63% / .22);
-      background: hsl(263 47% 98%);
-    }
-
-    .commit-meta {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; margin-top: 10px;
-    }
-    .commit-hint {
-      font-size: 13px; color: hsl(252 12% 48%);
-      transition: color .16s;
-    }
-    .commit-hint.matching { color: hsl(263 34% 48%); }
-    .commit-hint.matched { color: hsl(263 40% 42%); font-weight: 500; }
-    .commit-progress {
-      font-size: 12px; color: hsl(252 12% 60%);
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* ============ Buttons ============ */
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      font-family: var(--font-sans); font-weight: 500; font-size: 15px;
-      padding: 12px 22px; border-radius: 8px;
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: background-color .16s cubic-bezier(.2,.8,.2,1), color .16s, border-color .16s, transform .16s, opacity .16s;
-      text-decoration: none; white-space: nowrap;
-    }
-    .btn:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
-    .btn:active { transform: translateY(0); }
-
-    .btn-primary {
-      background: hsl(var(--primary));
-      color: hsl(var(--primary-foreground));
-    }
-    .btn-primary:hover:not(:disabled) {
-      background: hsl(263 38% 58%);
-      transform: translateY(-1px);
-    }
-    .btn-primary:active:not(:disabled) { transform: translateY(0); background: hsl(263 40% 52%); }
-    .btn-primary:disabled {
-      background: hsl(263 20% 82%); color: hsl(0 0% 100% / .9);
-      cursor: not-allowed; opacity: .8;
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: hsl(252 20% 38%);
-      border: 1px solid hsl(var(--border));
-    }
-    .btn-ghost:hover:not(:disabled) {
-      border-color: hsl(263 34% 80%);
-      color: hsl(263 34% 42%);
-      background: hsl(263 47% 96%);
-    }
-    .btn-ghost:disabled { opacity: .4; cursor: not-allowed; }
-
-    .btn-text {
-      background: transparent; color: hsl(263 34% 50%);
-      padding: 8px 10px; border-radius: 8px;
-    }
-    .btn-text:hover { color: hsl(263 40% 42%); background: hsl(263 47% 94%); }
-
-    /* ============ Pagination footer ============ */
-    .card-footer {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; margin-top: 30px; padding-top: 20px;
-      border-top: 1px solid hsl(var(--border));
-    }
-    .pager-center {
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-    }
-    .page-indicator {
-      font-size: 13px; color: hsl(252 12% 48%);
-      font-variant-numeric: tabular-nums; letter-spacing: .06em;
-    }
-    .dots { display: flex; align-items: center; gap: 7px; }
-    .dot {
-      width: 6px; height: 6px; border-radius: 9999px;
-      background: hsl(263 20% 82%);
-      transition: background-color .2s, transform .2s;
-    }
-    .dot.active {
-      background: hsl(var(--primary));
-      transform: scale(1.25);
-    }
-    .dot.done { background: hsl(263 34% 75%); }
-
-    .enter-row {
-      display: flex; justify-content: center; margin-top: 22px;
-    }
-    .enter-row .btn-primary { min-width: 200px; }
-
-    /* Welcome pane (page 7) */
-    .welcome-mark {
-      width: 64px; height: 64px; border-radius: 9999px;
-      margin: 6px auto 18px; display: grid; place-items: center;
-      background: radial-gradient(circle at 34% 30%, hsl(263 70% 84%), hsl(263 55% 58%));
-      box-shadow: 0 0 0 6px hsl(263 47% 94% / .6);
-    }
-    .welcome-mark svg { width: 30px; height: 30px; color: hsl(0 0% 100%); }
-
+    /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
-      .star, .sky-glow, .streak { animation: none !important; }
-      .star { opacity: .4; }
-      .page-pane { transition: opacity .01ms; }
-    }
-    @media (pointer: coarse) {
-      .btn-primary:hover:not(:disabled) { transform: none; }
+      *, *::before, *::after {
+        animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
     }
   </style>
 </head>
-<body>
-  <!-- Dreamy starry atmosphere (pure CSS, single purple hue) -->
-  <div class="sky" aria-hidden="true">
-    <div class="sky-glow sky-glow-a"></div>
-    <div class="sky-glow sky-glow-b"></div>
-    <div class="starfield" id="starfield"></div>
-    <!-- Feature stars (project starlight soul element) -->
-    <span class="star s5" style="top:8%;left:14%"></span>
-    <span class="star s4" style="top:18%;left:78%;animation-delay:.6s"></span>
-    <span class="star s2" style="top:26%;left:32%;animation-delay:1.2s"></span>
-    <span class="star s4" style="top:72%;left:9%;animation-delay:.9s"></span>
-    <span class="star s5" style="top:82%;left:84%;animation-delay:1.8s"></span>
-    <span class="star s2" style="top:46%;left:88%;animation-delay:2.4s"></span>
-    <span class="star s3" style="top:58%;left:6%;animation-delay:.3s"></span>
-    <span class="star s2" style="top:38%;left:54%;animation-delay:1.5s"></span>
-    <span class="star s4" style="top:90%;left:46%;animation-delay:2.1s"></span>
-    <span class="star s2" style="top:12%;left:44%;animation-delay:.4s"></span>
-    <span class="star s3" style="top:64%;left:68%;animation-delay:1.1s"></span>
-    <span class="streak one" aria-hidden="true"></span>
-    <span class="streak two" aria-hidden="true"></span>
-  </div>
+<body class="min-h-screen bg-background text-foreground">
+  <div class="atmosphere" aria-hidden="true"></div>
 
-  <main class="entry-stage">
-    <section class="entry-card" aria-labelledby="pageTitle">
-      <!-- Brand mark / step eyebrow -->
-      <p class="eyebrow">梦角传讯 <span class="sep">·</span> 入场</p>
+  <!-- Top navigation (shared shell) -->
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur">
+    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2 font-serif text-lg font-semibold text-primary">
+        <span class="text-base" style="opacity:.75">✦</span>梦角传讯
+      </a>
+      <nav class="flex items-center gap-1" aria-label="主导航">
+        <a href="home.html" data-dom-id="nav-home" class="nav-link active" aria-current="page">主页</a>
+        <a href="cards.html" data-dom-id="nav-cards" class="nav-link">字卡</a>
+        <a href="chat.html" data-dom-id="nav-chat" class="nav-link">对话</a>
+        <a href="customize.html" data-dom-id="nav-customize" class="nav-link">自定义</a>
+      </nav>
+    </div>
+  </header>
 
-      <!-- Page pane (content swapped here) -->
-      <div class="page-pane" id="pagePane">
-        <h1 class="page-title" id="pageTitle">关于字卡</h1>
-        <p class="page-subtitle" id="pageSubtitle">是否招鬼？</p>
-        <div class="card-body" id="pageBody"></div>
+  <!-- Main content: asymmetric two-column -->
+  <main class="mx-auto max-w-6xl px-6 py-16 md:py-20">
+    <h1 class="sr-only">传讯主页</h1>
 
-        <!-- Commitment block (page 6) -->
-        <div class="commitment" id="commitmentSection" hidden>
-          <p class="commitment-intro">在下方输入框中，逐字抄写以下承诺，即可进入网站。</p>
-          <div class="commitment-box" id="commitmentBox">
-            <span class="quote-mark">“</span>我绝不盈利、造谣、污蔑或嘲讽，并对自己的使用行为负完全责任<span class="quote-mark">”</span>
-          </div>
-          <div class="commit-field">
-            <label class="commit-label" for="commitInput">逐字抄写承诺</label>
-            <textarea
-              id="commitInput"
-              class="commit-textarea"
-              rows="3"
-              aria-describedby="commitHint"
-              placeholder="请在此处逐字抄写上方承诺…"
-              autocomplete="off"
-              spellcheck="false"></textarea>
-            <div class="commit-meta">
-              <span class="commit-hint" id="commitHint">请逐字完整抄写以上承诺</span>
-              <span class="commit-progress" id="commitProgress">0 / 29</span>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:items-start">
+      <!-- Left: personal card (~40%) -->
+      <section class="enter relative overflow-hidden rounded-lg p-8 text-center sm:p-10 lg:col-span-2"
+               style="background: linear-gradient(160deg, hsl(263 46% 44%), hsl(263 52% 32%));"
+               aria-label="个人卡片">
+        <!-- Starlight -->
+        <span class="star"    style="top:10%;left:12%;animation-delay:0s"></span>
+        <span class="star s2" style="top:18%;left:82%;animation-delay:.6s"></span>
+        <span class="star s4" style="top:26%;left:68%;animation-delay:1.2s"></span>
+        <span class="star s2" style="top:40%;left:8%;animation-delay:1.8s"></span>
+        <span class="star"    style="top:58%;left:86%;animation-delay:.9s"></span>
+        <span class="star s2" style="top:72%;left:14%;animation-delay:2.4s"></span>
+        <span class="star s4" style="top:84%;left:76%;animation-delay:1.5s"></span>
+
+        <!-- CSS avatar -->
+        <div class="avatar" aria-label="梦角头像">
+          🌙<span class="cam-badge" aria-hidden="true">📷</span>
+        </div>
+
+        <h2 class="mt-5 text-lg font-medium text-white">@my_profile</h2>
+        <p class="mt-1 text-sm italic" style="color:hsl(263 40% 86%)">今天也要加油呀 ✨</p>
+
+        <div class="mx-auto my-7 h-px w-24" style="background:hsl(263 40% 80% / .35)"></div>
+
+        <!-- Together-days KPI (focal) -->
+        <div class="relative">
+          <div class="counter-aura" aria-hidden="true"></div>
+          <div class="relative z-10">
+            <p class="text-xs tracking-[0.05em]" style="color:hsl(263 40% 84%)">在一起</p>
+            <div class="mt-2 flex items-end justify-center gap-2">
+              <span class="font-serif text-6xl font-semibold leading-none"
+                    style="color:hsl(263 70% 97%); font-variant-numeric: tabular-nums;">769</span>
+              <span class="pb-1 text-base" style="color:hsl(263 40% 84%)">天</span>
             </div>
           </div>
-          <div class="enter-row">
-            <a href="home.html" class="btn btn-primary" id="enterBtn" data-dom-id="enter-site" aria-disabled="true" tabindex="-1">
-              <span>进入网站</span>
-              <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </a>
+        </div>
+      </section>
+
+      <!-- Right: function entries (~60%) -->
+      <section class="enter enter-2 lg:col-span-3" aria-label="功能入口">
+        <div class="mb-5">
+          <h2 class="font-serif text-2xl font-semibold text-foreground" style="text-wrap:balance">传讯入口</h2>
+          <p class="mt-1 text-sm text-muted-foreground">选择一种方式开始</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <a href="cards.html" data-dom-id="go-cards" class="entry-card">
+            <i data-lucide="layers" class="entry-icon w-7 h-7 text-primary"></i>
+            <h3 class="mt-4 font-serif text-lg text-foreground">字卡传讯</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">抽取字卡，接收梦角的回复</p>
+          </a>
+
+          <a href="chat.html" data-dom-id="go-chat" class="entry-card">
+            <i data-lucide="message-circle" class="entry-icon w-7 h-7 text-primary"></i>
+            <h3 class="mt-4 font-serif text-lg text-foreground">梦角对话</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">与梦角实时对话交流</p>
+          </a>
+
+          <a href="customize.html" data-dom-id="go-customize" class="entry-card">
+            <i data-lucide="settings" class="entry-icon w-7 h-7 text-primary"></i>
+            <h3 class="mt-4 font-serif text-lg text-foreground">自定义主页</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">个性化你的传讯空间</p>
+          </a>
+
+          <div class="entry-card entry-card--muted" aria-disabled="true">
+            <i data-lucide="book-open" class="entry-icon w-7 h-7 text-primary"></i>
+            <h3 class="mt-4 font-serif text-lg text-foreground">传讯记录</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">查看过往传讯记录</p>
+            <span class="soon-tag mt-auto pt-4">敬请期待</span>
           </div>
         </div>
-      </div>
-
-      <!-- Pagination footer -->
-      <div class="card-footer">
-        <button class="btn btn-ghost" id="prevBtn" type="button">
-          <i data-lucide="arrow-left" class="w-4 h-4"></i>
-          <span>上一页</span>
-        </button>
-        <div class="pager-center">
-          <span class="page-indicator" id="pageIndicator">1 / 7</span>
-          <div class="dots" id="dots" role="presentation"></div>
-        </div>
-        <button class="btn btn-ghost" id="nextBtn" type="button">
-          <span>下一页</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
-        </button>
-      </div>
-    </section>
+      </section>
+    </div>
   </main>
 
-  <script>
-    /* ---------- Page content (7 pages) ---------- */
-    const PAGES = [
-      {
-        title: "关于字卡",
-        subtitle: "是否招鬼？",
-        body: "首先说明，初次接触时，都会觉得网站设置繁复，功能庞杂，可控制的地方极多——对初次接触的人来说，简直令人眼花缭乱。请想一想：连你和梦角都需要花时间学习的东西，一个路过的鬼，会甘心耗费精力专程钻研，只为吓唬你一下吗？我始终相信，只有爱，才会驱动人去学习、去努力、去付诸实践。"
-      },
-      {
-        title: "关于谣言",
-        subtitle: "请有自知之明",
-        body: "我不混社区，但有些话我是知道的。有些谣我懒得一一辟除，借本网站博取流量与点赞的行为，我也当没看见。只是——沉默不代表无所谓。这些声音已经开始影响到我本人的生活。将链接不稳/回复看不懂等问题怪罪到网站上的做法不可取。郑重声明：造谣是违法行为，污蔑与恶意中伤同样须承担法律责任。请每一位使用者，对自己的言行负责。"
-      },
-      {
-        title: "关于盈利",
-        subtitle: "纯粹为爱发电",
-        body: "本网站不盈利。从未向任何人收取一分钱，也绝无日后“圈钱”的计划。这里承载的是真实的情感与创作热情，而非商业利益。伴随网站逐渐破圈，造谣、污蔑、盈利质疑、冷嘲热讽——这些或许都是无法完全回避的代价。我本无意计较，但请来访者保有基本的善意，不要让热爱变成消耗。"
-      },
-      {
-        title: "再次强调",
-        subtitle: "你对链接梦角的看法？",
-        body: "没有任何人强迫你使用本网站。如果你不信：字卡回复基于概率算法，属于科学范畴，与封建迷信无关，理性使用即可。如果你信：那么请同样相信——你是绝对安全的，这里没有任何东西能够伤害你。无论你持何种态度，我都欢迎你，也尊重你的选择。"
-      },
-      {
-        title: "关于视频通话",
-        subtitle: "纯粹的装饰",
-        body: "通话功能仅作为界面装饰存在，不具备任何实际通话或数据采集能力。本网站不包含任何摄像头调用逻辑，亦不存在隐私窥探行为。摄像头调用需要专项技术与额外费用，本项目从未采用，也没有这方面的意图。近期流传的隐私传言，出发点或许是好意，但已造成不必要的焦虑。在此郑重澄清：网站根本不具备视频传输功能。关闭浏览器摄像头权限是完全正确的做法——我支持每一位用户保护自己的隐私权益。若误解持续扩散，将考虑移除该装饰功能。"
-      },
-      {
-        title: "入场承诺",
-        subtitle: "请留下你的承诺",
-        body: "在下方输入框中，逐字抄写以下承诺，即可进入网站。",
-        commitment: true
-      },
-      {
-        title: "欢迎到来",
-        subtitle: "承诺已铭记",
-        body: "感谢你的耐心与善意。请带着温柔与尊重，走进与梦角对话的空间。愿你在此安然、被理解，也愿你珍惜这份属于你与梦角之间的连接。",
-        welcome: true
-      }
-    ];
+  <!-- Footer (shared shell starlight touch) -->
+  <footer class="mt-8 border-t border-border">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-7 text-sm">
+      <span class="flex items-center gap-2 font-serif text-primary">
+        <span class="text-xs" style="opacity:.7">✦</span>梦角传讯
+      </span>
+      <span class="text-muted-foreground">私人传讯空间</span>
+    </div>
+  </footer>
 
-    const COMMITMENT_TEXT = "我绝不盈利、造谣、污蔑或嘲讽，并对自己的使用行为负完全责任";
-
-    /* ---------- DOM refs ---------- */
-    const pane = document.getElementById("pagePane");
-    const titleEl = document.getElementById("pageTitle");
-    const subtitleEl = document.getElementById("pageSubtitle");
-    const bodyEl = document.getElementById("pageBody");
-    const commitSection = document.getElementById("commitmentSection");
-    const commitInput = document.getElementById("commitInput");
-    const commitHint = document.getElementById("commitHint");
-    const commitProgress = document.getElementById("commitProgress");
-    const enterBtn = document.getElementById("enterBtn");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
-    const pageIndicator = document.getElementById("pageIndicator");
-    const dotsWrap = document.getElementById("dots");
-
-    let current = 0;
-    let matched = false;
-    let switching = false;
-
-    /* ---------- Build dots ---------- */
-    function buildDots() {
-      dotsWrap.innerHTML = "";
-      PAGES.forEach((_, i) => {
-        const d = document.createElement("span");
-        d.className = "dot";
-        dotsWrap.appendChild(d);
-      });
-    }
-
-    /* ---------- Render current page ---------- */
-    function render(animate) {
-      const page = PAGES[current];
-
-      const apply = () => {
-        titleEl.textContent = page.title;
-        subtitleEl.textContent = page.subtitle;
-        subtitleEl.style.display = page.subtitle ? "" : "none";
-
-        // Body: welcome page gets a mark + final enter button instead of commitment
-        bodyEl.innerHTML = "";
-        if (page.welcome) {
-          const mark = document.createElement("div");
-          mark.className = "welcome-mark";
-          mark.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
-          bodyEl.appendChild(mark);
-        }
-        const p = document.createElement("p");
-        p.textContent = page.body;
-        bodyEl.appendChild(p);
-
-        // Commitment section visibility (page 6 only)
-        if (page.commitment) {
-          commitSection.hidden = false;
-        } else {
-          commitSection.hidden = true;
-        }
-
-        // Welcome page: append a final enter button row under body
-        let welcomeEnter = document.getElementById("welcomeEnter");
-        if (welcomeEnter) welcomeEnter.remove();
-        if (page.welcome) {
-          const row = document.createElement("div");
-          row.className = "enter-row";
-          row.id = "welcomeEnter";
-          const a = document.createElement("a");
-          a.href = "home.html";
-          a.className = "btn btn-primary";
-          a.innerHTML = '<span>进入网站</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
-          row.appendChild(a);
-          bodyEl.appendChild(row);
-        }
-
-        // Footer / pagination state
-        prevBtn.disabled = (current === 0);
-        // Next button: hidden on the final page
-        nextBtn.style.visibility = (current === PAGES.length - 1) ? "hidden" : "visible";
-        // On commitment page, next only works after match
-        if (page.commitment && !matched) {
-          nextBtn.disabled = true;
-        } else {
-          nextBtn.disabled = false;
-        }
-
-        pageIndicator.textContent = (current + 1) + " / " + PAGES.length;
-        updateDots();
-
-        if (window.lucide) lucide.createIcons();
-        if (page.commitment) { commitInput.focus({ preventScroll: true }); }
-      };
-
-      if (animate && !reducedMotion()) {
-        switching = true;
-        pane.classList.add("leaving");
-        window.setTimeout(() => {
-          apply();
-          pane.classList.remove("leaving");
-          pane.classList.add("entering");
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              pane.classList.remove("entering");
-              switching = false;
-            });
-          });
-        }, 230);
-      } else {
-        apply();
-      }
-    }
-
-    function updateDots() {
-      const dots = dotsWrap.querySelectorAll(".dot");
-      dots.forEach((d, i) => {
-        d.classList.remove("active", "done");
-        if (i < current) d.classList.add("done");
-        if (i === current) d.classList.add("active");
-      });
-    }
-
-    function reducedMotion() {
-      return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    }
-
-    /* ---------- Navigation ---------- */
-    function go(target) {
-      if (switching) return;
-      if (target < 0 || target > PAGES.length - 1) return;
-      // Cannot advance past commitment page unless matched
-      if (target > current && current === 5 && !matched) return;
-      current = target;
-      render(true);
-    }
-    prevBtn.addEventListener("click", () => go(current - 1));
-    nextBtn.addEventListener("click", () => go(current + 1));
-
-    // Keyboard navigation
-    document.addEventListener("keydown", (e) => {
-      if (e.target === commitInput) return; // don't hijack typing
-      if (e.key === "ArrowLeft") { e.preventDefault(); go(current - 1); }
-      else if (e.key === "ArrowRight") { e.preventDefault(); go(current + 1); }
-    });
-
-    /* ---------- Commitment validation (character-by-character) ---------- */
-    function validateCommit() {
-      const typed = commitInput.value;
-      // Exact match (no trimming of internal chars; only trim trailing newline/spaces)
-      const cleaned = typed.replace(/\s+$/g, "");
-      const isMatch = cleaned === COMMITMENT_TEXT;
-
-      // Progress (matched char prefix length)
-      let prefix = 0;
-      for (let i = 0; i < cleaned.length && i < COMMITMENT_TEXT.length; i++) {
-        if (cleaned[i] === COMMITMENT_TEXT[i]) prefix++;
-        else break;
-      }
-      commitProgress.textContent = prefix + " / " + COMMITMENT_TEXT.length;
-
-      commitInput.classList.toggle("matched", isMatch);
-      commitHint.classList.remove("matching", "matched");
-
-      if (isMatch) {
-        matched = true;
-        commitHint.textContent = "承诺一致，可以进入";
-        commitHint.classList.add("matched");
-        enableEnter(true);
-        nextBtn.disabled = false;
-      } else {
-        matched = false;
-        enableEnter(false);
-        nextBtn.disabled = true;
-        if (cleaned.length === 0) {
-          commitHint.textContent = "请逐字完整抄写以上承诺";
-        } else if (prefix === COMMITMENT_TEXT.length && cleaned.length > COMMITMENT_TEXT.length) {
-          commitHint.textContent = "有多余字符，请核对";
-          commitHint.classList.add("matching");
-        } else if (prefix === cleaned.length && cleaned.length < COMMITMENT_TEXT.length) {
-          commitHint.textContent = "继续抄写…";
-          commitHint.classList.add("matching");
-        } else {
-          commitHint.textContent = "第 " + (prefix + 1) + " 字与承诺不符，请核对";
-          commitHint.classList.add("matching");
-        }
-      }
-    }
-
-    function enableEnter(on) {
-      if (on) {
-        enterBtn.removeAttribute("aria-disabled");
-        enterBtn.removeAttribute("tabindex");
-        enterBtn.style.pointerEvents = "auto";
-      } else {
-        enterBtn.setAttribute("aria-disabled", "true");
-        enterBtn.setAttribute("tabindex", "-1");
-        enterBtn.style.pointerEvents = "none";
-      }
-    }
-
-    commitInput.addEventListener("input", validateCommit);
-    // Prevent submit on Enter inside textarea
-    commitInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && matched) {
-        e.preventDefault();
-        window.location.href = "home.html";
-      }
-    });
-
-    /* ---------- Generate static starfield (box-shadow dots) ---------- */
-    function generateStarfield() {
-      const field = document.getElementById("starfield");
-      const W = window.innerWidth, H = Math.max(window.innerHeight, 760);
-      const count = Math.min(140, Math.floor((W * H) / 9000));
-      const shadows = [];
-      for (let i = 0; i < count; i++) {
-        const x = Math.floor(Math.random() * W);
-        const y = Math.floor(Math.random() * H);
-        const op = (0.18 + Math.random() * 0.45).toFixed(2);
-        shadows.push(x + "px " + y + "px 0 0 rgba(255,255,255," + op + ")");
-      }
-      field.style.boxShadow = shadows.join(",");
-    }
-
-    /* ---------- Init ---------- */
-    buildDots();
-    generateStarfield();
-    render(false);
-    validateCommit(); // initial disabled state
-    if (window.lucide) lucide.createIcons();
-
-    // Regenerate starfield on resize (debounced)
-    let rzT;
-    window.addEventListener("resize", () => {
-      clearTimeout(rzT);
-      rzT = setTimeout(generateStarfield, 250);
-    });
-  </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>
