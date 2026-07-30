@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>传讯主页 · 梦角传讯</title>
+
+  <!-- Fonts: Noto Serif SC (headings) + Noto Sans SC (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Project token system (single hue: 梦幻紫 #9d7fc2) -->
+  <link rel="stylesheet" href="colors_and_type.css" />
+
+  <!-- Tailwind + token bridge -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            'card-foreground': 'hsl(var(--card-foreground))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            secondary: 'hsl(var(--secondary))',
+            'secondary-foreground': 'hsl(var(--secondary-foreground))',
+            muted: 'hsl(var(--muted))',
+            'muted-foreground': 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--accent))',
+            'accent-foreground': 'hsl(var(--accent-foreground))',
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+            destructive: 'hsl(var(--destructive))'
+          },
+          fontFamily: {
+            sans: ['"Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif']
+          },
+          borderRadius: { sm: '4px', md: '8px', lg: '12px' }
+        }
+      }
+    };
+  </script>
+
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <style>
+    html { -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--font-sans); }
+
+    /* Dreamy, airy single-hue atmosphere (same-hue wash only) */
+    .atmosphere {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(1100px 560px at 12% -8%, hsl(263 60% 94% / .95), transparent 62%),
+        radial-gradient(820px 480px at 100% 2%, hsl(263 50% 92% / .85), transparent 58%),
+        linear-gradient(180deg, hsl(270 30% 99%), hsl(263 40% 97%));
+    }
+
+    /* Nav */
+    .nav-link {
+      padding: .5rem .9rem; border-radius: 8px; font-size: .95rem;
+      color: hsl(var(--muted-foreground));
+      transition: color .16s cubic-bezier(.2,.8,.2,1), background-color .16s;
+    }
+    .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+    .nav-link:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    .nav-link.active { color: hsl(var(--primary)); background: hsl(var(--accent)); font-weight: 500; }
+
+    /* Starlight soul element — sparse, low-opacity, gentle twinkle (on deep card only) */
+    .star {
+      position: absolute; width: 3px; height: 3px; border-radius: 9999px;
+      background: hsl(263 60% 96%); opacity: .45;
+      animation: twinkle 4.5s ease-in-out infinite;
+    }
+    .star.s2 { width: 2px; height: 2px; }
+    .star.s4 { width: 4px; height: 4px; }
+    @keyframes twinkle {
+      0%, 100% { opacity: .12; transform: scale(.7); }
+      50% { opacity: .7; transform: scale(1.15); }
+    }
+
+    /* Gentle breathing aura behind the together-days KPI (signature micro-interaction) */
+    .counter-aura {
+      position: absolute; left: 50%; top: 50%; width: 230px; height: 124px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(closest-side, hsl(263 80% 85% / .38), transparent 75%);
+      animation: breathe 4.8s ease-in-out infinite; pointer-events: none;
+    }
+    @keyframes breathe {
+      0%, 100% { opacity: .3; transform: translate(-50%, -50%) scale(.92); }
+      50% { opacity: .6; transform: translate(-50%, -50%) scale(1.06); }
+    }
+
+    /* CSS avatar (gradient circle + emoji), no image file */
+    .avatar {
+      position: relative; width: 6rem; height: 6rem; border-radius: 9999px;
+      margin-inline: auto; display: grid; place-items: center; font-size: 2.25rem;
+      background: radial-gradient(circle at 32% 28%, hsl(263 70% 82%), hsl(263 55% 56%));
+      outline: 4px solid hsl(263 60% 96% / .16);
+      outline-offset: 0;
+    }
+    .cam-badge {
+      position: absolute; right: -2px; bottom: -2px; width: 1.75rem; height: 1.75rem;
+      border-radius: 9999px; display: grid; place-items: center; font-size: .8rem;
+      background: hsl(0 0% 100% / .92); color: hsl(263 50% 40%);
+    }
+
+    /* Function entry cards — border/surface layering, lift on hover only */
+    .entry-card {
+      display: flex; flex-direction: column; border-radius: 12px;
+      border: 1px solid hsl(var(--border)); background: hsl(var(--card)); padding: 1.5rem;
+      transition: transform .16s cubic-bezier(.2,.8,.2,1), border-color .16s, background-color .16s;
+    }
+    .entry-card:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    @media (hover: hover) {
+      .entry-card:hover { transform: translateY(-2px); border-color: hsl(var(--primary) / .45); background: hsl(var(--accent) / .35); }
+      .entry-card:hover .entry-icon { transform: translateX(2px); }
+    }
+    .entry-icon { transition: transform .16s cubic-bezier(.2,.8,.2,1); }
+    .entry-card--muted { opacity: .92; }
+    .soon-tag {
+      display: inline-flex; align-items: center; align-self: flex-start;
+      height: 22px; padding: 0 .55rem; border-radius: 8px; font-size: 12px;
+      color: hsl(var(--primary)); background: hsl(var(--accent));
+    }
+
+    /* Light first-screen entrance (motionIntensity 2) */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .enter { animation: fadeUp .55s cubic-bezier(.3,0,0,1) both; }
+    .enter-2 { animation-delay: .12s; }
+
+    svg.lucide { stroke-width: 1.5; }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-background text-foreground">
+  <div class="atmosphere" aria-hidden="true"></div>
+
+  <!-- Top navigation (shared shell) -->
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur">
+    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2 font-serif text-lg font-semibold text-primary">
+        <span class="text-base" style="opacity:.75">✦</span>梦角传讯
+      </a>
+      <nav class="flex items-center gap-1" aria-label="主导航">
+        <a href="home.html" data-dom-id="nav-home" class="nav-link active" aria-current="page">主页</a>
+        <a href="cards.html" data-dom-id="nav-cards" class="nav-link">字卡</a>
+        <a href="chat.html" data-dom-id="nav-chat" class="nav-link">对话</a>
+        <a href="customize.html" data-dom-id="nav-customize" class="nav-link">自定义</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main content: asymmetric two-column -->
+  <main class="mx-auto max-w-6xl px-6 py-16 md:py-20">
+    <h1 class="sr-only">传讯主页</h1>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:items-start">
+      <!-- Left: personal card (~40%) -->
+      <section class="enter relative overflow-hidden rounded-lg p-8 text-center sm:p-10 lg:col-span-2"
+               style="background: linear-gradient(160deg, hsl(263 46% 44%), hsl(263 52% 32%));"
+               aria-label="个人卡片">
+        <!-- Starlight -->
+        <span class="star"    style="top:10%;left:12%;animation-delay:0s"></span>
+        <span class="star s2" style="top:18%;left:82%;animation-delay:.6s"></span>
+        <span class="star s4" style="top:26%;left:68%;animation-delay:1.2s"></span>
+        <span class="star s2" style="top:40%;left:8%;animation-delay:1.8s"></span>
+        <span class="star"    style="top:58%;left:86%;animation-delay:.9s"></span>
+        <span class="star s2" style="top:72%;left:14%;animation-delay:2.4s"></span>
+        <span class="star s4" style="top:84%;left:76%;animation-delay:1.5s"></span>
+
+        <!-- CSS avatar -->
+        <div class="avatar" aria-label="梦角头像">
+          🌙<span class="cam-badge" aria-hidden="true">📷</span>
+        </div>
+
+        <h2 class="mt-5 text-lg font-medium text-white">@my_profile</h2>
+        <p class="mt-1 text-sm italic" style="color:hsl(263 40% 86%)">今天也要加油呀 ✨</p>
+
+        <div class="mx-auto my-7 h-px w-24" style="background:hsl(263 40% 80% / .35)"></div>
+
+        <!-- Together-days KPI (focal) -->
+        <div class="relative">
+          <div class="counter-aura" aria-hidden="true"></div>
+          <div class="relative z-10">
+            <p class="text-xs tracking-[0.05em]" style="color:hsl(263 40% 84%)">在一起</p>
+            <div class="mt-2 flex items-end justify-center gap-2">
+              <span class="font-serif text-6xl font-semibold leading-none"
+                    style="color:hsl(263 70% 97%); font-variant-numeric: tabular-nums;">769</span>
+              <span class="pb-1 text-base" style="color:hsl(263 40% 84%)">天</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: function entries (~60%) -->
+      <section class="enter enter-2 lg:col-span-3" aria-label="功能入口">
+        <div class="mb-5">
+          <h2 class="font-serif text-2xl font-semibold text-foreground" style="text-wrap:balance">传讯入口</h2>
+          <p class="mt-1 text-sm text-muted-foreground">选择一种方式开始</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <a href="cards.html" data-dom-id="go-cards" class="entry-card">
+            <i data-lucide="layers" class="entry-icon w-7 h-7 text-primary"></i>
+            <h3 class="mt-4 font-serif text-lg text-foreground">字卡传讯</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">抽取字卡，接收梦角的回复</p>
+          </a>
+
+          <a href="chat.html" data-dom-id="go-chat" class="entry-card">
+            <i data-lucide="message-circle" class="entry-icon w-7 h-7 text-primary"></i>
+            <h3 class="mt-4 font-serif text-lg text-foreground">梦角对话</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">与梦角实时对话交流</p>
+          </a>
+
+          <a href="customize.html" data-dom-id="go-customize" class="entry-card">
+            <i data-lucide="settings" class="entry-icon w-7 h-7 text-primary"></i>
+            <h3 class="mt-4 font-serif text-lg text-foreground">自定义主页</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">个性化你的传讯空间</p>
+          </a>
+
+          <div class="entry-card entry-card--muted" aria-disabled="true">
+            <i data-lucide="book-open" class="entry-icon w-7 h-7 text-primary"></i>
+            <h3 class="mt-4 font-serif text-lg text-foreground">传讯记录</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">查看过往传讯记录</p>
+            <span class="soon-tag mt-auto pt-4">敬请期待</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer (shared shell starlight touch) -->
+  <footer class="mt-8 border-t border-border">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-7 text-sm">
+      <span class="flex items-center gap-2 font-serif text-primary">
+        <span class="text-xs" style="opacity:.7">✦</span>梦角传讯
+      </span>
+      <span class="text-muted-foreground">私人传讯空间</span>
+    </div>
+  </footer>
+
+  <script>lucide.createIcons();</script>
+</body>
+</html>
