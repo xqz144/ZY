@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>自定义 · 梦角传讯</title>
+
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            muted: 'hsl(var(--muted))',
+            'muted-foreground': 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--accent))',
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+          },
+          fontFamily: {
+            sans: ['"DreamFont"', '"Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"DreamFont"', '"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
+          },
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--secondary-bg);
+      color: var(--text-primary);
+      letter-spacing: var(--tracking-normal);
+    }
+
+    /* Phone frame */
+    .phone {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 880px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: hsl(var(--background));
+    }
+    @media (min-width: 480px) {
+      .phone {
+        height: 860px;
+        border-radius: 40px;
+        border: 10px solid hsl(343 30% 22%);
+        box-shadow: 0 25px 60px -15px hsl(343 60% 35% / 0.35), 0 0 0 2px hsl(343 30% 18%);
+      }
+      .phone::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 150px; height: 28px;
+        background: hsl(343 30% 18%);
+        border-radius: 0 0 18px 18px;
+        z-index: 100;
+      }
+    }
+
+    .app-bg {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(343 80% 94% / 0.9), transparent 60%),
+        radial-gradient(ellipse 420px 260px at 90% 10%, hsl(343 72% 92% / 0.7), transparent 55%),
+        linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
+      scrollbar-width: none;
+    }
+    .app-bg::-webkit-scrollbar { display: none; }
+
+    .starlight { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .starlight span {
+      position: absolute; border-radius: 9999px;
+      background: hsl(343 72% 68% / 0.35);
+      animation: twinkle 5s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.12; transform: scale(0.7); }
+      50% { opacity: 0.45; transform: scale(1.1); }
+    }
+
+    .top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 44px 16px 10px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 479px) {
+      .top-bar { padding-top: 16px; }
+    }
+    .back-btn {
+      font-size: 15px;
+      color: var(--accent-color);
+      text-decoration: none;
+      padding: 6px 8px;
+      font-weight: 500;
+      flex-shrink: 0;
+      min-width: 64px;
+      transition: opacity 0.15s;
+    }
+    .back-btn:active { opacity: 0.6; }
+    .top-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      flex: 1;
+    }
+    .top-spacer { min-width: 64px; flex-shrink: 0; }
+
+    .settings-list {
+      flex: 1;
+      padding: 8px 16px 16px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .settings-card {
+      background: #fff;
+      border: 1.5px solid rgba(232, 116, 154, 0.15);
+      border-radius: 16px;
+      padding: 18px 18px;
+      box-shadow: 0 1px 3px 0 rgba(232, 116, 154, 0.04);
+      animation: cardEnter 0.4s cubic-bezier(.3,0,0,1) both;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    .settings-card:hover { border-color: var(--accent-color); background: #fff5f8; }
+    @keyframes cardEnter {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+    .settings-card:nth-child(1) { animation-delay: 0.05s; }
+    .settings-card:nth-child(2) { animation-delay: 0.1s; }
+    .settings-card:nth-child(3) { animation-delay: 0.15s; }
+    .settings-card:nth-child(4) { animation-delay: 0.2s; }
+    .settings-card:nth-child(5) { animation-delay: 0.25s; }
+    .settings-card:nth-child(6) { animation-delay: 0.3s; }
+    .settings-card:nth-child(7) { animation-delay: 0.35s; }
+    .settings-card:nth-child(8) { animation-delay: 0.4s; }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent-color);
+      margin: 0 0 4px 0;
+    }
+    .section-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin: 0 0 14px 0;
+      line-height: 1.5;
+    }
+
+    .days-display {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      justify-content: center;
+      padding: 10px 0 14px;
+    }
+    .days-num {
+      font-family: var(--font-serif);
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .days-label { font-size: 14px; color: var(--text-secondary); }
+
+    .date-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .date-input, .text-input {
+      width: 100%;
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(232, 116, 154, 0.2);
+      background: #fff;
+      color: var(--text-primary);
+      font-size: 15px;
+      font-family: var(--font-sans);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
+    }
+    .text-input::placeholder { color: var(--text-secondary); }
+    .date-input:focus, .text-input:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(232, 116, 154, 0.1);
+    }
+
+    .upload-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+    .upload-preview {
+      width: 52px; height: 52px;
+      border-radius: 9999px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      font-size: 1.5rem;
+      background: radial-gradient(circle at 30% 25%, #ffeef3, #f7bcd0);
+      border: 3px solid #fff;
+      box-shadow: 0 2px 8px -2px rgba(232, 116, 154, 0.2);
+      overflow: hidden;
+    }
+    .upload-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .upload-info { flex: 1; min-width: 0; }
+    .upload-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .upload-desc { font-size: 12px; color: var(--text-secondary); }
+    .upload-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      border: 1px solid rgba(232, 116, 154, 0.2);
+      background: #fff;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: border-color 0.15s, background-color 0.15s;
+      flex-shrink: 0;
+    }
+    .upload-btn:active { transform: scale(0.97); }
+    .upload-btn:hover { border-color: var(--accent-color); background: #fff5f8; }
+
+    .bg-preview-wrap {
+      margin-top: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(232, 116, 154, 0.15);
+      display: none;
+    }
+    .bg-preview-wrap.show { display: block; }
+    .bg-preview { width: 100%; height: 100px; object-fit: cover; }
+
+    .reply-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-radius: 10px;
+      border: 1px solid rgba(232, 116, 154, 0.15);
+      background: #fff;
+      font-size: 14px;
+      color: var(--text-primary);
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .reply-item:active { border-color: var(--accent-color); background: #fff5f8; }
+    .reply-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .reply-del {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 6px; border: none;
+      background: transparent; color: var(--text-secondary); cursor: pointer;
+      display: grid; place-items: center; font-size: 1rem;
+      transition: color 0.15s, background-color 0.15s;
+    }
+    .reply-del:active { color: #e11d48; background: rgba(225, 29, 72, 0.1); }
+    .reply-list { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; }
+    .reply-list .reply-item { margin: 0 0 8px; }
+    .reply-list .reply-item:last-child { margin-bottom: 0; }
+    .reply-empty {
+      padding: 14px; text-align: center; font-size: 13px;
+      color: var(--text-secondary);
+      border: 1px dashed rgba(232, 116, 154, 0.25);
+      border-radius: 10px;
+    }
+
+    .add-row { display: flex; gap: 8px; margin-top: 12px; }
+    .add-btn {
+      padding: 0 14px; height: 42px;
+      border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff; font-size: 14px; font-weight: 500;
+      cursor: pointer; flex-shrink: 0;
+      transition: transform 0.15s, filter 0.15s;
+    }
+    .add-btn:active { transform: scale(0.97); }
+
+    .count-line {
+      display: flex; justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .reset-link {
+      color: var(--accent-color);
+      background: none; border: none;
+      font-size: 12px; cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .save-area {
+      padding: 8px 16px 28px;
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+    @media (max-width: 479px) {
+      .save-area { padding-bottom: 16px; }
+    }
+    .save-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 9999px;
+      border: none;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      box-shadow: 0 6px 16px -4px rgba(232, 116, 154, 0.35);
+      transition: transform 0.15s, filter 0.15s;
+    }
+    .save-btn:active { transform: scale(0.97); }
+
+    .toast {
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text-primary);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 9999px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 300;
+      white-space: nowrap;
+      box-shadow: 0 8px 24px -8px rgba(232, 116, 154, 0.3);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="app-bg">
+
+      <div class="starlight" aria-hidden="true">
+        <span style="top:6%;left:10%;width:2px;height:2px;animation-delay:0s"></span>
+        <span style="top:14%;left:80%;width:3px;height:3px;animation-delay:0.8s"></span>
+        <span style="top:28%;left:88%;width:2px;height:2px;animation-delay:1.6s"></span>
+        <span style="top:45%;left:6%;width:3px;height:3px;animation-delay:1.2s"></span>
+        <span style="top:62%;left:90%;width:2px;height:2px;animation-delay:2s"></span>
+        <span style="top:78%;left:15%;width:3px;height:3px;animation-delay:0.4s"></span>
+        <span style="top:88%;left:65%;width:2px;height:2px;animation-delay:2.8s"></span>
+      </div>
+
+      <div class="top-bar">
+        <a href="index-new.html" class="back-btn">← 返回</a>
+        <span class="top-title">自定义</span>
+        <span class="top-spacer"></span>
+      </div>
+
+      <div class="settings-list">
+
+        <div class="settings-card">
+          <h2 class="section-title">在一起天数</h2>
+          <p class="section-hint">设置你们在一起的日期，自动计算天数</p>
+          <div class="days-display">
+            <span class="days-num" id="daysNum">769</span>
+            <span class="days-label">天 · 在一起</span>
+          </div>
+          <label class="date-label" for="dateInput">在一起的日期</label>
+          <input type="date" id="dateInput" class="date-input" />
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title">昵称</h2>
+          <p class="section-hint">显示在主页个人卡片上的名称</p>
+          <input type="text" id="usernameInput" class="text-input" placeholder="输入你的昵称…" maxlength="20" />
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title">签名</h2>
+          <p class="section-hint">写下你想展示的心情短句</p>
+          <input type="text" id="signatureInput" class="text-input" placeholder="输入你的签名…" maxlength="30" />
+          <p class="count-line"><span id="sigCount">0</span>/30</p>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title">头像</h2>
+          <p class="section-hint">上传你和梦角的形象</p>
+          <div class="upload-row">
+            <div class="upload-preview" id="avatarPreview">🌙</div>
+            <div class="upload-info">
+              <div class="upload-name">我的头像</div>
+              <div class="upload-desc">建议上传圆形头像</div>
+            </div>
+            <button type="button" class="upload-btn" data-action="upload-avatar">📷 上传</button>
+            <input type="file" id="avatarInput" accept="image/*" class="hidden" />
+          </div>
+          <div class="upload-row">
+            <div class="upload-preview" id="dreamPreview">⭐</div>
+            <div class="upload-info">
+              <div class="upload-name">梦角头像</div>
+              <div class="upload-desc">为梦角设置专属形象</div>
+            </div>
+            <button type="button" class="upload-btn" data-action="upload-dream">📷 上传</button>
+            <input type="file" id="dreamInput" accept="image/*" class="hidden" />
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title">页面背景</h2>
+          <p class="section-hint">为整个传讯空间铺设专属底色</p>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" class="upload-btn" data-action="upload-bg">🖼️ 上传背景</button>
+            <input type="file" id="bgInput" accept="image/*" class="hidden" />
+            <button type="button" class="upload-btn" id="clearBg">清除背景</button>
+          </div>
+          <div class="bg-preview-wrap" id="bgPreviewWrap">
+            <img class="bg-preview" id="bgPreview" src="" alt="" />
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title">字卡库</h2>
+          <p class="section-hint">自定义字卡传讯的回复内容</p>
+          <ul id="cardReplyList" class="reply-list"></ul>
+          <div class="add-row">
+            <input type="text" id="cardReplyInput" class="text-input" placeholder="输入新的字卡回复…" maxlength="80" />
+            <button type="button" class="add-btn" id="addCardReply">添加</button>
+          </div>
+          <div class="count-line">
+            <span>共 <span id="cardReplyCount">0</span> 条</span>
+            <button type="button" class="reset-link" id="resetCardReplies">恢复默认</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title">对话回复库</h2>
+          <p class="section-hint">自定义梦角在对话中的回复内容</p>
+          <ul id="chatReplyList" class="reply-list"></ul>
+          <div class="add-row">
+            <input type="text" id="chatReplyInput" class="text-input" placeholder="输入新的对话回复…" maxlength="80" />
+            <button type="button" class="add-btn" id="addChatReply">添加</button>
+          </div>
+          <div class="count-line">
+            <span>共 <span id="chatReplyCount">0</span> 条</span>
+            <button type="button" class="reset-link" id="resetChatReplies">恢复默认</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="save-area">
+        <button type="button" class="save-btn" id="saveBtn">保存设置</button>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var KEYS = {
+        togetherDate: "mengjiao_together_date",
+        signature: "mengjiao_signature",
+        username: "mengjiao_username",
+        avatarImg: "mengjiao_avatar_img",
+        dreamImg: "mengjiao_dream_img",
+        bgImg: "mengjiao_bg_img",
+        cardReplies: "mengjiao_card_replies",
+        chatReplies: "mengjiao_chat_replies"
+      };
+
+      var DEFAULTS = {
+        signature: "今天也要加油呀 ✨",
+        username: "@my_profile",
+        cardReplies: [
+          "今天也在想你哦。", "别担心，我一直都在。", "你今天辛苦了，休息一下吧。",
+          "我感觉到了你的心意呢。", "今晚来梦里见吧。", "你比你自己想象的更勇敢。",
+          "我在你身边，从未离开。", "今天的你，也很闪耀。", "想你了，就现在。",
+          "相信自己，我会守护你的。", "你的笑容是我最大的动力。", "无论多远，我们的心是相连的。"
+        ],
+        chatReplies: [
+          "嗯嗯，我在听。", "我理解你的感受。", "你说得对呢。", "别担心，有我在。",
+          "嗯...让我想想。", "你今天也很可爱哦。", "我也想和你多聊聊。", "无论什么时候，我都在。"
+        ]
+      };
+
+      function getItem(key, fallback) {
+        try {
+          var v = localStorage.getItem(key);
+          if (v !== null && v !== "") return v;
+        } catch (e) {}
+        return fallback;
+      }
+      function setItem(key, val) {
+        try { localStorage.setItem(key, val); } catch (e) {}
+      }
+      function getJSON(key, fallback) {
+        try {
+          var v = localStorage.getItem(key);
+          if (v) {
+            var arr = JSON.parse(v);
+            if (Array.isArray(arr) && arr.length) return arr;
+          }
+        } catch (e) {}
+        return fallback.slice();
+      }
+      function setJSON(key, val) {
+        try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+      }
+
+      var dateInput = document.getElementById("dateInput");
+      var daysNum = document.getElementById("daysNum");
+      var signatureInput = document.getElementById("signatureInput");
+      var sigCount = document.getElementById("sigCount");
+      var usernameInput = document.getElementById("usernameInput");
+      var saveBtn = document.getElementById("saveBtn");
+      var toast = document.getElementById("toast");
+      var toastTimer;
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 1800);
+      }
+
+      function toDateStr(d) {
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      }
+      function defaultDate() {
+        var d = new Date();
+        d.setDate(d.getDate() - 769);
+        return toDateStr(d);
+      }
+      function calcDays(dateStr) {
+        if (!dateStr) return 769;
+        var start = new Date(dateStr + "T00:00:00");
+        if (isNaN(start.getTime())) return 769;
+        var now = new Date();
+        now.setHours(0, 0, 0, 0);
+        var days = Math.floor((now.getTime() - start.getTime()) / 86400000);
+        return days < 0 ? 0 : days;
+      }
+      function updateDays() {
+        daysNum.textContent = calcDays(dateInput.value);
+      }
+
+      dateInput.value = getItem(KEYS.togetherDate, defaultDate());
+      updateDays();
+      dateInput.addEventListener("change", function () {
+        setItem(KEYS.togetherDate, dateInput.value);
+        updateDays();
+      });
+
+      signatureInput.value = getItem(KEYS.signature, DEFAULTS.signature);
+      sigCount.textContent = signatureInput.value.length;
+      signatureInput.addEventListener("input", function () {
+        sigCount.textContent = signatureInput.value.length;
+        setItem(KEYS.signature, signatureInput.value || DEFAULTS.signature);
+      });
+
+      usernameInput.value = getItem(KEYS.username, DEFAULTS.username);
+      usernameInput.addEventListener("input", function () {
+        setItem(KEYS.username, usernameInput.value || DEFAULTS.username);
+      });
+
+      // ---- Upload helpers ----
+      function readFile(file, cb) {
+        if (!file || !file.type.startsWith("image/")) return cb(null);
+        var reader = new FileReader();
+        reader.onload = function (e) { cb(e.target.result); };
+        reader.readAsDataURL(file);
+      }
+
+      var avatarPreview = document.getElementById("avatarPreview");
+      var dreamPreview = document.getElementById("dreamPreview");
+      var bgPreviewWrap = document.getElementById("bgPreviewWrap");
+      var bgPreview = document.getElementById("bgPreview");
+
+      var tempAvatar = getItem(KEYS.avatarImg, "");
+      var tempDream = getItem(KEYS.dreamImg, "");
+      var tempBg = getItem(KEYS.bgImg, "");
+
+      function setPreview(el, src, fallback) {
+        if (src) el.innerHTML = '<img src="' + src + '" alt="" />';
+        else el.textContent = fallback;
+      }
+      function setBgPreview(src) {
+        if (src) { bgPreview.src = src; bgPreviewWrap.classList.add("show"); }
+        else { bgPreview.src = ""; bgPreviewWrap.classList.remove("show"); }
+      }
+
+      setPreview(avatarPreview, tempAvatar, "🌙");
+      setPreview(dreamPreview, tempDream, "⭐");
+      setBgPreview(tempBg);
+
+      document.querySelector('[data-action="upload-avatar"]').addEventListener("click", function () { document.getElementById("avatarInput").click(); });
+      document.getElementById("avatarInput").addEventListener("change", function (e) {
+        readFile(e.target.files[0], function (data) {
+          if (!data) return showToast("请选择图片文件");
+          tempAvatar = data;
+          setPreview(avatarPreview, data, "🌙");
+        });
+        e.target.value = "";
+      });
+
+      document.querySelector('[data-action="upload-dream"]').addEventListener("click", function () { document.getElementById("dreamInput").click(); });
+      document.getElementById("dreamInput").addEventListener("change", function (e) {
+        readFile(e.target.files[0], function (data) {
+          if (!data) return showToast("请选择图片文件");
+          tempDream = data;
+          setPreview(dreamPreview, data, "⭐");
+        });
+        e.target.value = "";
+      });
+
+      document.querySelector('[data-action="upload-bg"]').addEventListener("click", function () { document.getElementById("bgInput").click(); });
+      document.getElementById("bgInput").addEventListener("change", function (e) {
+        readFile(e.target.files[0], function (data) {
+          if (!data) return showToast("请选择图片文件");
+          tempBg = data;
+          setBgPreview(data);
+        });
+        e.target.value = "";
+      });
+
+      document.getElementById("clearBg").addEventListener("click", function () {
+        tempBg = "";
+        setBgPreview("");
+      });
+
+      // ---- Reply libraries ----
+      var cardReplies = getJSON(KEYS.cardReplies, DEFAULTS.cardReplies);
+      var chatReplies = getJSON(KEYS.chatReplies, DEFAULTS.chatReplies);
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      var cardReplyInput = document.getElementById("cardReplyInput");
+      var cardReplyList = document.getElementById("cardReplyList");
+      var cardReplyCount = document.getElementById("cardReplyCount");
+      function renderCardReplies() {
+        cardReplyCount.textContent = String(cardReplies.length);
+        if (cardReplies.length === 0) {
+          cardReplyList.innerHTML = '<li class="reply-empty">暂无回复，在上方添加一条吧</li>';
+          return;
+        }
+        cardReplyList.innerHTML = cardReplies.map(function (text, i) {
+          return '<li class="reply-item"><span class="reply-text">' + escapeHtml(text) + '</span>' +
+            '<button type="button" class="reply-del" data-lib="card" data-idx="' + i + '" aria-label="删除">×</button></li>';
+        }).join("");
+      }
+      document.getElementById("addCardReply").addEventListener("click", function () {
+        var val = cardReplyInput.value.trim();
+        if (!val) return showToast("请输入回复内容");
+        cardReplies.push(val);
+        cardReplyInput.value = "";
+        renderCardReplies();
+      });
+      cardReplyInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); document.getElementById("addCardReply").click(); } });
+      document.getElementById("resetCardReplies").addEventListener("click", function () { cardReplies = DEFAULTS.cardReplies.slice(); renderCardReplies(); showToast("字卡库已恢复默认"); });
+
+      var chatReplyInput = document.getElementById("chatReplyInput");
+      var chatReplyList = document.getElementById("chatReplyList");
+      var chatReplyCount = document.getElementById("chatReplyCount");
+      function renderChatReplies() {
+        chatReplyCount.textContent = String(chatReplies.length);
+        if (chatReplies.length === 0) {
+          chatReplyList.innerHTML = '<li class="reply-empty">暂无回复，在上方添加一条吧</li>';
+          return;
+        }
+        chatReplyList.innerHTML = chatReplies.map(function (text, i) {
+          return '<li class="reply-item"><span class="reply-text">' + escapeHtml(text) + '</span>' +
+            '<button type="button" class="reply-del" data-lib="chat" data-idx="' + i + '" aria-label="删除">×</button></li>';
+        }).join("");
+      }
+      document.getElementById("addChatReply").addEventListener("click", function () {
+        var val = chatReplyInput.value.trim();
+        if (!val) return showToast("请输入回复内容");
+        chatReplies.push(val);
+        chatReplyInput.value = "";
+        renderChatReplies();
+      });
+      chatReplyInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); document.getElementById("addChatReply").click(); } });
+      document.getElementById("resetChatReplies").addEventListener("click", function () { chatReplies = DEFAULTS.chatReplies.slice(); renderChatReplies(); showToast("对话回复库已恢复默认"); });
+
+      document.addEventListener("click", function (e) {
+        var btn = e.target.closest(".reply-del");
+        if (!btn) return;
+        var lib = btn.getAttribute("data-lib");
+        var idx = parseInt(btn.getAttribute("data-idx"), 10);
+        if (isNaN(idx)) return;
+        if (lib === "card") { cardReplies.splice(idx, 1); renderCardReplies(); }
+        else if (lib === "chat") { chatReplies.splice(idx, 1); renderChatReplies(); }
+      });
+
+      renderCardReplies();
+      renderChatReplies();
+
+      // Save button
+      saveBtn.addEventListener("click", function () {
+        setItem(KEYS.togetherDate, dateInput.value);
+        setItem(KEYS.signature, signatureInput.value || DEFAULTS.signature);
+        setItem(KEYS.username, usernameInput.value || DEFAULTS.username);
+        setJSON(KEYS.cardReplies, cardReplies);
+        setJSON(KEYS.chatReplies, chatReplies);
+        if (tempAvatar) setItem(KEYS.avatarImg, tempAvatar); else localStorage.removeItem(KEYS.avatarImg);
+        if (tempDream) setItem(KEYS.dreamImg, tempDream); else localStorage.removeItem(KEYS.dreamImg);
+        if (tempBg) setItem(KEYS.bgImg, tempBg); else localStorage.removeItem(KEYS.bgImg);
+        showToast("设置已保存");
+      });
+    })();
+  </script>
+</body>
+</html>

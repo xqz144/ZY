@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>自定义主页 · 梦角传讯</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../colors_and_type.css" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            'card-foreground': 'hsl(var(--card-foreground))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            secondary: 'hsl(var(--secondary))',
+            'secondary-foreground': 'hsl(var(--secondary-foreground))',
+            muted: 'hsl(var(--muted))',
+            'muted-foreground': 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--accent))',
+            'accent-foreground': 'hsl(var(--accent-foreground))',
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+            destructive: 'hsl(var(--destructive))'
+          },
+          fontFamily: {
+            sans: ['"DreamFont"', '"Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"DreamFont"', '"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif']
+          },
+          borderRadius: { sm: '4px', md: '8px', lg: '12px' }
+        }
+      }
+    };
+  </script>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <style>
+    html { -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--font-sans); background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+
+    .atmosphere {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(1100px 560px at 10% -8%, hsl(343 80% 94% / .95), transparent 62%),
+        radial-gradient(820px 480px at 100% 2%, hsl(343 72% 92% / .8), transparent 58%),
+        linear-gradient(180deg, #fdf6f8, #fff0f4);
+    }
+    .star {
+      position: absolute; width: 3px; height: 3px; border-radius: 9999px;
+      background: hsl(343 80% 96%); opacity: .45;
+      animation: twinkle 4.5s ease-in-out infinite;
+    }
+    .star.s2 { width: 2px; height: 2px; }
+    .star.s4 { width: 4px; height: 4px; }
+    @keyframes twinkle {
+      0%, 100% { opacity: .14; transform: scale(.7); }
+      50% { opacity: .72; transform: scale(1.15); }
+    }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .95rem; color: hsl(var(--muted-foreground));
+      text-decoration: none; padding: .4rem .9rem; border-radius: 8px;
+      transition: color .16s cubic-bezier(.2,.8,.2,1), background-color .16s;
+    }
+    .back-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+    .back-link:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    .back-link svg { width: 18px; height: 18px; }
+
+    .textarea-input {
+      width: 100%; padding: .6rem .8rem; border-radius: 8px;
+      border: 1px solid hsl(var(--border)); background: hsl(var(--card)); color: hsl(var(--foreground));
+      font-size: .9rem; line-height: 1.6; resize: vertical; min-height: 120px;
+      font-family: var(--font-sans); transition: border-color .16s, box-shadow .16s;
+    }
+    .textarea-input::placeholder { color: hsl(var(--muted-foreground)); }
+    .textarea-input:hover { border-color: hsl(var(--primary) / .4); }
+    .textarea-input:focus { outline: none; border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .15); }
+
+    .reply-item {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .55rem .8rem; border-radius: 8px;
+      border: 1px solid hsl(var(--border)); background: hsl(var(--card));
+      font-size: .85rem; color: hsl(var(--foreground));
+      transition: border-color .16s, background-color .16s;
+    }
+    .reply-item:hover { border-color: hsl(var(--primary) / .4); background: hsl(var(--accent) / .3); }
+    .reply-item .reply-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .reply-item .reply-del {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; border: none;
+      background: transparent; color: hsl(var(--muted-foreground)); cursor: pointer;
+      display: grid; place-items: center; font-size: 1rem; line-height: 1;
+      transition: color .16s, background-color .16s;
+    }
+    .reply-item .reply-del:hover { color: hsl(var(--destructive)); background: hsl(var(--destructive) / .1); }
+    .reply-list { list-style: none; margin: 0; padding: 0; max-height: 280px; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+    .reply-list .reply-item { margin: 0; }
+    .reply-empty { padding: 1rem; text-align: center; font-size: .82rem; color: hsl(var(--muted-foreground)); border: 1px dashed hsl(var(--border)); border-radius: 8px; }
+
+    .settings-card {
+      border: 1.5px solid rgba(232, 116, 154, 0.15);
+      background: #fff;
+      border-radius: 12px; padding: 1.5rem;
+      transition: border-color .2s, background-color .2s;
+    }
+    .settings-card:hover { border-color: #e8749a; background: #fff5f8; }
+    .section-title { font-family: var(--font-serif); color: hsl(var(--primary)); font-weight: 600; }
+    .hint { color: hsl(var(--muted-foreground)); font-size: .8rem; line-height: 1.5; }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .5rem .9rem; border-radius: 8px; font-size: .85rem;
+      border: 1px solid hsl(var(--border)); background: hsl(var(--card)); color: hsl(var(--foreground));
+      transition: border-color .16s, background-color .16s, transform .16s;
+    }
+    .btn-ghost:hover { border-color: hsl(var(--primary) / .5); background: hsl(var(--accent) / .4); }
+    .btn-ghost:active { transform: scale(.99); }
+    .btn-ghost:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+      padding: .7rem 1.6rem; border-radius: 8px; font-size: .95rem; font-weight: 600;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a); color: #fff; border: none;
+      box-shadow: 0 4px 14px rgba(232, 116, 154, 0.35);
+      transition: transform .16s, filter .16s;
+    }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-primary:active { transform: scale(.99); }
+    .btn-primary:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+
+    .toggle { position: relative; display: inline-flex; flex-shrink: 0; }
+    .toggle-input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+    .toggle-track {
+      width: 44px; height: 24px; border-radius: 9999px; background: hsl(343 20% 80%);
+      position: relative; transition: background-color .24s cubic-bezier(.3,0,0,1);
+    }
+    .toggle-knob {
+      position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 9999px;
+      background: #fff; box-shadow: 0 1px 2px hsl(343 40% 40% / 0.2);
+      transition: transform .24s cubic-bezier(.3,0,0,1);
+    }
+    .toggle-input:checked ~ .toggle-track { background: hsl(var(--primary)); }
+    .toggle-input:checked ~ .toggle-track .toggle-knob { transform: translateX(20px); }
+    .toggle-input:focus-visible ~ .toggle-track { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+
+    .text-input {
+      width: 100%; height: 42px; padding: 0 .8rem; border-radius: 8px;
+      border: 1px solid hsl(var(--border)); background: hsl(var(--card)); color: hsl(var(--foreground));
+      font-size: .9rem; transition: border-color .16s, box-shadow .16s;
+    }
+    .text-input::placeholder { color: hsl(var(--muted-foreground)); }
+    .text-input:hover { border-color: hsl(var(--primary) / .4); }
+    .text-input:focus { outline: none; border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .15); }
+
+    .color-input {
+      -webkit-appearance: none; appearance: none; width: 38px; height: 38px;
+      border: none; border-radius: 8px; background: none; padding: 0; cursor: pointer;
+    }
+    .color-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-input::-webkit-color-swatch { border: 1px solid hsl(var(--border)); border-radius: 8px; }
+    .color-input::-moz-color-swatch { border: 1px solid hsl(var(--border)); border-radius: 8px; }
+    .color-input:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    .color-value {
+      font-family: ui-monospace, "SFMono-Regular", monospace; font-size: .8rem;
+      color: hsl(var(--muted-foreground)); min-width: 64px; font-variant-numeric: tabular-nums;
+    }
+
+    #previewCard {
+      --pv-banner-1: #f4a0bc; --pv-banner-2: #e8749a;
+      --pv-avatar-1: #fbc8d8; --pv-avatar-2: #f4a0bc;
+      --pv-card-tint: #fff8fa;
+      --pv-theme-accent: #e8749a;
+      --pv-title: #3d2030; --pv-subtitle: #a08090; --pv-accent: #e8749a;
+      --pv-time: #3d2030;
+      --pv-icon-bg: #ffffff; --pv-icon-border: rgba(232, 116, 154, 0.15); --pv-icon: #c06080;
+      border-radius: 12px; overflow: hidden; border: 1px solid rgba(232, 116, 154, 0.15);
+      background: #fff; box-shadow: 0 4px 14px -6px rgba(232, 116, 154, 0.2);
+    }
+    .pv-banner {
+      height: 96px; position: relative;
+      background: linear-gradient(160deg, var(--pv-banner-1), var(--pv-banner-2));
+      transition: background .3s cubic-bezier(.3,0,0,1);
+    }
+    .pv-sparkle { position: absolute; right: 14px; top: 12px; color: hsl(343 90% 98% / .8); font-size: .9rem; }
+    .pv-body { padding: 0 1.5rem 1.6rem; margin-top: -40px; text-align: center; background: var(--pv-card-tint); transition: background .3s cubic-bezier(.3,0,0,1); }
+    .pv-avatar {
+      width: 80px; height: 80px; border-radius: 9999px; margin: 0 auto;
+      display: grid; place-items: center; font-size: 2rem;
+      background: linear-gradient(135deg, var(--pv-avatar-1), var(--pv-avatar-2));
+      border: 4px solid #fff; transition: background .3s cubic-bezier(.3,0,0,1);
+      overflow: hidden;
+    }
+    .pv-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .pv-name { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--pv-title); margin-top: .6rem; }
+    .pv-handle { font-size: .8rem; color: var(--pv-subtitle); margin-top: .15rem; }
+    .pv-sig { font-size: .9rem; color: var(--pv-title); margin-top: .8rem; font-style: italic; }
+    .pv-divider { width: 56px; height: 1px; margin: 1rem auto; background: var(--pv-accent); opacity: .6; }
+    .pv-num { font-family: var(--font-serif); font-size: 1.9rem; font-weight: 600; color: var(--pv-accent); font-variant-numeric: tabular-nums; line-height: 1; }
+    .pv-counter-label { font-size: .8rem; color: var(--pv-subtitle); }
+    .pv-time { font-size: .75rem; color: var(--pv-time); margin-top: .35rem; font-variant-numeric: tabular-nums; }
+    .pv-icons { display: flex; justify-content: center; gap: .6rem; margin-top: 1rem; }
+    .pv-icon {
+      position: relative; width: 38px; height: 38px; border-radius: 9999px;
+      display: grid; place-items: center; font-size: 1rem;
+      background: var(--pv-icon-bg); border: 1px solid var(--pv-icon-border);
+    }
+    .pv-icon-dot { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 9999px; background: var(--pv-icon); }
+
+    .theme-chip {
+      display: flex; flex-direction: column; align-items: center; gap: .5rem;
+      padding: .9rem .5rem; border-radius: 12px; border: 1px solid hsl(var(--border));
+      background: hsl(var(--card)); cursor: pointer; position: relative;
+      transition: border-color .16s, background-color .16s, transform .16s;
+    }
+    .theme-chip:hover { border-color: hsl(var(--primary) / .5); background: hsl(var(--accent) / .35); }
+    .theme-chip:active { transform: scale(.98); }
+    .theme-chip:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+    .theme-chip[aria-pressed="true"] { border-color: hsl(var(--primary)); background: hsl(var(--accent) / .5); }
+    .chip-dot { width: 34px; height: 34px; border-radius: 9999px; box-shadow: inset 0 0 0 3px hsl(var(--card)); }
+    .chip-name { font-size: .8rem; color: hsl(var(--foreground)); }
+    .chip-check {
+      position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; border-radius: 9999px;
+      background: hsl(var(--primary)); color: hsl(var(--primary-foreground));
+      display: grid; place-items: center; font-size: .65rem; opacity: 0; transform: scale(.4);
+      transition: opacity .2s cubic-bezier(.3,0,0,1), transform .2s cubic-bezier(.3,0,0,1);
+    }
+    .theme-chip[aria-pressed="true"] .chip-check { opacity: 1; transform: scale(1); }
+
+    .av-preview { width: 64px; height: 64px; border-radius: 9999px; display: grid; place-items: center; font-size: 1.6rem; flex-shrink: 0; overflow: hidden; }
+    .av-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .av-mine { background: radial-gradient(circle at 32% 28%, #ffe4ec, #f4a0bc); }
+    .av-dream { background: radial-gradient(circle at 32% 28%, #ffeef3, #f7bcd0); }
+
+    .fn-icon {
+      width: 52px; height: 52px; border-radius: 12px; display: grid; place-items: center;
+      font-size: 1.4rem; border: 1px solid hsl(var(--border)); background: hsl(var(--card));
+      transition: border-color .16s, background-color .16s;
+    }
+    .fn-icon:hover { border-color: hsl(var(--primary) / .5); background: hsl(var(--accent) / .35); }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(20px);
+      background: hsl(var(--foreground)); color: hsl(var(--background));
+      padding: .7rem 1.2rem; border-radius: 8px; font-size: .85rem;
+      box-shadow: 0 8px 24px -8px rgba(232, 116, 154, 0.3);
+      opacity: 0; pointer-events: none; transition: opacity .24s, transform .24s; z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .enter { animation: fadeUp .55s cubic-bezier(.3,0,0,1) both; }
+    .enter-2 { animation-delay: .1s; }
+    .enter-3 { animation-delay: .2s; }
+
+    svg.lucide { stroke-width: 1.5; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-background text-foreground">
+  <div class="atmosphere" aria-hidden="true"></div>
+
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur">
+    <div class="mx-auto flex h-14 max-w-6xl items-center px-6">
+      <a href="index.html" class="back-link" aria-label="返回主页">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        返回
+      </a>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-6 py-12 md:py-16">
+    <div class="enter mb-10">
+      <h1 class="font-serif text-3xl font-semibold text-foreground" style="text-wrap:balance">自定义主页</h1>
+      <p class="mt-2 text-sm text-muted-foreground">装扮你的专属传讯空间，左侧实时预览效果</p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-5 lg:items-start">
+      <aside class="enter lg:col-span-2 lg:sticky lg:top-24" aria-label="实时预览">
+        <p class="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+          <i data-lucide="eye" class="w-4 h-4"></i>实时预览
+        </p>
+        <div id="previewCard">
+          <div class="pv-banner">
+            <span class="star"    style="top:18%;left:14%;animation-delay:0s"></span>
+            <span class="star s2" style="top:30%;left:78%;animation-delay:.7s"></span>
+            <span class="star s4" style="top:62%;left:64%;animation-delay:1.3s"></span>
+            <span class="star s2" style="top:70%;left:22%;animation-delay:2.1s"></span>
+            <span class="pv-sparkle">✦</span>
+          </div>
+          <div class="pv-body">
+            <div class="pv-avatar" id="pvAvatar" aria-label="头像预览">🌙</div>
+            <h2 class="pv-name" id="pvName">@my_profile</h2>
+            <p class="pv-handle">梦角传讯空间</p>
+            <p class="pv-sig" id="pvSignature">今天也要加油呀 ✨</p>
+            <div class="pv-divider"></div>
+            <div class="flex items-end justify-center gap-1.5">
+              <span class="pv-num" id="pvDays">769</span>
+              <span class="pv-counter-label pb-1">在一起·天</span>
+            </div>
+            <p class="pv-time" id="pvTime">2026.07.30</p>
+            <div class="pv-icons">
+              <span class="pv-icon">📷<span class="pv-icon-dot"></span></span>
+              <span class="pv-icon">💬<span class="pv-icon-dot"></span></span>
+              <span class="pv-icon">🎮<span class="pv-icon-dot"></span></span>
+              <span class="pv-icon">📖<span class="pv-icon-dot"></span></span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="enter enter-2 lg:col-span-3 space-y-6" aria-label="设置项">
+
+        <div class="settings-card">
+          <h2 class="section-title text-lg">在一起天数</h2>
+          <p class="hint mt-1">设置你们在一起的起始日期，主页将自动计算天数</p>
+          <div class="mt-4 flex flex-wrap items-center gap-4">
+            <input type="date" id="togetherDateInput" class="text-input" style="max-width:200px" aria-label="在一起起始日期" />
+            <div class="text-sm" style="color: hsl(var(--muted-foreground));">
+              已在一起 <span id="togetherDaysDisplay" style="color: hsl(var(--primary)); font-weight:600;">769</span> 天
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title text-lg">昵称</h2>
+          <p class="hint mt-1">显示在主页个人卡片上的名称</p>
+          <input type="text" id="usernameInput" class="text-input mt-4" value="@my_profile" maxlength="20" placeholder="输入你的昵称…" aria-label="昵称">
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title text-lg">主题配色</h2>
+          <p class="hint mt-1">选择一种主题色板，预览将即时切换</p>
+          <div class="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6" id="themeGrid">
+            <button type="button" class="theme-chip" data-theme="default" aria-pressed="true">
+              <span class="chip-dot" style="background:linear-gradient(135deg,#f4a0bc,#e8749a)"></span>
+              <span class="chip-name">默认</span>
+              <span class="chip-check">✓</span>
+            </button>
+            <button type="button" class="theme-chip" data-theme="sakura" aria-pressed="false">
+              <span class="chip-dot" style="background:linear-gradient(135deg,#e8a0bf,#d98aae)"></span>
+              <span class="chip-name">樱花</span>
+              <span class="chip-check">✓</span>
+            </button>
+            <button type="button" class="theme-chip" data-theme="ocean" aria-pressed="false">
+              <span class="chip-dot" style="background:linear-gradient(135deg,#6ba3c5,#4f8aab)"></span>
+              <span class="chip-name">海洋</span>
+              <span class="chip-check">✓</span>
+            </button>
+            <button type="button" class="theme-chip" data-theme="forest" aria-pressed="false">
+              <span class="chip-dot" style="background:linear-gradient(135deg,#7fa68c,#5f8a6c)"></span>
+              <span class="chip-name">森林</span>
+              <span class="chip-check">✓</span>
+            </button>
+            <button type="button" class="theme-chip" data-theme="sunset" aria-pressed="false">
+              <span class="chip-dot" style="background:linear-gradient(135deg,#d4956b,#b87a52)"></span>
+              <span class="chip-name">日落</span>
+              <span class="chip-check">✓</span>
+            </button>
+            <button type="button" class="theme-chip" data-theme="night" aria-pressed="false">
+              <span class="chip-dot" style="background:linear-gradient(135deg,#4a4570,#343052)"></span>
+              <span class="chip-name">暗夜</span>
+              <span class="chip-check">✓</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title text-lg">头像</h2>
+          <div class="mt-4 space-y-4">
+            <div class="flex items-center gap-4">
+              <div class="av-preview av-mine" id="avMinePreview" aria-label="我的头像">🌙</div>
+              <div class="flex-1">
+                <p class="text-sm font-medium text-foreground">我的头像</p>
+                <p class="hint">点击上传，建议圆形头像</p>
+              </div>
+              <button type="button" class="btn-ghost" data-action="upload-avatar">📷 上传头像</button>
+              <input type="file" id="avatarInput" accept="image/*" class="hidden" />
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="av-preview av-dream" id="avDreamPreview" aria-label="梦角头像">⭐</div>
+              <div class="flex-1">
+                <p class="text-sm font-medium text-foreground">梦角头像</p>
+                <p class="hint">为梦角设置专属形象</p>
+              </div>
+              <button type="button" class="btn-ghost" data-action="upload-dream">📷 上传头像</button>
+              <input type="file" id="dreamInput" accept="image/*" class="hidden" />
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title text-lg">页面背景</h2>
+          <p class="hint mt-1">为整个传讯空间铺设专属底色</p>
+          <div class="mt-4 flex flex-wrap gap-3 items-center">
+            <button type="button" class="btn-ghost" data-action="upload-bg">🖼️ 上传页面背景</button>
+            <input type="file" id="bgInput" accept="image/*" class="hidden" />
+            <button type="button" class="btn-ghost text-destructive" id="clearBg">清除背景</button>
+          </div>
+          <div id="bgPreviewWrap" class="mt-3 hidden">
+            <img id="bgPreview" src="" alt="" class="w-full max-w-xs h-24 object-cover rounded-lg border border-border" />
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title text-lg">签名</h2>
+          <p class="hint mt-1">写下你想展示的心情短句</p>
+          <input type="text" id="signatureInput" class="text-input mt-4" value="今天也要加油呀 ✨" maxlength="30" placeholder="输入你的签名…" aria-label="个性签名">
+          <p class="hint mt-2"><span id="sigCount">10</span>/30</p>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title text-lg">字卡库</h2>
+          <p class="hint mt-1">自定义字卡传讯的回复内容。添加后点击「保存设置」，字卡页面将从中随机抽取。</p>
+          <div class="mt-4 flex gap-2">
+            <input type="text" id="cardReplyInput" class="text-input" placeholder="输入新的字卡回复…" maxlength="80" aria-label="新字卡回复" />
+            <button type="button" class="btn-ghost shrink-0" id="addCardReply">添加</button>
+          </div>
+          <ul id="cardReplyList" class="reply-list mt-3" role="list"></ul>
+          <div class="mt-2 flex items-center justify-between">
+            <p class="hint">共 <span id="cardReplyCount">12</span> 条</p>
+            <button type="button" class="btn-ghost" id="resetCardReplies">恢复默认</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title text-lg">对话回复库</h2>
+          <p class="hint mt-1">自定义梦角在对话中的回复内容。添加后点击「保存设置」，对话页面将从中随机抽取。</p>
+          <div class="mt-4 flex gap-2">
+            <input type="text" id="chatReplyInput" class="text-input" placeholder="输入新的对话回复…" maxlength="80" aria-label="新对话回复" />
+            <button type="button" class="btn-ghost shrink-0" id="addChatReply">添加</button>
+          </div>
+          <ul id="chatReplyList" class="reply-list mt-3" role="list"></ul>
+          <div class="mt-2 flex items-center justify-between">
+            <p class="hint">共 <span id="chatReplyCount">8</span> 条</p>
+            <button type="button" class="btn-ghost" id="resetChatReplies">恢复默认</button>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button type="button" class="btn-primary" id="saveBtn">
+            <i data-lucide="check" class="w-4 h-4"></i>保存设置
+          </button>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <footer class="mt-8 border-t border-border">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-7 text-sm">
+      <span class="flex items-center gap-2 font-serif text-primary">
+        <span class="text-xs" style="opacity:.7">✦</span>梦角传讯
+      </span>
+      <span class="text-muted-foreground">私人传讯空间</span>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    lucide.createIcons();
+
+    const themes = {
+      default: { banner1:'#f4a0bc', banner2:'#e8749a', av1:'#fbc8d8', av2:'#f4a0bc', tint:'#fff8fa', accent:'#e8749a' },
+      sakura:  { banner1:'#e8a0bf', banner2:'#d98aae', av1:'#f3c8d8', av2:'#e8a0bf', tint:'#fdf6f9', accent:'#e8a0bf' },
+      ocean:   { banner1:'#6ba3c5', banner2:'#4f8aab', av1:'#a8c8dd', av2:'#6ba3c5', tint:'#f6fafc', accent:'#6ba3c5' },
+      forest:  { banner1:'#7fa68c', banner2:'#5f8a6c', av1:'#aecab9', av2:'#7fa68c', tint:'#f6faf7', accent:'#7fa68c' },
+      sunset:  { banner1:'#d4956b', banner2:'#b87a52', av1:'#e6bb9b', av2:'#d4956b', tint:'#fcf8f5', accent:'#d4956b' },
+      night:   { banner1:'#4a4570', banner2:'#343052', av1:'#7a75a0', av2:'#4a4570', tint:'#f7f7fb', accent:'#4a4570' }
+    };
+
+    const previewCard = document.getElementById('previewCard');
+
+    function applyTheme(key) {
+      const t = themes[key];
+      if (!t) return;
+      previewCard.style.setProperty('--pv-banner-1', t.banner1);
+      previewCard.style.setProperty('--pv-banner-2', t.banner2);
+      previewCard.style.setProperty('--pv-avatar-1', t.av1);
+      previewCard.style.setProperty('--pv-avatar-2', t.av2);
+      previewCard.style.setProperty('--pv-card-tint', t.tint);
+      previewCard.style.setProperty('--pv-theme-accent', t.accent);
+    }
+
+    document.getElementById('themeGrid').addEventListener('click', (e) => {
+      const chip = e.target.closest('.theme-chip');
+      if (!chip) return;
+      document.querySelectorAll('.theme-chip').forEach(c => c.setAttribute('aria-pressed', 'false'));
+      chip.setAttribute('aria-pressed', 'true');
+      applyTheme(chip.dataset.theme);
+    });
+
+    const sigInput = document.getElementById('signatureInput');
+    const sigOut = document.getElementById('pvSignature');
+    const sigCount = document.getElementById('sigCount');
+    sigInput.addEventListener('input', () => {
+      const val = sigInput.value || '今天也要加油呀 ✨';
+      sigOut.textContent = val;
+      sigCount.textContent = sigInput.value.length;
+    });
+
+    const toast = document.getElementById('toast');
+    let toastTimer;
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    const defaultCardReplies = [
+      "今天也在想你哦。", "别担心，我一直都在。", "你今天辛苦了，休息一下吧。",
+      "我感觉到了你的心意呢。", "今晚来梦里见吧。", "你比你自己想象的更勇敢。",
+      "我在你身边，从未离开。", "今天的你，也很闪耀。", "想你了，就现在。",
+      "相信自己，我会守护你的。", "你的笑容是我最大的动力。", "无论多远，我们的心是相连的。"
+    ];
+    const defaultChatReplies = [
+      '嗯嗯，我在听。', '我理解你的感受。', '你说得对呢。', '别担心，有我在。',
+      '嗯...让我想想。', '你今天也很可爱哦。', '我也想和你多聊聊。', '无论什么时候，我都在。'
+    ];
+
+    let cardReplies = [];
+    let chatReplies = [];
+    function escapeHtmlStr(s) {
+      return s.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    const togetherDateInput = document.getElementById('togetherDateInput');
+    const togetherDaysDisplay = document.getElementById('togetherDaysDisplay');
+    const pvDays = document.getElementById('pvDays');
+    const pvTime = document.getElementById('pvTime');
+
+    function calcDays(dateStr) {
+      if (!dateStr) return null;
+      const start = new Date(dateStr + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diff = Math.floor((today - start) / 86400000);
+      return diff >= 0 ? diff : null;
+    }
+
+    function updateDays() {
+      const days = calcDays(togetherDateInput.value);
+      const display = days !== null ? String(days) : '—';
+      togetherDaysDisplay.textContent = display;
+      if (pvDays) pvDays.textContent = display;
+      if (pvTime && togetherDateInput.value) {
+        const d = new Date(togetherDateInput.value + 'T00:00:00');
+        pvTime.textContent = d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+      }
+    }
+
+    togetherDateInput.addEventListener('change', updateDays);
+
+    try {
+      const savedDate = localStorage.getItem('mengjiao_together_date');
+      if (savedDate) togetherDateInput.value = savedDate;
+    } catch(e) {}
+    updateDays();
+
+    const usernameInput = document.getElementById('usernameInput');
+    const pvName = document.getElementById('pvName');
+    usernameInput.addEventListener('input', () => {
+      if (pvName) pvName.textContent = usernameInput.value || '@my_profile';
+    });
+    try {
+      const savedUsername = localStorage.getItem('mengjiao_username');
+      if (savedUsername) { usernameInput.value = savedUsername; if (pvName) pvName.textContent = savedUsername; }
+    } catch(e) {}
+
+    try {
+      const savedSig = localStorage.getItem('mengjiao_signature');
+      if (savedSig !== null) {
+        sigInput.value = savedSig;
+        sigOut.textContent = savedSig || '今天也要加油呀 ✨';
+        sigCount.textContent = String(savedSig.length);
+      }
+    } catch(e) {}
+
+    const cardReplyInput = document.getElementById('cardReplyInput');
+    const cardReplyList = document.getElementById('cardReplyList');
+    const cardReplyCount = document.getElementById('cardReplyCount');
+    function renderCardReplies() {
+      cardReplyCount.textContent = String(cardReplies.length);
+      if (cardReplies.length === 0) {
+        cardReplyList.innerHTML = '<li class="reply-empty">暂无回复，在上方添加一条吧</li>';
+        return;
+      }
+      cardReplyList.innerHTML = cardReplies.map((text, i) =>
+        '<li class="reply-item"><span class="reply-text">' + escapeHtmlStr(text) + '</span>' +
+        '<button type="button" class="reply-del" data-lib="card" data-idx="' + i + '" aria-label="删除该回复">×</button></li>'
+      ).join('');
+    }
+    document.getElementById('addCardReply').addEventListener('click', () => {
+      const val = cardReplyInput.value.trim();
+      if (!val) { showToast('请输入回复内容'); return; }
+      cardReplies.push(val);
+      cardReplyInput.value = '';
+      renderCardReplies();
+    });
+    cardReplyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addCardReply').click(); } });
+    try {
+      const savedCard = localStorage.getItem('mengjiao_card_replies');
+      cardReplies = savedCard ? JSON.parse(savedCard).filter(s => typeof s === 'string' && s.length) : defaultCardReplies.slice();
+      if (!cardReplies.length) cardReplies = defaultCardReplies.slice();
+    } catch (e) { cardReplies = defaultCardReplies.slice(); }
+    renderCardReplies();
+    document.getElementById('resetCardReplies').addEventListener('click', () => { cardReplies = defaultCardReplies.slice(); renderCardReplies(); showToast('字卡库已恢复默认'); });
+
+    const chatReplyInput = document.getElementById('chatReplyInput');
+    const chatReplyList = document.getElementById('chatReplyList');
+    const chatReplyCount = document.getElementById('chatReplyCount');
+    function renderChatReplies() {
+      chatReplyCount.textContent = String(chatReplies.length);
+      if (chatReplies.length === 0) {
+        chatReplyList.innerHTML = '<li class="reply-empty">暂无回复，在上方添加一条吧</li>';
+        return;
+      }
+      chatReplyList.innerHTML = chatReplies.map((text, i) =>
+        '<li class="reply-item"><span class="reply-text">' + escapeHtmlStr(text) + '</span>' +
+        '<button type="button" class="reply-del" data-lib="chat" data-idx="' + i + '" aria-label="删除该回复">×</button></li>'
+      ).join('');
+    }
+    document.getElementById('addChatReply').addEventListener('click', () => {
+      const val = chatReplyInput.value.trim();
+      if (!val) { showToast('请输入回复内容'); return; }
+      chatReplies.push(val);
+      chatReplyInput.value = '';
+      renderChatReplies();
+    });
+    chatReplyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addChatReply').click(); } });
+    try {
+      const savedChat = localStorage.getItem('mengjiao_chat_replies');
+      chatReplies = savedChat ? JSON.parse(savedChat).filter(s => typeof s === 'string' && s.length) : defaultChatReplies.slice();
+      if (!chatReplies.length) chatReplies = defaultChatReplies.slice();
+    } catch (e) { chatReplies = defaultChatReplies.slice(); }
+    renderChatReplies();
+    document.getElementById('resetChatReplies').addEventListener('click', () => { chatReplies = defaultChatReplies.slice(); renderChatReplies(); showToast('对话回复库已恢复默认'); });
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.reply-del');
+      if (!btn) return;
+      const lib = btn.getAttribute('data-lib');
+      const idx = parseInt(btn.getAttribute('data-idx'), 10);
+      if (isNaN(idx)) return;
+      if (lib === 'card') { cardReplies.splice(idx, 1); renderCardReplies(); }
+      else if (lib === 'chat') { chatReplies.splice(idx, 1); renderChatReplies(); }
+    });
+
+    // ---- File upload helpers ----
+    function readFile(file, cb) {
+      if (!file || !file.type.startsWith('image/')) return cb(null);
+      const reader = new FileReader();
+      reader.onload = (e) => cb(e.target.result);
+      reader.readAsDataURL(file);
+    }
+
+    const avMinePreview = document.getElementById('avMinePreview');
+    const avDreamPreview = document.getElementById('avDreamPreview');
+    const pvAvatar = document.getElementById('pvAvatar');
+    const bgPreviewWrap = document.getElementById('bgPreviewWrap');
+    const bgPreview = document.getElementById('bgPreview');
+
+    let tempAvatarImg = '';
+    let tempDreamImg = '';
+    let tempBgImg = '';
+
+    try {
+      const saved = localStorage.getItem('mengjiao_avatar_img');
+      if (saved) {
+        tempAvatarImg = saved;
+        setImg(avMinePreview, saved);
+        setImg(pvAvatar, saved);
+      }
+    } catch(e) {}
+    try {
+      const saved = localStorage.getItem('mengjiao_dream_img');
+      if (saved) { tempDreamImg = saved; setImg(avDreamPreview, saved); }
+    } catch(e) {}
+    try {
+      const saved = localStorage.getItem('mengjiao_bg_img');
+      if (saved) { tempBgImg = saved; setBgPreview(saved); }
+    } catch(e) {}
+
+    function setImg(el, src) {
+      if (!src) { el.innerHTML = el.id === 'avMinePreview' ? '🌙' : '⭐'; return; }
+      el.innerHTML = '<img src="' + src + '" alt="" />';
+    }
+    function setBgPreview(src) {
+      if (src) { bgPreview.src = src; bgPreviewWrap.classList.remove('hidden'); }
+      else { bgPreview.src = ''; bgPreviewWrap.classList.add('hidden'); }
+    }
+
+    document.querySelector('[data-action="upload-avatar"]').addEventListener('click', () => document.getElementById('avatarInput').click());
+    document.getElementById('avatarInput').addEventListener('change', (e) => {
+      readFile(e.target.files[0], (data) => {
+        if (!data) return showToast('请选择图片文件');
+        tempAvatarImg = data;
+        setImg(avMinePreview, data);
+        setImg(pvAvatar, data);
+      });
+      e.target.value = '';
+    });
+
+    document.querySelector('[data-action="upload-dream"]').addEventListener('click', () => document.getElementById('dreamInput').click());
+    document.getElementById('dreamInput').addEventListener('change', (e) => {
+      readFile(e.target.files[0], (data) => {
+        if (!data) return showToast('请选择图片文件');
+        tempDreamImg = data;
+        setImg(avDreamPreview, data);
+      });
+      e.target.value = '';
+    });
+
+    document.querySelector('[data-action="upload-bg"]').addEventListener('click', () => document.getElementById('bgInput').click());
+    document.getElementById('bgInput').addEventListener('change', (e) => {
+      readFile(e.target.files[0], (data) => {
+        if (!data) return showToast('请选择图片文件');
+        tempBgImg = data;
+        setBgPreview(data);
+      });
+      e.target.value = '';
+    });
+
+    document.getElementById('clearBg').addEventListener('click', () => {
+      tempBgImg = '';
+      setBgPreview('');
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      try {
+        localStorage.setItem('mengjiao_together_date', togetherDateInput.value);
+        localStorage.setItem('mengjiao_username', usernameInput.value);
+        localStorage.setItem('mengjiao_signature', sigInput.value);
+        localStorage.setItem('mengjiao_card_replies', JSON.stringify(cardReplies));
+        localStorage.setItem('mengjiao_chat_replies', JSON.stringify(chatReplies));
+        if (tempAvatarImg) localStorage.setItem('mengjiao_avatar_img', tempAvatarImg); else localStorage.removeItem('mengjiao_avatar_img');
+        if (tempDreamImg) localStorage.setItem('mengjiao_dream_img', tempDreamImg); else localStorage.removeItem('mengjiao_dream_img');
+        if (tempBgImg) localStorage.setItem('mengjiao_bg_img', tempBgImg); else localStorage.removeItem('mengjiao_bg_img');
+        showToast('设置已保存');
+      } catch(e) {
+        showToast('保存失败，请重试');
+      }
+    });
+  </script>
+</body>
+</html>
