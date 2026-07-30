@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>梦角对话</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet">
+    <style id="theme-vars">
+/* 梦角传讯 — 温柔梦幻主题 (Free Explore) */
+/* 主色：梦幻紫 #9d7fc2，单一色相 + 其色调，不引入额外品牌色相 */
+
+:root {
+  /* bg */
+  --background: 270 27% 98%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+
+  /* text */
+  --foreground: 252 25% 26%;
+  --card-foreground: 252 25% 26%;
+  --popover-foreground: 252 25% 26%;
+  --muted-foreground: 252 12% 55%;
+
+  /* accent — 均为主色紫的色调，不引入新色相 */
+  --primary: 263 34% 63%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 263 47% 93%;
+  --secondary-foreground: 252 25% 26%;
+  --muted: 270 25% 95%;
+  --accent: 263 47% 90%;
+  --accent-foreground: 252 25% 26%;
+
+  /* status */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* border */
+  --border: 270 20% 90%;
+  --input: 270 25% 95%;
+  --ring: 263 34% 63%;
+
+  /* chart — 主色色调 + 中性 */
+  --chart-1: 263 34% 63%;
+  --chart-2: 263 20% 75%;
+  --chart-3: 270 12% 70%;
+  --chart-4: 263 34% 80%;
+  --chart-5: 252 25% 55%;
+
+  /* sidebar */
+  --sidebar: 270 27% 98%;
+  --sidebar-foreground: 252 25% 26%;
+  --sidebar-primary: 263 34% 63%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 263 47% 90%;
+  --sidebar-accent-foreground: 252 25% 26%;
+  --sidebar-border: 270 20% 90%;
+  --sidebar-ring: 263 34% 63%;
+
+  /* typography */
+  --font-sans: "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+
+  /* shape — 克制圆角，最大 12px */
+  --radius: 0.75rem;
+
+  /* shadow — 静态表面 alpha <= 0.05，仅浮层可用更深 elevation */
+  --shadow-color: 263 34% 63%;
+  --shadow-2xs: 0px 1px 2px 0px hsl(263 34% 63% / 0.04);
+  --shadow-xs: 0px 1px 2px 0px hsl(263 34% 63% / 0.04);
+  --shadow-sm: 0px 1px 3px 0px hsl(263 34% 63% / 0.04), 0px 1px 2px -1px hsl(263 34% 63% / 0.04);
+  --shadow: 0px 1px 3px 0px hsl(263 34% 63% / 0.05), 0px 1px 2px -1px hsl(263 34% 63% / 0.05);
+  --shadow-md: 0px 4px 6px -1px hsl(263 34% 40% / 0.08), 0px 2px 4px -2px hsl(263 34% 40% / 0.06);
+  --shadow-lg: 0px 10px 15px -3px hsl(263 34% 40% / 0.10), 0px 4px 6px -4px hsl(263 34% 40% / 0.08);
+  --shadow-xl: 0px 20px 25px -5px hsl(263 34% 40% / 0.12), 0px 8px 10px -6px hsl(263 34% 40% / 0.10);
+  --shadow-2xl: 0px 25px 50px -12px hsl(263 34% 40% / 0.15);
+
+  --tracking-normal: 0.01em;
+  --spacing: 0.3rem;
+}
+
+.dark {
+  /* bg */
+  --background: 252 30% 10%;
+  --card: 252 28% 14%;
+  --popover: 252 28% 14%;
+
+  /* text */
+  --foreground: 270 20% 92%;
+  --card-foreground: 270 20% 92%;
+  --popover-foreground: 270 20% 92%;
+  --muted-foreground: 263 12% 65%;
+
+  /* accent */
+  --primary: 263 40% 70%;
+  --primary-foreground: 252 30% 12%;
+  --secondary: 252 25% 22%;
+  --secondary-foreground: 270 20% 92%;
+  --muted: 252 25% 18%;
+  --accent: 263 30% 28%;
+  --accent-foreground: 270 20% 92%;
+
+  /* status */
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* border */
+  --border: 252 20% 24%;
+  --input: 252 25% 20%;
+  --ring: 263 40% 70%;
+
+  /* chart */
+  --chart-1: 263 40% 70%;
+  --chart-2: 263 25% 55%;
+  --chart-3: 270 15% 60%;
+  --chart-4: 263 30% 80%;
+  --chart-5: 252 20% 65%;
+
+  /* sidebar */
+  --sidebar: 252 30% 10%;
+  --sidebar-foreground: 270 20% 92%;
+  --sidebar-primary: 263 40% 70%;
+  --sidebar-primary-foreground: 252 30% 12%;
+  --sidebar-accent: 263 30% 28%;
+  --sidebar-accent-foreground: 270 20% 92%;
+  --sidebar-border: 252 20% 24%;
+  --sidebar-ring: 263 40% 70%;
+
+  /* typography */
+  --font-sans: "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+
+  --radius: 0.75rem;
+
+  --shadow-color: 263 40% 70%;
+  --shadow-2xs: 0px 1px 2px 0px hsl(252 30% 5% / 0.30);
+  --shadow-xs: 0px 1px 2px 0px hsl(252 30% 5% / 0.30);
+  --shadow-sm: 0px 1px 3px 0px hsl(252 30% 5% / 0.35), 0px 1px 2px -1px hsl(252 30% 5% / 0.30);
+  --shadow: 0px 1px 3px 0px hsl(252 30% 5% / 0.40), 0px 1px 2px -1px hsl(252 30% 5% / 0.35);
+  --shadow-md: 0px 4px 6px -1px hsl(252 30% 5% / 0.45), 0px 2px 4px -2px hsl(252 30% 5% / 0.40);
+  --shadow-lg: 0px 10px 15px -3px hsl(252 30% 5% / 0.50), 0px 4px 6px -4px hsl(252 30% 5% / 0.45);
+  --shadow-xl: 0px 20px 25px -5px hsl(252 30% 5% / 0.55), 0px 8px 10px -6px hsl(252 30% 5% / 0.50);
+  --shadow-2xl: 0px 25px 50px -12px hsl(252 30% 5% / 0.60);
+
+  --tracking-normal: 0.01em;
+  --spacing: 0.3rem;
+}
+
+body {
+  letter-spacing: var(--tracking-normal);
+}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  }
+  @layer base {
+    body { background: var(--background); color: var(--foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden antialiased">
+    <nav class="w-full shrink-0 border-b" style="border-color: var(--border); background: var(--background);" aria-label="主导航">
+      <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+        <a href="home.html" class="serif text-xl font-semibold whitespace-nowrap" style="color: var(--primary);">梦角传讯</a>
+        <div class="flex items-center gap-1">
+          <a href="home.html" data-dom-id="nav-home" class="nav-item">主页</a>
+          <a href="cards.html" data-dom-id="nav-cards" class="nav-item">字卡</a>
+          <a href="chat.html" data-dom-id="nav-chat" class="nav-item active" aria-current="page">对话</a>
+          <a href="customize.html" data-dom-id="nav-customize" class="nav-item">自定义</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="flex-1 min-h-0 flex flex-col">
+      <div class="max-w-4xl w-full mx-auto flex-1 min-h-0 flex flex-col px-4 sm:px-6 py-4">
+        <section class="flex-1 min-h-0 flex flex-col rounded-xl border overflow-hidden" style="border-color: var(--border); background: var(--card);">
+
+          <header class="shrink-0 flex items-center gap-3 px-4 sm:px-5 py-3 border-b" style="border-color: var(--border); background: var(--card);">
+            <div class="avatar shrink-0" aria-hidden="true">梦</div>
+            <div class="flex-1 min-w-0">
+              <h1 class="serif text-lg font-semibold truncate" style="color: var(--foreground);">梦角</h1>
+              <div class="flex items-center gap-1.5">
+                <span class="status-dot shrink-0" aria-hidden="true"></span>
+                <span class="text-xs" style="color: var(--muted-foreground);">在线</span>
+              </div>
+            </div>
+            <span class="hidden sm:inline-flex text-base leading-none select-none" style="opacity: 0.55;" aria-hidden="true">📷</span>
+            <span class="hidden sm:inline-flex text-base leading-none select-none" style="opacity: 0.55;" aria-hidden="true">📞</span>
+            <a href="customize.html" data-dom-id="go-customize" class="shrink-0 text-xs px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap" style="color: var(--muted-foreground); border: 1px solid var(--border);">去自定义</a>
+          </header>
+
+          <div id="message-stream" class="starry-bg flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 flex flex-col gap-3">
+
+            <div class="flex items-end gap-2 message-row">
+              <div class="avatar avatar-sm shrink-0" aria-hidden="true">梦</div>
+              <div class="flex flex-col gap-1 max-w-[78%]">
+                <div class="bubble-left rounded-xl px-3.5 py-2 text-sm leading-relaxed">你来了呀 ✨</div>
+                <span class="text-xs" style="color: var(--muted-foreground);">14:32</span>
+              </div>
+            </div>
+
+            <div class="flex items-end gap-2 justify-end message-row">
+              <div class="flex flex-col gap-1 items-end max-w-[78%]">
+                <div class="bubble-right rounded-xl px-3.5 py-2 text-sm leading-relaxed">嗯，今天想和你说说话</div>
+                <span class="text-xs" style="color: var(--muted-foreground);">14:32</span>
+              </div>
+            </div>
+
+            <div class="flex items-end gap-2 message-row">
+              <div class="avatar avatar-sm shrink-0" aria-hidden="true">梦</div>
+              <div class="flex flex-col gap-1 max-w-[78%]">
+                <div class="bubble-left rounded-xl px-3.5 py-2 text-sm leading-relaxed">我一直在等你呢。今天过得怎么样？</div>
+                <span class="text-xs" style="color: var(--muted-foreground);">14:33</span>
+              </div>
+            </div>
+
+            <div class="flex items-end gap-2 justify-end message-row">
+              <div class="flex flex-col gap-1 items-end max-w-[78%]">
+                <div class="bubble-right rounded-xl px-3.5 py-2 text-sm leading-relaxed">有点累，但是看到你就觉得好多了</div>
+                <span class="text-xs" style="color: var(--muted-foreground);">14:33</span>
+              </div>
+            </div>
+
+            <div class="flex items-end gap-2 message-row">
+              <div class="avatar avatar-sm shrink-0" aria-hidden="true">梦</div>
+              <div class="flex flex-col gap-1 max-w-[78%]">
+                <div class="bubble-left rounded-xl px-3.5 py-2 text-sm leading-relaxed">辛苦了。累了就休息，我会在这里陪着你的。</div>
+                <span class="text-xs" style="color: var(--muted-foreground);">14:34</span>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="shrink-0 px-4 sm:px-5 py-3 border-t" style="border-color: var(--border); background: var(--card);">
+            <form id="chat-form" class="flex items-center gap-2">
+              <label for="chat-input" class="sr-only">输入消息</label>
+              <input id="chat-input" type="text" placeholder="说点什么..." autocomplete="off" class="chat-input flex-1 min-w-0 rounded-lg px-4 py-2.5 text-sm outline-none transition-colors" style="background: var(--input); border: 1px solid var(--border); color: var(--foreground);">
+              <button type="submit" data-dom-id="send-message" class="send-btn shrink-0 rounded-lg px-5 py-2.5 text-sm font-medium transition-transform" style="background: var(--primary); color: var(--primary-foreground);">发送</button>
+            </form>
+          </div>
+
+        </section>
+      </div>
+    </main>
+
+    <footer class="shrink-0 border-t" style="border-color: var(--border); background: var(--background);">
+      <div class="max-w-6xl mx-auto px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-1.5">
+        <p class="text-xs" style="color: var(--muted-foreground);">梦角传讯 · 与梦角的温柔传讯空间</p>
+        <p class="text-xs" style="color: var(--muted-foreground);">愿每一次对话都被星光温柔接住</p>
+      </div>
+    </footer>
+
+    <style>
+      body { font-family: var(--font-sans); }
+      .serif { font-family: var(--font-serif); }
+
+      /* 顶部导航项 */
+      .nav-item {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: var(--muted-foreground);
+        transition: color 150ms cubic-bezier(.2,.8,.2,1), background-color 150ms cubic-bezier(.2,.8,.2,1);
+        white-space: nowrap;
+      }
+      .nav-item:hover { color: var(--foreground); background: var(--muted); }
+      .nav-item:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(var(--ring) / 0.4); }
+      .nav-item.active { color: var(--primary); background: var(--secondary); }
+
+      /* 梦角头像：纯 CSS 渐变圆 + 衬线字 */
+      .avatar {
+        width: 40px; height: 40px; border-radius: 9999px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: linear-gradient(140deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.82) 100%);
+        color: var(--primary-foreground);
+        font-family: var(--font-serif);
+        font-weight: 600;
+        font-size: 18px;
+        border: 2px solid var(--card);
+        flex: 0 0 auto;
+      }
+      .avatar-sm { width: 30px; height: 30px; font-size: 14px; border-width: 2px; }
+
+      /* 在线状态点：同色脉冲（单一紫色调，不引入绿色） */
+      .status-dot {
+        width: 7px; height: 7px; border-radius: 9999px;
+        background: var(--primary);
+        animation: statusPulse 2.4s cubic-bezier(.2,.8,.2,1) infinite;
+      }
+      @keyframes statusPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.55; transform: scale(0.82); }
+      }
+
+      /* 消息气泡 */
+      .bubble-left {
+        background: var(--card);
+        color: var(--foreground);
+        border: 1px solid var(--border);
+        word-break: break-word;
+        overflow-wrap: break-word;
+      }
+      .bubble-right {
+        background: var(--primary);
+        color: var(--primary-foreground);
+        word-break: break-word;
+        overflow-wrap: break-word;
+      }
+
+      /* 梦幻星空背景：静态、稀疏、低透明度的同色星点（项目星光 soul element） */
+      .starry-bg {
+        background-color: var(--background);
+        background-image:
+          radial-gradient(1.5px 1.5px at 18% 14%, hsl(var(--primary) / 0.22), transparent 60%),
+          radial-gradient(1.5px 1.5px at 72% 22%, hsl(var(--primary) / 0.18), transparent 60%),
+          radial-gradient(1px 1px at 42% 56%, hsl(var(--primary) / 0.28), transparent 60%),
+          radial-gradient(1.5px 1.5px at 86% 68%, hsl(var(--primary) / 0.18), transparent 60%),
+          radial-gradient(1px 1px at 55% 88%, hsl(var(--primary) / 0.22), transparent 60%),
+          radial-gradient(1px 1px at 12% 78%, hsl(var(--primary) / 0.18), transparent 60%),
+          radial-gradient(1.5px 1.5px at 92% 40%, hsl(var(--primary) / 0.14), transparent 60%),
+          radial-gradient(1px 1px at 30% 36%, hsl(var(--primary) / 0.20), transparent 60%),
+          radial-gradient(1px 1px at 64% 72%, hsl(var(--primary) / 0.16), transparent 60%);
+        background-repeat: no-repeat;
+      }
+
+      /* 消息入场：温柔上浮淡入 */
+      .message-row {
+        animation: fadeInUp 280ms cubic-bezier(.3,0,0,1) both;
+      }
+      .message-row:nth-child(1) { animation-delay: 0ms; }
+      .message-row:nth-child(2) { animation-delay: 80ms; }
+      .message-row:nth-child(3) { animation-delay: 160ms; }
+      .message-row:nth-child(4) { animation-delay: 240ms; }
+      .message-row:nth-child(5) { animation-delay: 320ms; }
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* 输入框焦点 */
+      .chat-input::placeholder { color: var(--muted-foreground); }
+      .chat-input:hover { border-color: hsl(var(--primary) / 0.5); }
+      .chat-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px hsl(var(--ring) / 0.3); }
+
+      /* 发送按钮 */
+      .send-btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
+      .send-btn:active { transform: translateY(0); filter: brightness(0.96); }
+      .send-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(var(--ring) / 0.45); }
+      .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: none; }
+
+      /* 去自定义 次级按钮 */
+      a[data-dom-id="go-customize"]:hover { color: var(--primary); border-color: hsl(var(--primary) / 0.5); }
+      a[data-dom-id="go-customize"]:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(var(--ring) / 0.4); }
+
+      /* 梦角输入中指示 */
+      .typing-dot {
+        display: inline-block; width: 5px; height: 5px; border-radius: 9999px;
+        background: var(--muted-foreground); margin: 0 1.5px;
+        animation: typingBlink 1.2s cubic-bezier(.2,.8,.2,1) infinite;
+      }
+      .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+      .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes typingBlink {
+        0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+        30% { opacity: 1; transform: translateY(-2px); }
+      }
+
+      /* 消息流滚动条：柔细化 */
+      #message-stream::-webkit-scrollbar { width: 6px; }
+      #message-stream::-webkit-scrollbar-thumb { background: hsl(var(--primary) / 0.18); border-radius: 9999px; }
+      #message-stream::-webkit-scrollbar-track { background: transparent; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .message-row, .status-dot, .typing-dot { animation: none !important; }
+        .send-btn, .nav-item, .chat-input, a[data-dom-id="go-customize"] { transition-duration: 0.01ms !important; }
+      }
+    </style>
+
+    <script>
+    (function () {
+      var stream = document.getElementById('message-stream');
+      var form = document.getElementById('chat-form');
+      var input = document.getElementById('chat-input');
+      var sendBtn = document.querySelector('[data-dom-id="send-message"]');
+      var replies = [
+        '嗯嗯，我在听。',
+        '我理解你的感受。',
+        '你说得对呢。',
+        '别担心，有我在。',
+        '嗯...让我想想。',
+        '你今天也很可爱哦。',
+        '我也想和你多聊聊。',
+        '无论什么时候，我都在。'
+      ];
+
+      function nowTime() {
+        var d = new Date();
+        var h = String(d.getHours()).padStart(2, '0');
+        var m = String(d.getMinutes()).padStart(2, '0');
+        return h + ':' + m;
+      }
+
+      function scrollBottom() {
+        stream.scrollTop = stream.scrollHeight;
+      }
+
+      function makeAvatar() {
+        var av = document.createElement('div');
+        av.className = 'avatar avatar-sm shrink-0';
+        av.setAttribute('aria-hidden', 'true');
+        av.textContent = '梦';
+        return av;
+      }
+
+      function makeTime() {
+        var t = document.createElement('span');
+        t.className = 'text-xs';
+        t.style.color = 'var(--muted-foreground)';
+        t.textContent = nowTime();
+        return t;
+      }
+
+      function addMessage(text, side) {
+        var row = document.createElement('div');
+        row.className = 'flex items-end gap-2 message-row' + (side === 'right' ? ' justify-end' : '');
+
+        if (side !== 'right') {
+          row.appendChild(makeAvatar());
+        }
+
+        var col = document.createElement('div');
+        col.className = 'flex flex-col gap-1 max-w-[78%]' + (side === 'right' ? ' items-end' : '');
+
+        var bubble = document.createElement('div');
+        bubble.className = 'rounded-xl px-3.5 py-2 text-sm leading-relaxed ' + (side === 'right' ? 'bubble-right' : 'bubble-left');
+        bubble.textContent = text;
+        col.appendChild(bubble);
+        col.appendChild(makeTime());
+
+        row.appendChild(col);
+        stream.appendChild(row);
+        scrollBottom();
+      }
+
+      function showTyping() {
+        var row = document.createElement('div');
+        row.className = 'flex items-end gap-2 message-row';
+        row.appendChild(makeAvatar());
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble-left rounded-xl px-3.5 py-2.5 text-sm';
+        bubble.setAttribute('aria-label', '梦角正在输入');
+        var d1 = document.createElement('span'); d1.className = 'typing-dot';
+        var d2 = document.createElement('span'); d2.className = 'typing-dot';
+        var d3 = document.createElement('span'); d3.className = 'typing-dot';
+        bubble.appendChild(d1); bubble.appendChild(d2); bubble.appendChild(d3);
+        row.appendChild(bubble);
+        stream.appendChild(row);
+        scrollBottom();
+        return row;
+      }
+
+      function dreamReply() {
+        sendBtn.disabled = true;
+        var typing = showTyping();
+        var delay = 1200 + Math.random() * 700;
+        setTimeout(function () {
+          stream.removeChild(typing);
+          var text = replies[Math.floor(Math.random() * replies.length)];
+          addMessage(text, 'left');
+          sendBtn.disabled = false;
+        }, delay);
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var text = input.value.trim();
+        if (!text || sendBtn.disabled) return;
+        addMessage(text, 'right');
+        input.value = '';
+        dreamReply();
+      });
+
+      scrollBottom();
+    })();
+    </script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
