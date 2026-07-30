@@ -102,27 +102,18 @@
     }
     .app-bg::-webkit-scrollbar { display: none; }
 
-    /* Status bar */
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 28px 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: hsl(var(--foreground));
-    }
-    .status-icons { display: flex; align-items: center; gap: 6px; font-size: 12px; }
-
     /* Personal banner */
     .banner {
       position: relative;
-      margin: 8px 16px 0;
+      margin: 40px 16px 0;
       padding: 20px 20px 24px;
       border-radius: 20px;
       overflow: hidden;
       background: linear-gradient(140deg, hsl(263 46% 48%), hsl(263 52% 36%));
       box-shadow: 0 8px 24px -8px hsl(263 40% 35% / 0.3);
+    }
+    @media (max-width: 479px) {
+      .banner { margin-top: 16px; }
     }
     .banner-stars {
       position: absolute; inset: 0; pointer-events: none;
@@ -262,16 +253,6 @@
   <div class="phone">
     <div class="app-bg">
 
-      <!-- Status bar -->
-      <div class="status-bar">
-        <span>9:41</span>
-        <div class="status-icons">
-          <span>5G</span>
-          <span>●</span>
-          <span>85%</span>
-        </div>
-      </div>
-
       <!-- Personal banner -->
       <div class="banner">
         <div class="banner-stars">
@@ -283,14 +264,14 @@
           <span style="top:85%;left:15%;width:2px;height:2px;animation-delay:2.4s"></span>
         </div>
         <div class="banner-row">
-          <div class="avatar-circle">🌙</div>
+          <div class="avatar-circle" id="avatarEmoji">🌙</div>
           <div>
-            <div class="banner-name font-medium">@my_profile</div>
-            <div class="banner-sig italic">今天也要加油呀 ✨</div>
+            <div class="banner-name font-medium" id="username">@my_profile</div>
+            <div class="banner-sig italic" id="signature">今天也要加油呀 ✨</div>
           </div>
         </div>
         <div class="banner-days">
-          <span class="banner-days-num">769</span>
+          <span class="banner-days-num" id="daysNum">769</span>
           <span class="banner-days-label">天 · 在一起</span>
         </div>
       </div>
@@ -378,11 +359,75 @@
   </div>
 
   <script>
-    // Prevent pull-to-refresh interfering with app feel
-    document.body.addEventListener('touchmove', function(e) {
-      if (e.target.closest('.app-bg')) return;
-      e.preventDefault();
-    }, { passive: false });
+    (function () {
+      "use strict";
+
+      var KEYS = {
+        togetherDate: "mengjiao_together_date",
+        signature: "mengjiao_signature",
+        username: "mengjiao_username",
+        avatarEmoji: "mengjiao_avatar_emoji"
+      };
+
+      var DEFAULTS = {
+        signature: "今天也要加油呀 ✨",
+        username: "@my_profile",
+        avatarEmoji: "🌙"
+      };
+
+      function getItem(key, fallback) {
+        try {
+          var v = localStorage.getItem(key);
+          if (v !== null && v !== "") return v;
+        } catch (e) {}
+        return fallback;
+      }
+
+      function toDateStr(d) {
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, "0");
+        var day = String(d.getDate()).padStart(2, "0");
+        return y + "-" + m + "-" + day;
+      }
+
+      function defaultDate() {
+        var d = new Date();
+        d.setDate(d.getDate() - 769);
+        return toDateStr(d);
+      }
+
+      function calcDays(dateStr) {
+        if (!dateStr) return 769;
+        var start = new Date(dateStr + "T00:00:00");
+        if (isNaN(start.getTime())) return 769;
+        var now = new Date();
+        now.setHours(0, 0, 0, 0);
+        var diff = now.getTime() - start.getTime();
+        var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        if (days < 0) days = 0;
+        return days;
+      }
+
+      // Read together date and calculate days
+      var savedDate = getItem(KEYS.togetherDate, "");
+      var days = savedDate ? calcDays(savedDate) : 769;
+      document.getElementById("daysNum").textContent = days;
+
+      // Read signature
+      document.getElementById("signature").textContent = getItem(KEYS.signature, DEFAULTS.signature);
+
+      // Read username
+      document.getElementById("username").textContent = getItem(KEYS.username, DEFAULTS.username);
+
+      // Read avatar emoji
+      document.getElementById("avatarEmoji").textContent = getItem(KEYS.avatarEmoji, DEFAULTS.avatarEmoji);
+
+      // Prevent pull-to-refresh interfering with app feel
+      document.body.addEventListener('touchmove', function(e) {
+        if (e.target.closest('.app-bg')) return;
+        e.preventDefault();
+      }, { passive: false });
+    })();
   </script>
 </body>
 </html>
