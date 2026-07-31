@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>小火人 · 梦角传讯</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../colors_and_type.css" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            secondary: 'hsl(var(--secondary))',
+            accent: 'hsl(var(--accent))',
+            border: 'hsl(var(--border))',
+          },
+          fontFamily: {
+            sans: ['"DreamFont", "Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"DreamFont", "Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
+          },
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--secondary-bg);
+      color: var(--text-primary);
+      letter-spacing: var(--tracking-normal);
+    }
+
+    .phone {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 880px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: hsl(var(--background));
+    }
+    @media (min-width: 480px) {
+      .phone {
+        height: 860px;
+        border-radius: 40px;
+        border: 10px solid hsl(343 30% 22%);
+        box-shadow: 0 25px 60px -15px hsl(343 60% 35% / 0.35), 0 0 0 2px hsl(343 20% 12%);
+      }
+      .phone::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 150px; height: 28px;
+        background: hsl(343 30% 18%);
+        border-radius: 0 0 18px 18px;
+        z-index: 100;
+      }
+    }
+
+    .app-bg {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      background:
+        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(343 80% 94% / 0.9), transparent 60%),
+        radial-gradient(ellipse 400px 250px at 90% 10%, hsl(343 72% 92% / 0.7), transparent 55%),
+        linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
+    }
+
+    /* Top bar */
+    .top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 44px 16px 8px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 479px) { .top-bar { padding-top: 16px; } }
+    .back-btn {
+      font-size: 15px;
+      color: hsl(var(--primary));
+      text-decoration: none;
+      padding: 6px 8px;
+      font-weight: 500;
+      flex-shrink: 0;
+      min-width: 64px;
+    }
+    .back-btn:active { opacity: 0.6; }
+    .top-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      flex: 1;
+    }
+    .top-action {
+      flex-shrink: 0;
+      min-width: 64px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .dress-btn {
+      font-size: 13px;
+      padding: 5px 14px;
+      border-radius: 9999px;
+      border: 1px solid rgba(232,116,154,0.25);
+      background: rgba(255,255,255,0.5);
+      color: var(--accent-color);
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .dress-btn:active { transform: scale(0.94); }
+
+    /* Scroll area */
+    .scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 0 20px;
+      scrollbar-width: none;
+      position: relative;
+      z-index: 1;
+    }
+    .scroll-area::-webkit-scrollbar { display: none; }
+
+    /* Spark creature display */
+    .creature-stage {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0 4px;
+    }
+    .creature-aura {
+      position: absolute;
+      top: 10px;
+      width: 200px;
+      height: 200px;
+      border-radius: 9999px;
+      background: radial-gradient(circle, rgba(232,116,154,0.18), transparent 70%);
+      animation: auraPulse 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes auraPulse {
+      0%, 100% { opacity: 0.5; transform: scale(0.92); }
+      50% { opacity: 0.9; transform: scale(1.05); }
+    }
+    .creature-svg-wrap {
+      position: relative;
+      z-index: 1;
+      animation: creatureBob 2.5s ease-in-out infinite;
+    }
+    @keyframes creatureBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .creature-svg-wrap.sleeping { animation: creatureSleep 3s ease-in-out infinite; }
+    @keyframes creatureSleep {
+      0%, 100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(2px) rotate(2deg); }
+    }
+
+    .creature-name {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 4px;
+    }
+    .creature-status {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 6px;
+    }
+    .status-badge.happy { background: rgba(255,180,80,0.15); color: #c98a1f; }
+    .status-badge.calm { background: rgba(232,116,154,0.12); color: var(--accent-color); }
+    .status-badge.hungry { background: rgba(200,140,60,0.12); color: #a07420; }
+    .status-badge.weak { background: rgba(150,150,150,0.12); color: #888; }
+    .status-badge.sleeping { background: rgba(100,120,200,0.12); color: #6878a8; }
+
+    /* Level & exp */
+    .level-bar {
+      margin: 12px 18px 0;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(232,116,154,0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .level-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .level-label {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent-color);
+    }
+    .level-title { font-size: 12px; color: var(--text-secondary); }
+    .exp-text { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .exp-track {
+      height: 8px;
+      border-radius: 9999px;
+      background: rgba(232,116,154,0.12);
+      overflow: hidden;
+    }
+    .exp-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #f4a0bc, #e8749a, #ff9a56);
+      transition: width 0.6s cubic-bezier(0.3,0,0,1);
+      box-shadow: 0 0 10px -2px rgba(232,116,154,0.5);
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 18px 0;
+    }
+    .stat-card {
+      padding: 12px 8px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(232,116,154,0.12);
+      text-align: center;
+    }
+    .stat-icon { font-size: 18px; line-height: 1; margin-bottom: 4px; }
+    .stat-num {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent-color);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label { font-size: 10.5px; color: var(--text-secondary); margin-top: 3px; }
+
+    /* Today interactions */
+    .today-section {
+      margin: 12px 18px 0;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(232,116,154,0.12);
+    }
+    .today-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .today-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+    .today-left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+    .today-left .emoji { font-size: 16px; }
+    .today-count { font-size: 13px; font-weight: 600; color: var(--accent-color); font-variant-numeric: tabular-nums; }
+    .today-count.done { color: #c98a1f; }
+    .today-bar {
+      flex: 1;
+      height: 4px;
+      border-radius: 9999px;
+      background: rgba(232,116,154,0.1);
+      margin: 0 10px;
+      overflow: hidden;
+      max-width: 80px;
+    }
+    .today-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #f4a0bc, #e8749a);
+      transition: width 0.4s ease;
+    }
+
+    /* Milestones */
+    .milestone-section {
+      margin: 12px 18px 0;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(232,116,154,0.12);
+    }
+    .milestone-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .milestone-list {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .milestone-list::-webkit-scrollbar { display: none; }
+    .milestone-item {
+      flex-shrink: 0;
+      width: 72px;
+      text-align: center;
+    }
+    .milestone-circle {
+      width: 48px; height: 48px;
+      border-radius: 9999px;
+      display: grid; place-items: center;
+      font-size: 22px;
+      margin: 0 auto 4px;
+      border: 2px solid rgba(232,116,154,0.15);
+      background: rgba(255,255,255,0.5);
+      position: relative;
+    }
+    .milestone-item.unlocked .milestone-circle {
+      border-color: #e8a83a;
+      background: linear-gradient(135deg, #fff8e8, #ffe8c8);
+      box-shadow: 0 2px 10px -3px rgba(255,180,80,0.35);
+    }
+    .milestone-item.unlocked .milestone-circle::after {
+      content: '✓';
+      position: absolute;
+      top: -2px; right: -2px;
+      width: 16px; height: 16px;
+      border-radius: 9999px;
+      background: #e8a83a;
+      color: #fff;
+      font-size: 10px;
+      display: grid; place-items: center;
+    }
+    .milestone-label { font-size: 10px; color: var(--text-secondary); line-height: 1.3; }
+    .milestone-item.unlocked .milestone-label { color: #c98a1f; font-weight: 600; }
+
+    /* Makeup card */
+    .makeup-section {
+      margin: 12px 18px 0;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(255,248,232,0.7), rgba(255,232,200,0.6));
+      border: 1px solid rgba(255,180,80,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .makeup-info { display: flex; align-items: center; gap: 10px; }
+    .makeup-icon { font-size: 26px; }
+    .makeup-text { font-size: 13px; color: #a07420; }
+    .makeup-text b { font-family: var(--font-serif); font-size: 15px; }
+    .makeup-btn {
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,180,80,0.3);
+      background: #fff;
+      color: #c98a1f;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .makeup-btn:active { transform: scale(0.94); }
+    .makeup-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Interaction buttons */
+    .action-section {
+      margin: 14px 18px 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 4px;
+      border-radius: 14px;
+      border: 1px solid rgba(232,116,154,0.15);
+      background: rgba(255,255,255,0.55);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .action-btn:active { transform: scale(0.95); background: rgba(232,116,154,0.08); }
+    .action-icon { font-size: 22px; }
+    .action-label { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+    .action-exp { font-size: 10px; color: var(--accent-color); }
+
+    /* Dresser modal */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(40,20,32,0.45);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-sheet {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      padding: 20px 18px 26px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.3,0,0,1);
+      z-index: 101;
+      max-height: 85vh;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .modal-sheet::-webkit-scrollbar { display: none; }
+    .modal-overlay.show .modal-sheet { transform: translateY(0); }
+    .modal-handle {
+      width: 42px; height: 4px;
+      border-radius: 9999px;
+      background: rgba(0,0,0,0.12);
+      margin: 0 auto 16px;
+    }
+    .modal-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .dresser-preview {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .dresser-section { margin-bottom: 16px; }
+    .dresser-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .dresser-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .dresser-option {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      border: 2px solid rgba(232,116,154,0.12);
+      background: rgba(255,255,255,0.6);
+      display: grid; place-items: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+      font-size: 20px;
+    }
+    .dresser-option:active { transform: scale(0.92); }
+    .dresser-option.active {
+      border-color: var(--accent-color);
+      background: rgba(232,116,154,0.1);
+    }
+    .dresser-option.locked {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .dresser-option.locked::after {
+      content: '🔒';
+      position: absolute;
+      bottom: 2px; right: 2px;
+      font-size: 10px;
+    }
+    .color-swatch {
+      width: 36px; height: 36px;
+      border-radius: 9999px;
+      border: 3px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.12s;
+    }
+    .color-swatch:active { transform: scale(0.88); }
+    .color-swatch.active { box-shadow: 0 0 0 2px var(--accent-color), 0 1px 4px rgba(0,0,0,0.1); }
+    .color-swatch.locked { opacity: 0.4; cursor: not-allowed; }
+
+    .dresser-actions {
+      display: flex; gap: 10px;
+      margin-top: 20px;
+    }
+    .dresser-btn {
+      flex: 1;
+      height: 44px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s;
+    }
+    .dresser-btn:active { transform: scale(0.97); }
+    .dresser-btn.secondary { background: rgba(232,116,154,0.1); color: var(--accent-color); }
+    .dresser-btn.primary {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      box-shadow: 0 4px 14px -4px rgba(232,116,154,0.45);
+    }
+
+    /* Toast */
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%) translateY(12px);
+      background: rgba(61,32,48,0.88);
+      color: #fff;
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 50;
+      white-space: nowrap;
+      backdrop-filter: blur(6px);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Level up effect */
+    .levelup-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .levelup-overlay.show { display: flex; }
+    .levelup-text {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(255,180,80,0.8), 0 2px 8px rgba(0,0,0,0.3);
+      animation: levelupPop 1.5s ease-out forwards;
+    }
+    @keyframes levelupPop {
+      0% { opacity: 0; transform: scale(0.5); }
+      20% { opacity: 1; transform: scale(1.1); }
+      40% { transform: scale(1); }
+      80% { opacity: 1; transform: scale(1) translateY(-10px); }
+      100% { opacity: 0; transform: scale(1) translateY(-30px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="app-bg" id="appBg">
+      <div class="top-bar">
+        <a href="index-new.html" class="back-btn">← 返回</a>
+        <div class="top-title">小火人</div>
+        <div class="top-action">
+          <button class="dress-btn" id="dressBtn">装扮</button>
+        </div>
+      </div>
+
+      <div class="scroll-area" id="scrollArea">
+        <!-- Creature display -->
+        <div class="creature-stage">
+          <div class="creature-aura" id="creatureAura"></div>
+          <div class="creature-svg-wrap" id="creatureWrap">
+            <div id="creatureSvg"></div>
+          </div>
+          <div class="creature-name" id="creatureName">小火人</div>
+          <div class="creature-status" id="creatureStatusText">和梦角一起成长中</div>
+          <div class="status-badge happy" id="statusBadge">😊 开心</div>
+        </div>
+
+        <!-- Level & exp -->
+        <div class="level-bar">
+          <div class="level-row">
+            <div>
+              <span class="level-label" id="levelLabel">Lv.1</span>
+              <span class="level-title" id="levelTitle">小火苗</span>
+            </div>
+            <span class="exp-text" id="expText">0 / 50</span>
+          </div>
+          <div class="exp-track">
+            <div class="exp-fill" id="expFill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-num" id="streakNum">0</div>
+            <div class="stat-label">连续天数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✨</div>
+            <div class="stat-num" id="totalExpNum">0</div>
+            <div class="stat-label">总经验</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💬</div>
+            <div class="stat-num" id="totalInteractNum">0</div>
+            <div class="stat-label">总互动</div>
+          </div>
+        </div>
+
+        <!-- Today interactions -->
+        <div class="today-section">
+          <div class="today-title">今日互动</div>
+          <div class="today-row">
+            <div class="today-left"><span class="emoji">💬</span> 对话</div>
+            <div class="today-bar"><div class="today-bar-fill" id="chatBar" style="width:0%"></div></div>
+            <div class="today-count" id="chatCount">0/10</div>
+          </div>
+          <div class="today-row">
+            <div class="today-left"><span class="emoji">🃏</span> 抽字卡</div>
+            <div class="today-bar"><div class="today-bar-fill" id="cardBar" style="width:0%"></div></div>
+            <div class="today-count" id="cardCount">0/3</div>
+          </div>
+          <div class="today-row">
+            <div class="today-left"><span class="emoji">🌸</span> 发朋友圈</div>
+            <div class="today-bar"><div class="today-bar-fill" id="momentBar" style="width:0%"></div></div>
+            <div class="today-count" id="momentCount">0/2</div>
+          </div>
+        </div>
+
+        <!-- Milestones -->
+        <div class="milestone-section">
+          <div class="milestone-title">成长里程碑</div>
+          <div class="milestone-list" id="milestoneList"></div>
+        </div>
+
+        <!-- Makeup card -->
+        <div class="makeup-section">
+          <div class="makeup-info">
+            <div class="makeup-icon">🎫</div>
+            <div class="makeup-text">补签卡 <b id="makeupCount">1</b> 张</div>
+          </div>
+          <button class="makeup-btn" id="makeupBtn">补昨日</button>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="action-section">
+          <a href="chat-new.html" class="action-btn">
+            <span class="action-icon">💬</span>
+            <span class="action-label">去对话</span>
+            <span class="action-exp">+3 exp</span>
+          </a>
+          <a href="cards-new.html" class="action-btn">
+            <span class="action-icon">🃏</span>
+            <span class="action-label">抽字卡</span>
+            <span class="action-exp">+5 exp</span>
+          </a>
+          <a href="moments-new.html" class="action-btn">
+            <span class="action-icon">🌸</span>
+            <span class="action-label">发朋友圈</span>
+            <span class="action-exp">+8 exp</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Dresser modal -->
+      <div class="modal-overlay" id="dressModal">
+        <div class="modal-sheet">
+          <div class="modal-handle"></div>
+          <div class="modal-title">装扮小火人</div>
+          <div class="dresser-preview" id="dresserPreview"></div>
+
+          <div class="dresser-section">
+            <div class="dresser-label">头发颜色</div>
+            <div class="dresser-options" id="hairColorOptions"></div>
+          </div>
+          <div class="dresser-section">
+            <div class="dresser-label">衣服颜色</div>
+            <div class="dresser-options" id="outfitColorOptions"></div>
+          </div>
+          <div class="dresser-section">
+            <div class="dresser-label">猫耳颜色</div>
+            <div class="dresser-options" id="earColorOptions"></div>
+          </div>
+          <div class="dresser-section">
+            <div class="dresser-label">眼睛</div>
+            <div class="dresser-options" id="eyeOptions"></div>
+          </div>
+          <div class="dresser-section">
+            <div class="dresser-label">嘴巴</div>
+            <div class="dresser-options" id="mouthOptions"></div>
+          </div>
+          <div class="dresser-section">
+            <div class="dresser-label">配件</div>
+            <div class="dresser-options" id="accessoryOptions"></div>
+          </div>
+
+          <div class="dresser-actions">
+            <button class="dresser-btn secondary" id="dressCancel">取消</button>
+            <button class="dresser-btn primary" id="dressSave">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Level up overlay -->
+      <div class="levelup-overlay" id="levelupOverlay">
+        <div class="levelup-text" id="levelupText"></div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* ========== Shared Spark Tracker (inline) ========== */
+      var SPARK_KEY = "mengjiao_spark";
+
+      var LEVELS = [
+        { lv: 1, title: "小火苗", need: 50, flame: 0.6 },
+        { lv: 2, title: "小火人", need: 150, flame: 0.8 },
+        { lv: 3, title: "火精灵", need: 350, flame: 1.0 },
+        { lv: 4, title: "烈焰使者", need: 700, flame: 1.2 },
+        { lv: 5, title: "焰神", need: 1200, flame: 1.4 },
+        { lv: 6, title: "传说之焰", need: 2000, flame: 1.6 },
+        { lv: 7, title: "永恒之火", need: 999999, flame: 1.8 }
+      ];
+
+      var MILESTONES = [
+        { days: 3, label: "3天", icon: "🌱" },
+        { days: 7, label: "7天", icon: "🌿" },
+        { days: 14, label: "14天", icon: "🔥" },
+        { days: 30, label: "30天", icon: "⭐" },
+        { days: 50, label: "50天", icon: "💫" },
+        { days: 100, label: "100天", icon: "👑" }
+      ];
+
+      var HAIR_COLORS = [
+        { id: "purple", color: "#6b5b94", unlock: 1 },
+        { id: "pink", color: "#e8749a", unlock: 1 },
+        { id: "coral", color: "#ff8a65", unlock: 1 },
+        { id: "mint", color: "#7fd5b3", unlock: 2 },
+        { id: "sky", color: "#7ec8e3", unlock: 3 },
+        { id: "lavender", color: "#c5a3e3", unlock: 3 },
+        { id: "rose", color: "#e8749a", unlock: 4 },
+        { id: "honey", color: "#e8a83a", unlock: 5 }
+      ];
+
+      var OUTFIT_COLORS = [
+        { id: "maroon", color: "#7a3a4a", unlock: 1 },
+        { id: "navy", color: "#3a4a6a", unlock: 1 },
+        { id: "white", color: "#e8e8f0", unlock: 1 },
+        { id: "pink", color: "#e8749a", unlock: 2 },
+        { id: "mint", color: "#7fd5b3", unlock: 3 },
+        { id: "lavender", color: "#c5a3e3", unlock: 4 }
+      ];
+
+      var EAR_COLORS = [
+        { id: "brown", color: "#8b6940", inner: "#f4a0b0", unlock: 1 },
+        { id: "dark", color: "#4a4a4a", inner: "#f4a0b0", unlock: 1 },
+        { id: "cream", color: "#e8d5b8", inner: "#f4a0b0", unlock: 2 },
+        { id: "match", color: "", inner: "", unlock: 1 }
+      ];
+
+      var POSES = [
+        { id: "idle", label: "待机", emoji: "🧍" },
+        { id: "wave", label: "打招呼", emoji: "👋" },
+        { id: "cheer", label: "开心", emoji: "🙌" },
+        { id: "reach", label: "伸手", emoji: "🤲" },
+        { id: "shy", label: "害羞", emoji: "😳" },
+        { id: "sit", label: "坐下", emoji: "🪑" }
+      ];
+
+      var EYES = [
+        { id: "round", emoji: "👀", unlock: 1 },
+        { id: "sparkle", emoji: "✨", unlock: 1 },
+        { id: "happy", emoji: "😄", unlock: 1 },
+        { id: "sleepy", emoji: "😴", unlock: 2 },
+        { id: "star", emoji: "🌟", unlock: 3 },
+        { id: "heart", emoji: "❤️", unlock: 4 }
+      ];
+
+      var MOUTHS = [
+        { id: "smile", emoji: "🙂", unlock: 1 },
+        { id: "open", emoji: "😮", unlock: 1 },
+        { id: "cat", emoji: "😺", unlock: 1 },
+        { id: "neutral", emoji: "😐", unlock: 2 },
+        { id: "tongue", emoji: "😝", unlock: 3 },
+        { id: "whistle", emoji: "😙", unlock: 4 }
+      ];
+
+      var ACCESSORIES = [
+        { id: "none", emoji: "🚫", unlock: 1 },
+        { id: "halo", emoji: "😇", unlock: 3 },
+        { id: "wings", emoji: "🦋", unlock: 4 },
+        { id: "bow", emoji: "🎀", unlock: 2 },
+        { id: "hat", emoji: "🎩", unlock: 3 },
+        { id: "crown", emoji: "👑", unlock: 5 },
+        { id: "headphone", emoji: "🎧", unlock: 2 },
+        { id: "flower", emoji: "🌸", unlock: 1 }
+      ];
+
+      var DAILY_LIMITS = { chat: 10, cards: 3, moments: 2 };
+      var EXP_PER = { chat: 3, cards: 5, moments: 8 };
+
+      function todayStr() {
+        var d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+      }
+      function yesterdayStr() {
+        var d = new Date(); d.setDate(d.getDate()-1);
+        return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+      }
+      function monthKey() {
+        var d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+      }
+
+      function defaultData() {
+        return {
+          level: 1,
+          exp: 0,
+          totalExp: 0,
+          streak: 0,
+          lastActiveDate: "",
+          totalInteractions: 0,
+          makeupCards: 1,
+          makeupMonth: monthKey(),
+          milestones: [],
+          avatar: { hairColor: "purple", outfitColor: "maroon", earColor: "brown", eyes: "round", mouth: "smile", accessory: "none", pose: "idle" },
+          daily: {}
+        };
+      }
+
+      window.SparkTracker = {
+        load: function () {
+          try {
+            var raw = localStorage.getItem(SPARK_KEY);
+            if (raw) {
+              var d = JSON.parse(raw);
+              var def = defaultData();
+              for (var k in def) { if (!(k in d)) d[k] = def[k]; }
+              if (!d.avatar) d.avatar = def.avatar;
+              return d;
+            }
+          } catch (e) {}
+          return defaultData();
+        },
+        save: function (d) {
+          try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) {}
+        },
+        recordInteraction: function (type) {
+          var d = this.load();
+          var t = todayStr();
+          if (!d.daily[t]) d.daily[t] = { chat: 0, cards: 0, moments: 0 };
+          if (d.daily[t][type] >= DAILY_LIMITS[type]) return { gained: 0, leveledUp: false, level: d.level };
+          d.daily[t][type]++;
+          d.totalInteractions++;
+          var gained = EXP_PER[type];
+          d.exp += gained;
+          d.totalExp += gained;
+          if (t !== d.lastActiveDate) {
+            if (d.lastActiveDate === yesterdayStr()) d.streak++;
+            else if (d.lastActiveDate === t) { /* same day */ }
+            else d.streak = 1;
+            d.lastActiveDate = t;
+          } else if (d.streak === 0) {
+            d.streak = 1;
+          }
+          var leveledUp = false;
+          while (d.level < LEVELS.length && d.exp >= LEVELS[d.level - 1].need) {
+            d.exp -= LEVELS[d.level - 1].need;
+            d.level++;
+            leveledUp = true;
+          }
+          MILESTONES.forEach(function (m) {
+            if (d.streak >= m.days && d.milestones.indexOf(m.days) === -1) {
+              d.milestones.push(m.days);
+            }
+          });
+          if (d.makeupMonth !== monthKey()) {
+            d.makeupMonth = monthKey();
+            d.makeupCards = 1;
+          }
+          this.save(d);
+          return { gained: gained, leveledUp: leveledUp, level: d.level };
+        },
+        useMakeup: function () {
+          var d = this.load();
+          if (d.makeupCards <= 0) return false;
+          var y = yesterdayStr();
+          if (d.daily[y] && (d.daily[y].chat > 0 || d.daily[y].cards > 0 || d.daily[y].moments > 0)) return false;
+          if (!d.daily[y]) d.daily[y] = { chat: 0, cards: 0, moments: 0 };
+          d.daily[y].chat = 1;
+          d.makeupCards--;
+          if (d.lastActiveDate === y) {
+            d.streak++;
+          } else if (yesterdayStr() === y) {
+            d.streak = Math.max(d.streak, 1);
+            d.lastActiveDate = y;
+          }
+          MILESTONES.forEach(function (m) {
+            if (d.streak >= m.days && d.milestones.indexOf(m.days) === -1) d.milestones.push(m.days);
+          });
+          this.save(d);
+          return true;
+        },
+        getState: function () {
+          var d = this.load();
+          var t = todayStr();
+          var today = d.daily[t] || { chat: 0, cards: 0, moments: 0 };
+          var lastActive = d.lastActiveDate;
+          var state = "sleeping";
+          if (lastActive === t && (today.chat > 0 || today.cards > 0 || today.moments > 0)) {
+            state = "happy";
+          } else if (lastActive === yesterdayStr()) {
+            state = "calm";
+          } else {
+            var d2 = new Date(lastActive + "T00:00:00");
+            var now = new Date();
+            var diff = Math.round((now - d2) / 86400000);
+            if (isNaN(diff)) diff = 99;
+            if (diff <= 2) state = "hungry";
+            else if (diff <= 3) state = "weak";
+            else state = "sleeping";
+          }
+          return state;
+        }
+      };
+
+      /* ========== SVG Chibi Cat Renderer ========== */
+      function getHairColor(id) { return HAIR_COLORS.find(function(c){return c.id===id;}) || HAIR_COLORS[0]; }
+      function getOutfitColor(id) { return OUTFIT_COLORS.find(function(c){return c.id===id;}) || OUTFIT_COLORS[0]; }
+      function getEarColor(id, hairColor) {
+        if (id === "match") return { color: hairColor, inner: lightenColor(hairColor, 30) };
+        return EAR_COLORS.find(function(c){return c.id===id;}) || EAR_COLORS[0];
+      }
+      function getEyes(id) { return EYES.find(function(e){return e.id===id;}) || EYES[0]; }
+      function getMouth(id) { return MOUTHS.find(function(m){return m.id===id;}) || MOUTHS[0]; }
+      function getAccessory(id) { return ACCESSORIES.find(function(a){return a.id===id;}) || ACCESSORIES[0]; }
+
+      function renderCreature(data, state, forcedPose) {
+        var av = data.avatar;
+        var hair = getHairColor(av.hairColor).color;
+        var outfit = getOutfitColor(av.outfitColor).color;
+        var ear = getEarColor(av.earColor || "brown", hair);
+        var earColor = ear.color || hair;
+        var earInner = ear.inner || lightenColor(hair, 30);
+        var skin = "#ffe4d6";
+        var isSleeping = state === "sleeping";
+        var isWeak = state === "weak" || state === "sleeping";
+        var bodyOpacity = isWeak ? 0.72 : 1;
+        var pose = forcedPose || av.pose || "idle";
+        if (isSleeping) pose = "sleep";
+
+        var eyeSvg = renderEyes(av.eyes, isSleeping, pose);
+        var mouthSvg = renderMouth(av.mouth, isSleeping, pose);
+        var accSvg = renderAccessory(av.accessory, data.level);
+        var armsSvg = renderArms(pose, outfit, skin);
+        var bodySvg = renderBody(pose, outfit, skin, bodyOpacity);
+        var legsSvg = renderLegs(pose, skin);
+
+        return '<svg width="160" height="180" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer;overflow:visible">' +
+          '<defs>' +
+            '<radialGradient id="hairGrad" cx="50%" cy="30%">' +
+              '<stop offset="0%" stop-color="' + lightenColor(hair, 20) + '"/>' +
+              '<stop offset="100%" stop-color="' + darkenColor(hair, 10) + '"/>' +
+            '</radialGradient>' +
+          '</defs>' +
+          /* Shadow */
+          '<ellipse cx="100" cy="205" rx="34" ry="5" fill="#000" opacity="0.08"/>' +
+          /* Tail */
+          renderTail(pose, earColor) +
+          /* Body + Legs + Arms */
+          bodySvg + legsSvg + armsSvg +
+          /* Head group */
+          '<g opacity="' + bodyOpacity + '">' +
+            /* Unified hair crown - 统一发冠，所有头发从发旋生长 */
+            '<path d="M 44 92 Q 36 64 44 44 Q 56 20 80 24 Q 94 14 112 18 Q 140 20 154 44 Q 162 64 156 92 Q 152 106 146 100 Q 138 110 128 102 Q 120 112 108 104 Q 100 108 92 104 Q 80 112 72 102 Q 62 110 54 100 Q 48 106 44 92 Z" fill="url(#hairGrad)"/>' +
+            /* Crown shadow for depth */
+            '<ellipse cx="100" cy="54" rx="48" ry="34" fill="' + darkenColor(hair, 22) + '" opacity="0.18"/>' +
+            /* Head */
+            '<circle cx="100" cy="82" r="40" fill="' + skin + '"/>' +
+            /* Cat ears */
+            '<path d="M 58 44 Q 46 16 68 22 Q 80 34 78 50 Z" fill="' + earColor + '"/>' +
+            '<path d="M 142 44 Q 154 16 132 22 Q 120 34 122 50 Z" fill="' + earColor + '"/>' +
+            '<path d="M 61 41 Q 52 22 66 24 Q 75 36 74 46 Z" fill="' + earInner + '" opacity="0.8"/>' +
+            '<path d="M 139 41 Q 148 22 134 24 Q 125 36 126 46 Z" fill="' + earInner + '" opacity="0.8"/>' +
+            /* Ahoge 呆毛 */
+            '<path d="M 96 22 Q 88 6 102 4 Q 114 8 104 22 Z" fill="url(#hairGrad)"/>' +
+            '<path d="M 98 20 Q 96 10 102 8" stroke="' + darkenColor(hair, 18) + '" stroke-width="1" fill="none" opacity="0.3"/>' +
+            /* Middle-parted bangs - 中分刘海，从头顶向两侧分开有体积感 */
+            /* 左半边 - 从中分线向左蓬松延伸，露出部分额头 */
+            '<path d="M 100 30 Q 78 28 60 38 Q 44 50 46 74 Q 50 86 58 92 Q 54 74 62 64 Q 74 50 92 48 Q 96 40 100 30 Z" fill="url(#hairGrad)"/>' +
+            '<path d="M 58 92 Q 50 70 60 52 Q 74 40 88 42 Q 82 56 76 72 Q 66 86 58 92 Z" fill="url(#hairGrad)"/>' +
+            '<path d="M 50 86 Q 46 64 54 48 Q 64 38 72 42 Q 66 58 58 74 Q 52 84 50 86 Z" fill="url(#hairGrad)"/>' +
+            /* 右半边 - 镜像 */
+            '<path d="M 100 30 Q 122 28 140 38 Q 156 50 154 74 Q 150 86 142 92 Q 146 74 138 64 Q 126 50 108 48 Q 104 40 100 30 Z" fill="url(#hairGrad)"/>' +
+            '<path d="M 142 92 Q 150 70 140 52 Q 126 40 112 42 Q 118 56 124 72 Q 134 86 142 92 Z" fill="url(#hairGrad)"/>' +
+            '<path d="M 150 86 Q 154 64 146 48 Q 136 38 128 42 Q 134 58 142 74 Q 148 84 150 86 Z" fill="url(#hairGrad)"/>' +
+            /* Middle part line - 中分发缝 */
+            '<path d="M 100 28 L 100 52" stroke="' + darkenColor(hair, 28) + '" stroke-width="1.3" fill="none" opacity="0.22" stroke-linecap="round"/>' +
+            /* Hair flow lines 发丝流向 */
+            '<path d="M 84 36 Q 74 50 66 70" stroke="' + darkenColor(hair, 26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
+            '<path d="M 116 36 Q 126 50 134 70" stroke="' + darkenColor(hair, 26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
+            /* Hair shine highlights */
+            '<ellipse cx="72" cy="42" rx="4.5" ry="2.5" fill="' + lightenColor(hair, 42) + '" opacity="0.32" transform="rotate(-28 72 42)"/>' +
+            '<ellipse cx="128" cy="42" rx="4.5" ry="2.5" fill="' + lightenColor(hair, 42) + '" opacity="0.32" transform="rotate(28 128 42)"/>' +
+            '<ellipse cx="88" cy="44" rx="3" ry="1.8" fill="' + lightenColor(hair, 36) + '" opacity="0.22"/>' +
+            '<ellipse cx="112" cy="44" rx="3" ry="1.8" fill="' + lightenColor(hair, 36) + '" opacity="0.22"/>' +
+            /* Side hair - 男孩短发，短而蓬松，不垂长 */
+            '<path d="M 46 86 Q 36 98 40 112 Q 50 106 54 92 Z" fill="url(#hairGrad)"/>' +
+            '<path d="M 154 86 Q 164 98 160 112 Q 150 106 146 92 Z" fill="url(#hairGrad)"/>' +
+            '<path d="M 42 102 Q 44 108 48 110" stroke="' + darkenColor(hair, 20) + '" stroke-width="1" fill="none" opacity="0.18"/>' +
+            '<path d="M 158 102 Q 156 108 152 110" stroke="' + darkenColor(hair, 20) + '" stroke-width="1" fill="none" opacity="0.18"/>' +
+            /* Blush */
+            '<ellipse cx="72" cy="92" rx="7" ry="4.5" fill="#ff8aa0" opacity="0.35"/>' +
+            '<ellipse cx="128" cy="92" rx="7" ry="4.5" fill="#ff8aa0" opacity="0.35"/>' +
+            /* Eyes */
+            eyeSvg +
+            /* Mouth */
+            mouthSvg +
+          '</g>' +
+          /* Accessory */
+          accSvg +
+          /* Zzz for sleeping */
+          (isSleeping ? '<text x="148" y="52" font-size="14" fill="#aaa" opacity="0.6" font-family="serif">Z</text>' +
+           '<text x="158" y="42" font-size="10" fill="#bbb" opacity="0.4" font-family="serif">z</text>' : '') +
+        '</svg>';
+      }
+
+      function renderTail(pose, color) {
+        if (pose === "sit") {
+          return '<path d="M 138 165 Q 168 155 160 135" stroke="' + color + '" stroke-width="11" fill="none" stroke-linecap="round"/>';
+        }
+        if (pose === "sleep") {
+          return '<path d="M 140 170 Q 165 175 155 195" stroke="' + color + '" stroke-width="11" fill="none" stroke-linecap="round"/>';
+        }
+        return '<path d="M 138 160 Q 168 150 162 128" stroke="' + color + '" stroke-width="11" fill="none" stroke-linecap="round"/>' +
+               '<circle cx="162" cy="128" r="6" fill="' + color + '"/>';
+      }
+
+      function renderBody(pose, outfit, skin, opacity) {
+        var dark = darkenColor(outfit, 12);
+        if (pose === "sit") {
+          return '<g opacity="' + opacity + '">' +
+            '<ellipse cx="100" cy="160" rx="32" ry="22" fill="' + outfit + '"/>' +
+            '<rect x="72" y="155" width="56" height="14" rx="7" fill="' + skin + '"/>' +
+            '<ellipse cx="100" cy="157" rx="28" ry="12" fill="' + dark + '" opacity="0.3"/>' +
+            '</g>';
+        }
+        if (pose === "sleep") {
+          return '<g opacity="' + opacity + '">' +
+            '<ellipse cx="100" cy="175" rx="38" ry="15" fill="' + outfit + '"/>' +
+            '<rect x="65" y="172" width="70" height="10" rx="5" fill="' + skin + '"/>' +
+            '</g>';
+        }
+        return '<g opacity="' + opacity + '">' +
+          /* Torso */
+          '<path d="M 76 128 Q 76 120 100 120 Q 124 120 124 128 L 128 165 Q 128 172 100 172 Q 72 172 72 165 Z" fill="' + outfit + '"/>' +
+          /* Collar V-neck */
+          '<path d="M 88 120 L 100 132 L 112 120" fill="none" stroke="' + dark + '" stroke-width="2"/>' +
+          /* White lower */
+          '<rect x="78" y="158" width="44" height="14" rx="6" fill="' + skin + '"/>' +
+          '</g>';
+      }
+
+      function renderLegs(pose, skin) {
+        if (pose === "sit") return '';
+        if (pose === "sleep") return '';
+        return '<ellipse cx="88" cy="188" rx="9" ry="6" fill="' + skin + '"/>' +
+               '<ellipse cx="112" cy="188" rx="9" ry="6" fill="' + skin + '"/>';
+      }
+
+      function renderArms(pose, outfit, skin) {
+        var dark = darkenColor(outfit, 8);
+        switch (pose) {
+          case "wave":
+            return '<g>' +
+              '<ellipse cx="152" cy="98" rx="7" ry="15" fill="' + outfit + '" transform="rotate(25 152 98)"/>' +
+              '<circle cx="158" cy="85" r="6" fill="' + skin + '"/>' +
+              '<ellipse cx="48" cy="148" rx="7" ry="13" fill="' + outfit + '" transform="rotate(15 48 148)"/>' +
+              '<circle cx="44" cy="160" r="5.5" fill="' + skin + '"/>' +
+              '</g>';
+          case "cheer":
+            return '<g>' +
+              '<ellipse cx="150" cy="92" rx="7" ry="16" fill="' + outfit + '" transform="rotate(30 150 92)"/>' +
+              '<circle cx="158" cy="78" r="6" fill="' + skin + '"/>' +
+              '<ellipse cx="50" cy="92" rx="7" ry="16" fill="' + outfit + '" transform="rotate(-30 50 92)"/>' +
+              '<circle cx="42" cy="78" r="6" fill="' + skin + '"/>' +
+              '</g>';
+          case "reach":
+            return '<g>' +
+              '<ellipse cx="148" cy="135" rx="7" ry="15" fill="' + outfit + '" transform="rotate(55 148 135)"/>' +
+              '<circle cx="162" cy="150" r="6" fill="' + skin + '"/>' +
+              '<ellipse cx="52" cy="135" rx="7" ry="15" fill="' + outfit + '" transform="rotate(-55 52 135)"/>' +
+              '<circle cx="38" cy="150" r="6" fill="' + skin + '"/>' +
+              '</g>';
+          case "shy":
+            return '<g>' +
+              '<ellipse cx="72" cy="100" rx="7" ry="13" fill="' + outfit + '" transform="rotate(-35 72 100)"/>' +
+              '<circle cx="64" cy="88" r="6" fill="' + skin + '"/>' +
+              '<ellipse cx="128" cy="100" rx="7" ry="13" fill="' + outfit + '" transform="rotate(35 128 100)"/>' +
+              '<circle cx="136" cy="88" r="6" fill="' + skin + '"/>' +
+              '</g>';
+          case "sit":
+            return '<g>' +
+              '<ellipse cx="72" cy="155" rx="7" ry="12" fill="' + outfit + '" transform="rotate(-20 72 155)"/>' +
+              '<circle cx="66" cy="165" r="5.5" fill="' + skin + '"/>' +
+              '<ellipse cx="128" cy="155" rx="7" ry="12" fill="' + outfit + '" transform="rotate(20 128 155)"/>' +
+              '<circle cx="134" cy="165" r="5.5" fill="' + skin + '"/>' +
+              '</g>';
+          case "sleep":
+            return '<g>' +
+              '<ellipse cx="70" cy="172" rx="7" ry="10" fill="' + outfit + '" transform="rotate(-10 70 172)"/>' +
+              '<ellipse cx="130" cy="172" rx="7" ry="10" fill="' + outfit + '" transform="rotate(10 130 172)"/>' +
+              '</g>';
+          default: /* idle */
+            return '<g>' +
+              '<ellipse cx="50" cy="145" rx="7" ry="14" fill="' + outfit + '" transform="rotate(12 50 145)"/>' +
+              '<circle cx="45" cy="158" r="5.5" fill="' + skin + '"/>' +
+              '<ellipse cx="150" cy="145" rx="7" ry="14" fill="' + outfit + '" transform="rotate(-12 150 145)"/>' +
+              '<circle cx="155" cy="158" r="5.5" fill="' + skin + '"/>' +
+              '</g>';
+        }
+      }
+
+      function renderEyes(id, sleeping, pose) {
+        if (sleeping || pose === "sleep") {
+          return '<path d="M 78 84 Q 85 87 92 84" stroke="#5a3040" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
+                 '<path d="M 108 84 Q 115 87 122 84" stroke="#5a3040" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+        }
+        var lx = 82, rx = 118, cy = 84;
+        switch (id) {
+          case "sparkle":
+            return '<g stroke="#5a3040" stroke-width="2" stroke-linecap="round" fill="none">' +
+              '<path d="M ' + lx + ' ' + (cy-6) + ' L ' + lx + ' ' + (cy+6) + ' M ' + (lx-6) + ' ' + cy + ' L ' + (lx+6) + ' ' + cy + '"/>' +
+              '<path d="M ' + rx + ' ' + (cy-6) + ' L ' + rx + ' ' + (cy+6) + ' M ' + (rx-6) + ' ' + cy + ' L ' + (rx+6) + ' ' + cy + '"/>' +
+              '</g>';
+          case "happy":
+            return '<path d="M 76 ' + (cy+4) + ' Q ' + lx + ' ' + (cy-6) + ' 92 ' + (cy+4) + '" stroke="#5a3040" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
+                   '<path d="M 108 ' + (cy+4) + ' Q ' + rx + ' ' + (cy-6) + ' 124 ' + (cy+4) + '" stroke="#5a3040" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+          case "sleepy":
+            return '<path d="M 76 ' + cy + ' Q ' + lx + ' ' + (cy+4) + ' 92 ' + cy + '" stroke="#5a3040" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
+                   '<path d="M 108 ' + cy + ' Q ' + rx + ' ' + (cy+4) + ' 124 ' + cy + '" stroke="#5a3040" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+          case "star":
+            return '<text x="' + lx + '" y="' + (cy+5) + '" font-size="14" text-anchor="middle">⭐</text>' +
+                   '<text x="' + rx + '" y="' + (cy+5) + '" font-size="14" text-anchor="middle">⭐</text>';
+          case "heart":
+            return '<text x="' + lx + '" y="' + (cy+5) + '" font-size="13" text-anchor="middle">❤️</text>' +
+                   '<text x="' + rx + '" y="' + (cy+5) + '" font-size="13" text-anchor="middle">❤️</text>';
+          default: /* round */
+            return '<ellipse cx="' + lx + '" cy="' + cy + '" rx="5.5" ry="6.5" fill="#5a3040"/>' +
+                   '<ellipse cx="' + rx + '" cy="' + cy + '" rx="5.5" ry="6.5" fill="#5a3040"/>' +
+                   '<circle cx="' + (lx+2) + '" cy="' + (cy-2) + '" r="2" fill="#fff"/>' +
+                   '<circle cx="' + (rx+2) + '" cy="' + (cy-2) + '" r="2" fill="#fff"/>';
+        }
+      }
+
+      function renderMouth(id, sleeping, pose) {
+        if (sleeping || pose === "sleep") {
+          return '<ellipse cx="100" cy="100" rx="4" ry="2.5" fill="#5a3040" opacity="0.5"/>';
+        }
+        var cy = 100;
+        switch (id) {
+          case "open":
+            return '<ellipse cx="100" cy="' + cy + '" rx="5" ry="6" fill="#5a3040"/>';
+          case "cat":
+            return '<path d="M 92 ' + cy + ' Q 96 ' + (cy+4) + ' 100 ' + cy + ' Q 104 ' + (cy+4) + ' 108 ' + cy + '" stroke="#5a3040" stroke-width="2" fill="none" stroke-linecap="round"/>';
+          case "neutral":
+            return '<line x1="92" y1="' + cy + '" x2="108" y2="' + cy + '" stroke="#5a3040" stroke-width="2" stroke-linecap="round"/>';
+          case "tongue":
+            return '<path d="M 92 ' + cy + ' Q 100 ' + (cy+6) + ' 108 ' + cy + '" stroke="#5a3040" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+                   '<ellipse cx="100" cy="' + (cy+5) + '" rx="3" ry="3.5" fill="#ff7a90"/>';
+          case "whistle":
+            return '<path d="M 90 ' + cy + ' Q 95 ' + (cy-2) + ' 100 ' + cy + '" stroke="#5a3040" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+                   '<circle cx="106" cy="' + (cy-1) + '" r="2.5" fill="#5a3040"/>';
+          default: /* smile */
+            return '<path d="M 90 ' + cy + ' Q 100 ' + (cy+6) + ' 110 ' + cy + '" stroke="#5a3040" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
+        }
+      }
+
+      function renderAccessory(id, level) {
+        switch (id) {
+          case "halo":
+            return '<ellipse cx="100" cy="42" rx="26" ry="5" stroke="#ffd166" stroke-width="3" fill="none" opacity="0.8"/>' +
+                   '<ellipse cx="100" cy="42" rx="26" ry="5" stroke="#fff5d0" stroke-width="1" fill="none" opacity="0.6"/>';
+          case "wings":
+            return '<g opacity="0.75">' +
+              '<path d="M 50 125 Q 28 110 22 135 Q 34 140 54 135 Z" fill="#fff5f8" stroke="#e8749a" stroke-width="1"/>' +
+              '<path d="M 150 125 Q 172 110 178 135 Q 166 140 146 135 Z" fill="#fff5f8" stroke="#e8749a" stroke-width="1"/>' +
+              '</g>';
+          case "bow":
+            return '<g transform="translate(72,58)">' +
+              '<path d="M 0 0 L -12 -8 L -12 8 Z" fill="#e8749a"/>' +
+              '<path d="M 0 0 L 12 -8 L 12 8 Z" fill="#e8749a"/>' +
+              '<circle cx="0" cy="0" r="4" fill="#f4a0bc"/>' +
+              '</g>';
+          case "hat":
+            return '<g transform="translate(100,45)">' +
+              '<rect x="-18" y="-5" width="36" height="4" rx="2" fill="#5a3040"/>' +
+              '<rect x="-12" y="-22" width="24" height="20" rx="2" fill="#5a3040"/>' +
+              '<rect x="-12" y="-8" width="24" height="3" fill="#e8749a"/>' +
+              '</g>';
+          case "crown":
+            return '<g transform="translate(100,48)">' +
+              '<path d="M -18 0 L -12 -14 L -6 -4 L 0 -16 L 6 -4 L 12 -14 L 18 0 Z" fill="#ffd166" stroke="#e8a83a" stroke-width="1"/>' +
+              '<circle cx="0" cy="-12" r="2" fill="#e8749a"/>' +
+              '<circle cx="-12" cy="-10" r="1.5" fill="#7ec8e3"/>' +
+              '<circle cx="12" cy="-10" r="1.5" fill="#7ec8e3"/>' +
+              '</g>';
+          case "headphone":
+            return '<g>' +
+              '<path d="M 62 88 Q 100 58 138 88" stroke="#5a3040" stroke-width="3" fill="none"/>' +
+              '<ellipse cx="58" cy="102" rx="9" ry="13" fill="#5a3040"/>' +
+              '<ellipse cx="142" cy="102" rx="9" ry="13" fill="#5a3040"/>' +
+              '<ellipse cx="58" cy="102" rx="5" ry="8" fill="#e8749a"/>' +
+              '<ellipse cx="142" cy="102" rx="5" ry="8" fill="#e8749a"/>' +
+              '</g>';
+          case "flower":
+            return '<g transform="translate(70,56)">' +
+              '<circle cx="0" cy="-6" r="4" fill="#fff"/>' +
+              '<circle cx="-6" cy="0" r="4" fill="#fff"/>' +
+              '<circle cx="6" cy="0" r="4" fill="#fff"/>' +
+              '<circle cx="-4" cy="6" r="4" fill="#fff"/>' +
+              '<circle cx="4" cy="6" r="4" fill="#fff"/>' +
+              '<circle cx="0" cy="0" r="3.5" fill="#ffd166"/>' +
+              '</g>';
+          default:
+            return '';
+        }
+      }
+
+      function lightenColor(hex, amt) {
+        var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+        r = Math.min(255, r + amt); g = Math.min(255, g + amt); b = Math.min(255, b + amt);
+        return '#' + r.toString(16).padStart(2,'0') + g.toString(16).padStart(2,'0') + b.toString(16).padStart(2,'0');
+      }
+      function darkenColor(hex, amt) {
+        var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+        r = Math.max(0, r - amt); g = Math.max(0, g - amt); b = Math.max(0, b - amt);
+        return '#' + r.toString(16).padStart(2,'0') + g.toString(16).padStart(2,'0') + b.toString(16).padStart(2,'0');
+      }
+
+      /* ========== UI Logic ========== */
+      var data = SparkTracker.load();
+      var dresserTemp = JSON.parse(JSON.stringify(data.avatar));
+
+      var creatureSvg = document.getElementById("creatureSvg");
+      var creatureWrap = document.getElementById("creatureWrap");
+      var creatureName = document.getElementById("creatureName");
+      var creatureStatusText = document.getElementById("creatureStatusText");
+      var statusBadge = document.getElementById("statusBadge");
+      var levelLabel = document.getElementById("levelLabel");
+      var levelTitle = document.getElementById("levelTitle");
+      var expText = document.getElementById("expText");
+      var expFill = document.getElementById("expFill");
+      var streakNum = document.getElementById("streakNum");
+      var totalExpNum = document.getElementById("totalExpNum");
+      var totalInteractNum = document.getElementById("totalInteractNum");
+      var chatCount = document.getElementById("chatCount");
+      var cardCount = document.getElementById("cardCount");
+      var momentCount = document.getElementById("momentCount");
+      var chatBar = document.getElementById("chatBar");
+      var cardBar = document.getElementById("cardBar");
+      var momentBar = document.getElementById("momentBar");
+      var milestoneList = document.getElementById("milestoneList");
+      var makeupCount = document.getElementById("makeupCount");
+      var makeupBtn = document.getElementById("makeupBtn");
+      var dressBtn = document.getElementById("dressBtn");
+      var dressModal = document.getElementById("dressModal");
+      var dressCancel = document.getElementById("dressCancel");
+      var dressSave = document.getElementById("dressSave");
+      var dresserPreview = document.getElementById("dresserPreview");
+      var hairColorOptions = document.getElementById("hairColorOptions");
+      var outfitColorOptions = document.getElementById("outfitColorOptions");
+      var earColorOptions = document.getElementById("earColorOptions");
+      var eyeOptions = document.getElementById("eyeOptions");
+      var mouthOptions = document.getElementById("mouthOptions");
+      var accessoryOptions = document.getElementById("accessoryOptions");
+      var toastEl = document.getElementById("toast");
+      var levelupOverlay = document.getElementById("levelupOverlay");
+      var levelupText = document.getElementById("levelupText");
+
+      var STATE_INFO = {
+        happy: { label: "😊 开心", text: "今天和梦角互动过了，真开心！", class: "happy" },
+        calm: { label: "😌 平静", text: "今天还没和梦角互动哦", class: "calm" },
+        hungry: { label: "😋 想念", text: "梦角好想你，快来互动吧", class: "hungry" },
+        weak: { label: "😢 虚弱", text: "好久没互动了，火花快灭了…", class: "weak" },
+        sleeping: { label: "😴 沉睡", text: "小火人沉睡了，快唤醒它", class: "sleeping" }
+      };
+
+      function toast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add("show");
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(function(){ toastEl.classList.remove("show"); }, 2000);
+      }
+
+      function render() {
+        data = SparkTracker.load();
+        var state = SparkTracker.getState();
+        var info = STATE_INFO[state];
+
+        creatureSvg.innerHTML = renderCreature(data, state);
+        creatureWrap.className = "creature-svg-wrap" + (state === "sleeping" ? " sleeping" : "");
+        creatureName.textContent = "Lv." + data.level + " " + LEVELS[Math.min(data.level-1, LEVELS.length-1)].title;
+        creatureStatusText.textContent = info.text;
+        statusBadge.className = "status-badge " + info.class;
+        statusBadge.textContent = info.label;
+        var poseObj = POSES.find(function(p){return p.id===data.avatar.pose;}) || POSES[0];
+        creatureStatusText.textContent = info.text + " · " + poseObj.emoji + poseObj.label;
+
+        var lv = LEVELS[Math.min(data.level - 1, LEVELS.length - 1)];
+        levelLabel.textContent = "Lv." + data.level;
+        levelTitle.textContent = lv.title;
+        expText.textContent = data.exp + " / " + lv.need;
+        expFill.style.width = Math.min(100, (data.exp / lv.need) * 100) + "%";
+
+        streakNum.textContent = data.streak;
+        totalExpNum.textContent = data.totalExp;
+        totalInteractNum.textContent = data.totalInteractions;
+
+        var t = todayStr();
+        var today = data.daily[t] || { chat: 0, cards: 0, moments: 0 };
+        chatCount.textContent = today.chat + "/" + DAILY_LIMITS.chat;
+        cardCount.textContent = today.cards + "/" + DAILY_LIMITS.cards;
+        momentCount.textContent = today.moments + "/" + DAILY_LIMITS.moments;
+        chatBar.style.width = Math.min(100, (today.chat / DAILY_LIMITS.chat) * 100) + "%";
+        cardBar.style.width = Math.min(100, (today.cards / DAILY_LIMITS.cards) * 100) + "%";
+        momentBar.style.width = Math.min(100, (today.moments / DAILY_LIMITS.moments) * 100) + "%";
+
+        chatCount.className = "today-count" + (today.chat >= DAILY_LIMITS.chat ? " done" : "");
+        cardCount.className = "today-count" + (today.cards >= DAILY_LIMITS.cards ? " done" : "");
+        momentCount.className = "today-count" + (today.moments >= DAILY_LIMITS.moments ? " done" : "");
+
+        renderMilestones();
+        makeupCount.textContent = data.makeupCards;
+        makeupBtn.disabled = data.makeupCards <= 0;
+      }
+
+      function renderMilestones() {
+        milestoneList.innerHTML = "";
+        MILESTONES.forEach(function (m) {
+          var unlocked = data.milestones.indexOf(m.days) !== -1;
+          var item = document.createElement("div");
+          item.className = "milestone-item" + (unlocked ? " unlocked" : "");
+          item.innerHTML = '<div class="milestone-circle">' + m.icon + '</div><div class="milestone-label">' + m.label + '</div>';
+          milestoneList.appendChild(item);
+        });
+      }
+
+      /* Dresser */
+      function openDresser() {
+        dresserTemp = JSON.parse(JSON.stringify(data.avatar));
+        renderDresser();
+        dressModal.classList.add("show");
+      }
+      function closeDresser() { dressModal.classList.remove("show"); }
+
+      function renderDresser() {
+        dresserPreview.innerHTML = renderCreature({ level: data.level, avatar: dresserTemp }, "happy");
+
+        /* Hair color */
+        hairColorOptions.innerHTML = "";
+        HAIR_COLORS.forEach(function (c) {
+          var locked = data.level < c.unlock;
+          var sw = document.createElement("div");
+          sw.className = "color-swatch" + (dresserTemp.hairColor === c.id ? " active" : "") + (locked ? " locked" : "");
+          sw.style.background = c.color;
+          sw.title = locked ? "Lv." + c.unlock + "解锁" : "";
+          if (!locked) {
+            sw.addEventListener("click", function () { dresserTemp.hairColor = c.id; renderDresser(); });
+          }
+          hairColorOptions.appendChild(sw);
+        });
+
+        /* Outfit color */
+        outfitColorOptions.innerHTML = "";
+        OUTFIT_COLORS.forEach(function (c) {
+          var locked = data.level < c.unlock;
+          var sw = document.createElement("div");
+          sw.className = "color-swatch" + (dresserTemp.outfitColor === c.id ? " active" : "") + (locked ? " locked" : "");
+          sw.style.background = c.color;
+          sw.title = locked ? "Lv." + c.unlock + "解锁" : "";
+          if (!locked) {
+            sw.addEventListener("click", function () { dresserTemp.outfitColor = c.id; renderDresser(); });
+          }
+          outfitColorOptions.appendChild(sw);
+        });
+
+        /* Ear color */
+        earColorOptions.innerHTML = "";
+        EAR_COLORS.forEach(function (c) {
+          var locked = data.level < c.unlock;
+          var opt = document.createElement("div");
+          opt.className = "dresser-option" + ((dresserTemp.earColor || "brown") === c.id ? " active" : "") + (locked ? " locked" : "");
+          opt.style.background = c.id === "match" ? "linear-gradient(135deg,#9b8bc4,#8b6940)" : c.color;
+          opt.style.fontSize = "10px";
+          opt.textContent = c.id === "match" ? "同" : c.id === "brown" ? "棕" : c.id === "dark" ? "黑" : "奶";
+          opt.title = locked ? "Lv." + c.unlock + "解锁" : "";
+          if (!locked) {
+            opt.addEventListener("click", function () { dresserTemp.earColor = c.id; renderDresser(); });
+          }
+          earColorOptions.appendChild(opt);
+        });
+
+        eyeOptions.innerHTML = "";
+        EYES.forEach(function (e) {
+          var locked = data.level < e.unlock;
+          var opt = document.createElement("div");
+          opt.className = "dresser-option" + (dresserTemp.eyes === e.id ? " active" : "") + (locked ? " locked" : "");
+          opt.textContent = e.emoji;
+          opt.title = locked ? "Lv." + e.unlock + "解锁" : "";
+          if (!locked) {
+            opt.addEventListener("click", function () { dresserTemp.eyes = e.id; renderDresser(); });
+          }
+          eyeOptions.appendChild(opt);
+        });
+
+        mouthOptions.innerHTML = "";
+        MOUTHS.forEach(function (m) {
+          var locked = data.level < m.unlock;
+          var opt = document.createElement("div");
+          opt.className = "dresser-option" + (dresserTemp.mouth === m.id ? " active" : "") + (locked ? " locked" : "");
+          opt.textContent = m.emoji;
+          opt.title = locked ? "Lv." + m.unlock + "解锁" : "";
+          if (!locked) {
+            opt.addEventListener("click", function () { dresserTemp.mouth = m.id; renderDresser(); });
+          }
+          mouthOptions.appendChild(opt);
+        });
+
+        accessoryOptions.innerHTML = "";
+        ACCESSORIES.forEach(function (a) {
+          var locked = data.level < a.unlock;
+          var opt = document.createElement("div");
+          opt.className = "dresser-option" + (dresserTemp.accessory === a.id ? " active" : "") + (locked ? " locked" : "");
+          opt.textContent = a.emoji === "🚫" ? "无" : a.emoji;
+          opt.title = locked ? "Lv." + a.unlock + "解锁" : "";
+          if (!locked) {
+            opt.addEventListener("click", function () { dresserTemp.accessory = a.id; renderDresser(); });
+          }
+          accessoryOptions.appendChild(opt);
+        });
+      }
+
+      function saveDresser() {
+        data.avatar = JSON.parse(JSON.stringify(dresserTemp));
+        SparkTracker.save(data);
+        closeDresser();
+        render();
+        toast("装扮已保存 ✨");
+      }
+
+      function useMakeup() {
+        if (SparkTracker.useMakeup()) {
+          toast("已补签昨天 🔥");
+          render();
+        } else {
+          toast("无法补签（可能没有补签卡或昨天已有互动）");
+        }
+      }
+
+      dressBtn.addEventListener("click", openDresser);
+      dressCancel.addEventListener("click", closeDresser);
+      dressSave.addEventListener("click", saveDresser);
+      dressModal.addEventListener("click", function (e) { if (e.target === dressModal) closeDresser(); });
+      makeupBtn.addEventListener("click", useMakeup);
+
+      /* Tap creature to cycle poses */
+      creatureSvg.addEventListener("click", function () {
+        var state = SparkTracker.getState();
+        if (state === "sleeping") { toast("小火人沉睡中，快唤醒它吧 💤"); return; }
+        var curIdx = POSES.findIndex(function(p){return p.id===data.avatar.pose;});
+        if (curIdx === -1) curIdx = 0;
+        var next = POSES[(curIdx + 1) % POSES.length];
+        data.avatar.pose = next.id;
+        SparkTracker.save(data);
+        render();
+        toast(next.emoji + " " + next.label);
+      });
+
+      render();
+
+      /* Check for interaction gains from other pages (via URL param or storage event) */
+      window.addEventListener("storage", function (e) {
+        if (e.key === SPARK_KEY) render();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -441,10 +441,48 @@
         transition-duration: 0.01ms !important;
       }
     }
+
+    /* ===== 拖拽小精灵 ===== */
+    #spark-companion {
+      position: absolute;
+      width: 64px;
+      height: 72px;
+      z-index: 20;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.2s ease;
+      pointer-events: auto;
+      filter: drop-shadow(0 4px 8px rgba(232,116,154,0.2));
+    }
+    #spark-companion:active { cursor: grabbing; transform: scale(1.08); }
+    #spark-companion svg { width: 100%; height: 100%; pointer-events: none; }
+    #spark-companion .companion-hint {
+      position: absolute;
+      bottom: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    #spark-companion.dragging { transition: none; z-index: 30; }
+    @keyframes companionBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    #spark-companion:not(.dragging) { animation: companionBob 2.5s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      #spark-companion { animation: none !important; }
+    }
   </style>
 </head>
 <body>
   <div id="chat-app">
+    <div id="spark-companion" aria-label="小精灵拖拽"></div>
 
     <header id="partner-info">
       <a href="index-new.html" class="back-btn">← 返回</a>
@@ -1000,6 +1038,10 @@
         messages.push({ side: "right", text: text, time: time, read: false });
         saveMessages(messages);
 
+        /* 小火人互动埋点 */
+        try { (function(){var K="mengjiao_spark";var D=JSON.parse(localStorage.getItem(K)||"{}");var T=new Date();var t=T.getFullYear()+"-"+String(T.getMonth()+1).padStart(2,"0")+"-"+String(T.getDate()).padStart(2,"0");D.daily=D.daily||{};D.daily[t]=D.daily[t]||{chat:0,cards:0,moments:0};if(D.daily[t].chat<10){D.daily[t].chat++;D.totalInteractions=(D.totalInteractions||0)+1;D.exp=(D.exp||0)+3;D.totalExp=(D.totalExp||0)+3;if(t!==D.lastActiveDate){if(D.lastActiveDate===yesterday())D.streak=(D.streak||0)+1;else D.streak=1;D.lastActiveDate=t;}else if(!D.streak)D.streak=1;var L=[{lv:1,need:50},{lv:2,need:150},{lv:3,need:350},{lv:4,need:700},{lv:5,need:1200},{lv:6,need:2000}];while(D.level<7&&D.exp>=L[D.level-1].need){D.exp-=L[D.level-1].need;D.level++;}localStorage.setItem(K,JSON.stringify(D));}function yesterday(){var d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+        })(); } catch (e) {}
+
         input.value = "";
         input.style.height = "auto";
         lastUserText = text;
@@ -1119,6 +1161,195 @@
       } catch (e) {}
 
       if (getMessages().length > 0) continueBar.style.display = "flex";
+
+      /* ===== 拖拽小精灵 ===== */
+      (function initCompanion() {
+        var companion = document.getElementById("spark-companion");
+        if (!companion) return;
+        var SPARK_KEY = "mengjiao_spark";
+        var POS_KEY = "mengjiao_companion_pos";
+
+        function lighten(hex, amt) {
+          var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+          r = Math.min(255, r+amt); g = Math.min(255, g+amt); b = Math.min(255, b+amt);
+          return '#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');
+        }
+        function darken(hex, amt) {
+          var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+          r = Math.max(0, r-amt); g = Math.max(0, g-amt); b = Math.max(0, b-amt);
+          return '#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');
+        }
+
+        var HAIR_MAP = { purple:"#6b5b94", pink:"#e8749a", coral:"#ff8a65", mint:"#7fd5b3", sky:"#7ec8e3", lavender:"#c5a3e3", rose:"#e8749a", honey:"#e8a83a" };
+        var OUTFIT_MAP = { maroon:"#7a3a4a", navy:"#3a4a6a", white:"#e8e8f0", pink:"#e8749a", mint:"#7fd5b3", lavender:"#c5a3e3" };
+        var EAR_MAP = { brown:{c:"#8b6940",i:"#f4a0b0"}, dark:{c:"#4a4a4a",i:"#f4a0b0"}, cream:{c:"#e8d5b8",i:"#f4a0b0"} };
+
+        function renderCompanionSVG(av) {
+          var hair = HAIR_MAP[av.hairColor] || "#9b8bc4";
+          var outfit = OUTFIT_MAP[av.outfitColor] || "#7a3a4a";
+          var earDef = av.earColor === "match" ? {c:hair, i:lighten(hair,30)} : (EAR_MAP[av.earColor] || EAR_MAP.brown);
+          var skin = "#ffe4d6";
+          return '<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">' +
+            '<ellipse cx="100" cy="205" rx="30" ry="4" fill="#000" opacity="0.08"/>' +
+            '<path d="M 138 160 Q 165 150 160 130" stroke="' + earDef.c + '" stroke-width="10" fill="none" stroke-linecap="round"/>' +
+            '<circle cx="160" cy="130" r="5" fill="' + earDef.c + '"/>' +
+            '<path d="M 76 128 Q 76 120 100 120 Q 124 120 124 128 L 128 165 Q 128 172 100 172 Q 72 172 72 165 Z" fill="' + outfit + '"/>' +
+            '<path d="M 88 120 L 100 132 L 112 120" fill="none" stroke="' + darken(outfit,12) + '" stroke-width="2"/>' +
+            '<rect x="78" y="158" width="44" height="12" rx="6" fill="' + skin + '"/>' +
+            '<ellipse cx="88" cy="188" rx="8" ry="5" fill="' + skin + '"/>' +
+            '<ellipse cx="112" cy="188" rx="8" ry="5" fill="' + skin + '"/>' +
+            '<ellipse cx="50" cy="145" rx="6" ry="12" fill="' + outfit + '" transform="rotate(12 50 145)"/>' +
+            '<ellipse cx="150" cy="145" rx="6" ry="12" fill="' + outfit + '" transform="rotate(-12 150 145)"/>' +
+            '<path d="M 44 92 Q 36 64 44 44 Q 56 20 80 24 Q 94 14 112 18 Q 140 20 154 44 Q 162 64 156 92 Q 152 106 146 100 Q 138 110 128 102 Q 120 112 108 104 Q 100 108 92 104 Q 80 112 72 102 Q 62 110 54 100 Q 48 106 44 92 Z" fill="' + hair + '"/>' +
+            '<ellipse cx="100" cy="54" rx="48" ry="34" fill="' + darken(hair,22) + '" opacity="0.18"/>' +
+            '<circle cx="100" cy="82" r="38" fill="' + skin + '"/>' +
+            '<path d="M 58 44 Q 46 16 68 22 Q 80 34 78 50 Z" fill="' + earDef.c + '"/>' +
+            '<path d="M 142 44 Q 154 16 132 22 Q 120 34 122 50 Z" fill="' + earDef.c + '"/>' +
+            '<path d="M 61 41 Q 52 22 66 24 Q 75 36 74 46 Z" fill="' + earDef.i + '" opacity="0.8"/>' +
+            '<path d="M 139 41 Q 148 22 134 24 Q 125 36 126 46 Z" fill="' + earDef.i + '" opacity="0.8"/>' +
+            '<path d="M 96 22 Q 88 6 102 4 Q 114 8 104 22 Z" fill="' + hair + '"/>' +
+            '<path d="M 98 20 Q 96 10 102 8" stroke="' + darken(hair,18) + '" stroke-width="1" fill="none" opacity="0.3"/>' +
+            '<path d="M 100 30 Q 78 28 60 38 Q 44 50 46 74 Q 50 86 58 92 Q 54 74 62 64 Q 74 50 92 48 Q 96 40 100 30 Z" fill="' + hair + '"/>' +
+            '<path d="M 58 92 Q 50 70 60 52 Q 74 40 88 42 Q 82 56 76 72 Q 66 86 58 92 Z" fill="' + hair + '"/>' +
+            '<path d="M 50 86 Q 46 64 54 48 Q 64 38 72 42 Q 66 58 58 74 Q 52 84 50 86 Z" fill="' + hair + '"/>' +
+            '<path d="M 100 30 Q 122 28 140 38 Q 156 50 154 74 Q 150 86 142 92 Q 146 74 138 64 Q 126 50 108 48 Q 104 40 100 30 Z" fill="' + hair + '"/>' +
+            '<path d="M 142 92 Q 150 70 140 52 Q 126 40 112 42 Q 118 56 124 72 Q 134 86 142 92 Z" fill="' + hair + '"/>' +
+            '<path d="M 150 86 Q 154 64 146 48 Q 136 38 128 42 Q 134 58 142 74 Q 148 84 150 86 Z" fill="' + hair + '"/>' +
+            '<path d="M 100 28 L 100 52" stroke="' + darken(hair,28) + '" stroke-width="1.3" fill="none" opacity="0.22" stroke-linecap="round"/>' +
+            '<path d="M 84 36 Q 74 50 66 70" stroke="' + darken(hair,26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
+            '<path d="M 116 36 Q 126 50 134 70" stroke="' + darken(hair,26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
+            '<ellipse cx="72" cy="42" rx="4.5" ry="2.5" fill="' + lighten(hair,42) + '" opacity="0.32" transform="rotate(-28 72 42)"/>' +
+            '<ellipse cx="128" cy="42" rx="4.5" ry="2.5" fill="' + lighten(hair,42) + '" opacity="0.32" transform="rotate(28 128 42)"/>' +
+            '<ellipse cx="88" cy="44" rx="3" ry="1.8" fill="' + lighten(hair,36) + '" opacity="0.22"/>' +
+            '<ellipse cx="112" cy="44" rx="3" ry="1.8" fill="' + lighten(hair,36) + '" opacity="0.22"/>' +
+            '<path d="M 46 86 Q 36 98 40 112 Q 50 106 54 92 Z" fill="' + hair + '"/>' +
+            '<path d="M 154 86 Q 164 98 160 112 Q 150 106 146 92 Z" fill="' + hair + '"/>' +
+            '<ellipse cx="72" cy="92" rx="6" ry="4" fill="#ff8aa0" opacity="0.35"/>' +
+            '<ellipse cx="128" cy="92" rx="6" ry="4" fill="#ff8aa0" opacity="0.35"/>' +
+            '<ellipse cx="82" cy="84" rx="5" ry="6" fill="#5a3040"/>' +
+            '<ellipse cx="118" cy="84" rx="5" ry="6" fill="#5a3040"/>' +
+            '<circle cx="84" cy="82" r="1.8" fill="#fff"/>' +
+            '<circle cx="120" cy="82" r="1.8" fill="#fff"/>' +
+            '<path d="M 90 100 Q 100 106 110 100" stroke="#5a3040" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+            '</svg>';
+        }
+
+        function loadAvatar() {
+          try {
+            var raw = localStorage.getItem(SPARK_KEY);
+            if (raw) {
+              var d = JSON.parse(raw);
+              if (d.avatar) return d.avatar;
+            }
+          } catch (e) {}
+          return { hairColor:"purple", outfitColor:"maroon", earColor:"brown", eyes:"round", mouth:"smile", accessory:"none", pose:"idle" };
+        }
+
+        function updateCompanion() {
+          var av = loadAvatar();
+          companion.innerHTML = renderCompanionSVG(av) + '<div class="companion-hint">拖拽我</div>';
+        }
+
+        /* Position restore */
+        try {
+          var pos = JSON.parse(localStorage.getItem(POS_KEY) || "{}");
+          if (pos.x !== undefined) {
+            companion.style.left = pos.x + "px";
+            companion.style.top = pos.y + "px";
+          } else {
+            companion.style.right = "16px";
+            companion.style.bottom = "80px";
+          }
+        } catch (e) {
+          companion.style.right = "16px";
+          companion.style.bottom = "80px";
+        }
+
+        updateCompanion();
+
+        /* Drag logic */
+        var dragging = false;
+        var startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+        function onPointerDown(e) {
+          dragging = true;
+          companion.classList.add("dragging");
+          var rect = companion.getBoundingClientRect();
+          var parentRect = companion.parentElement.getBoundingClientRect();
+          origLeft = rect.left - parentRect.left;
+          origTop = rect.top - parentRect.top;
+          startX = e.clientX;
+          startY = e.clientY;
+          companion.style.left = origLeft + "px";
+          companion.style.top = origTop + "px";
+          companion.style.right = "auto";
+          companion.style.bottom = "auto";
+          e.preventDefault();
+        }
+
+        function onPointerMove(e) {
+          if (!dragging) return;
+          var dx = e.clientX - startX;
+          var dy = e.clientY - startY;
+          var newLeft = origLeft + dx;
+          var newTop = origTop + dy;
+          var parent = companion.parentElement;
+          var maxLeft = parent.clientWidth - companion.offsetWidth;
+          var maxTop = parent.clientHeight - companion.offsetHeight;
+          newLeft = Math.max(0, Math.min(maxLeft, newLeft));
+          newTop = Math.max(0, Math.min(maxTop, newTop));
+          companion.style.left = newLeft + "px";
+          companion.style.top = newTop + "px";
+        }
+
+        function onPointerUp() {
+          if (!dragging) return;
+          dragging = false;
+          companion.classList.remove("dragging");
+          try {
+            localStorage.setItem(POS_KEY, JSON.stringify({
+              x: parseInt(companion.style.left) || 0,
+              y: parseInt(companion.style.top) || 0
+            }));
+          } catch (e) {}
+        }
+
+        companion.addEventListener("pointerdown", onPointerDown);
+        document.addEventListener("pointermove", onPointerMove);
+        document.addEventListener("pointerup", onPointerUp);
+        document.addEventListener("pointercancel", onPointerUp);
+
+        /* Tap to cycle pose (quick interaction) */
+        var tapStartT = 0, tapStartX = 0, tapStartY = 0;
+        companion.addEventListener("pointerdown", function(e) {
+          tapStartT = Date.now();
+          tapStartX = e.clientX;
+          tapStartY = e.clientY;
+        });
+        companion.addEventListener("pointerup", function(e) {
+          if (Date.now() - tapStartT < 200 &&
+              Math.abs(e.clientX - tapStartX) < 8 &&
+              Math.abs(e.clientY - tapStartY) < 8) {
+            /* It's a tap - cycle pose */
+            try {
+              var raw = localStorage.getItem(SPARK_KEY);
+              var d = raw ? JSON.parse(raw) : {};
+              d.avatar = d.avatar || {};
+              var poses = ["idle","wave","cheer","reach","shy","sit"];
+              var cur = poses.indexOf(d.avatar.pose || "idle");
+              if (cur === -1) cur = 0;
+              d.avatar.pose = poses[(cur + 1) % poses.length];
+              localStorage.setItem(SPARK_KEY, JSON.stringify(d));
+              updateCompanion();
+            } catch (e) {}
+          }
+        });
+
+        /* Listen for avatar changes from spark page */
+        window.addEventListener("storage", function(e) {
+          if (e.key === SPARK_KEY) updateCompanion();
+        });
+      })();
     })();
   </script>
 </body>

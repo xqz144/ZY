@@ -878,6 +878,10 @@
         postModal.classList.remove("show");
         renderAll();
         showToast("发布成功");
+
+        /* 小火人互动埋点 */
+        try { (function(){var K="mengjiao_spark";var D=JSON.parse(localStorage.getItem(K)||"{}");var T=new Date();var t=T.getFullYear()+"-"+String(T.getMonth()+1).padStart(2,"0")+"-"+String(T.getDate()).padStart(2,"0");D.daily=D.daily||{};D.daily[t]=D.daily[t]||{chat:0,cards:0,moments:0};if(D.daily[t].moments<2){D.daily[t].moments++;D.totalInteractions=(D.totalInteractions||0)+1;D.exp=(D.exp||0)+8;D.totalExp=(D.totalExp||0)+8;if(t!==D.lastActiveDate){if(D.lastActiveDate===yesterday())D.streak=(D.streak||0)+1;else D.streak=1;D.lastActiveDate=t;}else if(!D.streak)D.streak=1;var L=[{lv:1,need:50},{lv:2,need:150},{lv:3,need:350},{lv:4,need:700},{lv:5,need:1200},{lv:6,need:2000}];while(D.level<7&&D.exp>=L[D.level-1].need){D.exp-=L[D.level-1].need;D.level++;}localStorage.setItem(K,JSON.stringify(D));}function yesterday(){var d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+        })(); } catch (e) {}
       });
 
       /* ========== 图片压缩 ========== */
