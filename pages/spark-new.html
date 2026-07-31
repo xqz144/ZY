@@ -1352,7 +1352,7 @@
         var state = SparkTracker.getState();
         var info = STATE_INFO[state];
 
-        creatureSvg.innerHTML = renderCreature(data, state);
+        creatureSvg.innerHTML = '<img src="character.png?v=2" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;">';
         creatureWrap.className = "creature-svg-wrap" + (state === "sleeping" ? " sleeping" : "");
         creatureName.textContent = "Lv." + data.level + " " + LEVELS[Math.min(data.level-1, LEVELS.length-1)].title;
         creatureStatusText.textContent = info.text;
@@ -1409,7 +1409,7 @@
       function closeDresser() { dressModal.classList.remove("show"); }
 
       function renderDresser() {
-        dresserPreview.innerHTML = renderCreature({ level: data.level, avatar: dresserTemp }, "happy");
+        dresserPreview.innerHTML = '<img src="character.png?v=2" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;">';
 
         /* Hair color */
         hairColorOptions.innerHTML = "";
