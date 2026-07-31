@@ -76,6 +76,16 @@
 
   --tracking-normal: 0.01em;
   --spacing: 0.3rem;
+
+  /* 直景色值 — 供自定义样式直接引用 */
+  --primary-bg: #fdf6f8;
+  --secondary-bg: #fff0f4;
+  --accent-color: #e8749a;
+  --accent-color-rgb: 232, 116, 154;
+  --text-primary: #3d2030;
+  --text-secondary: #a08090;
+  --border-color: rgba(232, 116, 154, 0.15);
+  --chat-bg: #fef8fa;
 }
 
 .dark {
@@ -127,15 +137,15 @@
   --tracking-normal: 0.01em;
   --spacing: 0.3rem;
 
-  /* 用户指定的直景色值（供自定义样式直接引用） */
-  --primary-bg: #fdf6f8;
-  --secondary-bg: #fff0f4;
+  /* 暗色模式直景色值 */
+  --primary-bg: #1a1218;
+  --secondary-bg: #241a22;
   --accent-color: #e8749a;
   --accent-color-rgb: 232, 116, 154;
-  --text-primary: #3d2030;
+  --text-primary: #f0e0e8;
   --text-secondary: #a08090;
-  --border-color: rgba(232, 116, 154, 0.15);
-  --chat-bg: #fef8fa;
+  --border-color: rgba(232, 116, 154, 0.2);
+  --chat-bg: #1a1218;
 }
 
 body {

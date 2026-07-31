@@ -689,6 +689,7 @@
       "use strict";
 
       var STORAGE_KEY = "mengjiao_card_replies";
+      var HISTORY_KEY = "mengjiao_card_history";
       var DEFAULT_REPLIES = [
         "今天也在想你哦。",
         "别担心，我一直都在。",
@@ -752,6 +753,35 @@
         } catch (e) {}
       }
 
+      /* ---- History ---- */
+      function getHistory() {
+        try {
+          var raw = localStorage.getItem(HISTORY_KEY);
+          if (raw) {
+            var arr = JSON.parse(raw);
+            if (Array.isArray(arr)) return arr;
+          }
+        } catch (e) {}
+        return [];
+      }
+      function saveHistory(arr) {
+        try {
+          if (arr.length > 100) arr = arr.slice(arr.length - 100);
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+        } catch (e) {}
+      }
+      function addHistory(reply) {
+        var d = new Date();
+        var entry = {
+          date: d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"),
+          time: String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"),
+          reply: reply
+        };
+        var history = getHistory();
+        history.push(entry);
+        saveHistory(history);
+      }
+
       /* ---- Toast ---- */
       function showToast(msg) {
         toast.textContent = msg;
@@ -787,6 +817,7 @@
         drawBtn.disabled = true;
 
         var reply = pickReply();
+        addHistory(reply);
         var isFlipped = card3d.classList.contains("is-flipped");
 
         if (!isFlipped) {

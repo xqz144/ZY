@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>背景音乐 · 梦角传讯</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../colors_and_type.css" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            muted: 'hsl(var(--muted))',
+            'muted-foreground': 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--accent))',
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+          },
+          fontFamily: {
+            sans: ['"DreamFont"', '"Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"DreamFont"', '"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
+          },
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--secondary-bg);
+      color: var(--text-primary);
+      letter-spacing: var(--tracking-normal);
+    }
+
+    /* Phone frame */
+    .phone {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 880px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: hsl(var(--background));
+    }
+    @media (min-width: 480px) {
+      .phone {
+        height: 860px;
+        border-radius: 40px;
+        border: 10px solid hsl(343 30% 22%);
+        box-shadow: 0 25px 60px -15px hsl(343 60% 35% / 0.35), 0 0 0 2px hsl(343 30% 18%);
+      }
+      .phone::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 150px; height: 28px;
+        background: hsl(343 30% 18%);
+        border-radius: 0 0 18px 18px;
+        z-index: 100;
+      }
+    }
+
+    .app-bg {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(343 80% 94% / 0.9), transparent 60%),
+        radial-gradient(ellipse 420px 260px at 90% 10%, hsl(343 72% 92% / 0.7), transparent 55%),
+        linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
+      scrollbar-width: none;
+    }
+    .app-bg::-webkit-scrollbar { display: none; }
+
+    .starlight { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .starlight span {
+      position: absolute; border-radius: 9999px;
+      background: hsl(343 72% 68% / 0.35);
+      animation: twinkle 5s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.12; transform: scale(0.7); }
+      50% { opacity: 0.45; transform: scale(1.1); }
+    }
+
+    .top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 44px 16px 10px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 479px) {
+      .top-bar { padding-top: 16px; }
+    }
+    .back-btn {
+      font-size: 15px;
+      color: var(--accent-color);
+      text-decoration: none;
+      padding: 6px 8px;
+      font-weight: 500;
+      flex-shrink: 0;
+      min-width: 64px;
+      transition: opacity 0.15s;
+    }
+    .back-btn:active { opacity: 0.6; }
+    .top-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      flex: 1;
+    }
+    .top-spacer { min-width: 64px; flex-shrink: 0; }
+
+    .music-content {
+      flex: 1;
+      padding: 8px 16px 28px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    /* Vinyl record */
+    .vinyl-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding-top: 8px;
+      animation: cardEnter 0.4s cubic-bezier(.3,0,0,1) both;
+    }
+    .vinyl {
+      width: 200px; height: 200px; border-radius: 9999px;
+      background: radial-gradient(circle at 50% 50%,
+        #e8749a 0%, #e8749a 15%,
+        #3d2030 15%, #3d2030 18%,
+        #2a1820 18%, #2a1820 100%);
+      position: relative;
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
+      animation: spin 8s linear infinite;
+      animation-play-state: paused;
+    }
+    .vinyl.playing { animation-play-state: running; }
+    .vinyl::before {
+      content: ''; position: absolute; inset: 25%;
+      border-radius: 9999px;
+      background: radial-gradient(circle, #f4a0bc, #e8749a);
+    }
+    .vinyl::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      width: 8px; height: 8px; border-radius: 9999px;
+      background: #3d2030; transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .music-info {
+      text-align: center;
+      max-width: 280px;
+    }
+    .music-name {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+    .music-status {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      transition: color 0.2s;
+    }
+    .music-status.active { color: var(--accent-color); }
+
+    .settings-card {
+      width: 100%;
+      box-sizing: border-box;
+      background: #fff;
+      border: 1.5px solid rgba(232, 116, 154, 0.15);
+      border-radius: 16px;
+      padding: 18px 18px;
+      box-shadow: 0 1px 3px 0 rgba(232, 116, 154, 0.04);
+      animation: cardEnter 0.4s cubic-bezier(.3,0,0,1) both;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    .settings-card:hover { border-color: var(--accent-color); background: #fff5f8; }
+    @keyframes cardEnter {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+    .settings-card.delay-1 { animation-delay: 0.05s; }
+    .settings-card.delay-2 { animation-delay: 0.1s; }
+    .settings-card.delay-3 { animation-delay: 0.15s; }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent-color);
+      margin: 0 0 4px 0;
+    }
+    .section-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin: 0 0 14px 0;
+      line-height: 1.5;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .text-input {
+      width: 100%;
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(232, 116, 154, 0.2);
+      background: #fff;
+      color: var(--text-primary);
+      font-size: 15px;
+      font-family: var(--font-sans);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
+    }
+    .text-input::placeholder { color: var(--text-secondary); }
+    .text-input:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(232, 116, 154, 0.1);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .input-row .text-input { flex: 1; min-width: 0; }
+    .small-btn {
+      flex-shrink: 0;
+      padding: 0 14px;
+      height: 42px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: transform 0.15s, filter 0.15s;
+    }
+    .small-btn:active { transform: scale(0.97); }
+
+    .format-hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    /* Player controls */
+    .controls-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .play-btn {
+      width: 64px; height: 64px;
+      border-radius: 9999px;
+      border: none;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      font-size: 1.6rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 8px 20px -4px rgba(232, 116, 154, 0.45);
+      transition: transform 0.15s, filter 0.15s, box-shadow 0.2s;
+    }
+    .play-btn:active { transform: scale(0.93); }
+    .play-btn:disabled {
+      background: hsl(343 20% 80%);
+      box-shadow: none;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .play-icon { display: block; line-height: 1; }
+
+    .progress-wrap {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 5px;
+      border-radius: 9999px;
+      background: rgba(232, 116, 154, 0.18);
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #f4a0bc, #e8749a);
+      transition: width 0.1s linear;
+    }
+    .progress-times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .volume-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .volume-icon { font-size: 1rem; flex-shrink: 0; }
+    .volume-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 5px;
+      border-radius: 9999px;
+      background: rgba(232, 116, 154, 0.18);
+      outline: none;
+      cursor: pointer;
+    }
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 9999px;
+      background: var(--accent-color);
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(232, 116, 154, 0.4);
+      cursor: pointer;
+    }
+    .volume-slider::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 9999px;
+      background: var(--accent-color);
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(232, 116, 154, 0.4);
+      cursor: pointer;
+    }
+
+    /* Toggle switch */
+    .toggle { position: relative; display: inline-flex; flex-shrink: 0; }
+    .toggle-input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+    .toggle-track {
+      width: 44px; height: 24px; border-radius: 9999px;
+      background: hsl(343 20% 80%); position: relative;
+      transition: background-color 0.24s;
+    }
+    .toggle-knob {
+      position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+      border-radius: 9999px; background: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      transition: transform 0.24s;
+    }
+    .toggle-input:checked ~ .toggle-track { background: var(--accent-color); }
+    .toggle-input:checked ~ .toggle-track .toggle-knob { transform: translateX(20px); }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+    }
+    .setting-row + .setting-row {
+      border-top: 1px solid rgba(232, 116, 154, 0.1);
+      margin-top: 6px;
+      padding-top: 14px;
+    }
+    .setting-label {
+      font-size: 14px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .setting-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .setting-volume-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 0;
+    }
+    .setting-volume-row .setting-label { flex-shrink: 0; }
+    .setting-volume-row .volume-slider { flex: 1; }
+    .vol-percent {
+      font-size: 12px;
+      color: var(--accent-color);
+      font-variant-numeric: tabular-nums;
+      min-width: 34px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .clear-link {
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin-top: 4px;
+      padding: 8px;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      transition: color 0.15s;
+    }
+    .clear-link:active { color: #e11d48; }
+
+    .toast {
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text-primary);
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 9999px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 300;
+      white-space: nowrap;
+      box-shadow: 0 8px 24px -8px rgba(232, 116, 154, 0.3);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .audio-hidden { display: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .vinyl { animation-play-state: paused !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="app-bg">
+
+      <div class="starlight" aria-hidden="true">
+        <span style="top:6%;left:10%;width:2px;height:2px;animation-delay:0s"></span>
+        <span style="top:14%;left:80%;width:3px;height:3px;animation-delay:0.8s"></span>
+        <span style="top:28%;left:88%;width:2px;height:2px;animation-delay:1.6s"></span>
+        <span style="top:45%;left:6%;width:3px;height:3px;animation-delay:1.2s"></span>
+        <span style="top:62%;left:90%;width:2px;height:2px;animation-delay:2s"></span>
+        <span style="top:78%;left:15%;width:3px;height:3px;animation-delay:0.4s"></span>
+        <span style="top:88%;left:65%;width:2px;height:2px;animation-delay:2.8s"></span>
+      </div>
+
+      <div class="top-bar">
+        <a href="index-new.html" class="back-btn">← 返回</a>
+        <span class="top-title">背景音乐</span>
+        <span class="top-spacer"></span>
+      </div>
+
+      <div class="music-content">
+
+        <div class="vinyl-wrap">
+          <div class="vinyl" id="vinyl" aria-hidden="true"></div>
+          <div class="music-info">
+            <div class="music-name" id="musicName">未设置音乐</div>
+            <div class="music-status" id="musicStatus">点击下方按钮设置</div>
+          </div>
+        </div>
+
+        <div class="settings-card delay-1">
+          <h2 class="section-title">音乐链接</h2>
+          <p class="section-hint">粘贴音频直链，保存后即可播放</p>
+          <div class="input-row">
+            <input type="url" id="urlInput" class="text-input" placeholder="粘贴音频链接…" />
+            <button type="button" class="small-btn" id="saveUrlBtn">保存链接</button>
+          </div>
+          <p class="format-hint">支持 mp3、wav、ogg 等直链</p>
+          <button type="button" class="clear-link" id="clearUrlBtn">清除音乐链接</button>
+        </div>
+
+        <div class="settings-card controls-card delay-2">
+          <h2 class="section-title" style="align-self:flex-start;">播放控制</h2>
+          <button type="button" class="play-btn" id="playBtn" disabled aria-label="播放/暂停">
+            <span class="play-icon" id="playIcon">▶</span>
+          </button>
+          <div class="progress-wrap">
+            <div class="progress-bar" id="progressBar" aria-label="播放进度">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-times">
+              <span id="currentTime">00:00</span>
+              <span id="totalTime">00:00</span>
+            </div>
+          </div>
+          <div class="volume-row">
+            <span class="volume-icon" aria-hidden="true">🔊</span>
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.6" aria-label="音量" />
+          </div>
+        </div>
+
+        <div class="settings-card delay-3">
+          <h2 class="section-title">播放设置</h2>
+          <p class="section-hint">控制进入主页时的自动播放与默认音量</p>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">进入主页时自动播放</div>
+              <div class="setting-desc">开启后，打开主页将自动播放音乐</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" class="toggle-input" id="autoplayToggle" />
+              <span class="toggle-track">
+                <span class="toggle-knob"></span>
+              </span>
+            </label>
+          </div>
+          <div class="setting-volume-row">
+            <span class="setting-label">默认音量</span>
+            <input type="range" id="defaultVolumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.6" aria-label="默认音量" />
+            <span class="vol-percent" id="volPercent">60%</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+      <audio class="audio-hidden" id="audio" preload="metadata"></audio>
+
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var KEYS = {
+        bgMusic: "mengjiao_bg_music",
+        autoplay: "mengjiao_music_autoplay",
+        volume: "mengjiao_music_volume"
+      };
+
+      function getItem(key, fallback) {
+        try {
+          var v = localStorage.getItem(key);
+          if (v !== null && v !== "") return v;
+        } catch (e) {}
+        return fallback;
+      }
+      function setItem(key, val) {
+        try { localStorage.setItem(key, val); } catch (e) {}
+      }
+
+      var audio = document.getElementById("audio");
+      var vinyl = document.getElementById("vinyl");
+      var musicName = document.getElementById("musicName");
+      var musicStatus = document.getElementById("musicStatus");
+      var urlInput = document.getElementById("urlInput");
+      var saveUrlBtn = document.getElementById("saveUrlBtn");
+      var clearUrlBtn = document.getElementById("clearUrlBtn");
+      var playBtn = document.getElementById("playBtn");
+      var playIcon = document.getElementById("playIcon");
+      var progressBar = document.getElementById("progressBar");
+      var progressFill = document.getElementById("progressFill");
+      var currentTimeEl = document.getElementById("currentTime");
+      var totalTimeEl = document.getElementById("totalTime");
+      var volumeSlider = document.getElementById("volumeSlider");
+      var autoplayToggle = document.getElementById("autoplayToggle");
+      var defaultVolumeSlider = document.getElementById("defaultVolumeSlider");
+      var volPercent = document.getElementById("volPercent");
+      var toast = document.getElementById("toast");
+      var toastTimer;
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 1800);
+      }
+
+      function formatTime(sec) {
+        if (!sec || isNaN(sec) || !isFinite(sec)) return "00:00";
+        var m = Math.floor(sec / 60);
+        var s = Math.floor(sec % 60);
+        return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+      }
+
+      function nameFromUrl(url) {
+        if (!url) return "";
+        try {
+          var u = new URL(url);
+          var last = u.pathname.split("/").filter(Boolean).pop();
+          return last ? decodeURIComponent(last) : url;
+        } catch (e) {
+          return url;
+        }
+      }
+
+      function setStatus(text, active) {
+        musicStatus.textContent = text;
+        if (active) musicStatus.classList.add("active");
+        else musicStatus.classList.remove("active");
+      }
+
+      function updateMusicDisplay() {
+        var url = getItem(KEYS.bgMusic, "");
+        if (url) {
+          musicName.textContent = nameFromUrl(url);
+          playBtn.disabled = false;
+          if (audio.paused) {
+            setStatus("准备播放", false);
+          }
+        } else {
+          musicName.textContent = "未设置音乐";
+          playBtn.disabled = true;
+          setStatus("点击下方按钮设置", false);
+          playIcon.textContent = "▶";
+        }
+      }
+
+      function loadUrl(url) {
+        if (url) {
+          audio.src = url;
+          audio.load();
+        } else {
+          audio.removeAttribute("src");
+          audio.load();
+          progressFill.style.width = "0%";
+          currentTimeEl.textContent = "00:00";
+          totalTimeEl.textContent = "00:00";
+        }
+        updateMusicDisplay();
+      }
+
+      function syncVolumeUI(val) {
+        var v = Math.max(0, Math.min(1, Number(val) || 0));
+        volumeSlider.value = v;
+        defaultVolumeSlider.value = v;
+        volPercent.textContent = Math.round(v * 100) + "%";
+        audio.volume = v;
+      }
+
+      // Initialize from storage
+      var savedUrl = getItem(KEYS.bgMusic, "");
+      var savedAutoplay = getItem(KEYS.autoplay, "false") === "true";
+      var savedVolume = getItem(KEYS.volume, "0.6");
+
+      urlInput.value = savedUrl;
+      autoplayToggle.checked = savedAutoplay;
+      syncVolumeUI(savedVolume);
+      loadUrl(savedUrl);
+
+      // Save URL
+      function saveUrl() {
+        var val = urlInput.value.trim();
+        if (!val) {
+          showToast("请输入音频链接");
+          return;
+        }
+        setItem(KEYS.bgMusic, val);
+        // reset playback state before loading new src
+        audio.pause();
+        playIcon.textContent = "▶";
+        vinyl.classList.remove("playing");
+        loadUrl(val);
+        showToast("音乐链接已保存");
+      }
+
+      saveUrlBtn.addEventListener("click", saveUrl);
+      urlInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); saveUrl(); }
+      });
+
+      clearUrlBtn.addEventListener("click", function () {
+        urlInput.value = "";
+        setItem(KEYS.bgMusic, "");
+        audio.pause();
+        playIcon.textContent = "▶";
+        vinyl.classList.remove("playing");
+        loadUrl("");
+        showToast("已清除音乐链接");
+      });
+
+      // Play / Pause
+      function togglePlay() {
+        if (!audio.src) {
+          showToast("请先保存音乐链接");
+          return;
+        }
+        if (audio.paused) {
+          var p = audio.play();
+          if (p && typeof p.then === "function") {
+            p.catch(function () {
+              showToast("无法播放此链接，请检查格式");
+              setStatus("播放失败", false);
+            });
+          }
+        } else {
+          audio.pause();
+        }
+      }
+      playBtn.addEventListener("click", togglePlay);
+
+      // Audio events
+      audio.addEventListener("play", function () {
+        vinyl.classList.add("playing");
+        playIcon.textContent = "❚❚";
+        setStatus("播放中…", true);
+      });
+      audio.addEventListener("pause", function () {
+        vinyl.classList.remove("playing");
+        playIcon.textContent = "▶";
+        if (!audio.ended) setStatus("已暂停", false);
+      });
+      audio.addEventListener("ended", function () {
+        vinyl.classList.remove("playing");
+        playIcon.textContent = "▶";
+        setStatus("播放结束", false);
+        progressFill.style.width = "0%";
+        currentTimeEl.textContent = "00:00";
+      });
+      audio.addEventListener("loadedmetadata", function () {
+        totalTimeEl.textContent = formatTime(audio.duration);
+      });
+      audio.addEventListener("timeupdate", function () {
+        if (audio.duration && isFinite(audio.duration)) {
+          var pct = (audio.currentTime / audio.duration) * 100;
+          progressFill.style.width = pct + "%";
+          currentTimeEl.textContent = formatTime(audio.currentTime);
+        }
+      });
+      audio.addEventListener("error", function () {
+        if (audio.src) {
+          vinyl.classList.remove("playing");
+          playIcon.textContent = "▶";
+          showToast("无法播放此链接，请检查格式");
+          setStatus("播放失败", false);
+        }
+      });
+
+      // Seek on progress bar
+      progressBar.addEventListener("click", function (e) {
+        if (!audio.duration || !isFinite(audio.duration)) return;
+        var rect = progressBar.getBoundingClientRect();
+        var ratio = (e.clientX - rect.left) / rect.width;
+        ratio = Math.max(0, Math.min(1, ratio));
+        audio.currentTime = ratio * audio.duration;
+      });
+
+      // Volume sliders (synchronized)
+      function onVolumeChange(val) {
+        var v = Math.max(0, Math.min(1, Number(val) || 0));
+        syncVolumeUI(v);
+        setItem(KEYS.volume, String(v));
+      }
+      volumeSlider.addEventListener("input", function () { onVolumeChange(volumeSlider.value); });
+      defaultVolumeSlider.addEventListener("input", function () { onVolumeChange(defaultVolumeSlider.value); });
+
+      // Autoplay toggle
+      autoplayToggle.addEventListener("change", function () {
+        setItem(KEYS.autoplay, autoplayToggle.checked ? "true" : "false");
+        showToast(autoplayToggle.checked ? "已开启自动播放" : "已关闭自动播放");
+      });
+    })();
+  </script>
+</body>
+</html>

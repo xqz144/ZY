@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>传讯记录 · 梦角传讯</title>
+
+  <!-- Fonts: Noto Sans SC (body) + Noto Serif SC (headings) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Project token system (single hue: 柔粉 #e8749a) -->
+  <link rel="stylesheet" href="../colors_and_type.css" />
+
+  <!-- Tailwind + token bridge -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            'card-foreground': 'hsl(var(--card-foreground))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            secondary: 'hsl(var(--secondary))',
+            'secondary-foreground': 'hsl(var(--secondary-foreground))',
+            muted: 'hsl(var(--muted))',
+            'muted-foreground': 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--accent))',
+            'accent-foreground': 'hsl(var(--accent-foreground))',
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+            destructive: 'hsl(var(--destructive))',
+            'destructive-foreground': 'hsl(var(--destructive-foreground))',
+          },
+          fontFamily: {
+            sans: ['"DreamFont"', '"Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"DreamFont"', '"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
+          },
+          borderRadius: { sm: '4px', md: '8px', lg: '12px', xl: '12px' },
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--secondary-bg);
+      color: hsl(var(--foreground));
+      letter-spacing: var(--tracking-normal);
+    }
+
+    /* ===== Phone frame ===== */
+    .phone {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 880px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: hsl(var(--background));
+    }
+    @media (min-width: 480px) {
+      .phone {
+        height: 860px;
+        border-radius: 40px;
+        border: 10px solid hsl(343 30% 22%);
+        box-shadow: 0 25px 60px -15px hsl(343 60% 35% / 0.35), 0 0 0 2px hsl(343 20% 12%);
+      }
+      .phone::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 150px; height: 28px;
+        background: hsl(343 30% 18%);
+        border-radius: 0 0 18px 18px;
+        z-index: 100;
+      }
+    }
+
+    /* ===== App background — dreamy pink gradient ===== */
+    .app-bg {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(343 80% 94% / 0.9), transparent 60%),
+        radial-gradient(ellipse 400px 250px at 90% 10%, hsl(343 72% 92% / 0.7), transparent 55%),
+        linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
+    }
+
+    /* ===== Starlight background (sparse, low opacity, twinkle) ===== */
+    .starlight { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .starlight span {
+      position: absolute; border-radius: 9999px;
+      background: hsl(343 72% 68% / 0.35);
+      animation: twinkle 4s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.15; transform: scale(0.7); }
+      50% { opacity: 0.6; transform: scale(1.1); }
+    }
+
+    /* ===== Top bar ===== */
+    .top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 44px 16px 10px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 479px) {
+      .top-bar { padding-top: 16px; }
+    }
+    .back-btn {
+      font-size: 15px;
+      color: hsl(var(--primary));
+      text-decoration: none;
+      padding: 6px 8px;
+      font-weight: 500;
+      flex-shrink: 0;
+      min-width: 64px;
+      transition: opacity 0.15s;
+    }
+    .back-btn:active { opacity: 0.6; }
+    .top-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      text-align: center;
+      flex: 1;
+    }
+    .clear-btn {
+      font-size: 14px;
+      color: hsl(var(--destructive));
+      background: hsl(var(--destructive) / 0.1);
+      border: 1px solid hsl(var(--destructive) / 0.22);
+      border-radius: 9999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+      min-width: 64px;
+      font-family: var(--font-sans);
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .clear-btn:active { background: hsl(var(--destructive) / 0.2); }
+    .clear-btn.armed {
+      background: hsl(var(--destructive));
+      color: hsl(var(--destructive-foreground));
+      border-color: transparent;
+      box-shadow: 0 4px 12px -2px hsl(var(--destructive) / 0.4);
+    }
+
+    /* ===== Tab bar ===== */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 5;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 9999px;
+      border: 1px solid rgba(232, 116, 154, 0.2);
+      background: #fff;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 12px -2px rgba(232, 116, 154, 0.35);
+    }
+
+    /* ===== Content area (scrollable) ===== */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 8px 16px 16px;
+      scrollbar-width: none;
+      position: relative;
+      z-index: 1;
+    }
+    .content-area::-webkit-scrollbar { display: none; }
+
+    /* ===== Tab panels ===== */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ===== Card history list ===== */
+    .card-list { display: flex; flex-direction: column; gap: 10px; }
+    .card-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(232, 116, 154, 0.15);
+      border-radius: 16px;
+      box-shadow: 0 4px 14px -6px rgba(232, 116, 154, 0.18);
+      animation: fadeUp 0.4s cubic-bezier(.3, 0, 0, 1) both;
+    }
+    .card-icon {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      display: grid; place-items: center;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      box-shadow: 0 4px 10px -3px rgba(232, 116, 154, 0.4);
+    }
+    .card-body { flex: 1; min-width: 0; }
+    .card-reply {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.6;
+      color: var(--text-primary);
+      margin: 0 0 6px;
+      word-break: break-word;
+    }
+    .card-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ===== Chat history list ===== */
+    .chat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .date-sep {
+      display: flex;
+      justify-content: center;
+      padding: 10px 0 2px;
+    }
+    .date-sep span {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      padding: 3px 14px;
+      border-radius: 9999px;
+      border: 1px solid rgba(232, 116, 154, 0.12);
+    }
+
+    .msg-row {
+      display: flex; align-items: flex-end; gap: 8px;
+      max-width: 100%;
+      animation: msgFadeIn 0.3s cubic-bezier(.3, 0, 0, 1) both;
+    }
+    @keyframes msgFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .msg-row.right { justify-content: flex-end; }
+
+    .msg-avatar {
+      width: 30px; height: 30px; border-radius: 9999px;
+      flex-shrink: 0; display: grid; place-items: center;
+      font-size: 1rem;
+      background: radial-gradient(circle at 30% 25%, #ffe4ec, #f4a0bc);
+      border: 2px solid #fff;
+      overflow: hidden;
+    }
+    .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .msg-col {
+      display: flex; flex-direction: column; gap: 3px;
+      max-width: 76%;
+    }
+    .msg-row.right .msg-col { align-items: flex-end; }
+
+    /* 玻璃气泡 (matches chat page) */
+    .message-sent, .message-received {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-top: 1px solid rgba(255, 255, 255, 0.65);
+      border-left: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+      color: #333333;
+      background-color: transparent;
+      padding: 10px 14px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .message-received { border-radius: 20px 20px 20px 5px; }
+    .message-sent { border-radius: 20px 20px 5px 20px; }
+
+    .msg-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+      padding: 0 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ===== Empty state ===== */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 64px 24px 32px;
+      color: var(--text-secondary);
+    }
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.5;
+      filter: grayscale(0.2);
+    }
+    .empty-title {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin: 0 0 6px;
+    }
+    .empty-sub {
+      font-size: 13px;
+      margin: 0 0 18px;
+      line-height: 1.6;
+    }
+    .empty-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      color: hsl(var(--primary-foreground));
+      text-decoration: none;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      padding: 9px 22px;
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px -3px rgba(232, 116, 154, 0.4);
+      transition: transform 0.15s;
+    }
+    .empty-link:active { transform: scale(0.96); }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: hsl(var(--foreground));
+      color: hsl(var(--background));
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 300;
+      white-space: nowrap;
+      max-width: 88%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ===== Entrance ===== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: none; }
+    }
+    .tab-bar { animation: fadeUp 0.4s cubic-bezier(.3, 0, 0, 1) both; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="app-bg">
+
+      <!-- Starlight background -->
+      <div class="starlight" aria-hidden="true">
+        <span style="top:8%;left:12%;width:3px;height:3px;animation-delay:0s"></span>
+        <span style="top:15%;left:78%;width:2px;height:2px;animation-delay:0.6s"></span>
+        <span style="top:28%;left:88%;width:3px;height:3px;animation-delay:1.2s"></span>
+        <span style="top:42%;left:6%;width:2px;height:2px;animation-delay:1.8s"></span>
+        <span style="top:58%;left:92%;width:3px;height:3px;animation-delay:0.9s"></span>
+        <span style="top:72%;left:14%;width:2px;height:2px;animation-delay:2.4s"></span>
+        <span style="top:85%;left:70%;width:3px;height:3px;animation-delay:1.5s"></span>
+        <span style="top:92%;left:40%;width:2px;height:2px;animation-delay:0.3s"></span>
+      </div>
+
+      <!-- Top bar -->
+      <div class="top-bar">
+        <a href="index-new.html" class="back-btn">← 返回</a>
+        <span class="top-title">传讯记录</span>
+        <button type="button" class="clear-btn" id="clearBtn">清空</button>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button type="button" class="tab-btn active" data-tab="card">字卡传讯</button>
+        <button type="button" class="tab-btn" data-tab="chat">梦角对话</button>
+      </div>
+
+      <!-- Content area -->
+      <div class="content-area" id="contentArea">
+        <div class="tab-panel active" id="cardPanel"></div>
+        <div class="tab-panel" id="chatPanel"></div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var CARD_KEY = "mengjiao_card_history";
+      var CHAT_KEY = "mengjiao_chat_messages";
+      var DREAM_IMG_KEY = "mengjiao_dream_img";
+
+      var cardPanel = document.getElementById("cardPanel");
+      var chatPanel = document.getElementById("chatPanel");
+      var contentArea = document.getElementById("contentArea");
+      var clearBtn = document.getElementById("clearBtn");
+      var toast = document.getElementById("toast");
+      var tabBtns = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
+
+      var currentTab = "card";
+      var toastTimer;
+      var clearArmed = false;
+      var clearTimer;
+
+      /* ---- helpers ---- */
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      function readJSON(key, fallback) {
+        try {
+          var raw = localStorage.getItem(key);
+          if (raw) {
+            var arr = JSON.parse(raw);
+            if (Array.isArray(arr)) return arr;
+          }
+        } catch (e) {}
+        return fallback;
+      }
+
+      function todayStr() {
+        var d = new Date();
+        return d.getFullYear() + "-" +
+          String(d.getMonth() + 1).padStart(2, "0") + "-" +
+          String(d.getDate()).padStart(2, "0");
+      }
+
+      /* "7月31日" for today, "2026年7月31日" for other dates */
+      function formatDateLabel(dateStr) {
+        if (!dateStr) return "";
+        var parts = String(dateStr).split("-");
+        if (parts.length < 3) return escapeHtml(dateStr);
+        var y = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10);
+        var d = parseInt(parts[2], 10);
+        if (!y || !m || !d) return escapeHtml(dateStr);
+        var now = new Date();
+        if (y === now.getFullYear() && m === (now.getMonth() + 1) && d === now.getDate()) {
+          return m + "月" + d + "日";
+        }
+        return y + "年" + m + "月" + d + "日";
+      }
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200);
+      }
+
+      /* ---- avatar (梦角 dream avatar image or 梦 emoji) ---- */
+      function avatarHtml() {
+        var img = "";
+        try { img = localStorage.getItem(DREAM_IMG_KEY) || ""; } catch (e) {}
+        if (img) {
+          return '<div class="msg-avatar" aria-hidden="true">' +
+            '<img src="' + escapeHtml(img) + '" alt="" /></div>';
+        }
+        return '<div class="msg-avatar" aria-hidden="true">梦</div>';
+      }
+
+      /* ---- empty state ---- */
+      function emptyState(title, sub, link, linkLabel, icon) {
+        return '<div class="empty-state">' +
+          '<div class="empty-icon">' + icon + '</div>' +
+          '<p class="empty-title">' + escapeHtml(title) + '</p>' +
+          '<p class="empty-sub">' + escapeHtml(sub) + '</p>' +
+          '<a href="' + escapeHtml(link) + '" class="empty-link">' + escapeHtml(linkLabel) + ' →</a>' +
+        '</div>';
+      }
+
+      /* ---- render: card history ---- */
+      function renderCard() {
+        var data = readJSON(CARD_KEY, []);
+        if (!data.length) {
+          cardPanel.innerHTML = emptyState(
+            "还没有字卡记录", "去抽一张字卡吧", "cards-new.html", "去抽字卡", "🃏");
+          return;
+        }
+        var html = '<div class="card-list">';
+        data.forEach(function (item, i) {
+          var delay = Math.min(i * 0.05, 0.4);
+          var dateLabel = formatDateLabel(item.date || todayStr());
+          var time = escapeHtml(item.time || "");
+          var meta = dateLabel + (time ? (" · " + time) : "");
+          html += '<div class="card-item" style="animation-delay:' + delay + 's">' +
+            '<div class="card-icon" aria-hidden="true">🃏</div>' +
+            '<div class="card-body">' +
+              '<p class="card-reply">' + escapeHtml(item.reply || "") + '</p>' +
+              '<p class="card-meta">' + meta + '</p>' +
+            '</div>' +
+          '</div>';
+        });
+        html += '</div>';
+        cardPanel.innerHTML = html;
+      }
+
+      /* ---- render: chat history ---- */
+      function renderChat() {
+        var data = readJSON(CHAT_KEY, []);
+        if (!data.length) {
+          chatPanel.innerHTML = emptyState(
+            "还没有对话记录", "去和梦角聊聊天吧", "chat-new.html", "去聊天", "💬");
+          return;
+        }
+        var html = '<div class="chat-list">';
+        var lastDate = null;
+        data.forEach(function (msg) {
+          var d = msg.date || todayStr();
+          if (d !== lastDate) {
+            html += '<div class="date-sep"><span>' + formatDateLabel(d) + '</span></div>';
+            lastDate = d;
+          }
+          var isRight = msg.side === "right";
+          html += '<div class="msg-row' + (isRight ? " right" : "") + '">';
+          if (!isRight) html += avatarHtml();
+          html += '<div class="msg-col">' +
+            '<div class="' + (isRight ? "message-sent" : "message-received") + '">' +
+              escapeHtml(msg.text || "") +
+            '</div>' +
+            '<span class="msg-time">' + escapeHtml(msg.time || "") + '</span>' +
+          '</div></div>';
+        });
+        html += '</div>';
+        chatPanel.innerHTML = html;
+      }
+
+      function render() {
+        if (currentTab === "card") renderCard();
+        else renderChat();
+        contentArea.scrollTop = 0;
+      }
+
+      /* ---- tabs ---- */
+      function switchTab(tab) {
+        if (tab === currentTab) return;
+        currentTab = tab;
+        tabBtns.forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-tab") === tab);
+        });
+        cardPanel.classList.toggle("active", tab === "card");
+        chatPanel.classList.toggle("active", tab === "chat");
+        resetClear();
+        render();
+      }
+
+      tabBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          switchTab(btn.getAttribute("data-tab"));
+        });
+      });
+
+      /* ---- clear (inline two-step confirm) ---- */
+      function resetClear() {
+        clearArmed = false;
+        clearBtn.textContent = "清空";
+        clearBtn.classList.remove("armed");
+        clearTimeout(clearTimer);
+      }
+
+      function doClear() {
+        if (currentTab === "card") {
+          try { localStorage.removeItem(CARD_KEY); } catch (e) {}
+          renderCard();
+          showToast("已清空字卡记录");
+        } else {
+          try { localStorage.removeItem(CHAT_KEY); } catch (e) {}
+          renderChat();
+          showToast("已清空对话记录");
+        }
+        contentArea.scrollTop = 0;
+      }
+
+      clearBtn.addEventListener("click", function () {
+        if (!clearArmed) {
+          clearArmed = true;
+          clearBtn.textContent = "确认清空";
+          clearBtn.classList.add("armed");
+          var msg = currentTab === "card"
+            ? "确定要清空字卡记录吗？再次点击确认"
+            : "确定要清空对话记录吗？再次点击确认";
+          showToast(msg);
+          clearTimeout(clearTimer);
+          clearTimer = setTimeout(resetClear, 3000);
+        } else {
+          clearTimeout(clearTimer);
+          resetClear();
+          doClear();
+        }
+      });
+
+      /* ---- init ---- */
+      render();
+    })();
+  </script>
+</body>
+</html>

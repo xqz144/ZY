@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>心愿 · 梦角传讯</title>
+
+  <!-- Fonts: Noto Serif SC (headings) + Noto Sans SC (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Project token system (single hue: 柔粉 #e8749a) -->
+  <link rel="stylesheet" href="../colors_and_type.css" />
+
+  <!-- Tailwind + token bridge -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            'card-foreground': 'hsl(var(--card-foreground))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            secondary: 'hsl(var(--secondary))',
+            'secondary-foreground': 'hsl(var(--secondary-foreground))',
+            muted: 'hsl(var(--muted))',
+            'muted-foreground': 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--accent))',
+            'accent-foreground': 'hsl(var(--accent-foreground))',
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+          },
+          fontFamily: {
+            sans: ['"DreamFont", "Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"DreamFont", "Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
+          },
+          borderRadius: { sm: '4px', md: '8px', lg: '12px', xl: '12px' },
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--secondary-bg);
+      color: var(--text-primary);
+      letter-spacing: var(--tracking-normal);
+    }
+
+    /* ===== Phone frame ===== */
+    .phone {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 880px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: hsl(var(--background));
+    }
+    @media (min-width: 480px) {
+      .phone {
+        height: 860px;
+        border-radius: 40px;
+        border: 10px solid hsl(343 30% 22%);
+        box-shadow: 0 25px 60px -15px hsl(343 60% 35% / 0.35), 0 0 0 2px hsl(343 20% 12%);
+      }
+      .phone::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 150px; height: 28px;
+        background: hsl(343 30% 18%);
+        border-radius: 0 0 18px 18px;
+        z-index: 100;
+      }
+    }
+
+    /* ===== App background — dreamy pink gradient ===== */
+    .app-bg {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      background:
+        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(343 80% 94% / 0.9), transparent 60%),
+        radial-gradient(ellipse 400px 250px at 90% 10%, hsl(343 72% 92% / 0.7), transparent 55%),
+        linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
+    }
+
+    /* ===== Starlight background (sparse, low opacity, twinkle) ===== */
+    .starlight { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .starlight span {
+      position: absolute; border-radius: 9999px;
+      background: hsl(343 72% 68% / 0.4);
+      animation: twinkle 4s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.15; transform: scale(0.7); }
+      50% { opacity: 0.6; transform: scale(1.1); }
+    }
+
+    /* ===== Top bar ===== */
+    .top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 44px 16px 10px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 479px) {
+      .top-bar { padding-top: 16px; }
+    }
+    .back-btn {
+      font-size: 15px;
+      color: hsl(var(--primary));
+      text-decoration: none;
+      padding: 6px 8px;
+      font-weight: 500;
+      flex-shrink: 0;
+      min-width: 64px;
+      transition: opacity 0.15s;
+    }
+    .back-btn:active { opacity: 0.6; }
+    .top-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      flex: 1;
+    }
+    .count-badge {
+      flex-shrink: 0;
+      min-width: 64px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .count-badge .pill {
+      font-size: 12px;
+      font-weight: 600;
+      color: hsl(var(--primary));
+      background: hsl(var(--accent) / 0.55);
+      border: 1px solid hsl(var(--primary) / 0.25);
+      border-radius: 9999px;
+      padding: 4px 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ===== Stats ===== */
+    .stats {
+      position: relative;
+      z-index: 1;
+      margin: 4px 16px 0;
+      padding: 12px 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(232, 116, 154, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .stats-text {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stats-text b {
+      color: var(--accent-color);
+      font-weight: 600;
+      font-family: var(--font-serif);
+    }
+    .progress-track {
+      height: 6px;
+      border-radius: 9999px;
+      background: rgba(232, 116, 154, 0.15);
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, #f4a0bc, #e8749a);
+      transition: width 0.5s cubic-bezier(0.3, 0, 0, 1);
+      box-shadow: 0 0 8px -2px rgba(232, 116, 154, 0.5);
+    }
+
+    /* ===== Filter pills ===== */
+    .filters {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px 4px;
+      flex-shrink: 0;
+    }
+    .filter-pill {
+      font-size: 13px;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      border: 1px solid rgba(232, 116, 154, 0.2);
+      background: rgba(255, 255, 255, 0.5);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.18s;
+      font-weight: 500;
+    }
+    .filter-pill:active { transform: scale(0.94); }
+    .filter-pill.active {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 3px 10px -3px rgba(232, 116, 154, 0.45);
+    }
+
+    /* ===== Wish wall ===== */
+    .wish-wall {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 8px 14px 80px;
+      column-count: 2;
+      column-gap: 10px;
+      position: relative;
+      z-index: 1;
+      scrollbar-width: none;
+    }
+    .wish-wall::-webkit-scrollbar { display: none; }
+
+    .wish-card {
+      break-inside: avoid;
+      display: inline-block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 14px 14px 12px;
+      border-radius: 14px;
+      position: relative;
+      border: 1px solid rgba(232, 116, 154, 0.1);
+      box-shadow: 0 2px 10px -4px rgba(232, 116, 154, 0.15);
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.2s ease;
+      animation: wishFloat 4s ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+      transform: rotate(var(--rot, 0deg));
+    }
+    .wish-card:active {
+      transform: rotate(var(--rot, 0deg)) scale(0.96);
+    }
+
+    /* Card gradient cycle */
+    .wish-card:nth-child(4n+1) { background: linear-gradient(135deg, #fff5f8, #ffe4ec); }
+    .wish-card:nth-child(4n+2) { background: linear-gradient(135deg, #fef7f0, #ffdfe8); }
+    .wish-card:nth-child(4n+3) { background: linear-gradient(135deg, #f0f5ff, #ffe4f0); }
+    .wish-card:nth-child(4n+4) { background: linear-gradient(135deg, #fff8f5, #ffdde8); }
+
+    /* Pending glow */
+    .wish-card:not(.fulfilled) {
+      box-shadow: 0 2px 12px -4px rgba(232, 116, 154, 0.22);
+    }
+
+    /* Fulfilled state */
+    .wish-card.fulfilled {
+      background: linear-gradient(135deg, #fff8e8, #ffe8c8);
+      box-shadow: 0 4px 20px -4px rgba(255, 200, 100, 0.3);
+      border-color: rgba(255, 200, 100, 0.25);
+    }
+
+    .wish-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 14px;
+      opacity: 0.75;
+      line-height: 1;
+    }
+    .wish-text {
+      font-family: var(--font-serif);
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      word-break: break-word;
+      padding-right: 18px;
+    }
+    .wish-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      gap: 6px;
+    }
+    .wish-date {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+    .fulfilled-badge {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #c98a1f;
+      background: rgba(255, 200, 100, 0.25);
+      border: 1px solid rgba(255, 200, 100, 0.35);
+      border-radius: 9999px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+    .wish-delete {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 22px;
+      height: 22px;
+      border-radius: 9999px;
+      border: none;
+      background: rgba(232, 116, 154, 0.12);
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.18s, background 0.18s;
+    }
+    .wish-card:hover .wish-delete { opacity: 1; }
+    .wish-delete:active { background: rgba(232, 116, 154, 0.3); }
+
+    @keyframes wishFloat {
+      0%, 100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
+      50% { transform: translateY(-4px) rotate(var(--rot, 0deg)); }
+    }
+
+    /* ===== Empty state ===== */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .empty-emoji {
+      font-size: 4rem;
+      line-height: 1;
+      filter: drop-shadow(0 0 18px rgba(255, 180, 120, 0.55));
+      animation: emptyGlow 3s ease-in-out infinite;
+    }
+    @keyframes emptyGlow {
+      0%, 100% { filter: drop-shadow(0 0 14px rgba(255, 180, 120, 0.45)); transform: translateY(0); }
+      50% { filter: drop-shadow(0 0 26px rgba(255, 180, 120, 0.7)); transform: translateY(-4px); }
+    }
+    .empty-text {
+      margin-top: 18px;
+      font-family: var(--font-serif);
+      font-size: 14.5px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      white-space: pre-line;
+    }
+
+    /* ===== Bottom input bar ===== */
+    .wish-input-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px 24px;
+      background: var(--secondary-bg);
+      border-top: 1px solid rgba(232, 116, 154, 0.15);
+      position: relative;
+      z-index: 5;
+    }
+    @media (max-width: 479px) {
+      .wish-input-bar { padding-bottom: 14px; }
+    }
+    .wish-input {
+      flex: 1;
+      border: 1px solid rgba(232, 116, 154, 0.2);
+      background: #fff;
+      border-radius: 9999px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .wish-input::placeholder { color: var(--text-secondary); }
+    .wish-input:focus {
+      border-color: rgba(232, 116, 154, 0.5);
+      box-shadow: 0 0 0 3px rgba(232, 116, 154, 0.12);
+    }
+    .wish-send {
+      width: 42px;
+      height: 42px;
+      border-radius: 9999px;
+      border: none;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      font-size: 18px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px -3px rgba(232, 116, 154, 0.5);
+      transition: transform 0.12s, box-shadow 0.2s;
+    }
+    .wish-send:active {
+      transform: scale(0.9);
+      box-shadow: 0 2px 6px -2px rgba(232, 116, 154, 0.4);
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 86px;
+      transform: translateX(-50%) translateY(12px);
+      background: rgba(61, 32, 48, 0.88);
+      color: #fff;
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 50;
+      white-space: nowrap;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (max-width: 479px) {
+      .toast { bottom: 72px; }
+    }
+
+    /* ===== Card enter animation ===== */
+    @keyframes wishEnter {
+      from { opacity: 0; transform: translateY(8px) rotate(var(--rot, 0deg)) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) rotate(var(--rot, 0deg)) scale(1); }
+    }
+    .wish-card.entering {
+      animation: wishEnter 0.32s cubic-bezier(0.3, 0, 0, 1) both;
+    }
+
+    /* ===== Reduced motion ===== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .wish-card { animation: none !important; }
+      .empty-emoji { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="app-bg">
+      <!-- Starlight -->
+      <div class="starlight">
+        <span style="top:6%;left:12%;width:3px;height:3px;animation-delay:0s"></span>
+        <span style="top:14%;left:82%;width:2px;height:2px;animation-delay:0.7s"></span>
+        <span style="top:28%;left:6%;width:2px;height:2px;animation-delay:1.3s"></span>
+        <span style="top:42%;left:92%;width:3px;height:3px;animation-delay:0.4s"></span>
+        <span style="top:62%;left:4%;width:2px;height:2px;animation-delay:1.9s"></span>
+        <span style="top:76%;left:88%;width:3px;height:3px;animation-delay:1.1s"></span>
+        <span style="top:88%;left:18%;width:2px;height:2px;animation-delay:2.5s"></span>
+        <span style="top:22%;left:48%;width:2px;height:2px;animation-delay:0.9s"></span>
+      </div>
+
+      <!-- Top bar -->
+      <div class="top-bar">
+        <a href="index-new.html" class="back-btn">← 返回</a>
+        <div class="top-title">心愿</div>
+        <div class="count-badge"><span class="pill" id="countPill">0</span></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stats-text" id="statsText">共 0 个心愿 · 已实现 0 个</div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters">
+        <button class="filter-pill active" data-filter="all">全部</button>
+        <button class="filter-pill" data-filter="pending">期待中</button>
+        <button class="filter-pill" data-filter="fulfilled">已实现</button>
+      </div>
+
+      <!-- Wish wall / empty state -->
+      <div class="wish-wall" id="wishWall"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-emoji">🏮</div>
+        <div class="empty-text">还没有心愿
+写下你的第一个心愿吧</div>
+      </div>
+
+      <!-- Bottom input bar -->
+      <div class="wish-input-bar">
+        <input type="text" class="wish-input" id="wishInput" placeholder="写下你的心愿…" maxlength="60" />
+        <button class="wish-send" id="wishSend" aria-label="发送心愿">✨</button>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var STORAGE_KEY = "mengjiao_wishes";
+      var currentFilter = "all";
+
+      /* ---------- DOM refs ---------- */
+      var wall = document.getElementById("wishWall");
+      var emptyState = document.getElementById("emptyState");
+      var input = document.getElementById("wishInput");
+      var sendBtn = document.getElementById("wishSend");
+      var toastEl = document.getElementById("toast");
+      var statsText = document.getElementById("statsText");
+      var progressFill = document.getElementById("progressFill");
+      var countPill = document.getElementById("countPill");
+      var filterBtns = document.querySelectorAll(".filter-pill");
+
+      /* ---------- Utilities ---------- */
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function loadWishes() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      function saveWishes(wishes) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(wishes));
+        } catch (e) {}
+      }
+
+      function ensureSeed() {
+        var existing = loadWishes();
+        if (existing !== null) return existing;
+        var today = new Date();
+        var seed = [
+          { id: String(today.getTime() - 86400000 * 2), text: "希望有一天能一起看樱花", date: isoDate(new Date(today.getTime() - 86400000 * 2)), fulfilled: false },
+          { id: String(today.getTime() - 86400000 * 5), text: "想和你在海边看一场日落", date: isoDate(new Date(today.getTime() - 86400000 * 5)), fulfilled: true },
+          { id: String(today.getTime() - 86400000 * 1), text: "愿你每个夜晚都有好梦", date: isoDate(new Date(today.getTime() - 86400000 * 1)), fulfilled: false },
+          { id: String(today.getTime() - 86400000 * 9), text: "一起养一只橘猫", date: isoDate(new Date(today.getTime() - 86400000 * 9)), fulfilled: false }
+        ];
+        saveWishes(seed);
+        return seed;
+      }
+
+      function isoDate(d) {
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, "0");
+        var day = String(d.getDate()).padStart(2, "0");
+        return y + "-" + m + "-" + day;
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return "";
+        var d = new Date(dateStr + "T00:00:00");
+        if (isNaN(d.getTime())) return "";
+        var now = new Date();
+        now.setHours(0, 0, 0, 0);
+        var diffDays = Math.round((now - d) / 86400000);
+        var sameYear = d.getFullYear() === now.getFullYear();
+        if (diffDays === 0) {
+          return (d.getMonth() + 1) + "月" + d.getDate() + "日";
+        }
+        if (sameYear) {
+          return (d.getMonth() + 1) + "月" + d.getDate() + "日";
+        }
+        return d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日";
+      }
+
+      function rotFor(id) {
+        // Stable pseudo-random rotation in [-2, 2] degrees based on id.
+        var n = 0;
+        for (var i = 0; i < id.length; i++) { n = (n * 31 + id.charCodeAt(i)) >>> 0; }
+        var v = (n % 400) / 100 - 2; // -2 .. 2
+        return v.toFixed(2) + "deg";
+      }
+
+      function delayFor(index) {
+        return ((index % 6) * 0.45).toFixed(2) + "s";
+      }
+
+      /* ---------- Toast ---------- */
+      var toastTimer = null;
+      function toast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add("show");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toastEl.classList.remove("show");
+        }, 1600);
+      }
+
+      /* ---------- Rendering ---------- */
+      function getFiltered() {
+        var wishes = loadWishes() || [];
+        if (currentFilter === "pending") {
+          return wishes.filter(function (w) { return !w.fulfilled; });
+        }
+        if (currentFilter === "fulfilled") {
+          return wishes.filter(function (w) { return w.fulfilled; });
+        }
+        return wishes;
+      }
+
+      function render(enteringId) {
+        var wishes = loadWishes() || [];
+        var list = getFiltered();
+
+        wall.innerHTML = "";
+
+        if (list.length === 0) {
+          wall.style.display = "none";
+          emptyState.style.display = "flex";
+        } else {
+          wall.style.display = "block";
+          emptyState.style.display = "none";
+          var frag = document.createDocumentFragment();
+          list.forEach(function (w, i) {
+            frag.appendChild(buildCard(w, i, enteringId));
+          });
+          wall.appendChild(frag);
+        }
+
+        renderStats(wishes);
+      }
+
+      function buildCard(w, index, enteringId) {
+        var card = document.createElement("div");
+        card.className = "wish-card" + (w.fulfilled ? " fulfilled" : "") +
+          (enteringId && w.id === enteringId ? " entering" : "");
+        card.style.setProperty("--rot", rotFor(w.id));
+        card.style.setProperty("--delay", delayFor(index));
+        card.dataset.id = w.id;
+
+        var icon = w.fulfilled ? "✨" : "🏮";
+        var badgeHtml = w.fulfilled
+          ? '<span class="fulfilled-badge">✓ 已实现</span>'
+          : "";
+
+        card.innerHTML =
+          '<span class="wish-icon">' + icon + '</span>' +
+          '<div class="wish-text">' + escapeHtml(w.text) + '</div>' +
+          '<div class="wish-meta">' +
+            '<span class="wish-date">' + escapeHtml(formatDate(w.date)) + '</span>' +
+            badgeHtml +
+          '</div>' +
+          '<button class="wish-delete" aria-label="删除心愿">×</button>';
+
+        return card;
+      }
+
+      function renderStats(wishes) {
+        var total = wishes.length;
+        var done = wishes.filter(function (w) { return w.fulfilled; }).length;
+        statsText.innerHTML = "共 <b>" + total + "</b> 个心愿 · 已实现 <b>" + done + "</b> 个";
+        countPill.textContent = String(total);
+        var pct = total === 0 ? 0 : Math.round((done / total) * 100);
+        progressFill.style.width = pct + "%";
+      }
+
+      /* ---------- Actions ---------- */
+      function addWish() {
+        var text = input.value.trim();
+        if (!text) {
+          toast("心愿不能为空呀");
+          return;
+        }
+        var wishes = loadWishes() || [];
+        var now = new Date();
+        var wish = {
+          id: String(now.getTime()),
+          text: text,
+          date: isoDate(now),
+          fulfilled: false
+        };
+        wishes.unshift(wish);
+        saveWishes(wishes);
+        input.value = "";
+        // If currently filtering by fulfilled, switch to all so the new wish is visible.
+        if (currentFilter === "fulfilled") {
+          setFilter("all");
+        } else {
+          render(wish.id);
+        }
+        toast("心愿已许下 ✨");
+      }
+
+      function toggleFulfilled(id) {
+        var wishes = loadWishes() || [];
+        var changed = false;
+        for (var i = 0; i < wishes.length; i++) {
+          if (wishes[i].id === id) {
+            wishes[i].fulfilled = !wishes[i].fulfilled;
+            changed = wishes[i].fulfilled;
+            break;
+          }
+        }
+        saveWishes(wishes);
+        render();
+        toast(changed ? "恭喜，心愿已实现 🎉" : "已重新期待中");
+      }
+
+      function deleteWish(id) {
+        var wishes = loadWishes() || [];
+        wishes = wishes.filter(function (w) { return w.id !== id; });
+        saveWishes(wishes);
+        render();
+        toast("心愿已收起");
+      }
+
+      function setFilter(filter) {
+        currentFilter = filter;
+        filterBtns.forEach(function (b) {
+          b.classList.toggle("active", b.dataset.filter === filter);
+        });
+        render();
+      }
+
+      /* ---------- Events ---------- */
+      sendBtn.addEventListener("click", addWish);
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addWish();
+        }
+      });
+
+      filterBtns.forEach(function (b) {
+        b.addEventListener("click", function () {
+          setFilter(b.dataset.filter);
+        });
+      });
+
+      // Card interactions: tap to toggle, × to delete, long-press to delete.
+      var pressTimer = null;
+      var longPressed = false;
+
+      wall.addEventListener("click", function (e) {
+        if (longPressed) { longPressed = false; return; }
+        var card = e.target.closest(".wish-card");
+        if (!card) return;
+        if (e.target.closest(".wish-delete")) {
+          e.stopPropagation();
+          deleteWish(card.dataset.id);
+          return;
+        }
+        toggleFulfilled(card.dataset.id);
+      });
+
+      wall.addEventListener("touchstart", function (e) {
+        var card = e.target.closest(".wish-card");
+        if (!card) return;
+        if (e.target.closest(".wish-delete")) return;
+        var id = card.dataset.id;
+        longPressed = false;
+        pressTimer = setTimeout(function () {
+          longPressed = true;
+          if (navigator.vibrate) { try { navigator.vibrate(15); } catch (er) {} }
+          deleteWish(id);
+        }, 600);
+      }, { passive: true });
+
+      wall.addEventListener("touchmove", function () {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      }, { passive: true });
+
+      wall.addEventListener("touchend", function () {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      });
+
+      wall.addEventListener("touchcancel", function () {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      });
+
+      // Prevent body scroll bounce outside the app area.
+      document.body.addEventListener('touchmove', function (e) {
+        if (e.target.closest('.wish-wall') || e.target.closest('.wish-input')) return;
+        e.preventDefault();
+      }, { passive: false });
+
+      /* ---------- Init ---------- */
+      ensureSeed();
+      render();
+    })();
+  </script>
+</body>
+</html>
