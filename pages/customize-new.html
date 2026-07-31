@@ -420,6 +420,8 @@
           <h2 class="section-title">昵称</h2>
           <p class="section-hint">显示在主页个人卡片上的名称</p>
           <input type="text" id="usernameInput" class="text-input" placeholder="输入你的昵称…" maxlength="20" />
+          <p class="section-hint" style="margin-top:12px;margin-bottom:6px;">梦角对你的称呼</p>
+          <input type="text" id="partnerNameInput" class="text-input" placeholder="输入梦角昵称…" maxlength="20" />
         </div>
 
         <div class="settings-card">
@@ -561,6 +563,7 @@
         togetherDate: "mengjiao_together_date",
         signature: "mengjiao_signature",
         username: "mengjiao_username",
+        partnerName: "mengjiao_partner_name",
         avatarImg: "mengjiao_avatar_img",
         dreamImg: "mengjiao_dream_img",
         bgImg: "mengjiao_bg_img",
@@ -573,6 +576,7 @@
       var DEFAULTS = {
         signature: "今天也要加油呀 ✨",
         username: "@my_profile",
+        partnerName: "梦角",
         cardReplies: [
           "今天也在想你哦。", "别担心，我一直都在。", "你今天辛苦了，休息一下吧。",
           "我感觉到了你的心意呢。", "今晚来梦里见吧。", "你比你自己想象的更勇敢。",
@@ -600,7 +604,10 @@
         return fallback;
       }
       function setItem(key, val) {
-        try { localStorage.setItem(key, val); } catch (e) {}
+        try { localStorage.setItem(key, val); } catch (e) {
+          console.error("localStorage setItem failed:", key, e);
+          throw e;
+        }
       }
       function getJSON(key, fallback) {
         try {
@@ -672,6 +679,12 @@
         setItem(KEYS.username, usernameInput.value || DEFAULTS.username);
       });
 
+      var partnerNameInput = document.getElementById("partnerNameInput");
+      partnerNameInput.value = getItem(KEYS.partnerName, DEFAULTS.partnerName);
+      partnerNameInput.addEventListener("input", function () {
+        setItem(KEYS.partnerName, partnerNameInput.value || DEFAULTS.partnerName);
+      });
+
       // ---- Upload helpers ----
       function readFile(file, cb) {
         if (!file || !file.type.startsWith("image/")) return cb(null);
@@ -725,7 +738,7 @@
       document.getElementById("avatarInput").addEventListener("change", function (e) {
         readFile(e.target.files[0], function (data) {
           if (!data) return showToast("请选择图片文件");
-          compressImage(data, 800, 0.85, function (small) {
+          compressImage(data, 400, 0.8, function (small) {
             tempAvatar = small;
             setPreview(avatarPreview, small, "🌙");
           });
@@ -737,7 +750,7 @@
       document.getElementById("dreamInput").addEventListener("change", function (e) {
         readFile(e.target.files[0], function (data) {
           if (!data) return showToast("请选择图片文件");
-          compressImage(data, 800, 0.85, function (small) {
+          compressImage(data, 400, 0.8, function (small) {
             tempDream = small;
             setPreview(dreamPreview, small, "⭐");
           });
@@ -925,6 +938,7 @@
           setItem(KEYS.togetherDate, dateInput.value);
           setItem(KEYS.signature, signatureInput.value || DEFAULTS.signature);
           setItem(KEYS.username, usernameInput.value || DEFAULTS.username);
+          setItem(KEYS.partnerName, partnerNameInput.value || DEFAULTS.partnerName);
           setJSON(KEYS.cardReplies, cardReplies);
           setJSON(KEYS.chatReplies, chatReplies);
           setJSON(KEYS.momentCards, momentCards);
