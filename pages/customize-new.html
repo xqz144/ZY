@@ -493,6 +493,55 @@
           </div>
         </div>
 
+        <div class="settings-card">
+          <h2 class="section-title">朋友圈字卡库</h2>
+          <p class="section-hint">自定义梦角朋友圈的文案，可配图为文字+图片卡片</p>
+          <ul id="momentCardList" class="reply-list"></ul>
+          <div class="add-row">
+            <input type="text" id="momentCardInput" class="text-input" placeholder="输入朋友圈文案…" maxlength="120" />
+            <button type="button" class="add-btn" id="addMomentCard">添加</button>
+          </div>
+          <div class="upload-row" style="padding:8px 0 0;">
+            <div class="upload-preview" id="momentCardPreview">🖼️</div>
+            <div class="upload-info">
+              <div class="upload-name">配图（可选）</div>
+              <div class="upload-desc">添加后即为文字+图片卡片</div>
+            </div>
+            <button type="button" class="upload-btn" id="momentCardImgBtn">📷 上传</button>
+            <input type="file" id="momentCardImgInput" accept="image/*" class="hidden" />
+            <button type="button" class="upload-btn" id="momentCardImgClear" style="display:none;">清除</button>
+          </div>
+          <div class="count-line">
+            <span>共 <span id="momentCardCount">0</span> 条</span>
+            <button type="button" class="reset-link" id="resetMomentCards">恢复默认</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title">朋友圈节奏</h2>
+          <p class="section-hint">设置梦角多久来一次朋友圈，每次发几条</p>
+          <div class="add-row" style="margin-bottom:10px;">
+            <label style="font-size:13px;color:var(--text-secondary);width:80px;flex-shrink:0;">最短间隔</label>
+            <input type="number" id="rhythmMin" class="text-input" min="1" max="999" style="flex:1;" />
+            <span style="font-size:13px;color:var(--text-secondary);flex-shrink:0;">分钟</span>
+          </div>
+          <div class="add-row" style="margin-bottom:10px;">
+            <label style="font-size:13px;color:var(--text-secondary);width:80px;flex-shrink:0;">最长间隔</label>
+            <input type="number" id="rhythmMax" class="text-input" min="1" max="999" style="flex:1;" />
+            <span style="font-size:13px;color:var(--text-secondary);flex-shrink:0;">分钟</span>
+          </div>
+          <div class="add-row" style="margin-bottom:10px;">
+            <label style="font-size:13px;color:var(--text-secondary);width:80px;flex-shrink:0;">每次最少</label>
+            <input type="number" id="rhythmBatchMin" class="text-input" min="1" max="10" style="flex:1;" />
+            <span style="font-size:13px;color:var(--text-secondary);flex-shrink:0;">条</span>
+          </div>
+          <div class="add-row">
+            <label style="font-size:13px;color:var(--text-secondary);width:80px;flex-shrink:0;">每次最多</label>
+            <input type="number" id="rhythmBatchMax" class="text-input" min="1" max="10" style="flex:1;" />
+            <span style="font-size:13px;color:var(--text-secondary);flex-shrink:0;">条</span>
+          </div>
+        </div>
+
       </div>
 
       <div class="save-area">
@@ -516,7 +565,9 @@
         dreamImg: "mengjiao_dream_img",
         bgImg: "mengjiao_bg_img",
         cardReplies: "mengjiao_card_replies",
-        chatReplies: "mengjiao_chat_replies"
+        chatReplies: "mengjiao_chat_replies",
+        momentCards: "mengjiao_moments_cards",
+        momentRhythm: "mengjiao_moments_rhythm"
       };
 
       var DEFAULTS = {
@@ -531,7 +582,14 @@
         chatReplies: [
           "嗯嗯，我在听。", "我理解你的感受。", "你说得对呢。", "别担心，有我在。",
           "嗯...让我想想。", "你今天也很可爱哦。", "我也想和你多聊聊。", "无论什么时候，我都在。"
-        ]
+        ],
+        momentCards: [
+          { type: "text", text: "今天也在想你哦。" },
+          { type: "text", text: "看到一朵很像你的云。" },
+          { type: "text", text: "晚安，好梦。" },
+          { type: "text", text: "你笑起来的时候，整个世界都亮了。" }
+        ],
+        momentRhythm: { minInterval: 60, maxInterval: 180, batchMin: 1, batchMax: 2 }
       };
 
       function getItem(key, fallback) {
@@ -770,10 +828,96 @@
         if (isNaN(idx)) return;
         if (lib === "card") { cardReplies.splice(idx, 1); renderCardReplies(); }
         else if (lib === "chat") { chatReplies.splice(idx, 1); renderChatReplies(); }
+        else if (lib === "moment") { momentCards.splice(idx, 1); renderMomentCards(); }
       });
 
       renderCardReplies();
       renderChatReplies();
+
+      // ---- 朋友圈字卡库 ----
+      var momentCards = getJSON(KEYS.momentCards, DEFAULTS.momentCards);
+      var tempMomentImg = "";
+      var momentCardInput = document.getElementById("momentCardInput");
+      var momentCardList = document.getElementById("momentCardList");
+      var momentCardCount = document.getElementById("momentCardCount");
+      var momentCardPreview = document.getElementById("momentCardPreview");
+      var momentCardImgClear = document.getElementById("momentCardImgClear");
+
+      function renderMomentCards() {
+        momentCardCount.textContent = String(momentCards.length);
+        if (momentCards.length === 0) {
+          momentCardList.innerHTML = '<li class="reply-empty">暂无朋友圈字卡，添加一条吧</li>';
+          return;
+        }
+        momentCardList.innerHTML = momentCards.map(function (card, i) {
+          var imgHtml = card.image ? '<span style="margin-left:4px;color:var(--accent-color);">🖼️</span>' : '';
+          return '<li class="reply-item"><span class="reply-text">' + escapeHtml(card.text || "") + imgHtml + '</span>' +
+            '<button type="button" class="reply-del" data-lib="moment" data-idx="' + i + '" aria-label="删除">×</button></li>';
+        }).join("");
+      }
+      function updateMomentImgPreview() {
+        if (tempMomentImg) {
+          momentCardPreview.innerHTML = '<img src="' + tempMomentImg + '" alt="" style="width:100%;height:100%;object-fit:cover;" />';
+          document.getElementById("momentCardImgBtn").style.display = "none";
+          momentCardImgClear.style.display = "inline-flex";
+        } else {
+          momentCardPreview.textContent = "🖼️";
+          document.getElementById("momentCardImgBtn").style.display = "inline-flex";
+          momentCardImgClear.style.display = "none";
+        }
+      }
+      document.getElementById("addMomentCard").addEventListener("click", function () {
+        var val = momentCardInput.value.trim();
+        if (!val && !tempMomentImg) return showToast("请输入文案或配图");
+        momentCards.push({ type: tempMomentImg ? "image" : "text", text: val || "分享了一张图片", image: tempMomentImg || "" });
+        momentCardInput.value = "";
+        tempMomentImg = "";
+        updateMomentImgPreview();
+        renderMomentCards();
+      });
+      momentCardInput.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); document.getElementById("addMomentCard").click(); } });
+      document.getElementById("resetMomentCards").addEventListener("click", function () {
+        momentCards = DEFAULTS.momentCards.slice();
+        tempMomentImg = "";
+        updateMomentImgPreview();
+        renderMomentCards();
+        showToast("朋友圈字卡库已恢复默认");
+      });
+      document.getElementById("momentCardImgBtn").addEventListener("click", function () { document.getElementById("momentCardImgInput").click(); });
+      document.getElementById("momentCardImgInput").addEventListener("change", function (e) {
+        readFile(e.target.files[0], function (data) {
+          if (!data) return showToast("请选择图片文件");
+          compressImage(data, 800, 0.85, function (small) {
+            tempMomentImg = small;
+            updateMomentImgPreview();
+          });
+        });
+        e.target.value = "";
+      });
+      momentCardImgClear.addEventListener("click", function () {
+        tempMomentImg = "";
+        updateMomentImgPreview();
+      });
+
+      // ---- 朋友圈节奏 ----
+      var rhythm = DEFAULTS.momentRhythm;
+      try {
+        var r = localStorage.getItem(KEYS.momentRhythm);
+        if (r) {
+          var parsed = JSON.parse(r);
+          if (parsed && typeof parsed === "object") rhythm = parsed;
+        }
+      } catch (e) {}
+      var rhythmMin = document.getElementById("rhythmMin");
+      var rhythmMax = document.getElementById("rhythmMax");
+      var rhythmBatchMin = document.getElementById("rhythmBatchMin");
+      var rhythmBatchMax = document.getElementById("rhythmBatchMax");
+      rhythmMin.value = rhythm.minInterval;
+      rhythmMax.value = rhythm.maxInterval;
+      rhythmBatchMin.value = rhythm.batchMin;
+      rhythmBatchMax.value = rhythm.batchMax;
+
+      renderMomentCards();
 
       // Save button
       saveBtn.addEventListener("click", function () {
@@ -783,6 +927,19 @@
           setItem(KEYS.username, usernameInput.value || DEFAULTS.username);
           setJSON(KEYS.cardReplies, cardReplies);
           setJSON(KEYS.chatReplies, chatReplies);
+          setJSON(KEYS.momentCards, momentCards);
+
+          var rMin = parseInt(rhythmMin.value, 10) || 60;
+          var rMax = parseInt(rhythmMax.value, 10) || 180;
+          var bMin = parseInt(rhythmBatchMin.value, 10) || 1;
+          var bMax = parseInt(rhythmBatchMax.value, 10) || 2;
+          if (rMin < 1) rMin = 1;
+          if (rMax < rMin) rMax = rMin;
+          if (bMin < 1) bMin = 1;
+          if (bMax < bMin) bMax = bMin;
+          if (bMax > 10) bMax = 10;
+          setJSON(KEYS.momentRhythm, { minInterval: rMin, maxInterval: rMax, batchMin: bMin, batchMax: bMax });
+
           if (tempAvatar) setItem(KEYS.avatarImg, tempAvatar); else localStorage.removeItem(KEYS.avatarImg);
           if (tempDream) setItem(KEYS.dreamImg, tempDream); else localStorage.removeItem(KEYS.dreamImg);
           if (tempBg) setItem(KEYS.bgImg, tempBg); else localStorage.removeItem(KEYS.bgImg);
