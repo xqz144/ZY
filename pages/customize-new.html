@@ -622,6 +622,25 @@
         reader.readAsDataURL(file);
       }
 
+      function compressImage(dataUrl, maxSize, quality, cb) {
+        var img = new Image();
+        img.onload = function () {
+          var canvas = document.createElement("canvas");
+          var w = img.width, h = img.height;
+          if (w > h && w > maxSize) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else if (h > maxSize) { w = Math.round(w * maxSize / h); h = maxSize; }
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          cb(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.onerror = function () { cb(dataUrl); };
+        img.src = dataUrl;
+      }
+
       var avatarPreview = document.getElementById("avatarPreview");
       var dreamPreview = document.getElementById("dreamPreview");
       var bgPreviewWrap = document.getElementById("bgPreviewWrap");
@@ -648,8 +667,10 @@
       document.getElementById("avatarInput").addEventListener("change", function (e) {
         readFile(e.target.files[0], function (data) {
           if (!data) return showToast("请选择图片文件");
-          tempAvatar = data;
-          setPreview(avatarPreview, data, "🌙");
+          compressImage(data, 800, 0.85, function (small) {
+            tempAvatar = small;
+            setPreview(avatarPreview, small, "🌙");
+          });
         });
         e.target.value = "";
       });
@@ -658,8 +679,10 @@
       document.getElementById("dreamInput").addEventListener("change", function (e) {
         readFile(e.target.files[0], function (data) {
           if (!data) return showToast("请选择图片文件");
-          tempDream = data;
-          setPreview(dreamPreview, data, "⭐");
+          compressImage(data, 800, 0.85, function (small) {
+            tempDream = small;
+            setPreview(dreamPreview, small, "⭐");
+          });
         });
         e.target.value = "";
       });
@@ -668,8 +691,10 @@
       document.getElementById("bgInput").addEventListener("change", function (e) {
         readFile(e.target.files[0], function (data) {
           if (!data) return showToast("请选择图片文件");
-          tempBg = data;
-          setBgPreview(data);
+          compressImage(data, 1200, 0.8, function (small) {
+            tempBg = small;
+            setBgPreview(small);
+          });
         });
         e.target.value = "";
       });
@@ -752,15 +777,20 @@
 
       // Save button
       saveBtn.addEventListener("click", function () {
-        setItem(KEYS.togetherDate, dateInput.value);
-        setItem(KEYS.signature, signatureInput.value || DEFAULTS.signature);
-        setItem(KEYS.username, usernameInput.value || DEFAULTS.username);
-        setJSON(KEYS.cardReplies, cardReplies);
-        setJSON(KEYS.chatReplies, chatReplies);
-        if (tempAvatar) setItem(KEYS.avatarImg, tempAvatar); else localStorage.removeItem(KEYS.avatarImg);
-        if (tempDream) setItem(KEYS.dreamImg, tempDream); else localStorage.removeItem(KEYS.dreamImg);
-        if (tempBg) setItem(KEYS.bgImg, tempBg); else localStorage.removeItem(KEYS.bgImg);
-        showToast("设置已保存");
+        try {
+          setItem(KEYS.togetherDate, dateInput.value);
+          setItem(KEYS.signature, signatureInput.value || DEFAULTS.signature);
+          setItem(KEYS.username, usernameInput.value || DEFAULTS.username);
+          setJSON(KEYS.cardReplies, cardReplies);
+          setJSON(KEYS.chatReplies, chatReplies);
+          if (tempAvatar) setItem(KEYS.avatarImg, tempAvatar); else localStorage.removeItem(KEYS.avatarImg);
+          if (tempDream) setItem(KEYS.dreamImg, tempDream); else localStorage.removeItem(KEYS.dreamImg);
+          if (tempBg) setItem(KEYS.bgImg, tempBg); else localStorage.removeItem(KEYS.bgImg);
+          showToast("设置已保存");
+        } catch (e) {
+          console.error("Save failed:", e);
+          showToast("保存失败：图片太大或存储已满");
+        }
       });
     })();
   </script>
