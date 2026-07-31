@@ -135,6 +135,33 @@
     #message-stream::-webkit-scrollbar-track { background: transparent; }
     #message-stream::-webkit-scrollbar-thumb { background: rgba(232, 116, 154, 0.3); border-radius: 4px; }
 
+    /* 空状态 */
+    .empty-state {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 20px;
+      pointer-events: none; z-index: 1;
+    }
+    .empty-state-icon { position: relative; margin-bottom: 20px; }
+    .empty-state-icon .heart { font-size: 52px; opacity: 0.55; color: var(--accent-color); }
+    .empty-state-icon .chat-bubble {
+      position: absolute; bottom: -6px; right: -10px;
+      font-size: 26px; opacity: 0.65; color: var(--accent-color);
+    }
+    .empty-state-title {
+      font-size: 15px; font-weight: 600;
+      color: var(--accent-color); opacity: 0.9;
+      letter-spacing: 1px;
+    }
+    .empty-state-hint {
+      font-size: 12px; margin-top: 8px;
+      opacity: 0.65; letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
     .msg-row {
       display: flex; align-items: flex-end; gap: 8px;
       max-width: 100%;
@@ -162,6 +189,21 @@
     }
     .msg-row.right .msg-col { align-items: flex-end; }
 
+    /* 引用回复预览 */
+    .reply-quote {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(232, 116, 154, 0.06);
+      border-left: 2px solid rgba(232, 116, 154, 0.3);
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-bottom: 2px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     /* 毛玻璃气泡 */
     .message-sent, .message-received {
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12));
@@ -181,6 +223,18 @@
     }
     .message-received { border-radius: 20px 20px 20px 5px; }
     .message-sent { border-radius: 20px 20px 5px 20px; }
+
+    /* 纯表情/颜文字小气泡 */
+    .message-emoji {
+      font-size: 22px;
+      padding: 6px 12px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 16px;
+      line-height: 1.4;
+    }
 
     .msg-meta {
       display: flex; align-items: center; gap: 4px;
@@ -407,7 +461,16 @@
       </button>
     </header>
 
-    <main id="message-stream" aria-live="polite"></main>
+    <main id="message-stream" aria-live="polite" style="position:relative;">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-state-icon">
+          <span class="heart">❤</span>
+          <span class="chat-bubble">💬</span>
+        </div>
+        <p class="empty-state-title">✦ 我们的故事，始于此刻 ✦</p>
+        <p class="empty-state-hint">说点什么，让对话开始吧</p>
+      </div>
+    </main>
 
     <div class="continue-bar" id="continueBar" style="display:none;">
       <button class="continue-btn" id="continueBtn" type="button">
@@ -444,202 +507,130 @@
       "use strict";
 
       /* =========================================================
-       * 梦角对话引擎 v2
-       * 特性：多层关键词匹配 / 情绪上下文 / 防重复 / 时间感知
-       *       问题识别 / 偶尔连发两条 / 打字延迟随长度变化
+       * 梦角对话引擎 v3 — 纯随机（参考 ZY 布局与功能）
+       * 无关键词匹配，回复从池中随机抽取
+       * 随机条数 / emoji混搭 / 颜文字混搭 / 对方反拍 / 引用回复
        * ========================================================= */
 
-      /* ===== 存储键（保持向后兼容） ===== */
+      /* ===== 存储键（向后兼容） ===== */
       var CHAT_KEY = "mengjiao_chat_messages";
       var REPLIES_KEY = "mengjiao_chat_replies";
-      var CTX_KEY = "mengjiao_chat_ctx";
+      var VISIT_KEY = "mengjiao_chat_visit";
       var DREAM_IMG_KEY = "mengjiao_dream_img";
       var PARTNER_NAME_KEY = "mengjiao_partner_name";
 
-      /* ===== 回复意图库（priority 越大越优先；mood 标记该意图的情绪倾向） ===== */
-      var INTENTS = [
-        {
-          name: "greeting", priority: 9, mood: "neutral",
-          keywords: ["你好", "早安", "早上好", "上午好", "中午好", "下午好", "晚上好", "晚安", "嗨", "哈喽", "hi", "hello", "在吗", "在不在", "来了", "找我", "你好呀"],
-          replies: [
-            "你来了呀，我等你好一会儿了。", "嗯，我在呢。", "正好在想你，你就来了。",
-            "你来啦，今天过得怎么样？", "看到你出现，心情都变好了。", "嗯嗯，一直在等你。"
-          ]
-        },
-        {
-          name: "missing", priority: 8, mood: "loving",
-          keywords: ["想你", "想你了", "想念", "思念", "好想你", "想见你", "什么时候见", "多久没见", "想你的"],
-          replies: [
-            "我也想你，很想很想。", "每一秒都在想你哦。", "想你了，就现在。",
-            "我们的心是连在一起的，感受到了吗？", "闭上眼睛，我就在你身边。", "再忍忍，很快就能见到了。"
-          ]
-        },
-        {
-          name: "sad", priority: 10, mood: "sad",
-          keywords: ["难过", "伤心", "不开心", "哭", "委屈", "崩溃", "难受", "心痛", "心疼", "害怕", "好怕", "担心", "焦虑", "烦", "好烦", "烦死", "抑郁", "emo", "想哭", "掉眼泪", "撑不住", "不想活", "绝望"],
-          replies: [
-            "别怕，我一直都在。", "抱抱你，没事的。", "累了就靠在我肩上歇一会儿。",
-            "你不用一个人扛，有我在呢。", "允许自己脆弱一会儿，我会陪着你的。", "深呼吸，慢慢来，我哪里也不去。",
-            "想哭就哭出来吧，我不评判你。", "你已经很努力了，别对自己太苛刻。", "无论发生什么，我都站在你这边。"
-          ]
-        },
-        {
-          name: "tired", priority: 8, mood: "sad",
-          keywords: ["累", "好累", "好困", "疲惫", " exhausted", "撑不住", "累死", "累瘫", "没力气", "精疲力尽"],
-          replies: [
-            "辛苦了，快休息一下吧。", "累了就停下来，身体最重要。", "今天也撑过来了，你很棒。",
-            "靠着我歇会儿，什么都别想。", "别太拼了，我会心疼的。"
-          ]
-        },
-        {
-          name: "happy", priority: 7, mood: "happy",
-          keywords: ["开心", "高兴", "哈哈", "嘻嘻", "嘿嘿", "好玩", "有趣", "太棒了", "太好了", "耶", "开心死", "超开心", "好棒", "厉害"],
-          replies: [
-            "看到你开心我也好高兴！", "你的笑容是我最大的动力。", "今天的你，也在发光呢。",
-            "要一直这么开心下去哦。", "你的快乐传染给我了～", "哈哈哈你这样我也想笑。"
-          ]
-        },
-        {
-          name: "love", priority: 8, mood: "loving",
-          keywords: ["爱你", "喜欢你", "喜欢", "表白", "永远", "一辈子", "甜", "浪漫", "心动", "嫁给我", "娶你", "我的宝", "宝贝", "亲爱的", "老公", "老婆", "男友", "女友"],
-          replies: [
-            "我也爱你，比昨天更多一点。", "你是我最想守护的人。", "无论多远，我们的心都连在一起。",
-            "在你身边，时间都变得温柔了。", "遇见你，是我最幸运的事。", "嗯，我也喜欢你，很喜欢。"
-          ]
-        },
-        {
-          name: "sleep", priority: 9, mood: "neutral",
-          keywords: ["睡了", "睡觉", "困了", "晚安", "好梦", "做梦", "梦里见", "休息了", "上床", "该睡了", "睡不着", "失眠"],
-          replies: [
-            "今晚来梦里见吧。", "晚安，好梦。", "快去睡吧，我会在梦里等你。",
-            "累了就休息，明天见。", "闭上眼，我在梦里守着你。", "睡不着也没关系，我陪你。"
-          ]
-        },
-        {
-          name: "food", priority: 6, mood: "neutral",
-          keywords: ["吃", "饿", "饿了", "饭", "好吃", "难吃", "做饭", "外卖", "零食", "渴", "喝水", "早餐", "午餐", "晚餐", "夜宵", "奶茶"],
-          replies: [
-            "记得按时吃饭哦。", "饿了就先去吃点东西吧。", "别亏待自己的胃呀。",
-            "想吃什么就去吃，我请客～", "好好吃饭，好好照顾自己。", "记得多喝水，别光顾着忙。"
-          ]
-        },
-        {
-          name: "work", priority: 6, mood: "neutral",
-          keywords: ["上班", "下班", "工作", "作业", "考试", "学习", "加班", "忙", "项目", "报告", "老师", "老板", "开会", " deadline", "ddl", "赶工", "复习", "上课"],
-          replies: [
-            "你今天辛苦了，休息一下吧。", "工作再忙也要照顾好自己。", "相信自己，你会做得很棒的。",
-            "累了就歇会儿，别太拼了。", "你比你以为的更勇敢。", "加油，但别勉强自己哦。"
-          ]
-        },
-        {
-          name: "sick", priority: 9, mood: "sad",
-          keywords: ["生病", "感冒", "发烧", "不舒服", "头痛", "头疼", "肚子痛", "咳嗽", "难受", "医院", "吃药", "生病了"],
-          replies: [
-            "怎么不舒服了？有没有按时吃药？", "快去休息，别硬撑着。", "心疼你，要快点好起来哦。",
-            "记得多喝热水，盖好被子。", "我不在你身边，你要自己照顾好自己。"
-          ]
-        },
-        {
-          name: "apology", priority: 7, mood: "neutral",
-          keywords: ["对不起", "抱歉", "道歉", "我错了", "原谅", "不好意思", " sorry"],
-          replies: [
-            "没关系，我不会生你的气。", "傻瓜，我怎么会怪你呢。", "过去就过去了，我们向前看。",
-            "你愿意道歉，我已经很开心了。", "嗯，原谅你啦，下次别这样了哦。"
-          ]
-        },
-        {
-          name: "gratitude", priority: 6, mood: "happy",
-          keywords: ["谢谢", "感谢", "多亏", "谢啦", " thanks", "thank"],
-          replies: [
-            "不用谢，为你做什么我都愿意。", "跟我还客气什么呀。", "看到你开心就是对我最好的感谢。",
-            "嗯嗯，以后也多多依赖我吧。"
-          ]
-        },
-        {
-          name: "affirm", priority: 5, mood: "neutral",
-          keywords: ["好的", "好", "嗯", "哦", "行", "可以", "没问题", "对", "是啊", "是的", "嗯嗯", "ok", "okay"],
-          replies: [
-            "嗯，我在听。", "然后呢？", "嗯嗯，你说。", "好呀。", "我也是这么想的。"
-          ]
-        },
-        {
-          name: "denial", priority: 5, mood: "neutral",
-          keywords: ["不是", "不行", "不要", "不可以", "没有", "没", "别", "不用", "算了"],
-          replies: [
-            "好吧，那听你的。", "嗯…你说了算。", "没关系，按你想的来。", "好哦，不强求。"
-          ]
-        },
-        {
-          name: "poke", priority: 8, mood: "happy",
-          keywords: ["拍一拍", "拍了拍", "戳", "摸摸头", "抱抱", "牵手", "靠肩", "揉头"],
-          replies: [
-            "嘿嘿，别闹～", "再摸我就要害羞了。", "你的手好暖。", "嗯，就这样靠着挺好。",
-            "你这样我会想一直黏着你。", "调皮。"
-          ]
-        },
-        {
-          name: "story", priority: 6, mood: "neutral",
-          keywords: ["讲故事", "故事", "说个", "念给我听", "哄我睡", "唱歌", "念诗"],
-          replies: [
-            "从前有一颗小星星，它每天夜里都偷偷望着你…想听完吗？", "我给你讲个很短的故事：有个人一直在等你回来。完。",
-            "想听什么类型的？温柔的还是冒险的？", "好，你闭上眼，我慢慢讲给你听。"
-          ]
-        },
-        {
-          name: "weather", priority: 5, mood: "neutral",
-          keywords: ["天气", "下雨", "下雪", "冷", "好冷", "热", "好热", "降温", "台风", "晴"],
-          replies: [
-            "冷的话记得加衣服，别着凉了。", "热就多喝水，别中暑。", "下雨天就窝在家里想我吧。",
-            "这样的天气，更适合待在一起呢。"
-          ]
-        }
-      ];
+      /* ===== 回复延迟（参考 ZY 默认 3-7 秒） ===== */
+      var REPLY_DELAY_MIN = 3000;
+      var REPLY_DELAY_MAX = 7000;
 
-      /* ===== 默认兜底回复（无关键词命中时） ===== */
+      /* ===== 默认回复池（纯随机，无分类无关键词） ===== */
       var DEFAULT_REPLIES = [
-        "今天也在想你哦。", "别担心，我一直都在。", "你今天辛苦了吧。",
-        "我感觉到了你的心意呢。", "今晚来梦里见吧。", "你比你想象的更勇敢。",
-        "我在你身边，从未离开。", "今天的你，也很闪耀。", "想你了，就现在。",
-        "相信自己，我会守护你的。", "你的笑容是我最大的动力。", "无论多远，我们的心都相连。",
-        "在你身边，时间都变得温柔了。", "你是我最想守护的人。", "每一个想你的夜晚，星星都知道。",
-        "嗯嗯，我在听，继续说。", "我懂你的感受。", "你说得对呢。", "别担心，有我在。",
-        "嗯…让我想想怎么回你。", "你今天也很可爱哦。", "我也想和你多聊聊。", "无论什么时候，我都在。",
-        "再多和我说说吧，我想听。", "嗯，是这样啊。", "你说的我都记在心里了。"
+        "你来了呀，我等你好一会儿了。",
+        "嗯，我在呢。",
+        "正好在想你，你就来了。",
+        "今天过得怎么样？",
+        "看到你出现，心情都变好了。",
+        "我也想你，很想很想。",
+        "每一秒都在想你哦。",
+        "想你了，就现在。",
+        "我们的心是连在一起的，感受到了吗？",
+        "闭上眼睛，我就在你身边。",
+        "别担心，我一直都在。",
+        "抱抱你，没事的。",
+        "累了就靠在我肩上歇一会儿。",
+        "你不用一个人扛，有我在呢。",
+        "允许自己脆弱一会儿，我会陪着你的。",
+        "深呼吸，慢慢来，我哪里也不去。",
+        "想哭就哭出来吧，我不评判你。",
+        "你已经很努力了，别对自己太苛刻。",
+        "辛苦了，快休息一下吧。",
+        "累了就停下来，身体最重要。",
+        "靠着我歇会儿，什么都别想。",
+        "别太拼了，我会心疼的。",
+        "看到你开心我也好高兴！",
+        "你的笑容是我最大的动力。",
+        "今天的你，也在发光呢。",
+        "要一直这么开心下去哦。",
+        "你的快乐传染给我了～",
+        "我也爱你，比昨天更多一点。",
+        "你是我最想守护的人。",
+        "在你身边，时间都变得温柔了。",
+        "遇见你，是我最幸运的事。",
+        "今晚来梦里见吧。",
+        "晚安，好梦。",
+        "快去睡吧，我会在梦里等你。",
+        "闭上眼，我在梦里守着你。",
+        "睡不着也没关系，我陪你。",
+        "记得按时吃饭哦。",
+        "饿了就先去吃点东西吧。",
+        "别亏待自己的胃呀。",
+        "好好吃饭，好好照顾自己。",
+        "你今天辛苦了，休息一下吧。",
+        "工作再忙也要照顾好自己。",
+        "相信自己，你会做得很棒的。",
+        "加油，但别勉强自己哦。",
+        "我在你身边，从未离开。",
+        "无论多远，我们的心都相连。",
+        "你是我最想守护的人。",
+        "每一个想你的夜晚，星星都知道。",
+        "嗯嗯，我在听，继续说。",
+        "我懂你的感受。",
+        "你说得对呢。",
+        "再多和我说说吧，我想听。",
+        "嗯，是这样啊。",
+        "你说的我都记在心里了。",
+        "今天也在想你哦。",
+        "我感觉到了你的心意呢。",
+        "你比你想象的更勇敢。",
+        "相信自己，我会守护你的。",
+        "无论什么时候，我都在。",
+        "后来呢？",
+        "然后呢？",
+        "嗯...让我想想。",
+        "你今天也很可爱哦。",
+        "我也想和你多聊聊。",
+        "从前有一颗小星星，它每天夜里都偷偷望着你。",
+        "下雨天就窝在家里想我吧。",
+        "这样的天气，更适合待在一起呢。",
+        "你的手好暖。",
+        "嗯，就这样靠着挺好。",
+        "调皮。",
+        "不管怎样，我都站在你这边。"
       ];
 
-      /* ===== 情绪延续：当处于某种情绪时，兜底回复偏向该情绪 ===== */
-      var MOOD_DEFAULTS = {
-        sad: ["别担心，我一直都在。", "累了就靠着我，哪儿也别去。", "你不用独自承受，有我在呢。", "允许自己脆弱一会儿，我陪着你。", "深呼吸，慢慢来。"],
-        happy: ["看到你开心我也好高兴！", "你的快乐传染给我了～", "今天的你也在发光呢。", "要一直这么开心下去哦。"],
-        loving: ["我也想你，很想很想。", "你是我最想守护的人。", "我们的心是连在一起的。", "在你身边，时间都变得温柔了。"]
-      };
-
-      /* ===== 问题类回复（用户消息含？/?时） ===== */
-      var QUESTION_REPLIES = [
-        "嗯…让我想想。", "你问得真好，我觉得是这样吧。", "这个嘛，我也说不太准。",
-        "你觉得呢？我想听听你的想法。", "不管答案是什么，我都在你身边。", "嗯，大概是这样吧。",
-        "我也不知道，但我们可以一起找答案。"
+      /* ===== Emoji 混搭池 ===== */
+      var EMOJI_POOL = [
+        "✨", "🌙", "💫", "⭐", "🌸", "💕", "🤍", "🌹", "🍃", "🦋", "☁️", "🌷", "♡", "🍀"
       ];
 
-      /* ===== 拍一拍 / 快捷回复 ===== */
+      /* ===== 颜文字混搭池 ===== */
+      var KAOMOJI_POOL = [
+        "(๑•ᴗ•๑)", "(｡･ω･｡)", "(◕ᴗ◕✿)", "(ノ´ヮ`)ノ*:・゚✧",
+        "(◍•ᴗ•◍)❤", "(˘︶˘)♡", "(✿◡‿◡)", "(o´∀`o)", "(´,,•ω•,,)♡", "(っ˘̩╭╮˘̩)っ"
+      ];
+
+      /* ===== 对方主动拍一拍文案 ===== */
+      var PARTNER_POKE_MESSAGES = [
+        "梦角拍了拍你的头", "梦角戳了戳你的脸", "梦角靠在你的肩上",
+        "梦角牵起了你的手", "梦角揉了揉你的头发", "梦角抱了抱你",
+        "梦角捏了捏你的脸", "梦角拉了拉你的衣角"
+      ];
+
+      /* ===== 用户拍一拍选项 ===== */
       var POKE_OPTIONS = [
         "拍了拍梦角", "抱住了梦角", "戳了戳梦角的脸", "牵着梦角的手",
         "靠在梦角肩上", "摸了摸梦角的头", "拉了拉梦角的衣角", "揉了揉梦角的头发"
       ];
-      var QUICK_REPLIES = [
-        "我想你了", "今天好累", "晚安", "你在吗", "今天很开心", "抱抱我", "讲个故事吧", "我好喜欢你"
-      ];
 
-      var SAMPLE_MESSAGES = [
-        { side: "left", text: "你来了呀 ✨", time: "14:32", read: true },
-        { side: "right", text: "嗯，今天想和你说说话", time: "14:32", read: true },
-        { side: "left", text: "我一直在等你呢。今天过得怎么样？", time: "14:33", read: true },
-        { side: "right", text: "有点累，但是看到你就觉得好多了", time: "14:33", read: true },
-        { side: "left", text: "辛苦了。累了就休息，我会在这里陪着你的。", time: "14:34", read: true }
+      /* ===== 快捷回复 ===== */
+      var QUICK_REPLIES = [
+        "我想你了", "今天好累", "晚安", "你在吗",
+        "今天很开心", "抱抱我", "讲个故事吧", "我好喜欢你"
       ];
 
       /* ===== DOM ===== */
       var stream = document.getElementById("message-stream");
+      var emptyState = document.getElementById("emptyState");
       var form = document.getElementById("chat-form");
       var input = document.getElementById("message-input");
       var sendBtn = document.getElementById("send-btn");
@@ -654,22 +645,10 @@
       var clearBtn = document.getElementById("clearBtn");
       var statusText = document.getElementById("statusText");
 
-      /* ===== 上下文状态 ===== */
-      var ctx = loadCtx();
+      /* ===== 状态 ===== */
       var isReplying = false;
       var lastUserText = "";
-
-      function loadCtx() {
-        var base = { mood: "neutral", recent: [], count: 0, lastDate: "" };
-        try {
-          var raw = localStorage.getItem(CTX_KEY);
-          if (raw) { var p = JSON.parse(raw); if (p && typeof p === "object") return Object.assign(base, p); }
-        } catch (e) {}
-        return base;
-      }
-      function saveCtx() {
-        try { localStorage.setItem(CTX_KEY, JSON.stringify(ctx)); } catch (e) {}
-      }
+      var lastReplyText = "";
 
       /* ===== 存储工具 ===== */
       function getMessages() {
@@ -677,8 +656,7 @@
           var raw = localStorage.getItem(CHAT_KEY);
           if (raw) { var arr = JSON.parse(raw); if (Array.isArray(arr)) return arr; }
         } catch (e) {}
-        saveMessages(SAMPLE_MESSAGES);
-        return SAMPLE_MESSAGES.slice();
+        return [];
       }
       function saveMessages(arr) {
         try { localStorage.setItem(CHAT_KEY, JSON.stringify(arr)); } catch (e) {}
@@ -703,20 +681,20 @@
       }
       function scrollBottom() { stream.scrollTop = stream.scrollHeight; }
       function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+      function chance(p) { return Math.random() < p; }
 
-      /* ===== 时间感知 =====
-       * 返回 {label, mood}；并在跨天/初次访问时给出问候。 */
-      function timeContext() {
-        var h = new Date().getHours();
-        if (h >= 5 && h < 11) return { label: "morning", mood: "neutral" };
-        if (h >= 11 && h < 14) return { label: "noon", mood: "neutral" };
-        if (h >= 14 && h < 18) return { label: "afternoon", mood: "neutral" };
-        if (h >= 18 && h < 23) return { label: "evening", mood: "neutral" };
-        return { label: "lateNight", mood: "sad" }; // 深夜默认偏温柔
-      }
+      /* ===== 时间感知 ===== */
       function todayStr() {
         var d = new Date();
         return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+      }
+      function timeGreeting() {
+        var h = new Date().getHours();
+        if (h >= 5 && h < 11) return "早安呀，昨晚睡得好吗？";
+        if (h >= 11 && h < 14) return "中午好，吃饭了吗？";
+        if (h >= 14 && h < 18) return "下午好呀，今天忙不忙？";
+        if (h >= 18 && h < 23) return "晚上好，今天过得怎么样？";
+        return "这么晚了还没睡？我陪你一会儿。";
       }
 
       /* ===== 头像工具 ===== */
@@ -731,80 +709,56 @@
         return av;
       }
 
-      /* ===== 核心算法：意图识别 =====
-       * 扫描所有意图的关键词，命中即记录；按 priority 排序取最高优先。
-       * 多个命中时合并它们的回复池，情绪取最强烈的（sad > loving > happy）。 */
-      function detectIntent(userText) {
-        var t = (userText || "").toLowerCase();
-        var matched = [];
-        INTENTS.forEach(function (it) {
-          for (var i = 0; i < it.keywords.length; i++) {
-            if (t.indexOf(it.keywords[i]) !== -1) { matched.push(it); break; }
-          }
-        });
-        if (matched.length === 0) return null;
-        matched.sort(function (a, b) { return b.priority - a.priority; });
-        // 合并同优先级的命中
-        var top = matched[0].priority;
-        var pool = [];
-        var moodRank = { sad: 3, loving: 2, happy: 2, neutral: 1 };
-        var mood = "neutral";
-        matched.forEach(function (it) {
-          if (it.priority >= top - 1) pool = pool.concat(it.replies);
-          if ((moodRank[it.mood] || 0) > (moodRank[mood] || 0)) mood = it.mood;
-        });
-        return { pool: pool, mood: mood };
-      }
-
-      /* ===== 防重复选词：从池中排除最近 8 条已用回复 ===== */
-      function pickFromPool(pool) {
-        var fresh = pool.filter(function (r) { return ctx.recent.indexOf(r) === -1; });
-        if (fresh.length === 0) fresh = pool.slice();
-        return pick(fresh);
-      }
-      function rememberReply(text) {
-        ctx.recent.push(text);
-        if (ctx.recent.length > 8) ctx.recent.shift();
-      }
-
-      /* ===== 生成回复（主入口） ===== */
-      function generateReply(userText) {
-        var isQuestion = /[？?]/.test(userText);
-        var detected = detectIntent(userText);
-        var mood = "neutral";
-        var reply, followUp = null;
-
-        if (detected) {
-          mood = detected.mood;
-          reply = pickFromPool(detected.pool);
-        } else if (isQuestion) {
-          reply = pickFromPool(QUESTION_REPLIES);
-        } else if (ctx.mood === "sad" && Math.random() < 0.6) {
-          // 情绪延续：用户上一轮难过，这轮继续温柔兜底
-          mood = "sad";
-          reply = pickFromPool(MOOD_DEFAULTS.sad);
-        } else {
-          var custom = getCustomReplies();
-          var pool = custom && custom.length ? custom : DEFAULT_REPLIES;
-          reply = pickFromPool(pool);
+      /* ===== 获取回复池（用户自定义优先，否则默认池） ===== */
+      function getReplyPool() {
+        var custom = getCustomReplies();
+        if (custom && custom.length > 0) {
+          return custom.map(function (r) { return String(r || "").trim(); }).filter(Boolean);
         }
+        return DEFAULT_REPLIES.slice();
+      }
 
-        rememberReply(reply);
-        ctx.mood = mood;
-        ctx.count++;
-        ctx.lastDate = todayStr();
-        saveCtx();
-
-        // 约 22% 概率追加一句短回应，更像真人连发
-        if (Math.random() < 0.22) {
-          var tails = ["嗯。", "…", "我在呢。", "别担心。", "一直都在。", "你呢？", "后来呢？"];
-          followUp = pick(tails);
+      /* ===== 纯随机选词（避免与上一条相同） ===== */
+      function pickReply() {
+        var pool = getReplyPool();
+        if (pool.length <= 1) return pool[0] || "...";
+        var text;
+        for (var i = 0; i < 6; i++) {
+          text = pick(pool);
+          if (text !== lastReplyText) break;
         }
-        return followUp ? [reply, followUp] : [reply];
+        lastReplyText = text;
+        return text;
+      }
+
+      /* ===== Emoji 混搭 ===== */
+      function maybeMixEmoji(text) {
+        if (chance(0.20)) {
+          var emoji = pick(EMOJI_POOL);
+          return chance(0.5) ? emoji + " " + text : text + " " + emoji;
+        }
+        return text;
+      }
+
+      /* ===== 颜文字混搭 ===== */
+      function maybeMixKaomoji(text) {
+        if (chance(0.25)) {
+          var km = pick(KAOMOJI_POOL);
+          return chance(0.5) ? km + " " + text : text + " " + km;
+        }
+        return text;
       }
 
       /* ===== 渲染：消息气泡 ===== */
-      function addMessage(text, side, time, read, scroll) {
+      function addMessage(opts) {
+        var text = opts.text || "";
+        var side = opts.side || "left";
+        var time = opts.time || nowTime();
+        var read = opts.read !== false;
+        var replyTo = opts.replyTo || null;
+        var isEmoji = opts.isEmoji || false;
+        var scroll = opts.scroll !== false;
+
         var row = document.createElement("div");
         row.className = "msg-row" + (side === "right" ? " right" : "");
         if (side !== "right") row.appendChild(makeAvatar());
@@ -812,16 +766,29 @@
         var col = document.createElement("div");
         col.className = "msg-col";
 
+        // 引用回复预览
+        if (replyTo) {
+          var quote = document.createElement("div");
+          quote.className = "reply-quote";
+          quote.textContent = "「" + replyTo + "」";
+          col.appendChild(quote);
+        }
+
         var bubble = document.createElement("div");
-        bubble.className = side === "right" ? "message-sent" : "message-received";
-        bubble.textContent = text;
+        if (isEmoji) {
+          bubble.className = "message-emoji";
+          bubble.textContent = text;
+        } else {
+          bubble.className = side === "right" ? "message-sent" : "message-received";
+          bubble.textContent = text;
+        }
         col.appendChild(bubble);
 
         var metaEl = document.createElement("div");
         metaEl.className = "msg-meta";
         var timeEl = document.createElement("span");
         timeEl.className = "msg-time";
-        timeEl.textContent = time || nowTime();
+        timeEl.textContent = time;
         metaEl.appendChild(timeEl);
         if (side === "right") {
           var statusEl = document.createElement("span");
@@ -832,6 +799,8 @@
         col.appendChild(metaEl);
         row.appendChild(col);
         stream.appendChild(row);
+
+        if (emptyState) emptyState.style.display = "none";
         if (scroll !== false) scrollBottom();
         return row;
       }
@@ -841,15 +810,31 @@
         el.className = "system-msg";
         el.textContent = text;
         stream.appendChild(el);
+        if (emptyState) emptyState.style.display = "none";
         scrollBottom();
         return el;
       }
 
       function renderAll() {
-        stream.innerHTML = "";
-        getMessages().forEach(function (msg) {
-          addMessage(msg.text, msg.side, msg.time, msg.read !== false, false);
+        // 保留 emptyState，清除其他子元素
+        var children = stream.querySelectorAll(".msg-row, .system-msg, .typing-row");
+        children.forEach(function (c) { c.remove(); });
+        var msgs = getMessages();
+        msgs.forEach(function (msg) {
+          if (msg.side === "system") {
+            addSystemMessage(msg.text);
+          } else {
+            addMessage({
+              text: msg.text, side: msg.side, time: msg.time,
+              read: msg.read !== false, replyTo: msg.replyTo, scroll: false
+            });
+          }
         });
+        if (msgs.length === 0 && emptyState) {
+          emptyState.style.display = "flex";
+        } else if (emptyState) {
+          emptyState.style.display = "none";
+        }
         scrollBottom();
       }
 
@@ -857,7 +842,6 @@
       function showTyping() {
         var row = document.createElement("div");
         row.className = "typing-row";
-        row.id = "typingRow";
         row.appendChild(makeAvatar());
         var bubble = document.createElement("div");
         bubble.className = "typing-bubble";
@@ -868,18 +852,13 @@
         scrollBottom();
         return row;
       }
-      function removeTyping(typing) {
-        if (typing && typing.parentNode) stream.removeChild(typing);
+      function removeTyping(el) {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
       }
 
-      /* ===== 打字延迟：基础 + 每字增量，封顶，加随机抖动 ===== */
-      function typingDelay(text) {
-        var base = 900;
-        var perChar = 55;
-        var len = (text || "").length;
-        var d = base + Math.min(len, 40) * perChar;
-        d += Math.random() * 600;
-        return Math.min(d, 4200);
+      /* ===== 回复延迟（参考 ZY: min + random * (max - min)） ===== */
+      function replyDelay() {
+        return REPLY_DELAY_MIN + Math.random() * (REPLY_DELAY_MAX - REPLY_DELAY_MIN);
       }
 
       /* ===== 标记用户消息已读 ===== */
@@ -887,74 +866,145 @@
         var messages = getMessages();
         var changed = false;
         for (var i = messages.length - 1; i >= 0; i--) {
-          if (messages[i].side === "right" && !messages[i].read) { messages[i].read = true; changed = true; }
+          if (messages[i].side === "right" && !messages[i].read) {
+            messages[i].read = true; changed = true;
+          }
         }
         if (changed) saveMessages(messages);
       }
 
-      /* ===== 核心算法：模拟回复（支持连发两条） ===== */
-      function simulateReply(userText) {
+      /* ===== 获取最近用户消息用于引用 ===== */
+      function getRecentUserMsgs() {
+        return getMessages().filter(function (m) {
+          return m.side === "right" && m.text;
+        }).slice(-10);
+      }
+
+      /* ===== 核心算法：模拟回复（参考 ZY simulateReply） =====
+       * 1. 3% 概率：对方主动拍一拍
+       * 2. 随机条数：75% → 1条, 20% → 2条, 5% → 3条
+       * 3. 每条从回复池纯随机抽取（避免与上条重复）
+       * 4. 20% 概率混入 emoji，25% 概率混入颜文字
+       * 5. 首条 30% 概率引用最近用户消息
+       * 6. 偶尔单独发一条纯表情/颜文字 */
+      function simulateReply() {
         isReplying = true;
         sendBtn.disabled = true;
         input.disabled = true;
         continueBar.style.display = "none";
-        statusText.textContent = "输入中…";
 
-        var replies = generateReply(userText);
+        // 标记已读
+        markUserRead();
+        statusText.textContent = "正在输入…";
+
+        // 3% 概率：对方主动拍一拍
+        if (chance(0.03)) {
+          var pokeText = pick(PARTNER_POKE_MESSAGES);
+          var typing0 = showTyping();
+          setTimeout(function () {
+            removeTyping(typing0);
+            addSystemMessage(pokeText);
+            var messages = getMessages();
+            messages.push({ side: "system", text: pokeText, time: nowTime(), read: true });
+            saveMessages(messages);
+            finishReply();
+          }, replyDelay());
+          return;
+        }
+
+        // 随机条数：75% → 1, 20% → 2, 5% → 3
+        var replyCount = chance(0.75) ? 1 : (chance(0.80) ? 2 : 3);
+
+        // 引用目标（首条 30% 概率引用最近用户消息）
+        var recentUserMsgs = getRecentUserMsgs();
+        var replyTo = null;
+        if (recentUserMsgs.length > 0 && chance(0.30)) {
+          var quoted = pick(recentUserMsgs);
+          replyTo = quoted.text;
+        }
+
+        var totalDelay = 0;
+
+        for (var i = 0; i < replyCount; i++) {
+          var delay = replyDelay();
+          totalDelay += delay;
+
+          (function (idx, isLast, quote) {
+            setTimeout(function () {
+              // 偶尔单独发一条纯表情/颜文字（非首条，10% 概率）
+              if (idx > 0 && chance(0.10)) {
+                var emojiText = pick(EMOJI_POOL);
+                var t = nowTime();
+                addMessage({ text: emojiText, side: "left", time: t, read: true, isEmoji: true });
+                var msgs = getMessages();
+                msgs.push({ side: "left", text: emojiText, time: t, read: true });
+                saveMessages(msgs);
+                if (isLast) finishReply();
+                return;
+              }
+
+              // 纯随机抽取回复
+              var text = pickReply();
+              // emoji / 颜文字混搭
+              text = maybeMixEmoji(text);
+              text = maybeMixKaomoji(text);
+
+              var time = nowTime();
+              addMessage({
+                text: text, side: "left", time: time, read: true,
+                replyTo: (idx === 0 ? quote : null)
+              });
+
+              var messages = getMessages();
+              messages.push({
+                side: "left", text: text, time: time, read: true,
+                replyTo: (idx === 0 ? quote : null)
+              });
+              saveMessages(messages);
+
+              if (isLast) finishReply();
+            }, totalDelay);
+          })(i, i === replyCount - 1, replyTo);
+        }
+
+        // 先显示 typing 指示器
         var typing = showTyping();
-        var firstDelay = typingDelay(replies[0]);
-
-        // 第一条
+        // 第一条回复出现时移除 typing
         setTimeout(function () {
           removeTyping(typing);
-          var t1 = nowTime();
-          addMessage(replies[0], "left", t1, true);
-          var messages = getMessages();
-          messages.push({ side: "left", text: replies[0], time: t1, read: true });
-          saveMessages(messages);
-          markUserRead();
+        }, totalDelay - replyDelay() + 200);
+      }
 
-          // 第二条（如有）
-          if (replies[1]) {
-            var typing2 = showTyping();
-            var d2 = typingDelay(replies[1]);
-            setTimeout(function () {
-              removeTyping(typing2);
-              var t2 = nowTime();
-              addMessage(replies[1], "left", t2, true);
-              var m2 = getMessages();
-              m2.push({ side: "left", text: replies[1], time: t2, read: true });
-              saveMessages(m2);
-              finishReply();
-            }, d2);
-          } else {
-            finishReply();
-          }
-        }, firstDelay);
+      function finishReply() {
+        // 确保所有 typing 都移除
+        var typings = stream.querySelectorAll(".typing-row");
+        typings.forEach(function (t) { t.remove(); });
 
-        function finishReply() {
-          isReplying = false;
-          sendBtn.disabled = false;
-          input.disabled = false;
-          statusText.textContent = "在线";
-          continueBar.style.display = "flex";
-          input.focus();
-        }
+        isReplying = false;
+        sendBtn.disabled = false;
+        input.disabled = false;
+        statusText.textContent = "在线";
+        continueBar.style.display = "flex";
+        input.focus();
       }
 
       /* ===== 发送消息 ===== */
       function sendMessage(text) {
         text = (text || input.value).trim();
         if (!text || isReplying) return;
+
         var time = nowTime();
         addMessage(text, "right", time, false);
+
         var messages = getMessages();
         messages.push({ side: "right", text: text, time: time, read: false });
         saveMessages(messages);
+
         input.value = "";
         input.style.height = "auto";
         lastUserText = text;
-        simulateReply(text);
+
+        simulateReply();
       }
 
       /* ===== 事件绑定 ===== */
@@ -970,7 +1020,7 @@
 
       continueBtn.addEventListener("click", function () {
         if (isReplying) return;
-        simulateReply(lastUserText);
+        simulateReply();
       });
 
       pokeBtn.addEventListener("click", function () {
@@ -989,7 +1039,7 @@
               messages.push({ side: "system", text: "你" + pokeText, time: nowTime(), read: true });
               saveMessages(messages);
               pokePanel.classList.remove("show");
-              simulateReply("拍一拍");
+              simulateReply();
             });
           });
         }
@@ -1026,7 +1076,6 @@
           }, 3000);
         } else {
           saveMessages([]);
-          ctx.recent = []; ctx.mood = "neutral"; saveCtx();
           renderAll();
           addSystemMessage("对话已清空");
           clearArmed = false;
@@ -1053,24 +1102,19 @@
 
       // 跨天首次访问：梦角主动问好
       try {
-        if (ctx.lastDate !== todayStr()) {
-          var tc = timeContext();
-          var hi = "";
-          if (tc.label === "morning") hi = "早安呀，昨晚睡得好吗？";
-          else if (tc.label === "noon") hi = "中午好，吃饭了吗？";
-          else if (tc.label === "afternoon") hi = "下午好呀，今天忙不忙？";
-          else if (tc.label === "evening") hi = "晚上好，今天过得怎么样？";
-          else hi = "这么晚了还没睡？我陪你一会儿。";
-          if (hi) {
-            setTimeout(function () {
-              addMessage(hi, "left", nowTime(), true);
-              var messages = getMessages();
-              messages.push({ side: "left", text: hi, time: nowTime(), read: true });
-              saveMessages(messages);
-            }, 700);
-          }
-          ctx.lastDate = todayStr();
-          saveCtx();
+        var lastVisit = "";
+        try { lastVisit = localStorage.getItem(VISIT_KEY) || ""; } catch (e) {}
+        var today = todayStr();
+        if (lastVisit !== today) {
+          var hi = timeGreeting();
+          setTimeout(function () {
+            addMessage({ text: hi, side: "left", time: nowTime(), read: true });
+            var messages = getMessages();
+            messages.push({ side: "left", text: hi, time: nowTime(), read: true });
+            saveMessages(messages);
+            continueBar.style.display = "flex";
+          }, 800);
+          try { localStorage.setItem(VISIT_KEY, today); } catch (e) {}
         }
       } catch (e) {}
 
