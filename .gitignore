@@ -1,0 +1,4 @@
+# Trae Design workspace files
+*.design
+generation-tree.json
+orchestration-summary.json

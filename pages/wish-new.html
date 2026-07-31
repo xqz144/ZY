@@ -5,15 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>心愿 · 梦角传讯</title>
 
-  <!-- Fonts: Noto Serif SC (headings) + Noto Sans SC (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Project token system (single hue: 柔粉 #e8749a) -->
   <link rel="stylesheet" href="../colors_and_type.css" />
 
-  <!-- Tailwind + token bridge -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -40,14 +36,13 @@
             sans: ['"DreamFont", "Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
             serif: ['"DreamFont", "Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
           },
-          borderRadius: { sm: '4px', md: '8px', lg: '12px', xl: '12px' },
         }
       }
     };
   </script>
 
   <style>
-    * { -webkit-tap-highlight-color: transparent; }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
     html { -webkit-font-smoothing: antialiased; }
     body {
       font-family: var(--font-sans);
@@ -61,7 +56,7 @@
       letter-spacing: var(--tracking-normal);
     }
 
-    /* ===== Phone frame ===== */
+    /* Phone frame */
     .phone {
       position: relative;
       width: 100%;
@@ -92,7 +87,6 @@
       }
     }
 
-    /* ===== App background — dreamy pink gradient ===== */
     .app-bg {
       flex: 1;
       display: flex;
@@ -105,7 +99,6 @@
         linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
     }
 
-    /* ===== Starlight background (sparse, low opacity, twinkle) ===== */
     .starlight { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .starlight span {
       position: absolute; border-radius: 9999px;
@@ -117,7 +110,7 @@
       50% { opacity: 0.6; transform: scale(1.1); }
     }
 
-    /* ===== Top bar ===== */
+    /* Top bar */
     .top-bar {
       position: relative;
       z-index: 10;
@@ -127,9 +120,7 @@
       padding: 44px 16px 10px;
       flex-shrink: 0;
     }
-    @media (max-width: 479px) {
-      .top-bar { padding-top: 16px; }
-    }
+    @media (max-width: 479px) { .top-bar { padding-top: 16px; } }
     .back-btn {
       font-size: 15px;
       color: hsl(var(--primary));
@@ -149,15 +140,9 @@
       text-align: center;
       flex: 1;
     }
-    .count-badge {
-      flex-shrink: 0;
-      min-width: 64px;
-      display: flex;
-      justify-content: flex-end;
-    }
+    .count-badge { flex-shrink: 0; min-width: 64px; display: flex; justify-content: flex-end; }
     .count-badge .pill {
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 12px; font-weight: 600;
       color: hsl(var(--primary));
       background: hsl(var(--accent) / 0.55);
       border: 1px solid hsl(var(--primary) / 0.25);
@@ -166,22 +151,25 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* ===== Stats ===== */
+    /* Stats */
     .stats {
       position: relative;
       z-index: 1;
       margin: 4px 16px 0;
-      padding: 12px 16px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.55);
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.58);
       border: 1px solid rgba(232, 116, 154, 0.15);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
+    .stats-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-bottom: 10px;
+    }
     .stats-text {
-      font-size: 12.5px;
+      font-size: 13px;
       color: var(--text-secondary);
-      margin-bottom: 8px;
       font-variant-numeric: tabular-nums;
     }
     .stats-text b {
@@ -203,8 +191,8 @@
       box-shadow: 0 0 8px -2px rgba(232, 116, 154, 0.5);
     }
 
-    /* ===== Filter pills ===== */
-    .filters {
+    /* Filter row */
+    .filter-row {
       position: relative;
       z-index: 1;
       display: flex;
@@ -222,6 +210,7 @@
       cursor: pointer;
       transition: all 0.18s;
       font-weight: 500;
+      flex-shrink: 0;
     }
     .filter-pill:active { transform: scale(0.94); }
     .filter-pill.active {
@@ -231,12 +220,44 @@
       box-shadow: 0 3px 10px -3px rgba(232, 116, 154, 0.45);
     }
 
-    /* ===== Wish wall ===== */
+    /* Category chips */
+    .category-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .category-row::-webkit-scrollbar { display: none; }
+    .category-chip {
+      flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      border: 1px solid rgba(232, 116, 154, 0.18);
+      background: rgba(255,255,255,0.45);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .category-chip:active { transform: scale(0.94); }
+    .category-chip.active {
+      background: rgba(232,116,154,0.12);
+      border-color: rgba(232,116,154,0.45);
+      color: var(--accent-color);
+      font-weight: 600;
+    }
+
+    /* Wish wall */
     .wish-wall {
       flex: 1;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 8px 14px 80px;
+      padding: 8px 14px 110px;
       column-count: 2;
       column-gap: 10px;
       position: relative;
@@ -250,8 +271,8 @@
       display: inline-block;
       width: 100%;
       margin-bottom: 10px;
-      padding: 14px 14px 12px;
-      border-radius: 14px;
+      padding: 13px 13px 11px;
+      border-radius: 16px;
       position: relative;
       border: 1px solid rgba(232, 116, 154, 0.1);
       box-shadow: 0 2px 10px -4px rgba(232, 116, 154, 0.15);
@@ -261,93 +282,82 @@
       animation-delay: var(--delay, 0s);
       transform: rotate(var(--rot, 0deg));
     }
-    .wish-card:active {
-      transform: rotate(var(--rot, 0deg)) scale(0.96);
-    }
+    .wish-card:active { transform: rotate(var(--rot, 0deg)) scale(0.96); }
 
-    /* Card gradient cycle */
     .wish-card:nth-child(4n+1) { background: linear-gradient(135deg, #fff5f8, #ffe4ec); }
     .wish-card:nth-child(4n+2) { background: linear-gradient(135deg, #fef7f0, #ffdfe8); }
     .wish-card:nth-child(4n+3) { background: linear-gradient(135deg, #f0f5ff, #ffe4f0); }
     .wish-card:nth-child(4n+4) { background: linear-gradient(135deg, #fff8f5, #ffdde8); }
 
-    /* Pending glow */
-    .wish-card:not(.fulfilled) {
-      box-shadow: 0 2px 12px -4px rgba(232, 116, 154, 0.22);
-    }
-
-    /* Fulfilled state */
     .wish-card.fulfilled {
       background: linear-gradient(135deg, #fff8e8, #ffe8c8);
       box-shadow: 0 4px 20px -4px rgba(255, 200, 100, 0.3);
       border-color: rgba(255, 200, 100, 0.25);
     }
 
-    .wish-icon {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 14px;
-      opacity: 0.75;
+    .wish-card-header {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 6px;
+      margin-bottom: 7px;
+    }
+    .wish-category {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      background: rgba(255,255,255,0.7);
+      color: var(--text-secondary);
+      border: 1px solid rgba(232,116,154,0.12);
+    }
+    .wish-priority {
+      font-size: 12px;
       line-height: 1;
+      opacity: 0.85;
+      letter-spacing: -1px;
     }
     .wish-text {
       font-family: var(--font-serif);
-      font-size: 14.5px;
-      line-height: 1.6;
+      font-size: 14px;
+      line-height: 1.55;
       color: var(--text-primary);
       word-break: break-word;
-      padding-right: 18px;
+      display: -webkit-box;
+      -webkit-line-clamp: 5;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .wish-text.fulfilled-text {
+      text-decoration: line-through;
+      opacity: 0.75;
     }
     .wish-meta {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 10px;
+      margin-top: 9px;
       gap: 6px;
     }
     .wish-date {
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-secondary);
       font-variant-numeric: tabular-nums;
     }
     .fulfilled-badge {
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 600;
       color: #c98a1f;
       background: rgba(255, 200, 100, 0.25);
       border: 1px solid rgba(255, 200, 100, 0.35);
       border-radius: 9999px;
-      padding: 2px 8px;
+      padding: 2px 7px;
       white-space: nowrap;
     }
-    .wish-delete {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      width: 22px;
-      height: 22px;
-      border-radius: 9999px;
-      border: none;
-      background: rgba(232, 116, 154, 0.12);
-      color: var(--text-secondary);
-      font-size: 13px;
-      line-height: 1;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.18s, background 0.18s;
-    }
-    .wish-card:hover .wish-delete { opacity: 1; }
-    .wish-delete:active { background: rgba(232, 116, 154, 0.3); }
 
     @keyframes wishFloat {
       0%, 100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
-      50% { transform: translateY(-4px) rotate(var(--rot, 0deg)); }
+      50% { transform: translateY(-3px) rotate(var(--rot, 0deg)); }
     }
 
-    /* ===== Empty state ===== */
+    /* Empty state */
     .empty-state {
       flex: 1;
       display: flex;
@@ -355,12 +365,12 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 40px 24px;
+      padding: 30px 24px 100px;
       position: relative;
       z-index: 1;
     }
     .empty-emoji {
-      font-size: 4rem;
+      font-size: 3.8rem;
       line-height: 1;
       filter: drop-shadow(0 0 18px rgba(255, 180, 120, 0.55));
       animation: emptyGlow 3s ease-in-out infinite;
@@ -369,72 +379,314 @@
       0%, 100% { filter: drop-shadow(0 0 14px rgba(255, 180, 120, 0.45)); transform: translateY(0); }
       50% { filter: drop-shadow(0 0 26px rgba(255, 180, 120, 0.7)); transform: translateY(-4px); }
     }
-    .empty-text {
-      margin-top: 18px;
+    .empty-title {
+      margin-top: 16px;
       font-family: var(--font-serif);
-      font-size: 14.5px;
-      line-height: 1.7;
-      color: var(--text-secondary);
-      white-space: pre-line;
-    }
-
-    /* ===== Bottom input bar ===== */
-    .wish-input-bar {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px 24px;
-      background: var(--secondary-bg);
-      border-top: 1px solid rgba(232, 116, 154, 0.15);
-      position: relative;
-      z-index: 5;
-    }
-    @media (max-width: 479px) {
-      .wish-input-bar { padding-bottom: 14px; }
-    }
-    .wish-input {
-      flex: 1;
-      border: 1px solid rgba(232, 116, 154, 0.2);
-      background: #fff;
-      border-radius: 9999px;
-      padding: 10px 18px;
-      font-size: 14px;
-      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 600;
       color: var(--text-primary);
-      outline: none;
-      transition: border-color 0.18s, box-shadow 0.18s;
     }
-    .wish-input::placeholder { color: var(--text-secondary); }
-    .wish-input:focus {
-      border-color: rgba(232, 116, 154, 0.5);
-      box-shadow: 0 0 0 3px rgba(232, 116, 154, 0.12);
+    .empty-text {
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
     }
-    .wish-send {
-      width: 42px;
-      height: 42px;
+    .empty-templates {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 18px;
+      max-width: 280px;
+    }
+    .empty-template {
+      font-size: 12px;
+      padding: 7px 13px;
+      border-radius: 9999px;
+      border: 1px solid rgba(232,116,154,0.2);
+      background: rgba(255,255,255,0.55);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .empty-template:active { transform: scale(0.95); background: #fff; }
+
+    /* Add button */
+    .add-btn {
+      position: absolute;
+      right: 18px;
+      bottom: 22px;
+      width: 58px;
+      height: 58px;
       border-radius: 9999px;
       border: none;
-      flex-shrink: 0;
       background: linear-gradient(135deg, #f4a0bc, #e8749a);
       color: #fff;
-      font-size: 18px;
+      font-size: 28px;
       display: grid;
       place-items: center;
       cursor: pointer;
-      box-shadow: 0 4px 12px -3px rgba(232, 116, 154, 0.5);
-      transition: transform 0.12s, box-shadow 0.2s;
+      box-shadow: 0 6px 20px -4px rgba(232, 116, 154, 0.55);
+      transition: transform 0.15s, box-shadow 0.2s;
+      z-index: 20;
     }
-    .wish-send:active {
-      transform: scale(0.9);
-      box-shadow: 0 2px 6px -2px rgba(232, 116, 154, 0.4);
+    .add-btn:active { transform: scale(0.9); }
+    .add-btn::after {
+      content: '许下心愿';
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: var(--accent-color);
+      white-space: nowrap;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+    @media (max-width: 479px) { .add-btn { bottom: 16px; } }
+
+    /* Modal */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(40, 20, 32, 0.45);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-sheet {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      padding: 20px 18px 26px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.3, 0, 0, 1);
+      z-index: 101;
+      max-height: 88vh;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .modal-sheet::-webkit-scrollbar { display: none; }
+    .modal-overlay.show .modal-sheet { transform: translateY(0); }
+    .modal-handle {
+      width: 42px; height: 4px;
+      border-radius: 9999px;
+      background: rgba(0,0,0,0.12);
+      margin: 0 auto 18px;
+    }
+    .modal-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .input-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+    .wish-textarea {
+      width: 100%;
+      min-height: 84px;
+      border: 1px solid rgba(232,116,154,0.22);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      resize: none;
+      outline: none;
+      line-height: 1.5;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .wish-textarea:focus {
+      border-color: rgba(232,116,154,0.55);
+      box-shadow: 0 0 0 3px rgba(232,116,154,0.1);
+    }
+    .char-count {
+      text-align: right;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 5px;
+    }
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .category-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 10px 4px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(232,116,154,0.14);
+      background: rgba(255,255,255,0.6);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .category-option:active { transform: scale(0.95); }
+    .category-option.active {
+      border-color: var(--accent-color);
+      background: rgba(232,116,154,0.1);
+      color: var(--accent-color);
+      font-weight: 600;
+    }
+    .category-option .emoji { font-size: 20px; line-height: 1; }
+    .priority-row {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .priority-heart {
+      font-size: 22px;
+      cursor: pointer;
+      opacity: 0.35;
+      transition: opacity 0.15s, transform 0.12s;
+      line-height: 1;
+    }
+    .priority-heart.active { opacity: 1; }
+    .priority-heart:active { transform: scale(0.85); }
+    .modal-note {
+      width: 100%;
+      min-height: 60px;
+      border: 1px solid rgba(232,116,154,0.18);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+      resize: none;
+      outline: none;
+      font-family: var(--font-sans);
+    }
+    .modal-note:focus {
+      border-color: rgba(232,116,154,0.45);
+      box-shadow: 0 0 0 3px rgba(232,116,154,0.08);
+    }
+    .modal-actions {
+      display: flex; gap: 10px;
+      margin-top: 22px;
+    }
+    .modal-btn {
+      flex: 1;
+      height: 46px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s, opacity 0.15s;
+    }
+    .modal-btn:active { transform: scale(0.97); }
+    .modal-btn.secondary {
+      background: rgba(232,116,154,0.1);
+      color: var(--accent-color);
+    }
+    .modal-btn.primary {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      box-shadow: 0 4px 14px -4px rgba(232,116,154,0.45);
+    }
+    .modal-btn.delete {
+      background: #fff0f0;
+      color: #d44;
+      border: 1px solid rgba(221,68,68,0.2);
     }
 
-    /* ===== Toast ===== */
+    /* Detail modal extras */
+    .detail-date {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .detail-wish-text {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      text-align: center;
+      padding: 8px 6px 16px;
+    }
+    .detail-note {
+      background: rgba(232,116,154,0.06);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .fulfill-toggle {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(232,116,154,0.18);
+      background: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 12px;
+    }
+    .fulfill-toggle:active { transform: scale(0.98); }
+    .fulfill-toggle.checked {
+      border-color: rgba(255, 180, 80, 0.45);
+      background: linear-gradient(135deg, #fff8e8, #fff0d8);
+    }
+    .fulfill-toggle .checkbox {
+      width: 22px; height: 22px;
+      border-radius: 9999px;
+      border: 2px solid rgba(232,116,154,0.35);
+      display: grid; place-items: center;
+      font-size: 13px;
+      color: #fff;
+      transition: all 0.2s;
+    }
+    .fulfill-toggle.checked .checkbox {
+      background: #e8a83a;
+      border-color: #e8a83a;
+    }
+    .fulfill-toggle .label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Blessing banner */
+    .blessing-banner {
+      background: linear-gradient(135deg, #fff8e8, #ffe8c8);
+      border: 1px solid rgba(255, 180, 80, 0.25);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      text-align: center;
+      font-size: 13px;
+      color: #a07420;
+      line-height: 1.6;
+      display: none;
+    }
+    .blessing-banner.show { display: block; animation: bannerPop 0.4s ease both; }
+    @keyframes bannerPop {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* Toast */
     .toast {
       position: absolute;
       left: 50%;
-      bottom: 86px;
+      bottom: 96px;
       transform: translateX(-50%) translateY(12px);
       background: rgba(61, 32, 48, 0.88);
       color: #fff;
@@ -449,30 +701,30 @@
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (max-width: 479px) { .toast { bottom: 86px; } }
+
+    /* Confetti */
+    .confetti-piece {
+      position: absolute;
+      width: 8px; height: 8px;
+      pointer-events: none;
+      z-index: 90;
+      animation: confettiFall 1s ease-out forwards;
     }
-    @media (max-width: 479px) {
-      .toast { bottom: 72px; }
+    @keyframes confettiFall {
+      0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(120px) rotate(720deg); }
     }
 
-    /* ===== Card enter animation ===== */
     @keyframes wishEnter {
       from { opacity: 0; transform: translateY(8px) rotate(var(--rot, 0deg)) scale(0.96); }
       to { opacity: 1; transform: translateY(0) rotate(var(--rot, 0deg)) scale(1); }
     }
-    .wish-card.entering {
-      animation: wishEnter 0.32s cubic-bezier(0.3, 0, 0, 1) both;
-    }
+    .wish-card.entering { animation: wishEnter 0.32s cubic-bezier(0.3, 0, 0, 1) both; }
 
-    /* ===== Reduced motion ===== */
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
       .wish-card { animation: none !important; }
       .empty-emoji { animation: none !important; }
     }
@@ -480,8 +732,7 @@
 </head>
 <body>
   <div class="phone">
-    <div class="app-bg">
-      <!-- Starlight -->
+    <div class="app-bg" id="appBg">
       <div class="starlight">
         <span style="top:6%;left:12%;width:3px;height:3px;animation-delay:0s"></span>
         <span style="top:14%;left:82%;width:2px;height:2px;animation-delay:0.7s"></span>
@@ -493,44 +744,96 @@
         <span style="top:22%;left:48%;width:2px;height:2px;animation-delay:0.9s"></span>
       </div>
 
-      <!-- Top bar -->
       <div class="top-bar">
         <a href="index-new.html" class="back-btn">← 返回</a>
         <div class="top-title">心愿</div>
         <div class="count-badge"><span class="pill" id="countPill">0</span></div>
       </div>
 
-      <!-- Stats -->
       <div class="stats">
-        <div class="stats-text" id="statsText">共 0 个心愿 · 已实现 0 个</div>
+        <div class="stats-row">
+          <div class="stats-text" id="statsText">共 <b>0</b> 个心愿 · 已实现 <b>0</b> 个</div>
+        </div>
         <div class="progress-track">
           <div class="progress-fill" id="progressFill" style="width:0%"></div>
         </div>
       </div>
 
-      <!-- Filters -->
-      <div class="filters">
+      <div class="filter-row">
         <button class="filter-pill active" data-filter="all">全部</button>
         <button class="filter-pill" data-filter="pending">期待中</button>
         <button class="filter-pill" data-filter="fulfilled">已实现</button>
       </div>
 
-      <!-- Wish wall / empty state -->
+      <div class="category-row" id="categoryRow">
+        <button class="category-chip active" data-cat="all">🏷️ 全部分类</button>
+        <button class="category-chip" data-cat="travel">🧳 旅行</button>
+        <button class="category-chip" data-cat="life">🏠 生活</button>
+        <button class="category-chip" data-cat="study">📚 成长</button>
+        <button class="category-chip" data-cat="love">💕 恋爱</button>
+        <button class="category-chip" data-cat="dream">🌙 梦境</button>
+        <button class="category-chip" data-cat="other">✨ 其他</button>
+      </div>
+
       <div class="wish-wall" id="wishWall"></div>
       <div class="empty-state" id="emptyState" style="display:none;">
         <div class="empty-emoji">🏮</div>
-        <div class="empty-text">还没有心愿
-写下你的第一个心愿吧</div>
+        <div class="empty-title">还没有心愿</div>
+        <div class="empty-text">点右下角按钮，许下你的第一个心愿吧</div>
+        <div class="empty-templates" id="emptyTemplates"></div>
       </div>
 
-      <!-- Bottom input bar -->
-      <div class="wish-input-bar">
-        <input type="text" class="wish-input" id="wishInput" placeholder="写下你的心愿…" maxlength="60" />
-        <button class="wish-send" id="wishSend" aria-label="发送心愿">✨</button>
-      </div>
+      <button class="add-btn" id="addBtn" aria-label="许下心愿">+</button>
 
-      <!-- Toast -->
       <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-sheet" id="editSheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="editModalTitle">许下心愿</div>
+      <label class="input-label">心愿内容</label>
+      <textarea class="wish-textarea" id="editText" maxlength="120" placeholder="写下你想和梦角一起实现的心愿…"></textarea>
+      <div class="char-count"><span id="charCount">0</span>/120</div>
+
+      <label class="input-label">分类</label>
+      <div class="category-grid" id="editCategoryGrid"></div>
+
+      <label class="input-label">重要程度</label>
+      <div class="priority-row" id="editPriorityRow"></div>
+
+      <label class="input-label">备注（可选）</label>
+      <textarea class="modal-note" id="editNote" maxlength="200" placeholder="想记下什么细节吗？"></textarea>
+
+      <div class="modal-actions">
+        <button class="modal-btn secondary" id="editCancel">取消</button>
+        <button class="modal-btn primary" id="editSave">保存心愿</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-sheet" id="detailSheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="detailCategoryTitle">心愿</div>
+      <div class="detail-date" id="detailDate"></div>
+      <div class="blessing-banner" id="blessingBanner"></div>
+      <div class="detail-wish-text" id="detailText"></div>
+      <div class="detail-note" id="detailNote" style="display:none;"></div>
+
+      <div class="fulfill-toggle" id="fulfillToggle">
+        <div class="checkbox">✓</div>
+        <span class="label">已实现这个心愿</span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn delete" id="detailDelete">删除</button>
+        <button class="modal-btn secondary" id="detailEdit">编辑</button>
+        <button class="modal-btn primary" id="detailClose">知道了</button>
+      </div>
     </div>
   </div>
 
@@ -540,19 +843,71 @@
 
       var STORAGE_KEY = "mengjiao_wishes";
       var currentFilter = "all";
+      var currentCategory = "all";
+      var editingId = null;
+      var detailId = null;
+      var selectedCategory = "other";
+      var selectedPriority = 2;
 
-      /* ---------- DOM refs ---------- */
+      var CATEGORIES = [
+        { id: "travel", label: "旅行", emoji: "🧳" },
+        { id: "life", label: "生活", emoji: "🏠" },
+        { id: "study", label: "成长", emoji: "📚" },
+        { id: "love", label: "恋爱", emoji: "💕" },
+        { id: "dream", label: "梦境", emoji: "🌙" },
+        { id: "other", label: "其他", emoji: "✨" }
+      ];
+
+      var TEMPLATES = [
+        "希望有一天能一起看樱花",
+        "想和你去海边看日落",
+        "愿你每个夜晚都有好梦",
+        "一起养一只橘猫",
+        "想听你亲口说早安",
+        "去一次只属于我们的旅行"
+      ];
+
+      var BLESSINGS = [
+        "梦角说：这个愿望，我们一起慢慢实现。",
+        "梦角说：你许下的每个心愿，我都会记得。",
+        "梦角说：真开心，又一起完成了一件事。",
+        "梦角说：未来的日子里，还会有更多惊喜。",
+        "梦角说：你的心愿，就是我的方向。"
+      ];
+
       var wall = document.getElementById("wishWall");
       var emptyState = document.getElementById("emptyState");
-      var input = document.getElementById("wishInput");
-      var sendBtn = document.getElementById("wishSend");
       var toastEl = document.getElementById("toast");
       var statsText = document.getElementById("statsText");
       var progressFill = document.getElementById("progressFill");
       var countPill = document.getElementById("countPill");
       var filterBtns = document.querySelectorAll(".filter-pill");
+      var categoryChips = document.querySelectorAll(".category-chip");
+      var addBtn = document.getElementById("addBtn");
+      var appBg = document.getElementById("appBg");
 
-      /* ---------- Utilities ---------- */
+      var editModal = document.getElementById("editModal");
+      var editSheet = document.getElementById("editSheet");
+      var editModalTitle = document.getElementById("editModalTitle");
+      var editText = document.getElementById("editText");
+      var charCount = document.getElementById("charCount");
+      var editCategoryGrid = document.getElementById("editCategoryGrid");
+      var editPriorityRow = document.getElementById("editPriorityRow");
+      var editNote = document.getElementById("editNote");
+      var editCancel = document.getElementById("editCancel");
+      var editSave = document.getElementById("editSave");
+
+      var detailModal = document.getElementById("detailModal");
+      var detailCategoryTitle = document.getElementById("detailCategoryTitle");
+      var detailDate = document.getElementById("detailDate");
+      var detailText = document.getElementById("detailText");
+      var detailNote = document.getElementById("detailNote");
+      var blessingBanner = document.getElementById("blessingBanner");
+      var fulfillToggle = document.getElementById("fulfillToggle");
+      var detailDelete = document.getElementById("detailDelete");
+      var detailEdit = document.getElementById("detailEdit");
+      var detailClose = document.getElementById("detailClose");
+
       function escapeHtml(str) {
         return String(str)
           .replace(/&/g, "&amp;")
@@ -567,7 +922,7 @@
           var raw = localStorage.getItem(STORAGE_KEY);
           if (raw) {
             var parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) return parsed;
+            if (Array.isArray(parsed)) return parsed.map(normalizeWish);
           }
         } catch (e) {}
         return null;
@@ -579,15 +934,27 @@
         } catch (e) {}
       }
 
+      function normalizeWish(w) {
+        return {
+          id: w.id || String(Date.now() + Math.random()),
+          text: w.text || "",
+          date: w.date || isoDate(new Date()),
+          fulfilled: !!w.fulfilled,
+          category: CATEGORIES.some(function (c) { return c.id === w.category; }) ? w.category : "other",
+          priority: typeof w.priority === "number" && w.priority >= 1 && w.priority <= 3 ? w.priority : 2,
+          note: w.note || ""
+        };
+      }
+
       function ensureSeed() {
         var existing = loadWishes();
         if (existing !== null) return existing;
         var today = new Date();
         var seed = [
-          { id: String(today.getTime() - 86400000 * 2), text: "希望有一天能一起看樱花", date: isoDate(new Date(today.getTime() - 86400000 * 2)), fulfilled: false },
-          { id: String(today.getTime() - 86400000 * 5), text: "想和你在海边看一场日落", date: isoDate(new Date(today.getTime() - 86400000 * 5)), fulfilled: true },
-          { id: String(today.getTime() - 86400000 * 1), text: "愿你每个夜晚都有好梦", date: isoDate(new Date(today.getTime() - 86400000 * 1)), fulfilled: false },
-          { id: String(today.getTime() - 86400000 * 9), text: "一起养一只橘猫", date: isoDate(new Date(today.getTime() - 86400000 * 9)), fulfilled: false }
+          { id: String(today.getTime() - 86400000 * 2), text: "希望有一天能一起看樱花", date: isoDate(new Date(today.getTime() - 86400000 * 2)), fulfilled: false, category: "travel", priority: 3, note: "" },
+          { id: String(today.getTime() - 86400000 * 5), text: "想和你在海边看一场日落", date: isoDate(new Date(today.getTime() - 86400000 * 5)), fulfilled: true, category: "travel", priority: 2, note: "那天风很大，但夕阳很美。" },
+          { id: String(today.getTime() - 86400000 * 1), text: "愿你每个夜晚都有好梦", date: isoDate(new Date(today.getTime() - 86400000 * 1)), fulfilled: false, category: "dream", priority: 2, note: "" },
+          { id: String(today.getTime() - 86400000 * 9), text: "一起养一只橘猫", date: isoDate(new Date(today.getTime() - 86400000 * 9)), fulfilled: false, category: "life", priority: 1, note: "" }
         ];
         saveWishes(seed);
         return seed;
@@ -604,52 +971,45 @@
         if (!dateStr) return "";
         var d = new Date(dateStr + "T00:00:00");
         if (isNaN(d.getTime())) return "";
-        var now = new Date();
-        now.setHours(0, 0, 0, 0);
-        var diffDays = Math.round((now - d) / 86400000);
-        var sameYear = d.getFullYear() === now.getFullYear();
-        if (diffDays === 0) {
-          return (d.getMonth() + 1) + "月" + d.getDate() + "日";
-        }
-        if (sameYear) {
-          return (d.getMonth() + 1) + "月" + d.getDate() + "日";
-        }
         return d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日";
       }
 
+      function shortDate(dateStr) {
+        if (!dateStr) return "";
+        var d = new Date(dateStr + "T00:00:00");
+        if (isNaN(d.getTime())) return "";
+        return (d.getMonth() + 1) + "月" + d.getDate() + "日";
+      }
+
       function rotFor(id) {
-        // Stable pseudo-random rotation in [-2, 2] degrees based on id.
         var n = 0;
         for (var i = 0; i < id.length; i++) { n = (n * 31 + id.charCodeAt(i)) >>> 0; }
-        var v = (n % 400) / 100 - 2; // -2 .. 2
+        var v = (n % 400) / 100 - 2;
         return v.toFixed(2) + "deg";
       }
 
-      function delayFor(index) {
-        return ((index % 6) * 0.45).toFixed(2) + "s";
+      function delayFor(index) { return ((index % 6) * 0.45).toFixed(2) + "s"; }
+
+      function getCategory(id) {
+        return CATEGORIES.find(function (c) { return c.id === id; }) || CATEGORIES[CATEGORIES.length - 1];
       }
 
-      /* ---------- Toast ---------- */
-      var toastTimer = null;
       function toast(msg) {
         toastEl.textContent = msg;
         toastEl.classList.add("show");
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () {
-          toastEl.classList.remove("show");
-        }, 1600);
+        clearTimeout(toastEl._timer);
+        toastEl._timer = setTimeout(function () { toastEl.classList.remove("show"); }, 1800);
       }
 
-      /* ---------- Rendering ---------- */
       function getFiltered() {
         var wishes = loadWishes() || [];
-        if (currentFilter === "pending") {
-          return wishes.filter(function (w) { return !w.fulfilled; });
-        }
-        if (currentFilter === "fulfilled") {
-          return wishes.filter(function (w) { return w.fulfilled; });
-        }
-        return wishes;
+        return wishes.filter(function (w) {
+          var statusMatch = currentFilter === "all" ||
+            (currentFilter === "pending" && !w.fulfilled) ||
+            (currentFilter === "fulfilled" && w.fulfilled);
+          var catMatch = currentCategory === "all" || w.category === currentCategory;
+          return statusMatch && catMatch;
+        });
       }
 
       function render(enteringId) {
@@ -657,45 +1017,45 @@
         var list = getFiltered();
 
         wall.innerHTML = "";
-
         if (list.length === 0) {
           wall.style.display = "none";
           emptyState.style.display = "flex";
+          renderTemplates();
         } else {
           wall.style.display = "block";
           emptyState.style.display = "none";
           var frag = document.createDocumentFragment();
-          list.forEach(function (w, i) {
-            frag.appendChild(buildCard(w, i, enteringId));
-          });
+          list.forEach(function (w, i) { frag.appendChild(buildCard(w, i, enteringId)); });
           wall.appendChild(frag);
         }
-
         renderStats(wishes);
       }
 
       function buildCard(w, index, enteringId) {
+        var cat = getCategory(w.category);
         var card = document.createElement("div");
         card.className = "wish-card" + (w.fulfilled ? " fulfilled" : "") +
           (enteringId && w.id === enteringId ? " entering" : "");
         card.style.setProperty("--rot", rotFor(w.id));
         card.style.setProperty("--delay", delayFor(index));
         card.dataset.id = w.id;
+        card.setAttribute("role", "button");
+        card.setAttribute("tabindex", "0");
+        card.setAttribute("aria-label", (w.fulfilled ? "已实现" : "期待中") + "心愿：" + w.text);
 
-        var icon = w.fulfilled ? "✨" : "🏮";
-        var badgeHtml = w.fulfilled
-          ? '<span class="fulfilled-badge">✓ 已实现</span>'
-          : "";
+        var hearts = "♥".repeat(w.priority) + "♡".repeat(3 - w.priority);
+        var badgeHtml = w.fulfilled ? '<span class="fulfilled-badge">✓ 已实现</span>' : "";
 
         card.innerHTML =
-          '<span class="wish-icon">' + icon + '</span>' +
-          '<div class="wish-text">' + escapeHtml(w.text) + '</div>' +
+          '<div class="wish-card-header">' +
+            '<span class="wish-category">' + escapeHtml(cat.emoji) + " " + escapeHtml(cat.label) + "</span>" +
+            '<span class="wish-priority">' + hearts + "</span>" +
+          "</div>" +
+          '<div class="wish-text' + (w.fulfilled ? " fulfilled-text" : "") + '">' + escapeHtml(w.text) + "</div>" +
           '<div class="wish-meta">' +
-            '<span class="wish-date">' + escapeHtml(formatDate(w.date)) + '</span>' +
+            '<span class="wish-date">' + escapeHtml(shortDate(w.date)) + "</span>" +
             badgeHtml +
-          '</div>' +
-          '<button class="wish-delete" aria-label="删除心愿">×</button>';
-
+          "</div>";
         return card;
       }
 
@@ -704,131 +1064,269 @@
         var done = wishes.filter(function (w) { return w.fulfilled; }).length;
         statsText.innerHTML = "共 <b>" + total + "</b> 个心愿 · 已实现 <b>" + done + "</b> 个";
         countPill.textContent = String(total);
-        var pct = total === 0 ? 0 : Math.round((done / total) * 100);
-        progressFill.style.width = pct + "%";
+        progressFill.style.width = total === 0 ? "0%" : Math.round((done / total) * 100) + "%";
       }
 
-      /* ---------- Actions ---------- */
-      function addWish() {
-        var text = input.value.trim();
-        if (!text) {
-          toast("心愿不能为空呀");
-          return;
+      function renderTemplates() {
+        var container = document.getElementById("emptyTemplates");
+        if (!container) return;
+        container.innerHTML = "";
+        TEMPLATES.slice(0, 4).forEach(function (t) {
+          var btn = document.createElement("button");
+          btn.className = "empty-template";
+          btn.textContent = t;
+          btn.addEventListener("click", function () { openEdit(null, t); });
+          container.appendChild(btn);
+        });
+      }
+
+      function openEdit(id, prefilledText) {
+        editingId = id || null;
+        var wishes = loadWishes() || [];
+        var wish = editingId ? wishes.find(function (w) { return w.id === editingId; }) : null;
+
+        editModalTitle.textContent = wish ? "编辑心愿" : "许下心愿";
+        editText.value = prefilledText || (wish ? wish.text : "");
+        editNote.value = wish ? wish.note : "";
+        selectedCategory = wish ? wish.category : "other";
+        selectedPriority = wish ? wish.priority : 2;
+        updateCharCount();
+        renderCategoryGrid();
+        renderPriorityRow();
+        editSave.textContent = wish ? "保存修改" : "许下心愿";
+        editModal.classList.add("show");
+        setTimeout(function () { editText.focus(); }, 50);
+      }
+
+      function closeEdit() { editModal.classList.remove("show"); }
+
+      function renderCategoryGrid() {
+        editCategoryGrid.innerHTML = "";
+        CATEGORIES.forEach(function (c) {
+          var btn = document.createElement("button");
+          btn.className = "category-option" + (selectedCategory === c.id ? " active" : "");
+          btn.innerHTML = '<span class="emoji">' + escapeHtml(c.emoji) + "</span><span>" + escapeHtml(c.label) + "</span>";
+          btn.addEventListener("click", function () {
+            selectedCategory = c.id;
+            renderCategoryGrid();
+          });
+          editCategoryGrid.appendChild(btn);
+        });
+      }
+
+      function renderPriorityRow() {
+        editPriorityRow.innerHTML = "";
+        for (var i = 1; i <= 3; i++) {
+          var span = document.createElement("span");
+          span.className = "priority-heart" + (i <= selectedPriority ? " active" : "");
+          span.textContent = "♥";
+          span.dataset.value = i;
+          span.addEventListener("click", function () {
+            selectedPriority = Number(this.dataset.value);
+            renderPriorityRow();
+          });
+          editPriorityRow.appendChild(span);
         }
+      }
+
+      function saveFromEdit() {
+        var text = editText.value.trim();
+        if (!text) { toast("心愿内容不能为空呀"); return; }
         var wishes = loadWishes() || [];
         var now = new Date();
-        var wish = {
-          id: String(now.getTime()),
-          text: text,
-          date: isoDate(now),
-          fulfilled: false
-        };
-        wishes.unshift(wish);
-        saveWishes(wishes);
-        input.value = "";
-        // If currently filtering by fulfilled, switch to all so the new wish is visible.
-        if (currentFilter === "fulfilled") {
-          setFilter("all");
+        var isNew = !editingId;
+        var targetId = editingId || String(now.getTime());
+        var existing = wishes.find(function (w) { return w.id === targetId; });
+
+        if (existing) {
+          existing.text = text;
+          existing.category = selectedCategory;
+          existing.priority = selectedPriority;
+          existing.note = editNote.value.trim();
         } else {
-          render(wish.id);
-        }
-        toast("心愿已许下 ✨");
-      }
-
-      function toggleFulfilled(id) {
-        var wishes = loadWishes() || [];
-        var changed = false;
-        for (var i = 0; i < wishes.length; i++) {
-          if (wishes[i].id === id) {
-            wishes[i].fulfilled = !wishes[i].fulfilled;
-            changed = wishes[i].fulfilled;
-            break;
-          }
+          wishes.unshift({
+            id: targetId,
+            text: text,
+            date: isoDate(now),
+            fulfilled: false,
+            category: selectedCategory,
+            priority: selectedPriority,
+            note: editNote.value.trim()
+          });
         }
         saveWishes(wishes);
+        closeEdit();
+        if (currentFilter === "fulfilled" && isNew) setFilter("all");
+        if (currentCategory !== "all" && isNew && selectedCategory !== currentCategory) setCategory("all");
+        render(targetId);
+        toast(isNew ? "心愿已许下 ✨" : "已保存修改");
+      }
+
+      function openDetail(id) {
+        detailId = id;
+        var wishes = loadWishes() || [];
+        var w = wishes.find(function (x) { return x.id === id; });
+        if (!w) return;
+        var cat = getCategory(w.category);
+        detailCategoryTitle.textContent = cat.emoji + " " + cat.label;
+        detailDate.textContent = formatDate(w.date) + "许下";
+        detailText.textContent = w.text;
+        detailText.className = "detail-wish-text" + (w.fulfilled ? " fulfilled-text" : "");
+        if (w.note) {
+          detailNote.style.display = "block";
+          detailNote.textContent = w.note;
+        } else {
+          detailNote.style.display = "none";
+        }
+        updateFulfillToggle(w.fulfilled);
+        if (w.fulfilled) {
+          blessingBanner.textContent = randomBlessing(w.id);
+          blessingBanner.classList.add("show");
+        } else {
+          blessingBanner.classList.remove("show");
+        }
+        detailModal.classList.add("show");
+      }
+
+      function closeDetail() { detailModal.classList.remove("show"); detailId = null; }
+
+      function updateFulfillToggle(checked) {
+        fulfillToggle.classList.toggle("checked", checked);
+        fulfillToggle.querySelector(".label").textContent = checked ? "已实现这个心愿" : "标记为已实现";
+      }
+
+      function randomBlessing(seed) {
+        var n = 0;
+        for (var i = 0; i < seed.length; i++) n = (n * 31 + seed.charCodeAt(i)) >>> 0;
+        return BLESSINGS[n % BLESSINGS.length];
+      }
+
+      function toggleFulfilledFromDetail() {
+        var wishes = loadWishes() || [];
+        var w = wishes.find(function (x) { return x.id === detailId; });
+        if (!w) return;
+        w.fulfilled = !w.fulfilled;
+        saveWishes(wishes);
+        updateFulfillToggle(w.fulfilled);
+        if (w.fulfilled) {
+          blessingBanner.textContent = randomBlessing(w.id);
+          blessingBanner.classList.add("show");
+          spawnConfetti();
+          toast("恭喜，心愿已实现 🎉");
+        } else {
+          blessingBanner.classList.remove("show");
+          toast("已重新期待中");
+        }
+        detailText.className = "detail-wish-text" + (w.fulfilled ? " fulfilled-text" : "");
         render();
-        toast(changed ? "恭喜，心愿已实现 🎉" : "已重新期待中");
       }
 
-      function deleteWish(id) {
+      function deleteCurrentWish() {
+        if (!detailId) return;
         var wishes = loadWishes() || [];
-        wishes = wishes.filter(function (w) { return w.id !== id; });
+        wishes = wishes.filter(function (w) { return w.id !== detailId; });
         saveWishes(wishes);
+        closeDetail();
         render();
         toast("心愿已收起");
       }
 
       function setFilter(filter) {
         currentFilter = filter;
-        filterBtns.forEach(function (b) {
-          b.classList.toggle("active", b.dataset.filter === filter);
-        });
+        filterBtns.forEach(function (b) { b.classList.toggle("active", b.dataset.filter === filter); });
         render();
       }
 
-      /* ---------- Events ---------- */
-      sendBtn.addEventListener("click", addWish);
-      input.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          addWish();
+      function setCategory(cat) {
+        currentCategory = cat;
+        categoryChips.forEach(function (c) { c.classList.toggle("active", c.dataset.cat === cat); });
+        render();
+      }
+
+      function spawnConfetti() {
+        var colors = ["#f4a0bc", "#e8749a", "#ffd166", "#9b5de5", "#00bbf9"];
+        var rect = fulfillToggle.getBoundingClientRect();
+        var containerRect = appBg.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2 - containerRect.left;
+        var cy = rect.top + rect.height / 2 - containerRect.top;
+        for (var i = 0; i < 24; i++) {
+          var piece = document.createElement("span");
+          piece.className = "confetti-piece";
+          piece.style.left = cx + "px";
+          piece.style.top = cy + "px";
+          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+          var angle = Math.random() * Math.PI * 2;
+          var dist = 40 + Math.random() * 80;
+          piece.style.setProperty("--tx", Math.cos(angle) * dist + "px");
+          piece.style.setProperty("--ty", Math.sin(angle) * dist + 60 + "px");
+          piece.style.animation = "confettiPop 0.9s ease-out forwards";
+          appBg.appendChild(piece);
+          setTimeout(function (p) { p.remove(); }, 950);
         }
+      }
+
+      // Confetti keyframes injection
+      var style = document.createElement("style");
+      style.textContent = "@keyframes confettiPop { 0% { opacity:1; transform: translate(0,0) rotate(0deg) scale(1); } 100% { opacity:0; transform: translate(var(--tx,0), var(--ty,80px)) rotate(720deg) scale(0.6); } }";
+      document.head.appendChild(style);
+
+      // Events
+      addBtn.addEventListener("click", function () { openEdit(); });
+      editCancel.addEventListener("click", closeEdit);
+      editSave.addEventListener("click", saveFromEdit);
+      editText.addEventListener("input", updateCharCount);
+      editModal.addEventListener("click", function (e) { if (e.target === editModal) closeEdit(); });
+
+      detailClose.addEventListener("click", closeDetail);
+      detailEdit.addEventListener("click", function () {
+        if (!detailId) return;
+        closeDetail();
+        openEdit(detailId);
       });
+      detailDelete.addEventListener("click", deleteCurrentWish);
+      fulfillToggle.addEventListener("click", toggleFulfilledFromDetail);
+      detailModal.addEventListener("click", function (e) { if (e.target === detailModal) closeDetail(); });
 
       filterBtns.forEach(function (b) {
-        b.addEventListener("click", function () {
-          setFilter(b.dataset.filter);
-        });
+        b.addEventListener("click", function () { setFilter(b.dataset.filter); });
       });
-
-      // Card interactions: tap to toggle, × to delete, long-press to delete.
-      var pressTimer = null;
-      var longPressed = false;
+      categoryChips.forEach(function (c) {
+        c.addEventListener("click", function () { setCategory(c.dataset.cat); });
+      });
 
       wall.addEventListener("click", function (e) {
-        if (longPressed) { longPressed = false; return; }
         var card = e.target.closest(".wish-card");
         if (!card) return;
-        if (e.target.closest(".wish-delete")) {
-          e.stopPropagation();
-          deleteWish(card.dataset.id);
-          return;
+        openDetail(card.dataset.id);
+      });
+
+      wall.addEventListener("keydown", function (e) {
+        var card = e.target.closest(".wish-card");
+        if (!card) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openDetail(card.dataset.id);
         }
-        toggleFulfilled(card.dataset.id);
       });
 
-      wall.addEventListener("touchstart", function (e) {
-        var card = e.target.closest(".wish-card");
-        if (!card) return;
-        if (e.target.closest(".wish-delete")) return;
-        var id = card.dataset.id;
-        longPressed = false;
-        pressTimer = setTimeout(function () {
-          longPressed = true;
-          if (navigator.vibrate) { try { navigator.vibrate(15); } catch (er) {} }
-          deleteWish(id);
-        }, 600);
-      }, { passive: true });
+      function updateCharCount() {
+        charCount.textContent = String(editText.value.length);
+      }
 
-      wall.addEventListener("touchmove", function () {
-        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-      }, { passive: true });
-
-      wall.addEventListener("touchend", function () {
-        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      // Back gesture / ESC
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          if (editModal.classList.contains("show")) closeEdit();
+          if (detailModal.classList.contains("show")) closeDetail();
+        }
       });
 
-      wall.addEventListener("touchcancel", function () {
-        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-      });
-
-      // Prevent body scroll bounce outside the app area.
       document.body.addEventListener('touchmove', function (e) {
-        if (e.target.closest('.wish-wall') || e.target.closest('.wish-input')) return;
+        if (e.target.closest('.wish-wall') || e.target.closest('.wish-textarea') || e.target.closest('.modal-note')) return;
         e.preventDefault();
       }, { passive: false });
 
-      /* ---------- Init ---------- */
+      // Init
       ensureSeed();
       render();
     })();
