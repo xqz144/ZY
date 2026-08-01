@@ -445,8 +445,8 @@
     /* ===== 拖拽小精灵 ===== */
     #spark-companion {
       position: absolute;
-      width: 92px;
-      height: 104px;
+      width: 64px;
+      height: 72px;
       z-index: 20;
       cursor: grab;
       touch-action: none;
@@ -454,10 +454,10 @@
       -webkit-user-select: none;
       transition: transform 0.2s ease;
       pointer-events: auto;
-      filter: drop-shadow(0 5px 10px rgba(232,116,154,0.22));
+      filter: drop-shadow(0 4px 8px rgba(232,116,154,0.2));
     }
     #spark-companion:active { cursor: grabbing; transform: scale(1.08); }
-    #spark-companion img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+    #spark-companion svg { width: 100%; height: 100%; pointer-events: none; }
     #spark-companion .companion-hint {
       position: absolute;
       bottom: -16px;
@@ -557,9 +557,9 @@
       var DREAM_IMG_KEY = "mengjiao_dream_img";
       var PARTNER_NAME_KEY = "mengjiao_partner_name";
 
-      /* ===== 回复延迟（最短 / 最长时限，单位毫秒） ===== */
-      var REPLY_DELAY_MIN = 5000;
-      var REPLY_DELAY_MAX = 20000;
+      /* ===== 回复延迟（更快更流畅） ===== */
+      var REPLY_DELAY_MIN = 700;
+      var REPLY_DELAY_MAX = 2000;
 
       /* ===== 默认回复池（纯随机，无分类无关键词） ===== */
       var DEFAULT_REPLIES = [
@@ -717,7 +717,16 @@
           return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
         });
       }
-      function scrollBottom() { stream.scrollTop = stream.scrollHeight; }
+      function scrollBottom(force) {
+        requestAnimationFrame(function() {
+          if (force) {
+            stream.scrollTo({ top: stream.scrollHeight, behavior: 'smooth' });
+          } else {
+            var nearBottom = stream.scrollHeight - stream.scrollTop - stream.clientHeight < 200;
+            if (nearBottom) stream.scrollTo({ top: stream.scrollHeight, behavior: 'smooth' });
+          }
+        });
+      }
       function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
       function chance(p) { return Math.random() < p; }
 
@@ -839,7 +848,7 @@
         stream.appendChild(row);
 
         if (emptyState) emptyState.style.display = "none";
-        if (scroll !== false) scrollBottom();
+        if (scroll !== false) scrollBottom(side === "right");
         return row;
       }
 
@@ -928,11 +937,10 @@
       function simulateReply() {
         isReplying = true;
         sendBtn.disabled = true;
-        input.disabled = true;
         continueBar.style.display = "none";
 
-        // 标记已读
-        markUserRead();
+        // 延迟标记已读，模拟对方先看到消息再输入
+        setTimeout(function() { markUserRead(); }, 500);
         statusText.textContent = "正在输入…";
 
         // 3% 概率：对方主动拍一拍
@@ -961,14 +969,18 @@
           replyTo = quoted.text;
         }
 
-        var totalDelay = 0;
+        // 先显示 typing 指示器
+        var currentTyping = showTyping();
 
+        var runningDelay = 0;
         for (var i = 0; i < replyCount; i++) {
-          var delay = replyDelay();
-          totalDelay += delay;
+          runningDelay += replyDelay();
 
           (function (idx, isLast, quote) {
             setTimeout(function () {
+              // 移除当前 typing
+              removeTyping(currentTyping);
+
               // 偶尔单独发一条纯表情/颜文字（非首条，10% 概率）
               if (idx > 0 && chance(0.10)) {
                 var emojiText = pick(EMOJI_POOL);
@@ -977,40 +989,42 @@
                 var msgs = getMessages();
                 msgs.push({ side: "left", text: emojiText, time: t, read: true });
                 saveMessages(msgs);
-                if (isLast) finishReply();
-                return;
+              } else {
+                // 纯随机抽取回复
+                var text = pickReply();
+                // emoji / 颜文字混搭
+                text = maybeMixEmoji(text);
+                text = maybeMixKaomoji(text);
+
+                var time = nowTime();
+                addMessage({
+                  text: text, side: "left", time: time, read: true,
+                  replyTo: (idx === 0 ? quote : null)
+                });
+
+                var messages = getMessages();
+                messages.push({
+                  side: "left", text: text, time: time, read: true,
+                  replyTo: (idx === 0 ? quote : null)
+                });
+                saveMessages(messages);
               }
 
-              // 纯随机抽取回复
-              var text = pickReply();
-              // emoji / 颜文字混搭
-              text = maybeMixEmoji(text);
-              text = maybeMixKaomoji(text);
-
-              var time = nowTime();
-              addMessage({
-                text: text, side: "left", time: time, read: true,
-                replyTo: (idx === 0 ? quote : null)
-              });
-
-              var messages = getMessages();
-              messages.push({
-                side: "left", text: text, time: time, read: true,
-                replyTo: (idx === 0 ? quote : null)
-              });
-              saveMessages(messages);
-
-              if (isLast) finishReply();
-            }, totalDelay);
+              if (isLast) {
+                finishReply();
+              } else {
+                // 非最后一条，显示新的 typing 指示器，模拟逐条输入
+                currentTyping = showTyping();
+              }
+            }, runningDelay);
           })(i, i === replyCount - 1, replyTo);
         }
 
-        // 先显示 typing 指示器
-        var typing = showTyping();
-        // 第一条回复出现时移除 typing
+        // 安全兜底：最多 15 秒后移除所有 typing
         setTimeout(function () {
-          removeTyping(typing);
-        }, totalDelay - replyDelay() + 200);
+          var typings = stream.querySelectorAll(".typing-row");
+          typings.forEach(function (t) { t.remove(); });
+        }, Math.min(15000, runningDelay + 1000));
       }
 
       function finishReply() {
@@ -1020,7 +1034,6 @@
 
         isReplying = false;
         sendBtn.disabled = false;
-        input.disabled = false;
         statusText.textContent = "在线";
         continueBar.style.display = "flex";
         input.focus();
@@ -1180,56 +1193,110 @@
           return '#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');
         }
 
-        var HAIR_MAP = { purple:"#6b5b94", pink:"#e8749a", coral:"#ff8a65", mint:"#7fd5b3", sky:"#7ec8e3", lavender:"#c5a3e3", rose:"#e8749a", honey:"#e8a83a" };
-        var OUTFIT_MAP = { maroon:"#7a3a4a", navy:"#3a4a6a", white:"#e8e8f0", pink:"#e8749a", mint:"#7fd5b3", lavender:"#c5a3e3" };
+        var HAIR_MAP = { purple:"#5a4a7a", pink:"#e8749a", coral:"#ff8a65", mint:"#7fd5b3", sky:"#7ec8e3", lavender:"#c5a3e3", rose:"#e8749a", honey:"#e8a83a" };
+        var OUTFIT_MAP = { white:"#ede8e0", maroon:"#7a3a4a", navy:"#3a4a6a", pink:"#e8749a", mint:"#7fd5b3", lavender:"#c5a3e3" };
         var EAR_MAP = { brown:{c:"#8b6940",i:"#f4a0b0"}, dark:{c:"#4a4a4a",i:"#f4a0b0"}, cream:{c:"#e8d5b8",i:"#f4a0b0"} };
 
         function renderCompanionSVG(av) {
-          var hair = HAIR_MAP[av.hairColor] || "#9b8bc4";
-          var outfit = OUTFIT_MAP[av.outfitColor] || "#7a3a4a";
+          /* 使用MMD模型渲染的角色PNG */
+          return '<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;filter:brightness(1.12) saturate(1.15) contrast(1.05)">' +
+            '<image href="character.png" x="0" y="0" width="512" height="512"/>' +
+            '</svg>';
+          var hair = HAIR_MAP[av.hairColor] || "#5a4a7a";
+          var outfit = OUTFIT_MAP[av.outfitColor] || "#ede8e0";
           var earDef = av.earColor === "match" ? {c:hair, i:lighten(hair,30)} : (EAR_MAP[av.earColor] || EAR_MAP.brown);
           var skin = "#ffe4d6";
-          return '<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">' +
+          var W = 13;
+          var vest = "#a0a0ac";
+          var vestDark = "#787880";
+          return '<svg viewBox="-10 -10 220 220" xmlns="http://www.w3.org/2000/svg">' +
+            '<defs>' +
+              '<radialGradient id="cEyeGradL" cx="50%" cy="30%">' +
+                '<stop offset="0%" stop-color="#ff9ec4"/>' +
+                '<stop offset="50%" stop-color="#c4a0dc"/>' +
+                '<stop offset="100%" stop-color="#7ec8e3"/>' +
+              '</radialGradient>' +
+              '<radialGradient id="cEyeGradR" cx="50%" cy="30%">' +
+                '<stop offset="0%" stop-color="#ff9ec4"/>' +
+                '<stop offset="50%" stop-color="#c4a0dc"/>' +
+                '<stop offset="100%" stop-color="#7ec8e3"/>' +
+              '</radialGradient>' +
+              '<linearGradient id="cJacketGrad" x1="0%" y1="0%" x2="0%" y2="100%">' +
+                '<stop offset="0%" stop-color="' + lighten(outfit,8) + '"/>' +
+                '<stop offset="100%" stop-color="' + darken(outfit,6) + '"/>' +
+              '</linearGradient>' +
+            '</defs>' +
+            /* Shadow */
             '<ellipse cx="100" cy="205" rx="30" ry="4" fill="#000" opacity="0.08"/>' +
-            '<path d="M 138 160 Q 165 150 160 130" stroke="' + earDef.c + '" stroke-width="10" fill="none" stroke-linecap="round"/>' +
-            '<circle cx="160" cy="130" r="5" fill="' + earDef.c + '"/>' +
-            '<path d="M 76 128 Q 76 120 100 120 Q 124 120 124 128 L 128 165 Q 128 172 100 172 Q 72 172 72 165 Z" fill="' + outfit + '"/>' +
-            '<path d="M 88 120 L 100 132 L 112 120" fill="none" stroke="' + darken(outfit,12) + '" stroke-width="2"/>' +
-            '<rect x="78" y="158" width="44" height="12" rx="6" fill="' + skin + '"/>' +
-            '<ellipse cx="88" cy="188" rx="8" ry="5" fill="' + skin + '"/>' +
-            '<ellipse cx="112" cy="188" rx="8" ry="5" fill="' + skin + '"/>' +
-            '<ellipse cx="50" cy="145" rx="6" ry="12" fill="' + outfit + '" transform="rotate(12 50 145)"/>' +
-            '<ellipse cx="150" cy="145" rx="6" ry="12" fill="' + outfit + '" transform="rotate(-12 150 145)"/>' +
-            '<path d="M 44 92 Q 36 64 44 44 Q 56 20 80 24 Q 94 14 112 18 Q 140 20 154 44 Q 162 64 156 92 Q 152 106 146 100 Q 138 110 128 102 Q 120 112 108 104 Q 100 108 92 104 Q 80 112 72 102 Q 62 110 54 100 Q 48 106 44 92 Z" fill="' + hair + '"/>' +
-            '<ellipse cx="100" cy="54" rx="48" ry="34" fill="' + darken(hair,22) + '" opacity="0.18"/>' +
-            '<circle cx="100" cy="82" r="38" fill="' + skin + '"/>' +
-            '<path d="M 58 44 Q 46 16 68 22 Q 80 34 78 50 Z" fill="' + earDef.c + '"/>' +
-            '<path d="M 142 44 Q 154 16 132 22 Q 120 34 122 50 Z" fill="' + earDef.c + '"/>' +
-            '<path d="M 61 41 Q 52 22 66 24 Q 75 36 74 46 Z" fill="' + earDef.i + '" opacity="0.8"/>' +
-            '<path d="M 139 41 Q 148 22 134 24 Q 125 36 126 46 Z" fill="' + earDef.i + '" opacity="0.8"/>' +
-            '<path d="M 96 22 Q 88 6 102 4 Q 114 8 104 22 Z" fill="' + hair + '"/>' +
-            '<path d="M 98 20 Q 96 10 102 8" stroke="' + darken(hair,18) + '" stroke-width="1" fill="none" opacity="0.3"/>' +
-            '<path d="M 100 30 Q 78 28 60 38 Q 44 50 46 74 Q 50 86 58 92 Q 54 74 62 64 Q 74 50 92 48 Q 96 40 100 30 Z" fill="' + hair + '"/>' +
-            '<path d="M 58 92 Q 50 70 60 52 Q 74 40 88 42 Q 82 56 76 72 Q 66 86 58 92 Z" fill="' + hair + '"/>' +
-            '<path d="M 50 86 Q 46 64 54 48 Q 64 38 72 42 Q 66 58 58 74 Q 52 84 50 86 Z" fill="' + hair + '"/>' +
-            '<path d="M 100 30 Q 122 28 140 38 Q 156 50 154 74 Q 150 86 142 92 Q 146 74 138 64 Q 126 50 108 48 Q 104 40 100 30 Z" fill="' + hair + '"/>' +
-            '<path d="M 142 92 Q 150 70 140 52 Q 126 40 112 42 Q 118 56 124 72 Q 134 86 142 92 Z" fill="' + hair + '"/>' +
-            '<path d="M 150 86 Q 154 64 146 48 Q 136 38 128 42 Q 134 58 142 74 Q 148 84 150 86 Z" fill="' + hair + '"/>' +
-            '<path d="M 100 28 L 100 52" stroke="' + darken(hair,28) + '" stroke-width="1.3" fill="none" opacity="0.22" stroke-linecap="round"/>' +
-            '<path d="M 84 36 Q 74 50 66 70" stroke="' + darken(hair,26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
-            '<path d="M 116 36 Q 126 50 134 70" stroke="' + darken(hair,26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
-            '<ellipse cx="72" cy="42" rx="4.5" ry="2.5" fill="' + lighten(hair,42) + '" opacity="0.32" transform="rotate(-28 72 42)"/>' +
-            '<ellipse cx="128" cy="42" rx="4.5" ry="2.5" fill="' + lighten(hair,42) + '" opacity="0.32" transform="rotate(28 128 42)"/>' +
-            '<ellipse cx="88" cy="44" rx="3" ry="1.8" fill="' + lighten(hair,36) + '" opacity="0.22"/>' +
-            '<ellipse cx="112" cy="44" rx="3" ry="1.8" fill="' + lighten(hair,36) + '" opacity="0.22"/>' +
-            '<path d="M 46 86 Q 36 98 40 112 Q 50 106 54 92 Z" fill="' + hair + '"/>' +
-            '<path d="M 154 86 Q 164 98 160 112 Q 150 106 146 92 Z" fill="' + hair + '"/>' +
-            '<ellipse cx="72" cy="92" rx="6" ry="4" fill="#ff8aa0" opacity="0.35"/>' +
-            '<ellipse cx="128" cy="92" rx="6" ry="4" fill="#ff8aa0" opacity="0.35"/>' +
-            '<ellipse cx="82" cy="84" rx="5" ry="6" fill="#5a3040"/>' +
-            '<ellipse cx="118" cy="84" rx="5" ry="6" fill="#5a3040"/>' +
-            '<circle cx="84" cy="82" r="1.8" fill="#fff"/>' +
-            '<circle cx="120" cy="82" r="1.8" fill="#fff"/>' +
+            /* Suit jacket - 西装外套 */
+            '<path d="M 72 124 Q 72 118 100 118 Q 128 118 128 124 L 132 168 Q 132 176 100 176 Q 68 176 68 168 Z" fill="url(#cJacketGrad)"/>' +
+            /* Jacket lapels - 翻领 */
+            '<path d="M 82 124 Q 80 134 84 148 L 92 140 L 92 124 Z" fill="' + darken(outfit,8) + '"/>' +
+            '<path d="M 118 124 Q 120 134 116 148 L 108 140 L 108 124 Z" fill="' + darken(outfit,8) + '"/>' +
+            /* Vest - 灰色马甲 */
+            '<path d="M 88 122 L 86 170 Q 86 174 100 174 Q 114 174 114 170 L 112 122 Z" fill="' + vest + '"/>' +
+            /* Shirt collar */
+            '<path d="M 90 120 L 100 134 L 110 120" fill="' + skin + '" stroke="' + darken(outfit,12) + '" stroke-width="1.5"/>' +
+            /* Choker */
+            '<rect x="90" y="116" width="20" height="4" rx="2" fill="' + darken(outfit,12) + '" opacity="0.4"/>' +
+            /* Vest buttons */
+            '<circle cx="100" cy="135" r="1.5" fill="' + vestDark + '"/>' +
+            '<circle cx="100" cy="145" r="1.5" fill="' + vestDark + '"/>' +
+            '<circle cx="100" cy="155" r="1.5" fill="' + vestDark + '"/>' +
+            /* Neck filler */
+            '<rect x="92" y="114" width="16" height="8" rx="4" fill="' + skin + '"/>' +
+            /* Lower body */
+            '<rect x="78" y="160" width="44" height="16" rx="6" fill="' + skin + '"/>' +
+            /* Arms */
+            '<path d="M 76 122 Q 58 140 45 159" stroke="' + outfit + '" stroke-width="' + W + '" fill="none" stroke-linecap="round"/>' +
+            '<circle cx="45" cy="159" r="6" fill="' + skin + '"/>' +
+            '<path d="M 124 122 Q 142 140 155 159" stroke="' + outfit + '" stroke-width="' + W + '" fill="none" stroke-linecap="round"/>' +
+            '<circle cx="155" cy="159" r="6" fill="' + skin + '"/>' +
+            /* Legs */
+            '<path d="M 85 176 Q 84 185 84 190" stroke="' + skin + '" stroke-width="7" fill="none" stroke-linecap="round"/>' +
+            '<path d="M 115 176 Q 116 185 116 190" stroke="' + skin + '" stroke-width="7" fill="none" stroke-linecap="round"/>' +
+            '<ellipse cx="82" cy="191" rx="10" ry="6" fill="#8b5a5a"/>' +
+            '<ellipse cx="118" cy="191" rx="10" ry="6" fill="#8b5a5a"/>' +
+            '<path d="M 74 191 Q 82 195 90 191" stroke="#6a4040" stroke-width="1.2" fill="none" opacity="0.4"/>' +
+            '<path d="M 110 191 Q 118 195 126 191" stroke="#6a4040" stroke-width="1.2" fill="none" opacity="0.4"/>' +
+            /* Hair crown - 蓬松发冠 */
+            '<path d="M 38 96 Q 26 64 36 38 Q 50 12 82 18 Q 96 6 118 12 Q 150 14 162 40 Q 172 64 166 96 Q 162 110 154 104 Q 144 116 132 106 Q 124 118 108 108 Q 100 112 92 108 Q 80 118 70 106 Q 58 116 46 104 Q 40 110 38 96 Z" fill="' + hair + '"/>' +
+            '<ellipse cx="100" cy="52" rx="52" ry="36" fill="' + darken(hair,22) + '" opacity="0.18"/>' +
+            /* Head */
+            '<circle cx="100" cy="82" r="40" fill="' + skin + '"/>' +
+            /* Ahoge 呆毛 - 带体积感 */
+            '<path d="M 98 25 Q 82 14 88 -2 Q 94 -8 102 2" stroke="' + darken(hair,18) + '" stroke-width="5.5" fill="none" stroke-linecap="round"/>' +
+            '<path d="M 98 25 Q 82 14 88 -2 Q 94 -8 102 2" stroke="' + hair + '" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+            '<path d="M 98 25 Q 82 14 88 -2 Q 94 -8 102 2" stroke="' + lighten(hair,36) + '" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.6"/>' +
+            /* Bangs - 中分刘海 */
+            '<path d="M 100 29 Q 93 35 89 49 Q 90 57 100 56 Q 110 57 111 49 Q 107 35 100 29 Z" fill="' + hair + '"/>' +
+            '<path d="M 100 31 Q 95 37 93 46 Q 96 50 100 48 Q 104 50 107 46 Q 105 37 100 31 Z" fill="' + hair + '" opacity="0.96"/>' +
+            '<path d="M 100 34 Q 97 39 96 44 Q 98 46 100 45 Q 102 46 104 44 Q 103 39 100 34 Z" fill="' + hair + '" opacity="0.88"/>' +
+            '<path d="M 100 30 Q 84 30 69 39 Q 55 48 54 70 Q 55 82 62 90 Q 61 75 69 64 Q 79 51 94 49 Q 97 41 100 30 Z" fill="' + hair + '"/>' +
+            '<path d="M 62 90 Q 56 71 65 55 Q 76 43 90 45 Q 84 58 78 73 Q 71 86 62 90 Z" fill="' + hair + '"/>' +
+            '<path d="M 55 84 Q 51 66 60 51 Q 69 41 79 45 Q 73 59 65 74 Q 57 83 55 84 Z" fill="' + hair + '"/>' +
+            '<path d="M 100 30 Q 116 30 131 39 Q 145 48 146 70 Q 145 82 138 90 Q 139 75 131 64 Q 121 51 106 49 Q 103 41 100 30 Z" fill="' + hair + '"/>' +
+            '<path d="M 138 90 Q 144 71 135 55 Q 124 43 110 45 Q 116 58 122 73 Q 129 86 138 90 Z" fill="' + hair + '"/>' +
+            '<path d="M 145 84 Q 149 66 140 51 Q 131 41 121 45 Q 127 59 135 74 Q 143 83 145 84 Z" fill="' + hair + '"/>' +
+            '<path d="M 100 30 Q 99 38 100 46" stroke="' + darken(hair,24) + '" stroke-width="1" fill="none" opacity="0.14" stroke-linecap="round"/>' +
+            /* Side hair - 蓬松鬓发 */
+            '<path d="M 40 78 Q 30 94 32 110 Q 46 106 54 92 Z" fill="' + hair + '"/>' +
+            '<path d="M 160 78 Q 170 94 168 110 Q 154 106 146 92 Z" fill="' + hair + '"/>' +
+            /* Blush */
+            '<ellipse cx="68" cy="94" rx="8" ry="5" fill="#ff8aa0" opacity="0.35"/>' +
+            '<ellipse cx="132" cy="94" rx="8" ry="5" fill="#ff8aa0" opacity="0.35"/>' +
+            /* Eyes - 粉蓝渐变大眼睛 */
+            '<ellipse cx="82" cy="84" rx="8" ry="10" fill="#3a2535"/>' +
+            '<ellipse cx="82" cy="84" rx="7" ry="9" fill="url(#cEyeGradL)"/>' +
+            '<ellipse cx="82" cy="87" rx="5" ry="5" fill="#5a3a55" opacity="0.5"/>' +
+            '<circle cx="83" cy="81" r="3" fill="#fff"/>' +
+            '<circle cx="80" cy="86" r="1.5" fill="#fff" opacity="0.7"/>' +
+            '<ellipse cx="118" cy="84" rx="8" ry="10" fill="#3a2535"/>' +
+            '<ellipse cx="118" cy="84" rx="7" ry="9" fill="url(#cEyeGradR)"/>' +
+            '<ellipse cx="118" cy="87" rx="5" ry="5" fill="#5a3a55" opacity="0.5"/>' +
+            '<circle cx="119" cy="81" r="3" fill="#fff"/>' +
+            '<circle cx="116" cy="86" r="1.5" fill="#fff" opacity="0.7"/>' +
+            /* Mouth */
             '<path d="M 90 100 Q 100 106 110 100" stroke="#5a3040" stroke-width="2" fill="none" stroke-linecap="round"/>' +
             '</svg>';
         }
@@ -1242,11 +1309,12 @@
               if (d.avatar) return d.avatar;
             }
           } catch (e) {}
-          return { hairColor:"purple", outfitColor:"maroon", earColor:"brown", eyes:"round", mouth:"smile", accessory:"none", pose:"idle" };
+          return { hairColor:"purple", outfitColor:"white", earColor:"match", eyes:"round", mouth:"smile", accessory:"none", pose:"idle" };
         }
 
         function updateCompanion() {
-          companion.innerHTML = '<img src="character.png?v=2" alt="小火人" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px;pointer-events:none;">' + '<div class="companion-hint">拖拽我</div>';
+          var av = loadAvatar();
+          companion.innerHTML = renderCompanionSVG(av) + '<div class="companion-hint">拖拽我</div>';
         }
 
         /* Position restore */

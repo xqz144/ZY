@@ -125,7 +125,7 @@
       display: flex;
       justify-content: flex-end;
     }
-    .dress-btn {
+    .feed-btn {
       font-size: 13px;
       padding: 5px 14px;
       border-radius: 9999px;
@@ -135,7 +135,7 @@
       font-weight: 500;
       cursor: pointer;
     }
-    .dress-btn:active { transform: scale(0.94); }
+    .feed-btn:active { transform: scale(0.94); }
 
     /* Scroll area */
     .scroll-area {
@@ -251,6 +251,43 @@
       transition: width 0.6s cubic-bezier(0.3,0,0,1);
       box-shadow: 0 0 10px -2px rgba(232,116,154,0.5);
     }
+
+    /* Vitals (fullness & mood) */
+    .vitals-section {
+      margin: 12px 18px 0;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(232,116,154,0.12);
+    }
+    .vital-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .vital-row + .vital-row { margin-top: 8px; margin-bottom: 4px; }
+    .vital-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .vital-icon { font-size: 14px; }
+    .vital-num { font-size: 11px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .vital-track {
+      height: 6px;
+      border-radius: 9999px;
+      background: rgba(232,116,154,0.1);
+      overflow: hidden;
+    }
+    .vital-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.5s cubic-bezier(0.3,0,0,1);
+    }
+    .vital-fill.fullness { background: linear-gradient(90deg, #f4d03f, #e67e22); }
+    .vital-fill.mood { background: linear-gradient(90deg, #f4a0bc, #e8749a); }
 
     /* Stats grid */
     .stats-grid {
@@ -470,66 +507,99 @@
       text-align: center;
     }
 
-    .dresser-preview {
+    .feeder-preview {
       display: flex;
       justify-content: center;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .feeder-preview img { transition: transform 0.2s ease; }
+    .feeder-preview.eating img { animation: eatBounce 0.5s ease; }
+    @keyframes eatBounce {
+      0%, 100% { transform: scale(1) translateY(0); }
+      30% { transform: scale(1.08) translateY(-6px); }
+      60% { transform: scale(0.96) translateY(2px); }
+    }
+
+    .feeder-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .food-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
       margin-bottom: 16px;
     }
-    .dresser-section { margin-bottom: 16px; }
-    .dresser-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-    }
-    .dresser-options {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .dresser-option {
-      width: 48px; height: 48px;
-      border-radius: 12px;
-      border: 2px solid rgba(232,116,154,0.12);
+    .food-card {
+      position: relative;
+      border-radius: 16px;
+      border: 1.5px solid rgba(232,116,154,0.12);
       background: rgba(255,255,255,0.6);
-      display: grid; place-items: center;
+      padding: 10px 6px;
+      text-align: center;
       cursor: pointer;
       transition: all 0.15s;
-      position: relative;
-      font-size: 20px;
     }
-    .dresser-option:active { transform: scale(0.92); }
-    .dresser-option.active {
+    .food-card:active { transform: scale(0.95); }
+    .food-card.active {
       border-color: var(--accent-color);
-      background: rgba(232,116,154,0.1);
+      background: rgba(232,116,154,0.08);
     }
-    .dresser-option.locked {
-      opacity: 0.4;
+    .food-card.locked {
+      opacity: 0.5;
       cursor: not-allowed;
     }
-    .dresser-option.locked::after {
+    .food-card.locked::after {
       content: '🔒';
       position: absolute;
-      bottom: 2px; right: 2px;
+      top: 6px; right: 6px;
       font-size: 10px;
     }
-    .color-swatch {
-      width: 36px; height: 36px;
+    .food-emoji { font-size: 28px; line-height: 1; margin-bottom: 4px; }
+    .food-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+    .food-effect { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+    .food-stock {
+      position: absolute;
+      top: 6px; left: 6px;
+      min-width: 18px; height: 18px;
+      padding: 0 5px;
       border-radius: 9999px;
-      border: 3px solid #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-      cursor: pointer;
-      transition: transform 0.12s;
+      background: var(--accent-color);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      display: grid; place-items: center;
     }
-    .color-swatch:active { transform: scale(0.88); }
-    .color-swatch.active { box-shadow: 0 0 0 2px var(--accent-color), 0 1px 4px rgba(0,0,0,0.1); }
-    .color-swatch.locked { opacity: 0.4; cursor: not-allowed; }
 
-    .dresser-actions {
-      display: flex; gap: 10px;
-      margin-top: 20px;
+    .feeder-detail {
+      background: rgba(255,248,232,0.6);
+      border: 1px solid rgba(255,180,80,0.2);
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 16px;
     }
-    .dresser-btn {
+    .feeder-detail-title {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      font-weight: 600;
+      color: #a07420;
+      margin-bottom: 6px;
+    }
+    .feeder-detail-desc {
+      font-size: 12px;
+      color: #a07420;
+      line-height: 1.5;
+    }
+
+    .feeder-actions {
+      display: flex; gap: 10px;
+      margin-top: 6px;
+    }
+    .feeder-btn {
       flex: 1;
       height: 44px;
       border-radius: 12px;
@@ -539,13 +609,14 @@
       cursor: pointer;
       transition: transform 0.12s;
     }
-    .dresser-btn:active { transform: scale(0.97); }
-    .dresser-btn.secondary { background: rgba(232,116,154,0.1); color: var(--accent-color); }
-    .dresser-btn.primary {
+    .feeder-btn:active { transform: scale(0.97); }
+    .feeder-btn.secondary { background: rgba(232,116,154,0.1); color: var(--accent-color); }
+    .feeder-btn.primary {
       background: linear-gradient(135deg, #f4a0bc, #e8749a);
       color: #fff;
       box-shadow: 0 4px 14px -4px rgba(232,116,154,0.45);
     }
+    .feeder-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
     /* Toast */
     .toast {
@@ -606,7 +677,7 @@
         <a href="index-new.html" class="back-btn">← 返回</a>
         <div class="top-title">小火人</div>
         <div class="top-action">
-          <button class="dress-btn" id="dressBtn">装扮</button>
+          <button class="feed-btn" id="feedBtn">喂食</button>
         </div>
       </div>
 
@@ -634,6 +705,20 @@
           <div class="exp-track">
             <div class="exp-fill" id="expFill" style="width:0%"></div>
           </div>
+        </div>
+
+        <!-- Vitals -->
+        <div class="vitals-section">
+          <div class="vital-row">
+            <span class="vital-label"><span class="vital-icon">🍖</span>饱食度</span>
+            <span class="vital-num" id="fullnessNum">60/100</span>
+          </div>
+          <div class="vital-track"><div class="vital-fill fullness" id="fullnessFill" style="width:60%"></div></div>
+          <div class="vital-row">
+            <span class="vital-label"><span class="vital-icon">💖</span>心情</span>
+            <span class="vital-num" id="moodNum">60/100</span>
+          </div>
+          <div class="vital-track"><div class="vital-fill mood" id="moodFill" style="width:60%"></div></div>
         </div>
 
         <!-- Stats -->
@@ -710,41 +795,26 @@
         </div>
       </div>
 
-      <!-- Dresser modal -->
-      <div class="modal-overlay" id="dressModal">
+      <!-- Feeder modal -->
+      <div class="modal-overlay" id="feedModal">
         <div class="modal-sheet">
           <div class="modal-handle"></div>
-          <div class="modal-title">装扮小火人</div>
-          <div class="dresser-preview" id="dresserPreview"></div>
+          <div class="modal-title">喂食小火人</div>
+          <div class="feeder-preview" id="feederPreview">
+            <img src="character.png?v=2" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;filter:brightness(1.12) saturate(1.15) contrast(1.05);">
+          </div>
+          <div class="feeder-hint" id="feederHint">选择食物喂给小火人吧～</div>
 
-          <div class="dresser-section">
-            <div class="dresser-label">头发颜色</div>
-            <div class="dresser-options" id="hairColorOptions"></div>
-          </div>
-          <div class="dresser-section">
-            <div class="dresser-label">衣服颜色</div>
-            <div class="dresser-options" id="outfitColorOptions"></div>
-          </div>
-          <div class="dresser-section">
-            <div class="dresser-label">猫耳颜色</div>
-            <div class="dresser-options" id="earColorOptions"></div>
-          </div>
-          <div class="dresser-section">
-            <div class="dresser-label">眼睛</div>
-            <div class="dresser-options" id="eyeOptions"></div>
-          </div>
-          <div class="dresser-section">
-            <div class="dresser-label">嘴巴</div>
-            <div class="dresser-options" id="mouthOptions"></div>
-          </div>
-          <div class="dresser-section">
-            <div class="dresser-label">配件</div>
-            <div class="dresser-options" id="accessoryOptions"></div>
+          <div class="food-grid" id="foodGrid"></div>
+
+          <div class="feeder-detail" id="feederDetail" style="display:none;">
+            <div class="feeder-detail-title" id="detailTitle"></div>
+            <div class="feeder-detail-desc" id="detailDesc"></div>
           </div>
 
-          <div class="dresser-actions">
-            <button class="dresser-btn secondary" id="dressCancel">取消</button>
-            <button class="dresser-btn primary" id="dressSave">保存</button>
+          <div class="feeder-actions">
+            <button class="feeder-btn secondary" id="feedClose">关闭</button>
+            <button class="feeder-btn primary" id="feedConfirm" disabled>喂食</button>
           </div>
         </div>
       </div>
@@ -853,6 +923,19 @@
       var DAILY_LIMITS = { chat: 10, cards: 3, moments: 2 };
       var EXP_PER = { chat: 3, cards: 5, moments: 8 };
 
+      var FOODS = [
+        { id: "star_cookie", name: "星星饼干", emoji: "⭐", exp: 3, fullness: 5, mood: 2, unlock: 1, desc: "咬一口会发出细碎星光，小火苗最爱的零嘴。" },
+        { id: "pudding", name: "草莓布丁", emoji: "🍮", exp: 5, fullness: 8, mood: 3, unlock: 1, desc: "软软甜甜，吃完嘴角都会翘起来。" },
+        { id: "honey_bread", name: "蜜糖面包", emoji: "🍞", exp: 6, fullness: 12, mood: 4, unlock: 2, desc: "淋了蜂蜜的温热面包，能让小火人暖一整天。" },
+        { id: "berry_cake", name: "蓝莓蛋糕", emoji: "🫐", exp: 8, fullness: 10, mood: 5, unlock: 2, desc: "酸甜的蓝莓配上绵密奶油，是成长的小奖励。" },
+        { id: "mooncake", name: "月光蛋糕", emoji: "🌙", exp: 12, fullness: 15, mood: 8, unlock: 3, desc: "只在梦里发光的蛋糕，吃完会偷偷笑。" },
+        { id: "flame_skewer", name: "火焰烤串", emoji: "🍢", exp: 15, fullness: 18, mood: 10, unlock: 4, desc: "辣呼呼的能量串，火焰使者专属料理。" },
+        { id: "rainbow_candy", name: "彩虹糖", emoji: "🌈", exp: 20, fullness: 25, mood: 15, unlock: 5, desc: "七种颜色七种心情，传说级甜品。" }
+      ];
+      var FOOD_DAILY_STOCK = 3;
+      var FULLNESS_MAX = 100;
+      var MOOD_MAX = 100;
+
       function todayStr() {
         var d = new Date();
         return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
@@ -878,7 +961,11 @@
           makeupMonth: monthKey(),
           milestones: [],
           avatar: { hairColor: "purple", outfitColor: "maroon", earColor: "brown", eyes: "round", mouth: "smile", accessory: "none", pose: "idle" },
-          daily: {}
+          daily: {},
+          fullness: 60,
+          mood: 60,
+          lastFed: "",
+          foods: {}
         };
       }
 
@@ -891,10 +978,28 @@
               var def = defaultData();
               for (var k in def) { if (!(k in d)) d[k] = def[k]; }
               if (!d.avatar) d.avatar = def.avatar;
+              if (typeof d.fullness !== "number") d.fullness = def.fullness;
+              if (typeof d.mood !== "number") d.mood = def.mood;
+              if (!d.foods) d.foods = {};
+              /* 每日首次进入刷新食物库存 */
+              var t = todayStr();
+              if (d.lastFed !== t) {
+                FOODS.forEach(function (f) {
+                  if (d.level >= f.unlock) d.foods[f.id] = FOOD_DAILY_STOCK;
+                });
+                d.lastFed = t;
+                localStorage.setItem(SPARK_KEY, JSON.stringify(d));
+              }
               return d;
             }
           } catch (e) {}
-          return defaultData();
+          var fresh = defaultData();
+          var t2 = todayStr();
+          FOODS.forEach(function (f) {
+            if (fresh.level >= f.unlock) fresh.foods[f.id] = FOOD_DAILY_STOCK;
+          });
+          fresh.lastFed = t2;
+          return fresh;
         },
         save: function (d) {
           try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) {}
@@ -954,6 +1059,40 @@
           });
           this.save(d);
           return true;
+        },
+        feed: function (foodId) {
+          var d = this.load();
+          var food = FOODS.find(function(f){ return f.id === foodId; });
+          if (!food) return { ok: false, reason: "food_not_found" };
+          if (d.level < food.unlock) return { ok: false, reason: "locked" };
+          if (!d.foods[foodId] || d.foods[foodId] <= 0) return { ok: false, reason: "no_stock" };
+          if (d.fullness >= FULLNESS_MAX - 2) return { ok: false, reason: "full" };
+
+          d.foods[foodId]--;
+          d.fullness = Math.min(FULLNESS_MAX, d.fullness + food.fullness);
+          d.mood = Math.min(MOOD_MAX, d.mood + food.mood);
+          d.exp += food.exp;
+          d.totalExp += food.exp;
+          d.totalInteractions++;
+
+          var leveledUp = false;
+          while (d.level < LEVELS.length && d.exp >= LEVELS[d.level - 1].need) {
+            d.exp -= LEVELS[d.level - 1].need;
+            d.level++;
+            leveledUp = true;
+          }
+          var t = todayStr();
+          if (!d.daily[t]) d.daily[t] = { chat: 0, cards: 0, moments: 0 };
+          if (t !== d.lastActiveDate) {
+            if (d.lastActiveDate === yesterdayStr()) d.streak++;
+            else d.streak = 1;
+            d.lastActiveDate = t;
+          }
+          MILESTONES.forEach(function (m) {
+            if (d.streak >= m.days && d.milestones.indexOf(m.days) === -1) d.milestones.push(m.days);
+          });
+          this.save(d);
+          return { ok: true, food: food, leveledUp: leveledUp, level: d.level };
         },
         getState: function () {
           var d = this.load();
@@ -1294,7 +1433,7 @@
 
       /* ========== UI Logic ========== */
       var data = SparkTracker.load();
-      var dresserTemp = JSON.parse(JSON.stringify(data.avatar));
+      var feederSelectedFood = null;
 
       var creatureSvg = document.getElementById("creatureSvg");
       var creatureWrap = document.getElementById("creatureWrap");
@@ -1317,17 +1456,16 @@
       var milestoneList = document.getElementById("milestoneList");
       var makeupCount = document.getElementById("makeupCount");
       var makeupBtn = document.getElementById("makeupBtn");
-      var dressBtn = document.getElementById("dressBtn");
-      var dressModal = document.getElementById("dressModal");
-      var dressCancel = document.getElementById("dressCancel");
-      var dressSave = document.getElementById("dressSave");
-      var dresserPreview = document.getElementById("dresserPreview");
-      var hairColorOptions = document.getElementById("hairColorOptions");
-      var outfitColorOptions = document.getElementById("outfitColorOptions");
-      var earColorOptions = document.getElementById("earColorOptions");
-      var eyeOptions = document.getElementById("eyeOptions");
-      var mouthOptions = document.getElementById("mouthOptions");
-      var accessoryOptions = document.getElementById("accessoryOptions");
+      var feedBtn = document.getElementById("feedBtn");
+      var feedModal = document.getElementById("feedModal");
+      var feedClose = document.getElementById("feedClose");
+      var feedConfirm = document.getElementById("feedConfirm");
+      var feederPreview = document.getElementById("feederPreview");
+      var feederHint = document.getElementById("feederHint");
+      var foodGrid = document.getElementById("foodGrid");
+      var feederDetail = document.getElementById("feederDetail");
+      var detailTitle = document.getElementById("detailTitle");
+      var detailDesc = document.getElementById("detailDesc");
       var toastEl = document.getElementById("toast");
       var levelupOverlay = document.getElementById("levelupOverlay");
       var levelupText = document.getElementById("levelupText");
@@ -1371,6 +1509,13 @@
         totalExpNum.textContent = data.totalExp;
         totalInteractNum.textContent = data.totalInteractions;
 
+        var f = Math.max(0, Math.min(FULLNESS_MAX, data.fullness || 0));
+        var m = Math.max(0, Math.min(MOOD_MAX, data.mood || 0));
+        fullnessNum.textContent = f + "/" + FULLNESS_MAX;
+        fullnessFill.style.width = f + "%";
+        moodNum.textContent = m + "/" + MOOD_MAX;
+        moodFill.style.width = m + "%";
+
         var t = todayStr();
         var today = data.daily[t] || { chat: 0, cards: 0, moments: 0 };
         chatCount.textContent = today.chat + "/" + DAILY_LIMITS.chat;
@@ -1400,107 +1545,76 @@
         });
       }
 
-      /* Dresser */
-      function openDresser() {
-        dresserTemp = JSON.parse(JSON.stringify(data.avatar));
-        renderDresser();
-        dressModal.classList.add("show");
+      /* Feeder */
+      function openFeeder() {
+        feederSelectedFood = null;
+        feederHint.textContent = "选择食物喂给小火人吧～";
+        feederDetail.style.display = "none";
+        feedConfirm.disabled = true;
+        renderFoodGrid();
+        feedModal.classList.add("show");
       }
-      function closeDresser() { dressModal.classList.remove("show"); }
+      function closeFeeder() { feedModal.classList.remove("show"); }
 
-      function renderDresser() {
-        dresserPreview.innerHTML = '<img src="character.png?v=2" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;">';
-
-        /* Hair color */
-        hairColorOptions.innerHTML = "";
-        HAIR_COLORS.forEach(function (c) {
-          var locked = data.level < c.unlock;
-          var sw = document.createElement("div");
-          sw.className = "color-swatch" + (dresserTemp.hairColor === c.id ? " active" : "") + (locked ? " locked" : "");
-          sw.style.background = c.color;
-          sw.title = locked ? "Lv." + c.unlock + "解锁" : "";
-          if (!locked) {
-            sw.addEventListener("click", function () { dresserTemp.hairColor = c.id; renderDresser(); });
+      function renderFoodGrid() {
+        foodGrid.innerHTML = "";
+        data = SparkTracker.load();
+        FOODS.forEach(function (food) {
+          var locked = data.level < food.unlock;
+          var stock = data.foods[food.id] || 0;
+          var card = document.createElement("div");
+          card.className = "food-card" + (feederSelectedFood === food.id ? " active" : "") + (locked ? " locked" : "");
+          card.innerHTML = '<div class="food-emoji">' + food.emoji + '</div><div class="food-name">' + food.name + '</div><div class="food-effect">+' + food.fullness + '饱 +' + food.mood + '心</div>' +
+            (locked ? '' : '<div class="food-stock">' + stock + '</div>');
+          if (locked) {
+            card.title = "Lv." + food.unlock + " 解锁";
+          } else if (stock <= 0) {
+            card.title = "今日份已吃完啦";
+          } else {
+            card.addEventListener("click", function () {
+              feederSelectedFood = food.id;
+              feederHint.textContent = "选择了 " + food.name;
+              feederDetail.style.display = "block";
+              detailTitle.textContent = food.emoji + " " + food.name;
+              detailDesc.textContent = food.desc + " （经验 +" + food.exp + "，饱食 +" + food.fullness + "，心情 +" + food.mood + "）";
+              feedConfirm.disabled = false;
+              renderFoodGrid();
+            });
           }
-          hairColorOptions.appendChild(sw);
-        });
-
-        /* Outfit color */
-        outfitColorOptions.innerHTML = "";
-        OUTFIT_COLORS.forEach(function (c) {
-          var locked = data.level < c.unlock;
-          var sw = document.createElement("div");
-          sw.className = "color-swatch" + (dresserTemp.outfitColor === c.id ? " active" : "") + (locked ? " locked" : "");
-          sw.style.background = c.color;
-          sw.title = locked ? "Lv." + c.unlock + "解锁" : "";
-          if (!locked) {
-            sw.addEventListener("click", function () { dresserTemp.outfitColor = c.id; renderDresser(); });
-          }
-          outfitColorOptions.appendChild(sw);
-        });
-
-        /* Ear color */
-        earColorOptions.innerHTML = "";
-        EAR_COLORS.forEach(function (c) {
-          var locked = data.level < c.unlock;
-          var opt = document.createElement("div");
-          opt.className = "dresser-option" + ((dresserTemp.earColor || "brown") === c.id ? " active" : "") + (locked ? " locked" : "");
-          opt.style.background = c.id === "match" ? "linear-gradient(135deg,#9b8bc4,#8b6940)" : c.color;
-          opt.style.fontSize = "10px";
-          opt.textContent = c.id === "match" ? "同" : c.id === "brown" ? "棕" : c.id === "dark" ? "黑" : "奶";
-          opt.title = locked ? "Lv." + c.unlock + "解锁" : "";
-          if (!locked) {
-            opt.addEventListener("click", function () { dresserTemp.earColor = c.id; renderDresser(); });
-          }
-          earColorOptions.appendChild(opt);
-        });
-
-        eyeOptions.innerHTML = "";
-        EYES.forEach(function (e) {
-          var locked = data.level < e.unlock;
-          var opt = document.createElement("div");
-          opt.className = "dresser-option" + (dresserTemp.eyes === e.id ? " active" : "") + (locked ? " locked" : "");
-          opt.textContent = e.emoji;
-          opt.title = locked ? "Lv." + e.unlock + "解锁" : "";
-          if (!locked) {
-            opt.addEventListener("click", function () { dresserTemp.eyes = e.id; renderDresser(); });
-          }
-          eyeOptions.appendChild(opt);
-        });
-
-        mouthOptions.innerHTML = "";
-        MOUTHS.forEach(function (m) {
-          var locked = data.level < m.unlock;
-          var opt = document.createElement("div");
-          opt.className = "dresser-option" + (dresserTemp.mouth === m.id ? " active" : "") + (locked ? " locked" : "");
-          opt.textContent = m.emoji;
-          opt.title = locked ? "Lv." + m.unlock + "解锁" : "";
-          if (!locked) {
-            opt.addEventListener("click", function () { dresserTemp.mouth = m.id; renderDresser(); });
-          }
-          mouthOptions.appendChild(opt);
-        });
-
-        accessoryOptions.innerHTML = "";
-        ACCESSORIES.forEach(function (a) {
-          var locked = data.level < a.unlock;
-          var opt = document.createElement("div");
-          opt.className = "dresser-option" + (dresserTemp.accessory === a.id ? " active" : "") + (locked ? " locked" : "");
-          opt.textContent = a.emoji === "🚫" ? "无" : a.emoji;
-          opt.title = locked ? "Lv." + a.unlock + "解锁" : "";
-          if (!locked) {
-            opt.addEventListener("click", function () { dresserTemp.accessory = a.id; renderDresser(); });
-          }
-          accessoryOptions.appendChild(opt);
+          foodGrid.appendChild(card);
         });
       }
 
-      function saveDresser() {
-        data.avatar = JSON.parse(JSON.stringify(dresserTemp));
-        SparkTracker.save(data);
-        closeDresser();
+      function doFeed() {
+        if (!feederSelectedFood) return;
+        var result = SparkTracker.feed(feederSelectedFood);
+        if (!result.ok) {
+          if (result.reason === "full") toast("小火人已经吃饱啦，等消化一下再喂吧～");
+          else if (result.reason === "no_stock") toast("今天这个食物没有库存了哦");
+          else if (result.reason === "locked") toast("等级不够，还不能吃这个");
+          else toast("喂食失败");
+          renderFoodGrid();
+          return;
+        }
+        var food = result.food;
+        feederPreview.classList.add("eating");
+        setTimeout(function(){ feederPreview.classList.remove("eating"); }, 550);
+        toast("小火人吃掉了 " + food.name + "，心情变好了 ✨");
+        if (result.leveledUp) {
+          setTimeout(function(){ showLevelUp(result.level); }, 400);
+        }
+        feederSelectedFood = null;
+        feederHint.textContent = "还想再喂点什么？";
+        feederDetail.style.display = "none";
+        feedConfirm.disabled = true;
+        renderFoodGrid();
         render();
-        toast("装扮已保存 ✨");
+      }
+
+      function showLevelUp(lv) {
+        levelupText.textContent = "升级啦！Lv." + lv + " " + LEVELS[Math.min(lv - 1, LEVELS.length - 1)].title;
+        levelupOverlay.classList.add("show");
+        setTimeout(function(){ levelupOverlay.classList.remove("show"); }, 1600);
       }
 
       function useMakeup() {
@@ -1512,10 +1626,10 @@
         }
       }
 
-      dressBtn.addEventListener("click", openDresser);
-      dressCancel.addEventListener("click", closeDresser);
-      dressSave.addEventListener("click", saveDresser);
-      dressModal.addEventListener("click", function (e) { if (e.target === dressModal) closeDresser(); });
+      feedBtn.addEventListener("click", openFeeder);
+      feedClose.addEventListener("click", closeFeeder);
+      feedConfirm.addEventListener("click", doFeed);
+      feedModal.addEventListener("click", function (e) { if (e.target === feedModal) closeFeeder(); });
       makeupBtn.addEventListener("click", useMakeup);
 
       /* Tap creature to cycle poses */
