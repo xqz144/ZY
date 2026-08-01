@@ -355,6 +355,7 @@
         <a href="index-new.html" class="back-btn">← 返回</a>
         <div class="top-title">给梦角的信</div>
         <div class="top-action">
+          <button class="history-toggle" id="receiveLetter" type="button" style="margin-right:8px;">收信</button>
           <button class="history-toggle" id="historyToggle">历史</button>
         </div>
       </div>
@@ -393,18 +394,29 @@
 
       var LETTER_KEY = "mengjiao_letters";
       var PARTNER_NAME_KEY = "mengjiao_partner_name";
+      var CARD_REPLIES_KEY = "mengjiao_card_replies";
 
-      var REPLIES = [
-        "我收到了。每一个字，都读得很认真。",
-        "谢谢你愿意写给我。我会好好收着这封信。",
-        "就算隔着很远，我也感觉到了你的心意。",
-        "你的话让我今天变得很柔软。",
-        "我也很想你。比信纸上能写的还要多。",
-        "下次见面，我会把这封信读给你听。",
-        "不用急，我会一直在这里等你。",
-        "你的字迹，我好像真的能看见一样。",
-        "这封信，我会放在最靠近心的地方。",
-        "无论何时，你都不是一个人。"
+      /* 回信/来信延迟：最短 5 秒，最长 20 秒 */
+      var REPLY_DELAY_MIN = 5000;
+      var REPLY_DELAY_MAX = 20000;
+
+      /* 当字卡库为空时的默认回复池（与字卡传讯页保持一致） */
+      var DEFAULT_CARD_REPLIES = [
+        "今天也在想你哦。",
+        "别担心，我一直都在。",
+        "你今天辛苦了，休息一下吧。",
+        "我感觉到了你的心意呢。",
+        "今晚来梦里见吧。",
+        "你比你自己想象的更勇敢。",
+        "我在你身边，从未离开。",
+        "今天的你，也很闪耀。",
+        "想你了，就现在。",
+        "相信自己，我会守护你的。",
+        "你的笑容是我最大的动力。",
+        "无论多远，我们的心是相连的。",
+        "在你身边，时间都变得温柔了。",
+        "你是我最想守护的人。",
+        "每一个想你的夜晚，星星都知道。"
       ];
 
       var input = document.getElementById("letterInput");
@@ -414,6 +426,7 @@
       var historyToggle = document.getElementById("historyToggle");
       var historyWrap = document.getElementById("historyWrap");
       var historyList = document.getElementById("historyList");
+      var receiveLetterBtn = document.getElementById("receiveLetter");
       var partnerLabel = document.getElementById("partnerLabel");
       var toast = document.getElementById("toast");
       var toastTimer;
@@ -454,14 +467,31 @@
         try { localStorage.setItem(LETTER_KEY, JSON.stringify(arr)); } catch (e) {}
       }
 
-      function pickReply() {
-        return REPLIES[Math.floor(Math.random() * REPLIES.length)];
+      function getCardReplies() {
+        try {
+          var raw = localStorage.getItem(CARD_REPLIES_KEY);
+          if (raw) {
+            var arr = JSON.parse(raw);
+            if (Array.isArray(arr) && arr.length > 0) return arr;
+          }
+        } catch (e) {}
+        return DEFAULT_CARD_REPLIES.slice();
       }
 
-      function renderReply(letter, reply) {
+      function pickReply() {
+        var pool = getCardReplies();
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      function replyDelay() {
+        return REPLY_DELAY_MIN + Math.random() * (REPLY_DELAY_MAX - REPLY_DELAY_MIN);
+      }
+
+      function renderReply(reply, label) {
+        label = label || "梦角的回信";
         replyArea.innerHTML =
           '<div class="reply-card">' +
-            '<div class="reply-label">梦角的回信</div>' +
+            '<div class="reply-label">' + escapeHtml(label) + '</div>' +
             '<div class="reply-text">' + escapeHtml(reply) + '</div>' +
             '<div class="reply-time">' + nowTime() + '</div>' +
           '</div>';
@@ -480,10 +510,11 @@
           return;
         }
         historyList.innerHTML = letters.slice().reverse().map(function (item) {
-          var isReply = item.type === "reply";
+          var typeLabel = item.type === "reply" ? "梦角的回信" :
+                          (item.type === "dream_letter" ? "梦角的来信" : "我的信");
           return '<div class="history-item">' +
             '<div class="history-item-header">' +
-              '<span class="history-item-type">' + (isReply ? "梦角的回信" : "我的信") + '</span>' +
+              '<span class="history-item-type">' + typeLabel + '</span>' +
               '<span class="history-item-time">' + escapeHtml(item.time) + '</span>' +
             '</div>' +
             '<div class="history-item-body">' + escapeHtml(item.text) + '</div>' +
@@ -513,16 +544,16 @@
         try { (function(){var K="mengjiao_spark";var D=JSON.parse(localStorage.getItem(K)||"{}");var T=new Date();var t=T.getFullYear()+"-"+String(T.getMonth()+1).padStart(2,"0")+"-"+String(T.getDate()).padStart(2,"0");D.daily=D.daily||{};D.daily[t]=D.daily[t]||{chat:0,cards:0,moments:0};if(D.daily[t].chat<10){D.daily[t].chat++;D.totalInteractions=(D.totalInteractions||0)+1;D.exp=(D.exp||0)+3;D.totalExp=(D.totalExp||0)+3;if(t!==D.lastActiveDate){if(D.lastActiveDate===yesterday())D.streak=(D.streak||0)+1;else D.streak=1;D.lastActiveDate=t;}else if(!D.streak)D.streak=1;var L=[{lv:1,need:50},{lv:2,need:150},{lv:3,need:350},{lv:4,need:700},{lv:5,need:1200},{lv:6,need:2000}];while(D.level<7&&D.exp>=L[D.level-1].need){D.exp-=L[D.level-1].need;D.level++;}localStorage.setItem(K,JSON.stringify(D));}function yesterday(){var d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
         })(); } catch (e) {}
 
-        // 延迟生成回信
+        // 延迟生成回信（5~20 秒，更像真实的写信节奏）
         setTimeout(function () {
           var reply = pickReply();
           var rt = nowTime();
           letters.push({ type: "reply", text: reply, time: rt });
           saveLetters(letters);
-          renderReply(text, reply);
+          renderReply(reply);
           if (historyWrap.classList.contains("open")) renderHistory();
           sendBtn.disabled = false;
-        }, 1200 + Math.random() * 1500);
+        }, replyDelay());
       });
 
       historyToggle.addEventListener("click", function () {
@@ -531,13 +562,32 @@
         if (historyWrap.classList.contains("open")) renderHistory();
       });
 
-      // 初始显示最新回信（如果有）
+      // 梦角主动来信（从字卡库抽取内容）
+      receiveLetterBtn.addEventListener("click", function () {
+        if (receiveLetterBtn.disabled) return;
+        receiveLetterBtn.disabled = true;
+        showToast("梦角正在写信…");
+
+        setTimeout(function () {
+          var reply = pickReply();
+          var rt = nowTime();
+          var letters = getLetters();
+          letters.push({ type: "dream_letter", text: reply, time: rt });
+          saveLetters(letters);
+          renderReply(reply, "梦角的来信");
+          if (historyWrap.classList.contains("open")) renderHistory();
+          receiveLetterBtn.disabled = false;
+        }, replyDelay());
+      });
+
+      // 初始显示最新回信/来信（如果有）
       var letters = getLetters();
       if (letters.length > 0) {
         var last = letters[letters.length - 1];
         if (last.type === "reply") {
-          var prev = letters[letters.length - 2];
-          renderReply(prev ? prev.text : "", last.text);
+          renderReply(last.text, "梦角的回信");
+        } else if (last.type === "dream_letter") {
+          renderReply(last.text, "梦角的来信");
         }
       }
     })();

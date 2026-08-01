@@ -445,8 +445,8 @@
     /* ===== 拖拽小精灵 ===== */
     #spark-companion {
       position: absolute;
-      width: 64px;
-      height: 72px;
+      width: 92px;
+      height: 104px;
       z-index: 20;
       cursor: grab;
       touch-action: none;
@@ -454,10 +454,10 @@
       -webkit-user-select: none;
       transition: transform 0.2s ease;
       pointer-events: auto;
-      filter: drop-shadow(0 4px 8px rgba(232,116,154,0.2));
+      filter: drop-shadow(0 5px 10px rgba(232,116,154,0.22));
     }
     #spark-companion:active { cursor: grabbing; transform: scale(1.08); }
-    #spark-companion svg { width: 100%; height: 100%; pointer-events: none; }
+    #spark-companion img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
     #spark-companion .companion-hint {
       position: absolute;
       bottom: -16px;
@@ -557,9 +557,9 @@
       var DREAM_IMG_KEY = "mengjiao_dream_img";
       var PARTNER_NAME_KEY = "mengjiao_partner_name";
 
-      /* ===== 回复延迟（参考 ZY 默认 3-7 秒） ===== */
-      var REPLY_DELAY_MIN = 3000;
-      var REPLY_DELAY_MAX = 7000;
+      /* ===== 回复延迟（最短 / 最长时限，单位毫秒） ===== */
+      var REPLY_DELAY_MIN = 5000;
+      var REPLY_DELAY_MAX = 20000;
 
       /* ===== 默认回复池（纯随机，无分类无关键词） ===== */
       var DEFAULT_REPLIES = [
