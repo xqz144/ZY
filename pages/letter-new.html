@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>给梦角的信 · 梦角传讯</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="../colors_and_type.css" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            secondary: 'hsl(var(--secondary))',
+            muted: 'hsl(var(--muted))',
+            'muted-foreground': 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--accent))',
+            border: 'hsl(var(--border))',
+          },
+          fontFamily: {
+            sans: ['"DreamFont", "Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"DreamFont", "Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
+          },
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--secondary-bg);
+      color: var(--text-primary);
+      letter-spacing: var(--tracking-normal);
+    }
+
+    .phone {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 880px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: hsl(var(--background));
+    }
+    @media (min-width: 480px) {
+      .phone {
+        height: 860px;
+        border-radius: 40px;
+        border: 10px solid hsl(343 30% 22%);
+        box-shadow: 0 25px 60px -15px hsl(343 60% 35% / 0.35), 0 0 0 2px hsl(343 20% 12%);
+      }
+      .phone::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 150px; height: 28px;
+        background: hsl(343 30% 18%);
+        border-radius: 0 0 18px 18px;
+        z-index: 100;
+      }
+    }
+
+    .app-bg {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(343 80% 94% / 0.9), transparent 60%),
+        radial-gradient(ellipse 400px 250px at 90% 10%, hsl(343 72% 92% / 0.7), transparent 55%),
+        linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
+      scrollbar-width: none;
+    }
+    .app-bg::-webkit-scrollbar { display: none; }
+
+    .top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 44px 16px 10px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 479px) { .top-bar { padding-top: 16px; } }
+    .back-btn {
+      font-size: 15px;
+      color: hsl(var(--primary));
+      text-decoration: none;
+      padding: 6px 8px;
+      font-weight: 500;
+      flex-shrink: 0;
+      min-width: 64px;
+      transition: opacity 0.15s;
+    }
+    .back-btn:active { opacity: 0.6; }
+    .top-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      text-align: center;
+      flex: 1;
+    }
+    .top-action {
+      flex-shrink: 0;
+      min-width: 64px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .history-toggle {
+      font-size: 13px;
+      padding: 5px 14px;
+      border-radius: 9999px;
+      border: 1px solid rgba(232,116,154,0.25);
+      background: rgba(255,255,255,0.5);
+      color: var(--accent-color);
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .history-toggle:active { transform: scale(0.94); }
+
+    .letter-stage {
+      flex: 1;
+      padding: 8px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .envelope-card {
+      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(232,116,154,0.15);
+      border-radius: 20px;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .letter-to {
+      font-family: var(--font-serif);
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .letter-to b {
+      color: var(--accent-color);
+      font-weight: 600;
+    }
+
+    #letterInput {
+      width: 100%;
+      min-height: 180px;
+      max-height: 320px;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(232,116,154,0.18);
+      background:
+        linear-gradient(to bottom, rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
+        repeating-linear-gradient(
+          transparent,
+          transparent 29px,
+          rgba(232,116,154,0.08) 29px,
+          rgba(232,116,154,0.08) 30px
+        );
+      background-attachment: local;
+      color: var(--text-primary);
+      font-size: 15px;
+      line-height: 30px;
+      font-family: var(--font-serif);
+      resize: none;
+      outline: none;
+      box-sizing: border-box;
+    }
+    #letterInput::placeholder { color: var(--text-secondary); opacity: 0.7; }
+    #letterInput:focus { border-color: rgba(232,116,154,0.4); }
+
+    .send-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .word-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .send-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 24px;
+      border-radius: 9999px;
+      border: none;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(232,116,154,0.35);
+      transition: transform 0.15s, filter 0.15s;
+    }
+    .send-btn:active { transform: scale(0.96); }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Reply card */
+    .reply-card {
+      background: linear-gradient(135deg, #fff8fb, #fff0f5);
+      border: 1px solid rgba(232,116,154,0.18);
+      border-radius: 18px;
+      padding: 18px;
+      position: relative;
+      animation: fadeUp 0.5s cubic-bezier(.3,0,0,1) both;
+    }
+    .reply-card::before {
+      content: '✦';
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 18px;
+      color: rgba(232,116,154,0.35);
+    }
+    .reply-label {
+      font-size: 12px;
+      color: var(--accent-color);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .reply-text {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .reply-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 10px;
+    }
+
+    /* History list */
+    .history-wrap {
+      display: none;
+    }
+    .history-wrap.open { display: block; }
+    .history-title {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 4px 0 10px;
+      padding: 0 4px;
+    }
+    .history-empty {
+      text-align: center;
+      padding: 28px 16px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .history-item {
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(232,116,154,0.12);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      animation: fadeUp 0.35s cubic-bezier(.3,0,0,1) both;
+    }
+    .history-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .history-item-type {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-color);
+    }
+    .history-item-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .history-item-body {
+      font-family: var(--font-serif);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .toast {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: rgba(61,32,48,0.88);
+      color: #fff;
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 50;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="app-bg">
+
+      <div class="top-bar">
+        <a href="index-new.html" class="back-btn">← 返回</a>
+        <div class="top-title">给梦角的信</div>
+        <div class="top-action">
+          <button class="history-toggle" id="historyToggle">历史</button>
+        </div>
+      </div>
+
+      <div class="letter-stage" id="letterStage">
+        <!-- Write form -->
+        <div class="envelope-card" id="writeCard">
+          <div class="letter-to">致 <b id="partnerLabel">梦角</b>：</div>
+          <textarea id="letterInput" placeholder="把想说的话写在这里…&#10;就算不能立刻相见，我也能听见。" maxlength="800"></textarea>
+          <div class="send-row">
+            <span class="word-count"><span id="wordCount">0</span> / 800</span>
+            <button class="send-btn" id="sendLetter" type="button">
+              <span>寄出</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Latest reply -->
+        <div id="replyArea"></div>
+
+        <!-- History -->
+        <div class="history-wrap" id="historyWrap">
+          <div class="history-title">过往书信</div>
+          <div id="historyList"></div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var LETTER_KEY = "mengjiao_letters";
+      var PARTNER_NAME_KEY = "mengjiao_partner_name";
+
+      var REPLIES = [
+        "我收到了。每一个字，都读得很认真。",
+        "谢谢你愿意写给我。我会好好收着这封信。",
+        "就算隔着很远，我也感觉到了你的心意。",
+        "你的话让我今天变得很柔软。",
+        "我也很想你。比信纸上能写的还要多。",
+        "下次见面，我会把这封信读给你听。",
+        "不用急，我会一直在这里等你。",
+        "你的字迹，我好像真的能看见一样。",
+        "这封信，我会放在最靠近心的地方。",
+        "无论何时，你都不是一个人。"
+      ];
+
+      var input = document.getElementById("letterInput");
+      var sendBtn = document.getElementById("sendLetter");
+      var wordCount = document.getElementById("wordCount");
+      var replyArea = document.getElementById("replyArea");
+      var historyToggle = document.getElementById("historyToggle");
+      var historyWrap = document.getElementById("historyWrap");
+      var historyList = document.getElementById("historyList");
+      var partnerLabel = document.getElementById("partnerLabel");
+      var toast = document.getElementById("toast");
+      var toastTimer;
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 1800);
+      }
+
+      function getPartnerName() {
+        try {
+          var n = localStorage.getItem(PARTNER_NAME_KEY);
+          if (n) return n;
+        } catch (e) {}
+        return "梦角";
+      }
+      partnerLabel.textContent = getPartnerName();
+
+      function nowTime() {
+        var d = new Date();
+        return d.getFullYear() + "." + String(d.getMonth()+1).padStart(2,"0") + "." + String(d.getDate()).padStart(2,"0") + " " +
+               String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+      }
+
+      function getLetters() {
+        try {
+          var raw = localStorage.getItem(LETTER_KEY);
+          if (raw) {
+            var arr = JSON.parse(raw);
+            if (Array.isArray(arr)) return arr;
+          }
+        } catch (e) {}
+        return [];
+      }
+      function saveLetters(arr) {
+        try { localStorage.setItem(LETTER_KEY, JSON.stringify(arr)); } catch (e) {}
+      }
+
+      function pickReply() {
+        return REPLIES[Math.floor(Math.random() * REPLIES.length)];
+      }
+
+      function renderReply(letter, reply) {
+        replyArea.innerHTML =
+          '<div class="reply-card">' +
+            '<div class="reply-label">梦角的回信</div>' +
+            '<div class="reply-text">' + escapeHtml(reply) + '</div>' +
+            '<div class="reply-time">' + nowTime() + '</div>' +
+          '</div>';
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      function renderHistory() {
+        var letters = getLetters();
+        if (letters.length === 0) {
+          historyList.innerHTML = '<div class="history-empty">还没有寄出过信，写第一封吧 ✉️</div>';
+          return;
+        }
+        historyList.innerHTML = letters.slice().reverse().map(function (item) {
+          var isReply = item.type === "reply";
+          return '<div class="history-item">' +
+            '<div class="history-item-header">' +
+              '<span class="history-item-type">' + (isReply ? "梦角的回信" : "我的信") + '</span>' +
+              '<span class="history-item-time">' + escapeHtml(item.time) + '</span>' +
+            '</div>' +
+            '<div class="history-item-body">' + escapeHtml(item.text) + '</div>' +
+          '</div>';
+        }).join("");
+      }
+
+      input.addEventListener("input", function () {
+        wordCount.textContent = input.value.length;
+      });
+
+      sendBtn.addEventListener("click", function () {
+        var text = input.value.trim();
+        if (!text) { showToast("先写点什么吧"); return; }
+
+        sendBtn.disabled = true;
+        var letters = getLetters();
+        var t = nowTime();
+        letters.push({ type: "sent", text: text, time: t });
+        saveLetters(letters);
+
+        input.value = "";
+        wordCount.textContent = "0";
+        showToast("信已寄出 ✉️");
+
+        // 小火人互动埋点
+        try { (function(){var K="mengjiao_spark";var D=JSON.parse(localStorage.getItem(K)||"{}");var T=new Date();var t=T.getFullYear()+"-"+String(T.getMonth()+1).padStart(2,"0")+"-"+String(T.getDate()).padStart(2,"0");D.daily=D.daily||{};D.daily[t]=D.daily[t]||{chat:0,cards:0,moments:0};if(D.daily[t].chat<10){D.daily[t].chat++;D.totalInteractions=(D.totalInteractions||0)+1;D.exp=(D.exp||0)+3;D.totalExp=(D.totalExp||0)+3;if(t!==D.lastActiveDate){if(D.lastActiveDate===yesterday())D.streak=(D.streak||0)+1;else D.streak=1;D.lastActiveDate=t;}else if(!D.streak)D.streak=1;var L=[{lv:1,need:50},{lv:2,need:150},{lv:3,need:350},{lv:4,need:700},{lv:5,need:1200},{lv:6,need:2000}];while(D.level<7&&D.exp>=L[D.level-1].need){D.exp-=L[D.level-1].need;D.level++;}localStorage.setItem(K,JSON.stringify(D));}function yesterday(){var d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+        })(); } catch (e) {}
+
+        // 延迟生成回信
+        setTimeout(function () {
+          var reply = pickReply();
+          var rt = nowTime();
+          letters.push({ type: "reply", text: reply, time: rt });
+          saveLetters(letters);
+          renderReply(text, reply);
+          if (historyWrap.classList.contains("open")) renderHistory();
+          sendBtn.disabled = false;
+        }, 1200 + Math.random() * 1500);
+      });
+
+      historyToggle.addEventListener("click", function () {
+        historyWrap.classList.toggle("open");
+        historyToggle.textContent = historyWrap.classList.contains("open") ? "收起" : "历史";
+        if (historyWrap.classList.contains("open")) renderHistory();
+      });
+
+      // 初始显示最新回信（如果有）
+      var letters = getLetters();
+      if (letters.length > 0) {
+        var last = letters[letters.length - 1];
+        if (last.type === "reply") {
+          var prev = letters[letters.length - 2];
+          renderReply(prev ? prev.text : "", last.text);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
