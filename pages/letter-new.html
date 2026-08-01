@@ -131,8 +131,9 @@
       min-width: 64px;
       display: flex;
       justify-content: flex-end;
+      gap: 8px;
     }
-    .history-toggle {
+    .top-action-btn {
       font-size: 13px;
       padding: 5px 14px;
       border-radius: 9999px;
@@ -142,7 +143,7 @@
       font-weight: 500;
       cursor: pointer;
     }
-    .history-toggle:active { transform: scale(0.94); }
+    .top-action-btn:active { transform: scale(0.94); }
 
     .letter-stage {
       flex: 1;
@@ -150,197 +151,641 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      min-height: 0;
     }
 
-    .envelope-card {
-      background: rgba(255,255,255,0.58);
-      border: 1px solid rgba(232,116,154,0.15);
-      border-radius: 20px;
-      padding: 16px;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+    /* envelope flap header */
+    .env-header {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      border-radius: 20px 20px 6px 6px;
+      padding: 22px 20px 34px;
+      text-align: center;
+      color: #fff;
+      position: relative;
+      clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+      box-shadow: 0 8px 24px rgba(232,116,154,0.25);
     }
+    .env-header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.06) 55%, transparent 100%);
+      pointer-events: none;
+      border-radius: 20px 20px 0 0;
+    }
+    .env-header-icon { margin: 0 auto 8px; opacity: 0.95; display: block; }
+    .env-header-title { font-size: 16px; font-weight: 700; letter-spacing: 3px; text-shadow: 0 1px 6px rgba(0,0,0,0.2); }
+    .env-header-subtitle { font-size: 10px; opacity: 0.75; letter-spacing: 2px; margin-top: 3px; text-transform: uppercase; font-style: italic; }
 
-    .letter-to {
-      font-family: var(--font-serif);
-      font-size: 14px;
+    /* tabs */
+    .env-tab-bar {
+      display: flex;
+      gap: 6px;
+      margin: 4px 0 6px;
+    }
+    .env-tab-btn {
+      flex: 1;
+      padding: 9px 4px;
+      background: rgba(255,255,255,0.5);
+      border: 1.5px solid rgba(232,116,154,0.18);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: var(--font-sans);
       color: var(--text-secondary);
-      margin-bottom: 10px;
+      position: relative;
+      transition: 0.25s;
+      letter-spacing: 0.3px;
     }
-    .letter-to b {
+    .env-tab-btn.active {
+      background: rgba(232,116,154,0.1);
+      border-color: var(--accent-color);
       color: var(--accent-color);
       font-weight: 600;
     }
+    .env-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ff4757;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 10px;
+      padding: 1px 5px;
+      min-width: 16px;
+      text-align: center;
+      border: 2px solid rgba(255,255,255,0.85);
+      font-weight: 600;
+    }
 
+    .env-card {
+      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(232,116,154,0.15);
+      border-radius: 20px;
+      padding: 14px 16px 16px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .env-section {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+    }
+    .env-section.active { display: flex; }
+
+    .env-empty {
+      text-align: center;
+      padding: 38px 20px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      opacity: 0.75;
+    }
+    .env-empty svg { display: block; margin: 0 auto 12px; opacity: 0.45; }
+
+    .env-letter-item {
+      background: rgba(255,255,255,0.7);
+      border-radius: 14px;
+      border: 1px solid rgba(232,116,154,0.14);
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.35s cubic-bezier(.3,0,0,1) both;
+    }
+    .env-letter-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,116,154,0.14); border-color: rgba(232,116,154,0.3); }
+    .env-letter-item.new { border-color: rgba(232,116,154,0.42); }
+    .env-letter-header {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      padding: 8px 12px 7px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .env-letter-header-from {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.95);
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .env-stamp {
+      width: 28px;
+      height: 34px;
+      border: 1.5px solid rgba(255,255,255,0.7);
+      border-radius: 3px;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.12), 1px 1px 0 2px rgba(255,255,255,0.12), -1px 1px 0 2px rgba(255,255,255,0.12);
+    }
+    .env-letter-body { padding: 10px 12px; }
+    .env-letter-preview {
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 92%;
+      font-style: italic;
+      color: var(--text-primary);
+      font-family: var(--font-serif);
+    }
+    .env-letter-status {
+      font-size: 10px;
+      color: var(--accent-color);
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .env-letter-delete-btn {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 12px;
+      opacity: 0.35;
+      padding: 4px;
+      border-radius: 4px;
+      transition: 0.2s;
+    }
+    .env-letter-delete-btn:hover { color: #ff4757; opacity: 1; }
+    .env-letter-item.reply .env-letter-status::before {
+      content: "已回信";
+      font-size: 9px;
+      color: #6bcb77;
+      border: 1px solid #6bcb77;
+      border-radius: 4px;
+      padding: 1px 5px;
+      letter-spacing: 0.5px;
+      margin-right: 4px;
+    }
+
+    .env-send-area {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .env-write-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: 0.25s;
+      box-shadow: 0 4px 16px rgba(232,116,154,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .env-write-btn:active { transform: scale(0.98); }
+    .env-write-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* compose form */
+    .env-compose-form {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+    }
+    .env-compose-form.active { display: flex; }
+    .env-compose-paper {
+      background: rgba(255,255,255,0.72);
+      border-radius: 14px;
+      border: 1px solid rgba(232,116,154,0.2);
+      padding: 16px 16px 12px;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .env-compose-paper::before {
+      content: "";
+      position: absolute;
+      left: 38px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(220,80,80,0.22);
+      pointer-events: none;
+    }
+    .env-compose-paper::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(transparent, transparent 28px, rgba(232,116,154,0.06) 28px, rgba(232,116,154,0.06) 29px);
+      pointer-events: none;
+      border-radius: 14px;
+    }
+    .env-compose-heading {
+      font-size: 11px;
+      color: var(--accent-color);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      opacity: 0.8;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
     #letterInput {
       width: 100%;
-      min-height: 180px;
-      max-height: 320px;
-      padding: 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(232,116,154,0.18);
-      background:
-        linear-gradient(to bottom, rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
-        repeating-linear-gradient(
-          transparent,
-          transparent 29px,
-          rgba(232,116,154,0.08) 29px,
-          rgba(232,116,154,0.08) 30px
-        );
-      background-attachment: local;
+      resize: none;
+      padding-left: 16px;
+      min-height: 160px;
+      position: relative;
+      z-index: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--font-serif) !important;
+      font-size: 15px !important;
+      line-height: 2 !important;
+      color: var(--text-primary) !important;
+    }
+    #letterInput::placeholder { color: var(--text-secondary); opacity: 0.65; }
+    .env-option-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0 6px;
+      font-size: 12px;
+      padding: 0 2px;
+      color: var(--text-secondary);
+    }
+    .env-option-row input[type="checkbox"] {
+      width: 15px; height: 15px;
+      cursor: pointer;
+      accent-color: var(--accent-color);
+    }
+    .env-option-row label { cursor: pointer; }
+    #scheduleTimeWrap { display: none; margin: 4px 0 8px; padding: 0 2px; }
+    #scheduleTimeWrap.open { display: block; }
+    #scheduleTime {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid rgba(232,116,154,0.2);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.7);
       color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      font-family: var(--font-sans);
+    }
+    .env-send-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.55);
+      border-radius: 10px;
+    }
+    .env-compose-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .env-btn-secondary {
+      flex: 1;
+      padding: 11px;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(232,116,154,0.2);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: 0.2s;
+    }
+    .env-btn-secondary:active { transform: scale(0.98); }
+    .env-btn-primary {
+      flex: 2;
+      padding: 11px;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.2s;
+      box-shadow: 0 4px 14px rgba(232,116,154,0.32);
+    }
+    .env-btn-primary:active { transform: scale(0.98); }
+    .env-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* view modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .env-view-card {
+      background: hsl(var(--background));
+      border-radius: 20px;
+      overflow: hidden;
+      width: 100%;
+      max-width: 380px;
+      max-height: 84vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      animation: modalIn 0.35s cubic-bezier(.3,0,0,1) both;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.96); }
+      to { opacity: 1; transform: none; }
+    }
+    .env-view-header {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      padding: 14px 18px;
+      position: relative;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .env-view-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+    }
+    .env-view-title { font-size: 15px; font-weight: 700; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; }
+    .env-view-stamp {
+      border: 2px solid rgba(255,255,255,0.55);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.85;
+      font-size: 8px;
+      line-height: 1.3;
+      text-align: center;
+    }
+    .env-view-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 14px;
+      min-height: 0;
+    }
+    .env-view-original {
+      display: none;
+      margin: 0 0 12px;
+      background: rgba(232,116,154,0.07);
+      border: 1px solid rgba(232,116,154,0.16);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border-left: 3px solid rgba(232,116,154,0.45);
+    }
+    .env-view-original.open { display: block; }
+    .env-view-original-label {
+      font-size: 10px;
+      color: var(--accent-color);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .env-view-original-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-style: italic;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: hidden;
+    }
+    .env-letter-paper {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px 18px 18px 46px;
       font-size: 15px;
-      line-height: 30px;
+      line-height: 31px;
+      min-height: 140px;
+      position: relative;
+      border: 1px solid rgba(232,116,154,0.14);
+      background-image: repeating-linear-gradient(transparent, transparent 30px, rgba(232,116,154,0.07) 30px, rgba(232,116,154,0.07) 31px);
+      color: var(--text-primary);
       font-family: var(--font-serif);
+    }
+    .env-letter-paper::before {
+      content: "";
+      position: absolute;
+      left: 36px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(220,80,80,0.2);
+    }
+    .env-paper-to {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .env-paper-greeting {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+      font-style: italic;
+      opacity: 0.85;
+    }
+    .env-paper-content {
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 16px;
+    }
+    .env-paper-divider {
+      border-top: 1px dashed rgba(232,116,154,0.25);
+      margin: 12px 0;
+    }
+    .env-paper-sign-date {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-align: right;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    .env-paper-sign-name {
+      font-size: 14px;
+      color: var(--accent-color);
+      text-align: right;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    .env-view-date {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 12px;
+      text-align: right;
+    }
+    .env-original-expand {
+      font-size: 11px;
+      color: var(--accent-color);
+      margin-top: 5px;
+      cursor: pointer;
+      display: none;
+    }
+    .env-original-expand.open { display: block; }
+    .env-view-actions {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px 16px;
+      flex-shrink: 0;
+    }
+    .env-view-actions .env-btn-secondary,
+    .env-view-actions .env-btn-primary { flex: 1; }
+    #viewEditArea { display: none; }
+    #viewEditArea.open { display: block; margin-bottom: 12px; }
+    #viewEditInput {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px;
+      border: 1px solid rgba(232,116,154,0.2);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.7);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: var(--font-serif);
+      line-height: 1.7;
       resize: none;
       outline: none;
       box-sizing: border-box;
     }
-    #letterInput::placeholder { color: var(--text-secondary); opacity: 0.7; }
-    #letterInput:focus { border-color: rgba(232,116,154,0.4); }
-
-    .send-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 8px;
-    }
-    .word-count {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-    .send-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 24px;
-      border-radius: 9999px;
-      border: none;
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(232,116,154,0.35);
-      transition: transform 0.15s, filter 0.15s;
-    }
-    .send-btn:active { transform: scale(0.96); }
-    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    /* Reply card */
-    .reply-card {
-      background: linear-gradient(135deg, #fff8fb, #fff0f5);
-      border: 1px solid rgba(232,116,154,0.18);
-      border-radius: 18px;
-      padding: 18px;
-      position: relative;
-      animation: fadeUp 0.5s cubic-bezier(.3,0,0,1) both;
-    }
-    .reply-card::before {
-      content: '✦';
-      position: absolute;
-      top: 12px;
-      right: 16px;
-      font-size: 18px;
-      color: rgba(232,116,154,0.35);
-    }
-    .reply-label {
-      font-size: 12px;
-      color: var(--accent-color);
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .reply-text {
-      font-family: var(--font-serif);
-      font-size: 15px;
-      line-height: 1.7;
-      color: var(--text-primary);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .reply-time {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-top: 10px;
-    }
-
-    /* History list */
-    .history-wrap {
-      display: none;
-    }
-    .history-wrap.open { display: block; }
-    .history-title {
-      font-family: var(--font-serif);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 4px 0 10px;
-      padding: 0 4px;
-    }
-    .history-empty {
-      text-align: center;
-      padding: 28px 16px;
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-    .history-item {
-      background: rgba(255,255,255,0.5);
-      border: 1px solid rgba(232,116,154,0.12);
-      border-radius: 14px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
-      animation: fadeUp 0.35s cubic-bezier(.3,0,0,1) both;
-    }
-    .history-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-    .history-item-type {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--accent-color);
-    }
-    .history-item-time {
-      font-size: 11px;
-      color: var(--text-secondary);
-    }
-    .history-item-body {
-      font-family: var(--font-serif);
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--text-primary);
-      white-space: pre-wrap;
-      word-break: break-word;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: none; }
-    }
 
     .toast {
-      position: absolute;
+      position: fixed;
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%) translateY(12px);
       background: rgba(61,32,48,0.88);
       color: #fff;
       font-size: 13px;
-      padding: 8px 18px;
+      padding: 9px 18px;
       border-radius: 9999px;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.25s, transform 0.25s;
-      z-index: 50;
+      z-index: 2000;
       white-space: nowrap;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* reply popup */
+    .reply-popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 3000;
+      padding: 16px;
+    }
+    .reply-popup-overlay.open { display: flex; }
+    .reply-popup {
+      background: var(--secondary-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 22px;
+      padding: 20px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+      animation: slideUpPopup 0.4s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes slideUpPopup {
+      from { opacity: 0; transform: translateY(24px) scale(0.96); }
+      to { opacity: 1; transform: none; }
+    }
+    .reply-popup-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .reply-popup-title span { font-size: 28px; }
+    .reply-popup-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .reply-popup-actions { display: flex; gap: 10px; }
+    .reply-popup-actions button {
+      flex: 1;
+      padding: 10px 0;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: var(--font-sans);
+    }
+    .reply-popup-later {
+      background: var(--primary-bg);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    .reply-popup-now {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -353,54 +798,177 @@
 
       <div class="top-bar">
         <a href="index-new.html" class="back-btn">← 返回</a>
-        <div class="top-title">给梦角的信</div>
+        <div class="top-title">信封投递</div>
         <div class="top-action">
-          <button class="history-toggle" id="receiveLetter" type="button" style="margin-right:8px;">收信</button>
-          <button class="history-toggle" id="historyToggle">历史</button>
+          <button class="top-action-btn" id="receiveLetterBtn" type="button">收信</button>
         </div>
       </div>
 
-      <div class="letter-stage" id="letterStage">
-        <!-- Write form -->
-        <div class="envelope-card" id="writeCard">
-          <div class="letter-to">致 <b id="partnerLabel">梦角</b>：</div>
-          <textarea id="letterInput" placeholder="把想说的话写在这里…&#10;就算不能立刻相见，我也能听见。" maxlength="800"></textarea>
-          <div class="send-row">
-            <span class="word-count"><span id="wordCount">0</span> / 800</span>
-            <button class="send-btn" id="sendLetter" type="button">
-              <span>寄出</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-            </button>
+      <div class="letter-stage">
+        <!-- envelope header -->
+        <div class="env-header">
+          <svg class="env-header-icon" width="40" height="30" viewBox="0 0 40 30" fill="none">
+            <rect x="1" y="7" width="38" height="22" rx="3" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.65)" stroke-width="1.5"/>
+            <path d="M1 9 L20 20 L39 9" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" fill="none"/>
+            <path d="M1 29 L14 18" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+            <path d="M39 29 L26 18" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+          </svg>
+          <div class="env-header-title">信 封 投 递</div>
+          <div class="env-header-subtitle">Letters · Correspondence</div>
+        </div>
+
+        <!-- tabs -->
+        <div class="env-tab-bar" id="tabBar">
+          <button class="env-tab-btn active" data-tab="outbox" type="button">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+            寄出的信
+            <span class="env-badge" id="outboxBadge" style="display:none;">0</span>
+          </button>
+          <button class="env-tab-btn" data-tab="inbox" type="button">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;"><path d="M22 13V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6"/><polyline points="15 3 21 3 21 9"/><line x1="21" y1="3" x2="10" y2="14"/></svg>
+            收到的信
+            <span class="env-badge" id="inboxBadge" style="display:none;">0</span>
+          </button>
+          <button class="env-tab-btn" data-tab="dream" type="button">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+            梦角来信
+            <span class="env-badge" id="dreamBadge" style="display:none;">0</span>
+          </button>
+        </div>
+
+        <div class="env-card" id="envCard">
+          <!-- outbox -->
+          <div class="env-section active" id="outboxSection">
+            <div id="outboxList"></div>
+          </div>
+          <!-- inbox -->
+          <div class="env-section" id="inboxSection">
+            <div id="inboxList"></div>
+          </div>
+          <!-- dream -->
+          <div class="env-section" id="dreamSection">
+            <div id="dreamList"></div>
+          </div>
+
+          <!-- compose form -->
+          <div class="env-compose-form" id="composeForm">
+            <div class="env-compose-paper">
+              <div class="env-compose-heading">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                <span id="composeTitle">写一封信</span>
+              </div>
+              <textarea id="letterInput" placeholder="亲爱的，&#10;&#10;今天想跟你说…" maxlength="800"></textarea>
+            </div>
+            <div class="env-option-row">
+              <input type="checkbox" id="sendToChat" />
+              <label for="sendToChat">同时发送到聊天记录</label>
+            </div>
+            <div class="env-option-row">
+              <input type="checkbox" id="scheduleSend" />
+              <label for="scheduleSend">定时发送</label>
+            </div>
+            <div id="scheduleTimeWrap">
+              <input type="datetime-local" id="scheduleTime" />
+            </div>
+            <div class="env-send-info">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span id="replyTimeInfo">梦角将在 5-20 秒内回信</span>
+            </div>
+            <div class="env-compose-actions">
+              <button class="env-btn-secondary" id="cancelCompose" type="button">取消</button>
+              <button class="env-btn-primary" id="sendLetter" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+                封 · 寄出
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Latest reply -->
-        <div id="replyArea"></div>
-
-        <!-- History -->
-        <div class="history-wrap" id="historyWrap">
-          <div class="history-title">过往书信</div>
-          <div id="historyList"></div>
+        <!-- main action -->
+        <div class="env-send-area" id="mainActionArea">
+          <button class="env-write-btn" id="writeLetterBtn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            提笔写信
+          </button>
         </div>
       </div>
-
-      <div class="toast" id="toast"></div>
     </div>
   </div>
+
+  <!-- view modal -->
+  <div class="modal-overlay" id="viewModal">
+    <div class="env-view-card">
+      <div class="env-view-header">
+        <div class="env-view-header-top">
+          <div class="env-view-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
+            <span id="viewTitle">信件内容</span>
+          </div>
+          <div class="env-view-stamp">
+            <span style="font-size:7px;letter-spacing:0.5px;">已送达</span>
+            <span id="viewStampDate" style="font-size:8px;font-weight:600;"></span>
+            <span style="font-size:6px;opacity:0.8;">DELIVERED</span>
+          </div>
+        </div>
+      </div>
+      <div class="env-view-body">
+          <div class="env-view-original" id="viewOriginalCtx">
+            <div class="env-view-original-label">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+              <span id="viewOriginalLabel">原信</span>
+            </div>
+            <div class="env-view-original-text" id="viewOriginalText"></div>
+            <div class="env-original-expand" id="viewOriginalExpand">展开查看全文</div>
+          </div>
+          <div id="viewEditArea">
+            <textarea id="viewEditInput" maxlength="800"></textarea>
+          </div>
+          <div class="env-letter-paper" id="viewPaper">
+            <div class="env-paper-to" id="viewToLine"></div>
+            <div class="env-paper-greeting" id="viewGreetingLine"></div>
+            <div class="env-paper-content" id="viewContentText"></div>
+            <div class="env-paper-divider"></div>
+            <div class="env-paper-sign-date" id="viewSignDate"></div>
+            <div class="env-paper-sign-name" id="viewSignName"></div>
+          </div>
+          <div class="env-view-date" id="viewDate"></div>
+        </div>
+      <div class="env-view-actions" id="viewActions">
+        <button class="env-btn-secondary" id="closeView" type="button">关闭</button>
+        <button class="env-btn-secondary" id="editView" type="button">编辑</button>
+        <button class="env-btn-primary" id="replyView" type="button">回复</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- reply arrival popup -->
+  <div class="reply-popup-overlay" id="replyPopupOverlay">
+    <div class="reply-popup">
+      <div class="reply-popup-title"><span>💌</span><span id="replyPopupTitle">收到了一封回信</span></div>
+      <div class="reply-popup-desc" id="replyPopupDesc">Ta 给你写了回信，快去看看吧~</div>
+      <div class="reply-popup-actions">
+        <button class="reply-popup-later" id="replyPopupLater" type="button">稍后查看</button>
+        <button class="reply-popup-now" id="replyPopupNow" type="button">立即阅读 ✉</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 
   <script>
     (function () {
       "use strict";
 
-      var LETTER_KEY = "mengjiao_letters";
+      var LETTER_KEY = "mengjiao_letters_v2";
+      var OLD_LETTER_KEY = "mengjiao_letters";
       var PARTNER_NAME_KEY = "mengjiao_partner_name";
       var CARD_REPLIES_KEY = "mengjiao_card_replies";
+      var CHAT_MESSAGES_KEY = "mengjiao_chat_messages";
 
-      /* 回信/来信延迟：最短 5 秒，最长 20 秒 */
+      /* 回信延迟：最短 5 秒，最长 20 秒 */
       var REPLY_DELAY_MIN = 5000;
       var REPLY_DELAY_MAX = 20000;
 
-      /* 当字卡库为空时的默认回复池（与字卡传讯页保持一致） */
       var DEFAULT_CARD_REPLIES = [
         "今天也在想你哦。",
         "别担心，我一直都在。",
@@ -419,23 +987,91 @@
         "每一个想你的夜晚，星星都知道。"
       ];
 
-      var input = document.getElementById("letterInput");
-      var sendBtn = document.getElementById("sendLetter");
-      var wordCount = document.getElementById("wordCount");
-      var replyArea = document.getElementById("replyArea");
-      var historyToggle = document.getElementById("historyToggle");
-      var historyWrap = document.getElementById("historyWrap");
-      var historyList = document.getElementById("historyList");
-      var receiveLetterBtn = document.getElementById("receiveLetter");
-      var partnerLabel = document.getElementById("partnerLabel");
+      /* DOM refs */
+      var tabBtns = document.querySelectorAll(".env-tab-btn");
+      var sections = {
+        outbox: document.getElementById("outboxSection"),
+        inbox: document.getElementById("inboxSection"),
+        dream: document.getElementById("dreamSection")
+      };
+      var lists = {
+        outbox: document.getElementById("outboxList"),
+        inbox: document.getElementById("inboxList"),
+        dream: document.getElementById("dreamList")
+      };
+      var badges = {
+        outbox: document.getElementById("outboxBadge"),
+        inbox: document.getElementById("inboxBadge"),
+        dream: document.getElementById("dreamBadge")
+      };
+      var envCard = document.getElementById("envCard");
+      var composeForm = document.getElementById("composeForm");
+      var mainActionArea = document.getElementById("mainActionArea");
+      var writeLetterBtn = document.getElementById("writeLetterBtn");
+      var cancelCompose = document.getElementById("cancelCompose");
+      var sendLetter = document.getElementById("sendLetter");
+      var letterInput = document.getElementById("letterInput");
+      var sendToChat = document.getElementById("sendToChat");
+      var scheduleSend = document.getElementById("scheduleSend");
+      var scheduleTimeWrap = document.getElementById("scheduleTimeWrap");
+      var scheduleTime = document.getElementById("scheduleTime");
+      var receiveLetterBtn = document.getElementById("receiveLetterBtn");
+      var viewModal = document.getElementById("viewModal");
+      var viewTitle = document.getElementById("viewTitle");
+      var viewStampDate = document.getElementById("viewStampDate");
+      var viewOriginalCtx = document.getElementById("viewOriginalCtx");
+      var viewOriginalLabel = document.getElementById("viewOriginalLabel");
+      var viewOriginalText = document.getElementById("viewOriginalText");
+      var viewEditArea = document.getElementById("viewEditArea");
+      var viewEditInput = document.getElementById("viewEditInput");
+      var viewPaper = document.getElementById("viewPaper");
+      var viewDate = document.getElementById("viewDate");
+      var viewToLine = document.getElementById("viewToLine");
+      var viewGreetingLine = document.getElementById("viewGreetingLine");
+      var viewContentText = document.getElementById("viewContentText");
+      var viewSignDate = document.getElementById("viewSignDate");
+      var viewSignName = document.getElementById("viewSignName");
+      var viewOriginalExpand = document.getElementById("viewOriginalExpand");
+      var closeView = document.getElementById("closeView");
+      var editView = document.getElementById("editView");
+      var replyView = document.getElementById("replyView");
+      var replyPopupOverlay = document.getElementById("replyPopupOverlay");
+      var replyPopupTitle = document.getElementById("replyPopupTitle");
+      var replyPopupDesc = document.getElementById("replyPopupDesc");
+      var replyPopupLater = document.getElementById("replyPopupLater");
+      var replyPopupNow = document.getElementById("replyPopupNow");
       var toast = document.getElementById("toast");
       var toastTimer;
+
+      var currentTab = "outbox";
+      var currentData = { outbox: [], inbox: [], dream: [] };
+      var viewing = { section: null, id: null };
 
       function showToast(msg) {
         toast.textContent = msg;
         toast.classList.add("show");
         clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 1800);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2000);
+      }
+
+      function showReplyPopup(replyLetter) {
+        var existing = document.getElementById("reply-popup-single");
+        if (existing) existing.remove();
+        var overlay = replyPopupOverlay;
+        replyPopupTitle.textContent = "收到了 " + getPartnerName() + " 的回信";
+        replyPopupDesc.textContent = "Ta 给你写了回信，快去看看吧~";
+        overlay.classList.add("open");
+        var popupTimer = setTimeout(function () { overlay.classList.remove("open"); }, 8000);
+        replyPopupLater.onclick = function () {
+          clearTimeout(popupTimer);
+          overlay.classList.remove("open");
+        };
+        replyPopupNow.onclick = function () {
+          clearTimeout(popupTimer);
+          overlay.classList.remove("open");
+          switchTab("inbox");
+          openView("inbox", replyLetter.id);
+        };
       }
 
       function getPartnerName() {
@@ -445,26 +1081,74 @@
         } catch (e) {}
         return "梦角";
       }
-      partnerLabel.textContent = getPartnerName();
+      function getMyName() {
+        try {
+          var n = localStorage.getItem("mengjiao_my_name");
+          if (n) return n;
+        } catch (e) {}
+        return "你";
+      }
 
       function nowTime() {
         var d = new Date();
         return d.getFullYear() + "." + String(d.getMonth()+1).padStart(2,"0") + "." + String(d.getDate()).padStart(2,"0") + " " +
                String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
       }
+      function formatShortTime(ts) {
+        var d = new Date(ts);
+        return (d.getMonth()+1) + "月" + d.getDate() + "日 " + String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+      }
+      function formatFullDate(ts) {
+        var d = new Date(ts);
+        var days = ["日","一","二","三","四","五","六"];
+        return d.getFullYear() + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + String(d.getDate()).padStart(2,"0") + " 星期" + days[d.getDay()];
+      }
 
-      function getLetters() {
+      function loadData() {
         try {
           var raw = localStorage.getItem(LETTER_KEY);
           if (raw) {
-            var arr = JSON.parse(raw);
-            if (Array.isArray(arr)) return arr;
+            var parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object") {
+              currentData.outbox = Array.isArray(parsed.outbox) ? parsed.outbox : [];
+              currentData.inbox = Array.isArray(parsed.inbox) ? parsed.inbox : [];
+              currentData.dream = Array.isArray(parsed.dream) ? parsed.dream : [];
+            }
           }
         } catch (e) {}
-        return [];
+        migrateOldData();
       }
-      function saveLetters(arr) {
-        try { localStorage.setItem(LETTER_KEY, JSON.stringify(arr)); } catch (e) {}
+      function saveData() {
+        try { localStorage.setItem(LETTER_KEY, JSON.stringify(currentData)); } catch (e) {}
+      }
+      function migrateOldData() {
+        if (currentData.outbox.length || currentData.inbox.length || currentData.dream.length) return;
+        try {
+          var raw = localStorage.getItem(OLD_LETTER_KEY);
+          if (!raw) return;
+          var old = JSON.parse(raw);
+          if (!Array.isArray(old)) return;
+          old.forEach(function (item) {
+            if (!item || !item.text) return;
+            if (item.type === "reply") {
+              currentData.inbox.push({ id: genId("inbox"), content: item.text, receivedTime: parseTime(item.time) || Date.now(), isNew: false });
+            } else if (item.type === "dream_letter") {
+              currentData.dream.push({ id: genId("dream"), content: item.text, receivedTime: parseTime(item.time) || Date.now(), isNew: false });
+            } else {
+              currentData.outbox.push({ id: genId("outbox"), content: item.text, sentTime: parseTime(item.time) || Date.now(), replyTime: Date.now(), status: "replied" });
+            }
+          });
+          saveData();
+        } catch (e) {}
+      }
+      function parseTime(s) {
+        if (!s) return null;
+        var d = new Date(s.replace(/\./g, "-").replace(" ", "T"));
+        return isNaN(d.getTime()) ? null : d.getTime();
+      }
+
+      function genId(section) {
+        return section + "_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
       }
 
       function getCardReplies() {
@@ -477,24 +1161,48 @@
         } catch (e) {}
         return DEFAULT_CARD_REPLIES.slice();
       }
-
       function pickReply() {
         var pool = getCardReplies();
         return pool[Math.floor(Math.random() * pool.length)];
       }
-
+      function generateReplyText(minSentences, maxSentences) {
+        var pool = getCardReplies();
+        if (pool.length === 0) pool = DEFAULT_CARD_REPLIES.slice();
+        var count = Math.floor(Math.random() * (maxSentences - minSentences + 1)) + minSentences;
+        var result = "";
+        for (var i = 0; i < count; i++) {
+          var sentence = pool[Math.floor(Math.random() * pool.length)];
+          var punctuation = Math.random() < 0.2 ? "！" : (Math.random() < 0.2 ? "..." : "。");
+          result += sentence + punctuation;
+        }
+        return result;
+      }
+      function generateDreamLetter() {
+        var pool = getCardReplies();
+        if (pool.length === 0) pool = DEFAULT_CARD_REPLIES.slice();
+        var count = Math.floor(Math.random() * 8) + 5; // 5-12 sentences
+        var sentences = [];
+        for (var i = 0; i < count; i++) {
+          sentences.push(pool[Math.floor(Math.random() * pool.length)] + "。");
+        }
+        var content = sentences.join("");
+        var positions = [];
+        for (var i = 0; i < content.length; i++) {
+          if (content[i] === "。") positions.push(i);
+        }
+        var breakCount = Math.min(Math.floor(Math.random() * 3) + 1, positions.length);
+        positions = positions.sort(function() { return Math.random() - 0.5; });
+        for (var b = 0; b < breakCount; b++) {
+          var pos = positions[b] + 1 + b;
+          content = content.substring(0, pos) + "\n" + content.substring(pos);
+          for (var j = b + 1; j < positions.length; j++) {
+            if (positions[j] >= pos - 1) positions[j]++;
+          }
+        }
+        return content.trim();
+      }
       function replyDelay() {
         return REPLY_DELAY_MIN + Math.random() * (REPLY_DELAY_MAX - REPLY_DELAY_MIN);
-      }
-
-      function renderReply(reply, label) {
-        label = label || "梦角的回信";
-        replyArea.innerHTML =
-          '<div class="reply-card">' +
-            '<div class="reply-label">' + escapeHtml(label) + '</div>' +
-            '<div class="reply-text">' + escapeHtml(reply) + '</div>' +
-            '<div class="reply-time">' + nowTime() + '</div>' +
-          '</div>';
       }
 
       function escapeHtml(s) {
@@ -503,93 +1211,548 @@
         });
       }
 
-      function renderHistory() {
-        var letters = getLetters();
-        if (letters.length === 0) {
-          historyList.innerHTML = '<div class="history-empty">还没有寄出过信，写第一封吧 ✉️</div>';
+      function switchTab(tab) {
+        currentTab = tab;
+        tabBtns.forEach(function (btn) {
+          btn.classList.toggle("active", btn.dataset.tab === tab);
+        });
+        Object.keys(sections).forEach(function (k) {
+          sections[k].classList.toggle("active", k === tab);
+        });
+        composeForm.classList.remove("active");
+        mainActionArea.style.display = "flex";
+        renderLists();
+      }
+
+      function renderLists() {
+        renderOutbox();
+        renderInbox();
+        renderDream();
+        updateBadges();
+      }
+
+      function updateBadges() {
+        var pending = currentData.outbox.filter(function (l) { return l.status === "pending" || l.status === "scheduled"; }).length;
+        var newInbox = currentData.inbox.filter(function (l) { return l.isNew; }).length;
+        var newDream = currentData.dream.filter(function (l) { return l.isNew; }).length;
+        setBadge("outbox", pending);
+        setBadge("inbox", newInbox);
+        setBadge("dream", newDream);
+      }
+      function setBadge(section, count) {
+        var el = badges[section];
+        if (!el) return;
+        el.textContent = count;
+        el.style.display = count > 0 ? "inline-block" : "none";
+      }
+
+      function renderOutbox() {
+        var list = lists.outbox;
+        if (currentData.outbox.length === 0) {
+          list.innerHTML = '<div class="env-empty">' +
+            '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>' +
+            '<div style="font-size:14px;font-weight:500;margin-top:4px;">还没有寄出任何信件</div>' +
+            '<div style="font-size:12px;margin-top:6px;opacity:0.6;">提笔写下心意，寄送给 Ta 吧~</div>' +
+          '</div>';
           return;
         }
-        historyList.innerHTML = letters.slice().reverse().map(function (item) {
-          var typeLabel = item.type === "reply" ? "梦角的回信" :
-                          (item.type === "dream_letter" ? "梦角的来信" : "我的信");
-          return '<div class="history-item">' +
-            '<div class="history-item-header">' +
-              '<span class="history-item-type">' + typeLabel + '</span>' +
-              '<span class="history-item-time">' + escapeHtml(item.time) + '</span>' +
+        list.innerHTML = currentData.outbox.slice().reverse().map(function (letter) {
+          var date = formatShortTime(letter.sentTime || letter.scheduleTime || Date.now());
+          var isScheduled = letter.status === "scheduled";
+          var isPending = letter.status === "pending";
+          var statusHtml;
+          if (isScheduled) {
+            statusHtml = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 定时发送 · ' + formatShortTime(letter.scheduleTime);
+          } else if (isPending) {
+            statusHtml = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 等待回信';
+          } else {
+            statusHtml = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 已收到回信';
+          }
+          var preview = letter.content.length > 40 ? letter.content.substring(0, 40) + "…" : letter.content;
+          var origCtx = "";
+          if (letter.replyToSection && letter.replyToId) {
+            var orig = getOriginalContent(letter.replyToSection, letter.replyToId);
+            if (orig) {
+              var op = orig.length > 30 ? orig.substring(0, 30) + "…" : orig;
+              origCtx = '<div style="padding:6px 12px 0;display:flex;align-items:flex-start;gap:6px;">' +
+                '<div style="width:2px;border-radius:2px;background:rgba(232,116,154,0.4);flex-shrink:0;align-self:stretch;min-height:14px;margin-top:1px;"></div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 14px);opacity:0.75;">回复: ' + escapeHtml(op) + '</div>' +
+              '</div>';
+            }
+          }
+          return '<div class="env-letter-item ' + (isScheduled || isPending ? "" : "reply") + '" onclick="window._openView(\'outbox\',\'' + letter.id + '\')">' +
+            '<div class="env-letter-header">' +
+              '<div class="env-letter-header-from">' +
+                '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>' +
+                (isScheduled ? "定时" : "寄出") + " · " + date +
+              '</div>' +
+              '<div class="env-stamp"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>' +
             '</div>' +
-            '<div class="history-item-body">' + escapeHtml(item.text) + '</div>' +
+            origCtx +
+            '<div class="env-letter-body">' +
+              '<div class="env-letter-preview">' + escapeHtml(preview) + '</div>' +
+              '<div class="env-letter-status">' + statusHtml + '</div>' +
+            '</div>' +
+            '<button class="env-letter-delete-btn" onclick="event.stopPropagation();window._deleteLetter(\'outbox\',\'' + letter.id + '\')">' +
+              '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+            '</button>' +
           '</div>';
         }).join("");
       }
 
-      input.addEventListener("input", function () {
-        wordCount.textContent = input.value.length;
-      });
+      function renderInbox() {
+        var list = lists.inbox;
+        if (currentData.inbox.length === 0) {
+          list.innerHTML = '<div class="env-empty">' +
+            '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/><polyline points="22 13 12 13"/><path d="M19 16l-5-3-5 3"/></svg>' +
+            '<div style="font-size:14px;font-weight:500;margin-top:4px;">还没有收到回信</div>' +
+            '<div style="font-size:12px;margin-top:6px;opacity:0.6;">对方正在认真回复中，请稍候~</div>' +
+          '</div>';
+          return;
+        }
+        list.innerHTML = currentData.inbox.slice().reverse().map(function (letter) {
+          var date = formatShortTime(letter.receivedTime || Date.now());
+          var preview = letter.content.length > 52 ? letter.content.substring(0, 52) + "…" : letter.content;
+          var newTag = letter.isNew ? '<span style="background:rgba(232,116,154,0.25);color:#fff;font-size:9px;padding:1px 5px;border-radius:6px;margin-left:6px;">新</span>' : "";
+          var origPreview = letter.originalContent ? (letter.originalContent.length > 32 ? letter.originalContent.substring(0, 32) + "…" : letter.originalContent) : "";
+          var origCtx = origPreview ? '<div style="padding:6px 12px 0;display:flex;align-items:flex-start;gap:6px;">' +
+            '<div style="width:2px;border-radius:2px;background:rgba(232,116,154,0.4);flex-shrink:0;align-self:stretch;min-height:14px;margin-top:1px;"></div>' +
+            '<div style="font-size:11px;color:var(--text-secondary);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 14px);opacity:0.75;">原信: ' + escapeHtml(origPreview) + '</div>' +
+          '</div>' : "";
+          return '<div class="env-letter-item ' + (letter.isNew ? "new" : "") + '" onclick="window._openView(\'inbox\',\'' + letter.id + '\')">' +
+            '<div class="env-letter-header">' +
+              '<div class="env-letter-header-from">' +
+                '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>' +
+                "收到 · " + date + newTag +
+              '</div>' +
+              '<div class="env-stamp"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>' +
+            '</div>' +
+            origCtx +
+            '<div class="env-letter-body">' +
+              '<div class="env-letter-preview">' + escapeHtml(preview) + '</div>' +
+            '</div>' +
+            '<button class="env-letter-delete-btn" onclick="event.stopPropagation();window._deleteLetter(\'inbox\',\'' + letter.id + '\')">' +
+              '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+            '</button>' +
+          '</div>';
+        }).join("");
+      }
 
-      sendBtn.addEventListener("click", function () {
-        var text = input.value.trim();
+      function renderDream() {
+        var list = lists.dream;
+        if (currentData.dream.length === 0) {
+          list.innerHTML = '<div class="env-empty">' +
+            '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>' +
+            '<div style="font-size:14px;font-weight:500;margin-top:4px;">还没有收到梦角来信</div>' +
+            '<div style="font-size:12px;margin-top:6px;opacity:0.6;">点击右上角“收信”，让梦角给你写一封信~</div>' +
+          '</div>';
+          return;
+        }
+        list.innerHTML = currentData.dream.slice().reverse().map(function (letter) {
+          var date = formatShortTime(letter.receivedTime || Date.now());
+          var preview = letter.content.length > 52 ? letter.content.substring(0, 52) + "…" : letter.content;
+          var newTag = letter.isNew ? '<span style="background:rgba(232,116,154,0.25);color:#fff;font-size:9px;padding:1px 5px;border-radius:6px;margin-left:6px;">新</span>' : "";
+          var hasReplied = currentData.outbox.some(function (l) { return l.replyToId === letter.id; });
+          return '<div class="env-letter-item ' + (letter.isNew ? "new" : "") + (hasReplied ? " reply" : "") + '" onclick="window._openView(\'dream\',\'' + letter.id + '\')">' +
+            '<div class="env-letter-header">' +
+              '<div class="env-letter-header-from">' +
+                '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>' +
+                "梦角 · " + date + newTag +
+              '</div>' +
+              '<div class="env-stamp"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></div>' +
+            '</div>' +
+            '<div class="env-letter-body">' +
+              '<div class="env-letter-preview">' + escapeHtml(preview) + '</div>' +
+              (hasReplied ? '<div class="env-letter-status"></div>' : "") +
+            '</div>' +
+            '<button class="env-letter-delete-btn" onclick="event.stopPropagation();window._deleteLetter(\'dream\',\'' + letter.id + '\')">' +
+              '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+            '</button>' +
+          '</div>';
+        }).join("");
+      }
+
+      function getOriginalContent(section, id) {
+        var arr = currentData[section];
+        if (!arr) return "";
+        var item = arr.find(function (l) { return l.id === id; });
+        return item ? item.content : "";
+      }
+
+      function openCompose() {
+        composeForm.classList.add("active");
+        sections.outbox.classList.remove("active");
+        sections.inbox.classList.remove("active");
+        sections.dream.classList.remove("active");
+        mainActionArea.style.display = "none";
+        letterInput.value = "";
+        sendToChat.checked = false;
+        scheduleSend.checked = false;
+        scheduleTimeWrap.classList.remove("open");
+        document.getElementById("composeTitle").textContent = "写一封信";
+        // schedule default = now + 1 hour rounded to minutes
+        var d = new Date(Date.now() + 3600000);
+        d.setSeconds(0, 0);
+        scheduleTime.value = toDateTimeLocal(d);
+      }
+      function cancelCompose() {
+        composeForm.classList.remove("active");
+        sections[currentTab].classList.add("active");
+        mainActionArea.style.display = "flex";
+      }
+
+      function toDateTimeLocal(d) {
+        var pad = function (n) { return String(n).padStart(2, "0"); };
+        return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+      }
+
+      function handleSend() {
+        var text = letterInput.value.trim();
         if (!text) { showToast("先写点什么吧"); return; }
 
-        sendBtn.disabled = true;
-        var letters = getLetters();
-        var t = nowTime();
-        letters.push({ type: "sent", text: text, time: t });
-        saveLetters(letters);
+        var scheduleChecked = scheduleSend.checked;
+        var scheduleValue = scheduleTime.value;
+        var scheduleTs = null;
+        if (scheduleChecked && scheduleValue) {
+          scheduleTs = new Date(scheduleValue).getTime();
+          if (scheduleTs <= Date.now()) { showToast("定时时间必须在未来"); return; }
+        }
 
-        input.value = "";
-        wordCount.textContent = "0";
-        showToast("信已寄出 ✉️");
+        sendLetter.disabled = true;
 
-        // 小火人互动埋点
-        try { (function(){var K="mengjiao_spark";var D=JSON.parse(localStorage.getItem(K)||"{}");var T=new Date();var t=T.getFullYear()+"-"+String(T.getMonth()+1).padStart(2,"0")+"-"+String(T.getDate()).padStart(2,"0");D.daily=D.daily||{};D.daily[t]=D.daily[t]||{chat:0,cards:0,moments:0};if(D.daily[t].chat<10){D.daily[t].chat++;D.totalInteractions=(D.totalInteractions||0)+1;D.exp=(D.exp||0)+3;D.totalExp=(D.totalExp||0)+3;if(t!==D.lastActiveDate){if(D.lastActiveDate===yesterday())D.streak=(D.streak||0)+1;else D.streak=1;D.lastActiveDate=t;}else if(!D.streak)D.streak=1;var L=[{lv:1,need:50},{lv:2,need:150},{lv:3,need:350},{lv:4,need:700},{lv:5,need:1200},{lv:6,need:2000}];while(D.level<7&&D.exp>=L[D.level-1].need){D.exp-=L[D.level-1].need;D.level++;}localStorage.setItem(K,JSON.stringify(D));}function yesterday(){var d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-        })(); } catch (e) {}
+        var letter = {
+          id: genId("outbox"),
+          content: text,
+          sentTime: scheduleChecked ? scheduleTs : Date.now(),
+          replyTime: Date.now() + replyDelay(),
+          status: scheduleChecked ? "scheduled" : "pending",
+          sendToChat: sendToChat.checked
+        };
 
-        // 延迟生成回信（5~20 秒，更像真实的写信节奏）
-        setTimeout(function () {
-          var reply = pickReply();
-          var rt = nowTime();
-          letters.push({ type: "reply", text: reply, time: rt });
-          saveLetters(letters);
-          renderReply(reply);
-          if (historyWrap.classList.contains("open")) renderHistory();
-          sendBtn.disabled = false;
-        }, replyDelay());
-      });
+        // 如果立即发送且勾选同步到聊天，直接写入聊天记录
+        if (!scheduleChecked && sendToChat.checked) {
+          addMessageToChat("【寄出的信】\n" + text);
+        }
 
-      historyToggle.addEventListener("click", function () {
-        historyWrap.classList.toggle("open");
-        historyToggle.textContent = historyWrap.classList.contains("open") ? "收起" : "历史";
-        if (historyWrap.classList.contains("open")) renderHistory();
-      });
+        currentData.outbox.push(letter);
+        saveData();
 
-      // 梦角主动来信（从字卡库抽取内容）
-      receiveLetterBtn.addEventListener("click", function () {
+        // 埋点：小火人互动
+        bumpSparkInteraction();
+
+        if (scheduleChecked) {
+          showToast("信件已设定，将在 " + formatShortTime(scheduleTs) + " 寄出 ✉️");
+        } else {
+          showToast("信件已寄出，正在加急寄给 " + getPartnerName() + " ✉️");
+          // 安排回信
+          setTimeout(function () { processReply(letter.id); }, letter.replyTime - Date.now());
+        }
+
+        cancelCompose();
+        switchTab("outbox");
+        sendLetter.disabled = false;
+      }
+
+      function processReply(outboxId) {
+        loadData();
+        var letter = currentData.outbox.find(function (l) { return l.id === outboxId; });
+        if (!letter || letter.status !== "pending") return;
+
+        // Replying to a dream letter has only 30% chance of receiving a reply back
+        if (letter.replyToSection === "dream" && letter.replyToId && Math.random() >= 0.3) {
+          letter.status = "replied";
+          saveData();
+          renderLists();
+          showToast("💌 已将回信送达梦角");
+          return;
+        }
+
+        letter.status = "replied";
+        var reply = {
+          id: genId("inbox"),
+          refId: letter.id,
+          originalContent: letter.content,
+          content: generateReplyText(8, 12),
+          receivedTime: Date.now(),
+          isNew: true
+        };
+        currentData.inbox.push(reply);
+        saveData();
+        renderLists();
+        if (currentTab !== "inbox") {
+          showReplyPopup(reply);
+        } else {
+          showToast("💌 收到了 " + getPartnerName() + " 的回信！");
+        }
+      }
+
+      function receiveDreamLetter() {
         if (receiveLetterBtn.disabled) return;
         receiveLetterBtn.disabled = true;
         showToast("梦角正在写信…");
-
         setTimeout(function () {
-          var reply = pickReply();
-          var rt = nowTime();
-          var letters = getLetters();
-          letters.push({ type: "dream_letter", text: reply, time: rt });
-          saveLetters(letters);
-          renderReply(reply, "梦角的来信");
-          if (historyWrap.classList.contains("open")) renderHistory();
+          var letter = {
+            id: genId("dream"),
+            content: generateDreamLetter(),
+            receivedTime: Date.now(),
+            isNew: true
+          };
+          currentData.dream.push(letter);
+          saveData();
+          renderLists();
+          showToast("💌 收到一封梦角来信！");
           receiveLetterBtn.disabled = false;
         }, replyDelay());
-      });
+      }
 
-      // 初始显示最新回信/来信（如果有）
-      var letters = getLetters();
-      if (letters.length > 0) {
-        var last = letters[letters.length - 1];
-        if (last.type === "reply") {
-          renderReply(last.text, "梦角的回信");
-        } else if (last.type === "dream_letter") {
-          renderReply(last.text, "梦角的来信");
+      function openView(section, id) {
+        var arr = currentData[section];
+        var letter = arr.find(function (l) { return l.id === id; });
+        if (!letter) return;
+        if ((section === "inbox" || section === "dream") && letter.isNew) {
+          letter.isNew = false;
+          saveData();
+          renderLists();
+        }
+        viewing = { section: section, id: id };
+
+        var title = section === "outbox" ? "寄出的信" : section === "inbox" ? "收到的回信" : "梦角来信";
+        viewTitle.textContent = title;
+
+        var ts = letter.receivedTime || letter.sentTime || letter.scheduleTime || Date.now();
+        viewStampDate.textContent = String(new Date(ts).getMonth()+1).padStart(2,"0") + "/" + String(new Date(ts).getDate()).padStart(2,"0");
+        viewDate.textContent = formatFullDate(ts);
+
+        var partner = getPartnerName();
+        var me = getMyName();
+        var toLine = "", greeting = "", signName = "";
+        if (section === "outbox") {
+          toLine = "致 " + partner + "：";
+          greeting = "见字如面，望君安好。";
+          signName = me;
+        } else if (section === "dream") {
+          toLine = "致 " + me + "：";
+          greeting = "见字如面，时空流转。";
+          signName = partner;
+        } else {
+          toLine = "致 " + me + "：";
+          greeting = "见字如面，一切皆好。";
+          signName = partner;
+        }
+        viewToLine.textContent = toLine;
+        viewGreetingLine.textContent = greeting;
+        viewContentText.textContent = letter.content;
+        viewSignDate.textContent = formatFullDate(ts);
+        viewSignName.textContent = signName;
+
+        var originalContent = "";
+        if (section === "inbox" && letter.originalContent) {
+          originalContent = letter.originalContent;
+          viewOriginalLabel.textContent = "你的原信";
+        } else if (section === "outbox" && letter.replyToSection && letter.replyToId) {
+          originalContent = getOriginalContent(letter.replyToSection, letter.replyToId);
+          viewOriginalLabel.textContent = "原信";
+        }
+        if (originalContent) {
+          viewOriginalCtx.classList.add("open");
+          viewOriginalText.textContent = originalContent;
+          viewOriginalText.style.maxHeight = "80px";
+          viewOriginalExpand.classList.toggle("open", originalContent.length > 120);
+          viewOriginalExpand.textContent = "展开查看全文";
+        } else {
+          viewOriginalCtx.classList.remove("open");
+          viewOriginalExpand.classList.remove("open");
+        }
+
+        viewEditArea.classList.remove("open");
+        editView.style.display = section === "outbox" || section === "dream" ? "inline-flex" : "none";
+        replyView.style.display = section === "inbox" || section === "dream" ? "inline-flex" : "none";
+        replyView.textContent = "回复";
+        replyView.dataset.mode = "";
+        replyView.className = "env-btn-primary";
+        editView.textContent = "编辑";
+
+        viewModal.classList.add("open");
+      }
+
+      function toggleOriginalExpand() {
+        var isExpanded = viewOriginalText.style.maxHeight === "none";
+        viewOriginalText.style.maxHeight = isExpanded ? "80px" : "none";
+        viewOriginalExpand.textContent = isExpanded ? "展开查看全文" : "收起";
+      }
+
+      function closeViewModal() {
+        viewModal.classList.remove("open");
+        viewing = { section: null, id: null };
+      }
+
+      function toggleEdit() {
+        if (editView.textContent === "编辑") {
+          viewEditArea.classList.add("open");
+          viewEditInput.value = getOriginalContent(viewing.section, viewing.id);
+          editView.textContent = "保存";
+        } else {
+          var text = viewEditInput.value.trim();
+          if (!text) { showToast("内容不能为空"); return; }
+          var letter = currentData[viewing.section].find(function (l) { return l.id === viewing.id; });
+          if (letter) {
+            letter.content = text;
+            saveData();
+            renderLists();
+            openView(viewing.section, viewing.id);
+            showToast("已保存");
+          }
         }
       }
+
+      function toggleReply() {
+        if (replyView.dataset.mode === "sending") {
+          var text = viewEditInput.value.trim();
+          if (!text) { showToast("回复内容不能为空"); return; }
+          var replyLetter = {
+            id: genId("outbox"),
+            content: text,
+            sentTime: Date.now(),
+            replyTime: Date.now() + replyDelay(),
+            status: "pending",
+            replyToId: viewing.id,
+            replyToSection: viewing.section
+          };
+          currentData.outbox.push(replyLetter);
+          saveData();
+          renderLists();
+          closeViewModal();
+          showToast("回信已寄出 ✉️");
+          setTimeout(function () { processReply(replyLetter.id); }, replyLetter.replyTime - Date.now());
+          return;
+        }
+        viewEditArea.classList.add("open");
+        viewEditInput.value = "";
+        viewEditInput.placeholder = "写下你的回复...";
+        replyView.textContent = "发送";
+        replyView.dataset.mode = "sending";
+        replyView.className = "env-btn-primary";
+        editView.style.display = "none";
+      }
+
+      function resetReplyButton() {
+        replyView.textContent = "回复";
+        replyView.dataset.mode = "";
+        replyView.className = "env-btn-primary";
+      }
+
+      function deleteLetter(section, id) {
+        if (!confirm("确定要删除这封信吗？")) return;
+        currentData[section] = currentData[section].filter(function (l) { return l.id !== id; });
+        saveData();
+        renderLists();
+        if (viewing.section === section && viewing.id === id) closeViewModal();
+        showToast("已删除");
+      }
+
+      function addMessageToChat(text) {
+        try {
+          var raw = localStorage.getItem(CHAT_MESSAGES_KEY);
+          var msgs = [];
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) msgs = parsed;
+          }
+          msgs.push({
+            id: Date.now(),
+            sender: "user",
+            text: text,
+            timestamp: new Date().toISOString(),
+            status: "sent",
+            type: "normal"
+          });
+          localStorage.setItem(CHAT_MESSAGES_KEY, JSON.stringify(msgs));
+        } catch (e) {}
+      }
+
+      function bumpSparkInteraction() {
+        try {
+          (function(){
+            var K = "mengjiao_spark";
+            var D = JSON.parse(localStorage.getItem(K) || "{}");
+            var T = new Date();
+            var t = T.getFullYear() + "-" + String(T.getMonth()+1).padStart(2,"0") + "-" + String(T.getDate()).padStart(2,"0");
+            D.daily = D.daily || {};
+            D.daily[t] = D.daily[t] || { chat: 0, cards: 0, moments: 0 };
+            if (D.daily[t].chat < 10) {
+              D.daily[t].chat++;
+              D.totalInteractions = (D.totalInteractions || 0) + 1;
+              D.exp = (D.exp || 0) + 3;
+              D.totalExp = (D.totalExp || 0) + 3;
+              if (t !== D.lastActiveDate) {
+                if (D.lastActiveDate === yesterday()) D.streak = (D.streak || 0) + 1;
+                else D.streak = 1;
+                D.lastActiveDate = t;
+              } else if (!D.streak) D.streak = 1;
+              var L = [{lv:1,need:50},{lv:2,need:150},{lv:3,need:350},{lv:4,need:700},{lv:5,need:1200},{lv:6,need:2000}];
+              while (D.level < 7 && D.exp >= L[D.level-1].need) { D.exp -= L[D.level-1].need; D.level++; }
+              localStorage.setItem(K, JSON.stringify(D));
+            }
+            function yesterday() { var d = new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+          })();
+        } catch (e) {}
+      }
+
+      // schedule checker
+      function checkScheduled() {
+        loadData();
+        var now = Date.now();
+        var changed = false;
+        currentData.outbox.forEach(function (letter) {
+          if (letter.status === "scheduled" && now >= letter.scheduleTime) {
+            letter.status = "pending";
+            letter.sentTime = now;
+            letter.replyTime = now + replyDelay();
+            changed = true;
+            if (letter.sendToChat) addMessageToChat("【寄出的信】\n" + letter.content);
+            showToast("定时信件已寄出 ✉️");
+            setTimeout(function () { processReply(letter.id); }, letter.replyTime - now);
+          }
+        });
+        if (changed) saveData();
+        renderLists();
+      }
+
+      /* event bindings */
+      tabBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () { switchTab(btn.dataset.tab); });
+      });
+      writeLetterBtn.addEventListener("click", openCompose);
+      cancelCompose.addEventListener("click", cancelCompose);
+      sendLetter.addEventListener("click", handleSend);
+      scheduleSend.addEventListener("change", function () {
+        scheduleTimeWrap.classList.toggle("open", scheduleSend.checked);
+      });
+      receiveLetterBtn.addEventListener("click", receiveDreamLetter);
+      closeView.addEventListener("click", closeViewModal);
+      editView.addEventListener("click", toggleEdit);
+      replyView.addEventListener("click", toggleReply);
+      viewOriginalExpand.addEventListener("click", toggleOriginalExpand);
+      replyPopupOverlay.addEventListener("click", function (e) {
+        if (e.target === replyPopupOverlay) replyPopupOverlay.classList.remove("open");
+      });
+      viewModal.addEventListener("click", function (e) {
+        if (e.target === viewModal) closeViewModal();
+      });
+
+      window._openView = openView;
+      window._deleteLetter = deleteLetter;
+
+      /* init */
+      loadData();
+      switchTab("outbox");
+      setInterval(checkScheduled, 3000);
+      // restore pending timers
+      currentData.outbox.forEach(function (l) {
+        if (l.status === "pending" && l.replyTime && l.replyTime > Date.now()) {
+          setTimeout(function () { processReply(l.id); }, l.replyTime - Date.now());
+        }
+      });
     })();
   </script>
 </body>
