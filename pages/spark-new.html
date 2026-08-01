@@ -171,6 +171,11 @@
       0%, 100% { opacity: 0.5; transform: scale(0.92); }
       50% { opacity: 0.9; transform: scale(1.05); }
     }
+    @keyframes heartFloat {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
+      50% { opacity: 0.8; transform: translate(-50%, -120%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
+    }
     .creature-svg-wrap {
       position: relative;
       z-index: 1;
@@ -965,6 +970,7 @@
           fullness: 60,
           mood: 60,
           lastFed: "",
+          lastVitalUpdate: "",
           foods: {}
         };
       }
@@ -988,8 +994,10 @@
                   if (d.level >= f.unlock) d.foods[f.id] = FOOD_DAILY_STOCK;
                 });
                 d.lastFed = t;
-                localStorage.setItem(SPARK_KEY, JSON.stringify(d));
               }
+              /* 根据离线时间更新饱食度/心情 */
+              this.updateVitals(d);
+              this.save(d);
               return d;
             }
           } catch (e) {}
@@ -999,7 +1007,21 @@
             if (fresh.level >= f.unlock) fresh.foods[f.id] = FOOD_DAILY_STOCK;
           });
           fresh.lastFed = t2;
+          fresh.lastVitalUpdate = new Date().toISOString();
           return fresh;
+        },
+        updateVitals: function (d) {
+          var now = new Date();
+          var last = d.lastVitalUpdate ? new Date(d.lastVitalUpdate) : now;
+          if (isNaN(last.getTime())) last = now;
+          var hours = Math.max(0, (now - last) / 3600000);
+          /* 每小时饱食度 -2，心情 -1；沉睡状态额外 -1 饱食 */
+          var state = this.getState();
+          var fullnessDrop = hours * 2 + (state === "sleeping" ? hours * 1 : 0);
+          var moodDrop = hours * 1;
+          d.fullness = Math.max(0, d.fullness - fullnessDrop);
+          d.mood = Math.max(0, d.mood - moodDrop);
+          d.lastVitalUpdate = now.toISOString();
         },
         save: function (d) {
           try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) {}
@@ -1093,6 +1115,23 @@
           });
           this.save(d);
           return { ok: true, food: food, leveledUp: leveledUp, level: d.level };
+        },
+        pet: function () {
+          var d = this.load();
+          if (d.mood >= MOOD_MAX) return { ok: false, reason: "max_mood" };
+          this.updateVitals(d);
+          d.mood = Math.min(MOOD_MAX, d.mood + 5);
+          d.exp += 1;
+          d.totalExp += 1;
+          d.totalInteractions++;
+          var leveledUp = false;
+          while (d.level < LEVELS.length && d.exp >= LEVELS[d.level - 1].need) {
+            d.exp -= LEVELS[d.level - 1].need;
+            d.level++;
+            leveledUp = true;
+          }
+          this.save(d);
+          return { ok: true, moodAdded: 5, leveledUp: leveledUp, level: d.level };
         },
         getState: function () {
           var d = this.load();
@@ -1632,18 +1671,27 @@
       feedModal.addEventListener("click", function (e) { if (e.target === feedModal) closeFeeder(); });
       makeupBtn.addEventListener("click", useMakeup);
 
-      /* Tap creature to cycle poses */
-      creatureSvg.addEventListener("click", function () {
+      /* Tap creature to pet */
+      creatureSvg.addEventListener("click", function (e) {
         var state = SparkTracker.getState();
         if (state === "sleeping") { toast("小火人沉睡中，快唤醒它吧 💤"); return; }
-        var curIdx = POSES.findIndex(function(p){return p.id===data.avatar.pose;});
-        if (curIdx === -1) curIdx = 0;
-        var next = POSES[(curIdx + 1) % POSES.length];
-        data.avatar.pose = next.id;
-        SparkTracker.save(data);
+        var result = SparkTracker.pet();
+        if (!result.ok) { toast("心情已经满啦，小火人很开心 ♡"); return; }
         render();
-        toast(next.emoji + " " + next.label);
+        toast("你拍了拍小火人，心情 +" + result.moodAdded + " ♡");
+        spawnHeart(e.clientX, e.clientY);
+        if (result.leveledUp) {
+          setTimeout(function(){ showLevelUp(result.level); }, 200);
+        }
       });
+
+      function spawnHeart(x, y) {
+        var heart = document.createElement("div");
+        heart.textContent = "♡";
+        heart.style.cssText = "position:fixed;left:" + x + "px;top:" + y + "px;font-size:20px;color:#e8749a;pointer-events:none;z-index:200;animation:heartFloat 1s ease-out forwards;";
+        document.body.appendChild(heart);
+        setTimeout(function(){ if (heart.parentNode) heart.parentNode.removeChild(heart); }, 1000);
+      }
 
       render();
 
