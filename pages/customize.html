@@ -433,9 +433,14 @@
             <button type="button" class="btn-ghost shrink-0" id="addCardReply">添加</button>
           </div>
           <ul id="cardReplyList" class="reply-list mt-3" role="list"></ul>
-          <div class="mt-2 flex items-center justify-between">
+          <div class="mt-2 flex items-center justify-between flex-wrap gap-2">
             <p class="hint">共 <span id="cardReplyCount">12</span> 条</p>
-            <button type="button" class="btn-ghost" id="resetCardReplies">恢复默认</button>
+            <div class="flex gap-2">
+              <button type="button" class="btn-ghost" id="exportCardReplies">📤 导出</button>
+              <button type="button" class="btn-ghost" id="importCardReplies">📥 导入</button>
+              <button type="button" class="btn-ghost" id="resetCardReplies">恢复默认</button>
+            </div>
+            <input type="file" id="cardImportInput" accept=".json" class="hidden" />
           </div>
         </div>
 
@@ -447,10 +452,28 @@
             <button type="button" class="btn-ghost shrink-0" id="addChatReply">添加</button>
           </div>
           <ul id="chatReplyList" class="reply-list mt-3" role="list"></ul>
-          <div class="mt-2 flex items-center justify-between">
+          <div class="mt-2 flex items-center justify-between flex-wrap gap-2">
             <p class="hint">共 <span id="chatReplyCount">8</span> 条</p>
-            <button type="button" class="btn-ghost" id="resetChatReplies">恢复默认</button>
+            <div class="flex gap-2">
+              <button type="button" class="btn-ghost" id="exportChatReplies">📤 导出</button>
+              <button type="button" class="btn-ghost" id="importChatReplies">📥 导入</button>
+              <button type="button" class="btn-ghost" id="resetChatReplies">恢复默认</button>
+            </div>
+            <input type="file" id="chatImportInput" accept=".json" class="hidden" />
           </div>
+        </div>
+
+        <div class="settings-card">
+          <h2 class="section-title text-lg">表情包</h2>
+          <p class="hint mt-1">上传自定义表情包，在聊天中可以直接发送。图片会自动压缩以节省空间。</p>
+          <div class="mt-4 flex gap-2 flex-wrap">
+            <button type="button" class="btn-ghost" id="uploadEmojiBtn">😊 上传表情包</button>
+            <button type="button" class="btn-ghost text-destructive" id="clearEmojiBtn">清空全部</button>
+            <input type="file" id="emojiInput" accept="image/*" multiple class="hidden" />
+          </div>
+          <div id="emojiGrid" class="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-6">
+          </div>
+          <p class="hint mt-3">共 <span id="emojiCount">0</span> 个表情包</p>
         </div>
 
         <div class="flex justify-end pt-2">
@@ -665,11 +688,36 @@
     });
 
     // ---- File upload helpers ----
+    function compressImage(file, maxWidth, quality, cb) {
+      maxWidth = maxWidth || 800;
+      quality = quality || 0.8;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxWidth) {
+            h = Math.round(h * (maxWidth / w));
+            w = maxWidth;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          cb(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => cb(e.target.result);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => cb(null);
+      reader.readAsDataURL(file);
+    }
+
     function readFile(file, cb) {
       if (!file || !file.type.startsWith('image/')) return cb(null);
-      const reader = new FileReader();
-      reader.onload = (e) => cb(e.target.result);
-      reader.readAsDataURL(file);
+      compressImage(file, 800, 0.8, cb);
     }
 
     const avMinePreview = document.getElementById('avMinePreview');
@@ -744,6 +792,143 @@
       setBgPreview('');
     });
 
+    // ---- Import/Export 回复库 ----
+    function exportReplies(replies, type) {
+      const data = {
+        version: 1,
+        type: type,
+        exportTime: new Date().toISOString(),
+        data: replies
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mengjiao_${type}_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('导出成功');
+    }
+
+    function importReplies(file, type, callback) {
+      if (!file || !file.name.endsWith('.json')) {
+        showToast('请选择 JSON 文件');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data && Array.isArray(data.data)) {
+            callback(data.data.filter(s => typeof s === 'string' && s.trim()));
+            showToast('导入成功，共 ' + data.data.length + ' 条');
+          } else {
+            showToast('文件格式不正确');
+          }
+        } catch (err) {
+          showToast('文件解析失败');
+        }
+      };
+      reader.onerror = () => showToast('文件读取失败');
+      reader.readAsText(file);
+    }
+
+    // 字卡库导入导出
+    document.getElementById('exportCardReplies').addEventListener('click', () => {
+      exportReplies(cardReplies, 'card_replies');
+    });
+    document.getElementById('importCardReplies').addEventListener('click', () => {
+      document.getElementById('cardImportInput').click();
+    });
+    document.getElementById('cardImportInput').addEventListener('change', (e) => {
+      importReplies(e.target.files[0], 'card_replies', (data) => {
+        cardReplies = data;
+        renderCardReplies();
+      });
+      e.target.value = '';
+    });
+
+    // 对话回复库导入导出
+    document.getElementById('exportChatReplies').addEventListener('click', () => {
+      exportReplies(chatReplies, 'chat_replies');
+    });
+    document.getElementById('importChatReplies').addEventListener('click', () => {
+      document.getElementById('chatImportInput').click();
+    });
+    document.getElementById('chatImportInput').addEventListener('change', (e) => {
+      importReplies(e.target.files[0], 'chat_replies', (data) => {
+        chatReplies = data;
+        renderChatReplies();
+      });
+      e.target.value = '';
+    });
+
+    // ---- 表情包管理 ----
+    let emojis = [];
+    const emojiGrid = document.getElementById('emojiGrid');
+    const emojiCount = document.getElementById('emojiCount');
+
+    function renderEmojis() {
+      emojiCount.textContent = String(emojis.length);
+      if (emojis.length === 0) {
+        emojiGrid.innerHTML = '<p class="hint col-span-full text-center py-4">暂无表情包，点击上方按钮上传</p>';
+        return;
+      }
+      emojiGrid.innerHTML = emojis.map((src, i) =>
+        '<div class="relative group">' +
+          '<img src="' + src + '" class="w-full h-16 object-contain rounded-lg border border-border p-1 bg-white" alt="表情 ' + (i+1) + '" />' +
+          '<button type="button" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" data-emoji-idx="' + i + '" aria-label="删除">×</button>' +
+        '</div>'
+      ).join('');
+    }
+
+    document.getElementById('uploadEmojiBtn').addEventListener('click', () => {
+      document.getElementById('emojiInput').click();
+    });
+    document.getElementById('emojiInput').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+      let loaded = 0;
+      files.forEach((file) => {
+        if (!file.type.startsWith('image/')) return;
+        compressImage(file, 128, 0.9, (data) => {
+          if (data) emojis.push(data);
+          loaded++;
+          if (loaded >= files.length) {
+            renderEmojis();
+            showToast('上传成功，共 ' + files.length + ' 个');
+          }
+        });
+      });
+      e.target.value = '';
+    });
+    document.getElementById('clearEmojiBtn').addEventListener('click', () => {
+      if (emojis.length === 0) return;
+      emojis = [];
+      renderEmojis();
+      showToast('已清空全部表情包');
+    });
+    emojiGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-emoji-idx]');
+      if (!btn) return;
+      const idx = parseInt(btn.getAttribute('data-emoji-idx'), 10);
+      if (isNaN(idx)) return;
+      emojis.splice(idx, 1);
+      renderEmojis();
+    });
+
+    // 加载已保存的表情包
+    try {
+      const saved = localStorage.getItem('mengjiao_emojis');
+      if (saved) {
+        emojis = JSON.parse(saved);
+        if (!Array.isArray(emojis)) emojis = [];
+      }
+    } catch(e) { emojis = []; }
+    renderEmojis();
+
     document.getElementById('saveBtn').addEventListener('click', () => {
       try {
         localStorage.setItem('mengjiao_together_date', togetherDateInput.value);
@@ -751,12 +936,13 @@
         localStorage.setItem('mengjiao_signature', sigInput.value);
         localStorage.setItem('mengjiao_card_replies', JSON.stringify(cardReplies));
         localStorage.setItem('mengjiao_chat_replies', JSON.stringify(chatReplies));
+        localStorage.setItem('mengjiao_emojis', JSON.stringify(emojis));
         if (tempAvatarImg) localStorage.setItem('mengjiao_avatar_img', tempAvatarImg); else localStorage.removeItem('mengjiao_avatar_img');
         if (tempDreamImg) localStorage.setItem('mengjiao_dream_img', tempDreamImg); else localStorage.removeItem('mengjiao_dream_img');
         if (tempBgImg) localStorage.setItem('mengjiao_bg_img', tempBgImg); else localStorage.removeItem('mengjiao_bg_img');
         showToast('设置已保存');
       } catch(e) {
-        showToast('保存失败，请重试');
+        showToast('保存失败，可能是图片太多导致空间不足');
       }
     });
   </script>

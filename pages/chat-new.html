@@ -236,6 +236,23 @@
       line-height: 1.4;
     }
 
+    /* 表情图片气泡 */
+    .message-emoji-img {
+      padding: 6px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 16px;
+      line-height: 0;
+    }
+    .message-emoji-img img {
+      max-width: 100px;
+      max-height: 100px;
+      border-radius: 10px;
+      display: block;
+    }
+
     .msg-meta {
       display: flex; align-items: center; gap: 4px;
       padding: 0 4px;
@@ -433,6 +450,53 @@
       transition: border-color 0.15s, background 0.15s, transform 0.1s;
     }
     .poke-item:active { transform: scale(0.98); border-color: var(--accent-color); background: rgba(232, 116, 154, 0.04); }
+
+    /* 表情包面板 */
+    .emoji-panel {
+      position: absolute;
+      bottom: 100%;
+      left: 0; right: 0;
+      background: var(--secondary-bg);
+      border-top: 1px solid rgba(232, 116, 154, 0.15);
+      padding: 12px 16px;
+      display: none;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      z-index: 20;
+      max-height: 240px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    .emoji-panel::-webkit-scrollbar { width: 4px; }
+    .emoji-panel::-webkit-scrollbar-thumb { background: rgba(232, 116, 154, 0.25); border-radius: 4px; }
+    .emoji-panel.show { display: grid; }
+    .emoji-item {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 10px;
+      border: 1px solid rgba(232, 116, 154, 0.12);
+      background: #fff;
+      padding: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .emoji-item:hover { border-color: var(--accent-color); background: rgba(232, 116, 154, 0.04); }
+    .emoji-item:active { transform: scale(0.95); }
+    .emoji-item img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .emoji-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 20px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
 
     /* ===== 引用预览（输入区） ===== */
     .quote-preview {
@@ -857,8 +921,12 @@
 
     <footer id="input-area" style="position:relative;">
       <div class="poke-panel" id="pokePanel"></div>
+      <div class="emoji-panel" id="emojiPanel"></div>
       <button class="input-tool" id="pokeBtn" aria-label="拍一拍" title="拍一拍">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+      </button>
+      <button class="input-tool" id="emojiBtn" aria-label="表情包" title="表情包">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
       </button>
       <button class="input-tool" id="quickBtn" aria-label="快捷回复" title="快捷回复">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -2065,6 +2133,7 @@
       pokeBtn.addEventListener("click", function () {
         pokePanel.classList.toggle("show");
         quickPanel.classList.remove("show");
+        emojiPanel.classList.remove("show");
         if (pokePanel.classList.contains("show") && !pokePanel.dataset.loaded) {
           pokePanel.innerHTML = POKE_OPTIONS.map(function (p) {
             return '<div class="poke-item">' + escapeHtml(p) + '</div>';
@@ -2083,10 +2152,90 @@
           });
         }
       });
-
+      emojiBtn.addEventListener("click", function () {
+        emojiPanel.classList.toggle("show");
+        pokePanel.classList.remove("show");
+        quickPanel.classList.remove("show");
+        if (emojiPanel.classList.contains("show")) {
+          renderEmojiPanel();
+        }
+      });
+      function getEmojis() {
+        try {
+          var raw = localStorage.getItem("mengjiao_emojis");
+          if (raw) {
+            var arr = JSON.parse(raw);
+            if (Array.isArray(arr)) return arr;
+          }
+        } catch (e) {}
+        return [];
+      }
+      function renderEmojiPanel() {
+        var emojis = getEmojis();
+        if (emojis.length === 0) {
+          emojiPanel.innerHTML = '<div class="emoji-empty">还没有表情包哦～<br/>去「自定义」页面上传吧</div>';
+          return;
+        }
+        emojiPanel.innerHTML = emojis.map(function (src, i) {
+          return '<div class="emoji-item" data-emoji-idx="' + i + '"><img src="' + src + '" alt="表情" /></div>';
+        }).join("");
+        emojiPanel.querySelectorAll(".emoji-item").forEach(function (el) {
+          el.addEventListener("click", function () {
+            var idx = parseInt(el.getAttribute("data-emoji-idx"), 10);
+            var emojiSrc = emojis[idx];
+            if (!emojiSrc) return;
+            sendEmoji(emojiSrc);
+            emojiPanel.classList.remove("show");
+          });
+        });
+      }
+      function sendEmoji(src) {
+        if (isReplying) return;
+        var time = nowTime();
+        var msgId = "msg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+        var msgTs = new Date().toISOString();
+        var row = document.createElement("div");
+        row.className = "msg-row right";
+        row.dataset.id = msgId;
+        var col = document.createElement("div");
+        col.className = "msg-col";
+        var bubble = document.createElement("div");
+        bubble.className = "message-emoji-img";
+        bubble.innerHTML = '<img src="' + src + '" alt="表情" />';
+        col.appendChild(bubble);
+        var metaEl = document.createElement("div");
+        metaEl.className = "msg-meta";
+        var timeEl = document.createElement("span");
+        timeEl.className = "msg-time";
+        timeEl.textContent = time;
+        if (chatSettings.timeFormat === "off") timeEl.style.display = "none";
+        metaEl.appendChild(timeEl);
+        if (chatSettings.timeFormat !== "off") {
+          var statusEl = document.createElement("span");
+          statusEl.className = "msg-status";
+          statusEl.textContent = chatSettings.readReceipts ? "已送达" : "";
+          metaEl.appendChild(statusEl);
+        }
+        col.appendChild(metaEl);
+        row.appendChild(col);
+        stream.appendChild(row);
+        if (emptyState) emptyState.style.display = "none";
+        scrollBottom();
+        var messages = getMessages();
+        messages.push({ side: "right", text: "[表情]", time: time, read: false, id: msgId, ts: msgTs, isEmojiImg: true, emojiSrc: src });
+        saveMessages(messages);
+        input.value = "";
+        input.style.height = "auto";
+        resetIdleTimer();
+        if (!chatSettings.readNoReply) {
+          simulateReply();
+        }
+      }
       quickBtn.addEventListener("click", function () {
+
         quickPanel.classList.toggle("show");
         pokePanel.classList.remove("show");
+        emojiPanel.classList.remove("show");
         if (quickPanel.classList.contains("show") && !quickPanel.dataset.loaded) {
           quickPanel.innerHTML = QUICK_REPLIES.map(function (q) {
             return '<div class="quick-chip">' + escapeHtml(q) + '</div>';
@@ -2127,6 +2276,7 @@
       document.addEventListener("click", function (e) {
         if (!e.target.closest("#pokeBtn") && !e.target.closest("#pokePanel")) pokePanel.classList.remove("show");
         if (!e.target.closest("#quickBtn") && !e.target.closest("#quickPanel")) quickPanel.classList.remove("show");
+        if (!e.target.closest("#emojiBtn") && !e.target.closest("#emojiPanel")) emojiPanel.classList.remove("show");
         if (!e.target.closest("#msgContextMenu")) hideContextMenu();
       });
 
