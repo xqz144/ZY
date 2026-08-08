@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>梦角传讯</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../colors_and_type.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: 'hsl(var(--card))',
+            'card-foreground': 'hsl(var(--card-foreground))',
+            primary: 'hsl(var(--primary))',
+            'primary-foreground': 'hsl(var(--primary-foreground))',
+            secondary: 'hsl(var(--secondary))',
+            'secondary-foreground': 'hsl(var(--secondary-foreground))',
+            muted: 'hsl(var(--muted))',
+            'muted-foreground': 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--accent))',
+            'accent-foreground': 'hsl(var(--accent-foreground))',
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+          },
+          fontFamily: {
+            sans: ['"DreamFont"', '"Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            serif: ['"DreamFont"', '"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif']
+          },
+        }
+      }
+    };
+  </script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f0f5;
+    }
+    .phone {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 880px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    @media (min-width: 480px) {
+      .phone {
+        height: 860px;
+        border-radius: 40px;
+        border: 10px solid #2d2a32;
+        box-shadow: 0 25px 60px -15px rgba(100, 80, 120, 0.35), 0 0 0 2px #1a1820;
+      }
+      .phone::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 150px; height: 28px;
+        background: #1a1820;
+        border-radius: 0 0 18px 18px;
+        z-index: 100;
+      }
+    }
+    .app-bg {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      scrollbar-width: none;
+    }
+    .app-bg::-webkit-scrollbar { display: none; }
+    .app-bg-fallback {
+      background:
+        radial-gradient(ellipse 500px 300px at 50% 0%, rgba(255, 230, 240, 0.8), transparent 60%),
+        radial-gradient(ellipse 400px 250px at 10% 20%, rgba(255, 240, 245, 0.6), transparent 55%),
+        radial-gradient(ellipse 350px 200px at 90% 40%, rgba(245, 235, 250, 0.5), transparent 50%),
+        linear-gradient(180deg, #faf6fa, #f0eaf0);
+    }
+
+    /* 状态栏 */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #3d2030;
+    }
+    .status-bar .time {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .status-bar .right-icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+    }
+    .status-bar .battery {
+      width: 22px;
+      height: 11px;
+      border: 1.5px solid #3d2030;
+      border-radius: 3px;
+      position: relative;
+    }
+    .status-bar .battery::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2px;
+      height: 5px;
+      background: #3d2030;
+      border-radius: 0 2px 2px 0;
+    }
+    .status-bar .battery-fill {
+      position: absolute;
+      left: 1px; top: 1px; bottom: 1px;
+      width: 75%;
+      background: #3d2030;
+      border-radius: 1px;
+    }
+
+    /* 日历小组件 */
+    .calendar-widget {
+      margin: 8px 16px 12px;
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 20px -6px rgba(180, 150, 180, 0.15);
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+    .calendar-month {
+      font-family: var(--font-serif);
+      font-size: 15px;
+      font-weight: 600;
+      color: #5a4050;
+    }
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 10px;
+      color: #b090a0;
+      margin-bottom: 6px;
+    }
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      text-align: center;
+    }
+    .calendar-day {
+      font-size: 11px;
+      padding: 4px 0;
+      color: #7a6070;
+      border-radius: 8px;
+    }
+    .calendar-day.today {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: white;
+      font-weight: 600;
+    }
+    .calendar-day.other-month {
+      color: #d0c0d0;
+    }
+    .calendar-day.heart::after {
+      content: '♥';
+      position: absolute;
+      font-size: 6px;
+      color: #e8749a;
+    }
+
+    /* 个人卡片 */
+    .profile-card {
+      margin: 0 16px 12px;
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 20px -6px rgba(180, 150, 180, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 100px; height: 100px;
+      background: radial-gradient(circle, rgba(244, 160, 188, 0.2), transparent 70%);
+      border-radius: 50%;
+    }
+    .profile-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: relative;
+      z-index: 1;
+    }
+    .avatar-circle {
+      width: 56px; height: 56px; border-radius: 9999px; flex-shrink: 0;
+      display: grid; place-items: center; font-size: 1.5rem;
+      background: linear-gradient(135deg, #ffe4ec, #f4a0bc);
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 12px rgba(232, 116, 154, 0.2);
+      overflow: hidden;
+    }
+    .avatar-circle img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .profile-info { flex: 1; min-width: 0; }
+    .profile-name {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      font-weight: 600;
+      color: #4a3040;
+    }
+    .profile-sig {
+      font-size: 12px;
+      color: #9a8090;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-style: italic;
+    }
+    .days-counter {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .days-num {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .days-label {
+      font-size: 10px;
+      color: #b090a0;
+      margin-top: 2px;
+    }
+
+    /* Fun Widgets 圆形图标区 */
+    .widget-label {
+      padding: 6px 24px 8px;
+      font-family: var(--font-serif);
+      font-size: 13px;
+      font-weight: 600;
+      color: #7a6070;
+    }
+    .widget-row {
+      display: flex;
+      justify-content: space-around;
+      padding: 0 20px 14px;
+    }
+    .widget-circle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .widget-circle:active { transform: scale(0.9); }
+    .widget-circle-icon {
+      width: 52px; height: 52px;
+      border-radius: 9999px;
+      display: grid; place-items: center;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 12px rgba(180, 150, 180, 0.15);
+      overflow: hidden;
+    }
+    .widget-circle-icon img {
+      width: 36px; height: 36px;
+      border-radius: 9999px;
+      object-fit: cover;
+    }
+    .widget-circle-label {
+      font-size: 10px;
+      color: #7a6070;
+    }
+
+    /* 语录按钮 */
+    .quote-row {
+      display: flex;
+      gap: 10px;
+      padding: 0 16px 14px;
+    }
+    .quote-btn {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      font-family: var(--font-serif);
+      font-size: 12px;
+      font-weight: 500;
+      color: #6a5060;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+      box-shadow: 0 2px 10px -3px rgba(180, 150, 180, 0.1);
+    }
+    .quote-btn:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    /* 音乐小组件 */
+    .music-widget {
+      margin: 0 16px 14px;
+      padding: 14px 16px;
+      border-radius: 20px;
+      background: rgba(45, 35, 50, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 20px -6px rgba(60, 40, 70, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .music-widget:active { transform: scale(0.98); }
+    .music-cover {
+      width: 48px; height: 48px;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      display: grid; place-items: center;
+      flex-shrink: 0;
+      position: relative;
+      animation: spin 8s linear infinite;
+      animation-play-state: paused;
+    }
+    .music-widget:hover .music-cover { animation-play-state: running; }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .music-cover::before {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      border-radius: 9999px;
+      background: rgba(45, 35, 50, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    .music-cover img {
+      width: 100%; height: 100%;
+      border-radius: 9999px;
+      object-fit: cover;
+    }
+    .music-info { flex: 1; min-width: 0; }
+    .music-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .music-artist {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 2px;
+    }
+    .music-play-btn {
+      width: 32px; height: 32px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.2);
+      display: grid; place-items: center;
+      color: #fff;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    /* App 图标网格 */
+    .section-label {
+      padding: 10px 24px 8px;
+      font-family: var(--font-serif);
+      font-size: 13px;
+      font-weight: 600;
+      color: #7a6070;
+    }
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px 4px;
+      padding: 4px 12px 10px;
+    }
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 2px;
+      border-radius: 16px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.1s;
+    }
+    .app-item:active { transform: scale(0.9); }
+    .app-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      display: grid; place-items: center;
+      overflow: hidden;
+      box-shadow: 0 4px 12px -3px rgba(180, 150, 180, 0.2);
+      background: #fff;
+    }
+    .app-icon img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .app-label {
+      font-size: 10.5px;
+      color: #5a4050;
+      text-align: center;
+      line-height: 1.3;
+      font-weight: 500;
+    }
+
+    /* Dock 栏 */
+    .dock {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin: auto 16px 12px;
+      padding: 10px 14px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 20px -6px rgba(180, 150, 180, 0.15);
+    }
+    .dock-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      text-decoration: none; cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .dock-item:active { transform: scale(0.9); }
+    .dock-icon {
+      width: 46px; height: 46px;
+      border-radius: 14px;
+      display: grid; place-items: center;
+      overflow: hidden;
+      box-shadow: 0 3px 10px -3px rgba(180, 150, 180, 0.18);
+      background: #fff;
+    }
+    .dock-icon img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .dock-label { font-size: 9.5px; color: #7a6070; font-weight: 500; }
+
+    /* 设置按钮 - 右上角 */
+    .settings-btn {
+      position: absolute;
+      top: 44px;
+      right: 20px;
+      width: 36px; height: 36px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      display: grid; place-items: center;
+      cursor: pointer;
+      z-index: 50;
+      text-decoration: none;
+      transition: transform 0.15s;
+      box-shadow: 0 2px 10px rgba(180, 150, 180, 0.15);
+    }
+    .settings-btn:active { transform: scale(0.9); }
+    .settings-btn img {
+      width: 22px; height: 22px;
+    }
+
+    .home-indicator {
+      display: flex; justify-content: center; padding: 6px 0 10px;
+    }
+    .home-indicator span {
+      width: 130px; height: 4px; border-radius: 9999px;
+      background: rgba(90, 64, 80, 0.3);
+    }
+
+    @keyframes appFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+    .app-item, .dock-item, .widget-circle, .quote-btn, .music-widget {
+      animation: appFadeIn 0.4s cubic-bezier(0.3, 0, 0, 1) both;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* 星星装饰 */
+    .star-deco {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="app-bg app-bg-fallback" id="appBg">
+      <!-- 设置按钮 -->
+      <a href="customize.html" class="settings-btn" aria-label="自定义设置">
+        <img src="icon-settings.png" alt="设置" />
+      </a>
+
+      <!-- 状态栏 -->
+      <div class="status-bar">
+        <span class="time" id="statusTime">09:41</span>
+        <div class="right-icons">
+          <span>📶</span>
+          <span>📡</span>
+          <div class="battery">
+            <div class="battery-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 日历小组件 -->
+      <div class="calendar-widget">
+        <div class="calendar-header">
+          <span class="calendar-month" id="calendarMonth">2026年08月</span>
+        </div>
+        <div class="calendar-weekdays">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div class="calendar-days" id="calendarDays">
+          <!-- JS 生成 -->
+        </div>
+      </div>
+
+      <!-- 个人信息卡片 -->
+      <div class="profile-card">
+        <div class="profile-row">
+          <div class="avatar-circle" id="avatarEmoji">🌙</div>
+          <div class="profile-info">
+            <div class="profile-name" id="username">@my_profile</div>
+            <div class="profile-sig" id="signature">今天也要加油呀 ✨</div>
+          </div>
+          <div class="days-counter">
+            <div class="days-num" id="daysNum">769</div>
+            <div class="days-label">天 · 在一起</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fun Widgets 圆形图标 -->
+      <div class="widget-label">Fun Widgets</div>
+      <div class="widget-row">
+        <a href="cards-new.html" class="widget-circle" style="animation-delay:0.05s">
+          <div class="widget-circle-icon">
+            <img src="icon-cards.png" alt="字卡" />
+          </div>
+          <span class="widget-circle-label">字卡</span>
+        </a>
+        <a href="chat-new.html" class="widget-circle" style="animation-delay:0.1s">
+          <div class="widget-circle-icon">
+            <img src="icon-chat.png" alt="对话" />
+          </div>
+          <span class="widget-circle-label">对话</span>
+        </a>
+        <a href="moments-new.html" class="widget-circle" style="animation-delay:0.15s">
+          <div class="widget-circle-icon">
+            <img src="icon-moments.png" alt="朋友圈" />
+          </div>
+          <span class="widget-circle-label">朋友圈</span>
+        </a>
+        <a href="spark-new.html" class="widget-circle" style="animation-delay:0.2s">
+          <div class="widget-circle-icon">
+            <img src="icon-spark.png" alt="小火人" />
+          </div>
+          <span class="widget-circle-label">小火人</span>
+        </a>
+      </div>
+
+      <!-- 语录按钮 -->
+      <div class="quote-row">
+        <a href="diary-new.html" class="quote-btn" style="animation-delay:0.25s">命运是我的肋骨</a>
+        <a href="letter-new.html" class="quote-btn" style="animation-delay:0.3s">你长在我的痛处</a>
+      </div>
+
+      <!-- 音乐小组件 -->
+      <a href="music-new.html" class="music-widget" style="animation-delay:0.35s">
+        <div class="music-cover">
+          <img src="icon-music.png" alt="音乐" />
+        </div>
+        <div class="music-info">
+          <div class="music-title">梦角传讯 BGM</div>
+          <div class="music-artist">背景音乐</div>
+        </div>
+        <div class="music-play-btn">▶</div>
+      </a>
+
+      <!-- 传讯 App 组 -->
+      <div class="section-label">传讯</div>
+      <div class="app-grid">
+        <a href="cards-new.html" class="app-item" style="animation-delay:0.4s">
+          <div class="app-icon">
+            <img src="icon-cards.png" alt="字卡传讯" />
+          </div>
+          <span class="app-label">字卡传讯</span>
+        </a>
+        <a href="chat-new.html" class="app-item" style="animation-delay:0.42s">
+          <div class="app-icon">
+            <img src="icon-chat.png" alt="梦角对话" />
+          </div>
+          <span class="app-label">梦角对话</span>
+        </a>
+        <a href="moments-new.html" class="app-item" style="animation-delay:0.44s">
+          <div class="app-icon">
+            <img src="icon-moments.png" alt="朋友圈" />
+          </div>
+          <span class="app-label">朋友圈</span>
+        </a>
+        <a href="history-new.html" class="app-item" style="animation-delay:0.46s">
+          <div class="app-icon">
+            <img src="icon-diary.png" alt="传讯记录" />
+          </div>
+          <span class="app-label">传讯记录</span>
+        </a>
+      </div>
+
+      <!-- 日记 App 组 -->
+      <div class="section-label">日记</div>
+      <div class="app-grid">
+        <a href="diary-new.html" class="app-item" style="animation-delay:0.5s">
+          <div class="app-icon">
+            <img src="icon-diary.png" alt="梦境日记" />
+          </div>
+          <span class="app-label">梦境日记</span>
+        </a>
+        <a href="letter-new.html" class="app-item" style="animation-delay:0.52s">
+          <div class="app-icon">
+            <img src="icon-letter.png" alt="给梦角的信" />
+          </div>
+          <span class="app-label">给梦角的信</span>
+        </a>
+        <a href="anniversary-new.html" class="app-item" style="animation-delay:0.54s">
+          <div class="app-icon">
+            <img src="icon-anniversary.png" alt="纪念日" />
+          </div>
+          <span class="app-label">纪念日</span>
+        </a>
+        <a href="wish-new.html" class="app-item" style="animation-delay:0.56s">
+          <div class="app-icon">
+            <img src="icon-wish.png" alt="心愿" />
+          </div>
+          <span class="app-label">心愿</span>
+        </a>
+        <a href="music-new.html" class="app-item" style="animation-delay:0.58s">
+          <div class="app-icon">
+            <img src="icon-music.png" alt="背景音乐" />
+          </div>
+          <span class="app-label">背景音乐</span>
+        </a>
+        <a href="spark-new.html" class="app-item" style="animation-delay:0.6s">
+          <div class="app-icon">
+            <img src="icon-spark.png" alt="小火人" />
+          </div>
+          <span class="app-label">小火人</span>
+        </a>
+        <a href="customize.html" class="app-item" style="animation-delay:0.62s">
+          <div class="app-icon">
+            <img src="icon-settings.png" alt="自定义" />
+          </div>
+          <span class="app-label">自定义</span>
+        </a>
+      </div>
+
+      <!-- Dock 栏 -->
+      <div class="dock">
+        <a href="cards-new.html" class="dock-item" style="animation-delay:0.65s">
+          <div class="dock-icon">
+            <img src="icon-cards.png" alt="字卡" />
+          </div>
+          <span class="dock-label">字卡</span>
+        </a>
+        <a href="chat-new.html" class="dock-item" style="animation-delay:0.68s">
+          <div class="dock-icon">
+            <img src="icon-chat.png" alt="对话" />
+          </div>
+          <span class="dock-label">对话</span>
+        </a>
+        <a href="moments-new.html" class="dock-item" style="animation-delay:0.7s">
+          <div class="dock-icon">
+            <img src="icon-moments.png" alt="朋友圈" />
+          </div>
+          <span class="dock-label">朋友圈</span>
+        </a>
+        <a href="spark-new.html" class="dock-item" style="animation-delay:0.72s">
+          <div class="dock-icon">
+            <img src="icon-spark.png" alt="小火人" />
+          </div>
+          <span class="dock-label">小火人</span>
+        </a>
+      </div>
+
+      <div class="home-indicator">
+        <span></span>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      "use strict";
+      var KEYS = {
+        togetherDate: "mengjiao_together_date",
+        signature: "mengjiao_signature",
+        username: "mengjiao_username",
+        avatarEmoji: "mengjiao_avatar_emoji",
+        avatarImg: "mengjiao_avatar_img",
+        bgImg: "mengjiao_bg_img"
+      };
+      var DEFAULTS = {
+        signature: "今天也要加油呀 ✨",
+        username: "@my_profile",
+        avatarEmoji: "🌙"
+      };
+      function getItem(key, fallback) {
+        try {
+          var v = localStorage.getItem(key);
+          if (v !== null && v !== "") return v;
+        } catch (e) {}
+        return fallback;
+      }
+      function calcDays(dateStr) {
+        if (!dateStr) return 769;
+        var start = new Date(dateStr + "T00:00:00");
+        if (isNaN(start.getTime())) return 769;
+        var now = new Date();
+        now.setHours(0, 0, 0, 0);
+        var days = Math.floor((now - start) / 86400000);
+        return days < 0 ? 0 : days;
+      }
+
+      // 更新状态栏时间
+      function updateStatusTime() {
+        var now = new Date();
+        var h = String(now.getHours()).padStart(2, '0');
+        var m = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById("statusTime").textContent = h + ':' + m;
+      }
+      updateStatusTime();
+      setInterval(updateStatusTime, 60000);
+
+      // 生成日历
+      function renderCalendar() {
+        var now = new Date();
+        var year = now.getFullYear();
+        var month = now.getMonth();
+        var today = now.getDate();
+
+        document.getElementById("calendarMonth").textContent = year + '年' + String(month + 1).padStart(2, '0') + '月';
+
+        var firstDay = new Date(year, month, 1).getDay();
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
+        var daysInPrevMonth = new Date(year, month, 0).getDate();
+
+        var html = '';
+        // 上月末尾
+        for (var i = firstDay - 1; i >= 0; i--) {
+          html += '<div class="calendar-day other-month">' + (daysInPrevMonth - i) + '</div>';
+        }
+        // 本月
+        for (var d = 1; d <= daysInMonth; d++) {
+          if (d === today) {
+            html += '<div class="calendar-day today">' + d + '</div>';
+          } else {
+            html += '<div class="calendar-day">' + d + '</div>';
+          }
+        }
+        // 下月开头（补满6行）
+        var totalCells = firstDay + daysInMonth;
+        var remaining = (7 - (totalCells % 7)) % 7;
+        for (var j = 1; j <= remaining; j++) {
+          html += '<div class="calendar-day other-month">' + j + '</div>';
+        }
+
+        document.getElementById("calendarDays").innerHTML = html;
+      }
+      renderCalendar();
+
+      // 个人信息
+      var savedDate = getItem(KEYS.togetherDate, "");
+      document.getElementById("daysNum").textContent = savedDate ? String(calcDays(savedDate)) : "769";
+      document.getElementById("signature").textContent = getItem(KEYS.signature, DEFAULTS.signature);
+      document.getElementById("username").textContent = getItem(KEYS.username, DEFAULTS.username);
+
+      var avatarEl = document.getElementById("avatarEmoji");
+      var avatarImg = getItem(KEYS.avatarImg, "");
+      if (avatarImg) {
+        avatarEl.innerHTML = '<img src="' + avatarImg + '" alt="" />';
+      } else {
+        avatarEl.textContent = getItem(KEYS.avatarEmoji, DEFAULTS.avatarEmoji);
+      }
+
+      var bgImg = getItem(KEYS.bgImg, "");
+      var appBg = document.getElementById("appBg");
+      if (bgImg) {
+        appBg.style.backgroundImage = 'url(' + bgImg + ')';
+        appBg.classList.remove("app-bg-fallback");
+      }
+
+      document.body.addEventListener('touchmove', function(e) {
+        if (e.target.closest('.app-bg')) return;
+        e.preventDefault();
+      }, { passive: false });
+    })();
+  </script>
+</body>
+</html>
