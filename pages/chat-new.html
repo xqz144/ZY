@@ -204,8 +204,8 @@ body {
       }
     </style>
 </head>
-<body class="m-0 h-screen overflow-hidden bg-[var(--chat-bg)] text-[var(--text-primary)] antialiased">
-  <div id="chat-app" class="relative flex h-screen w-full flex-col bg-[var(--chat-bg)]">
+<body class="m-0 overflow-hidden bg-[var(--chat-bg)] text-[var(--text-primary)] antialiased" style="height:100vh;height:100dvh;">
+  <div id="chat-app" class="relative flex w-full flex-col bg-[var(--chat-bg)]" style="height:100vh;height:100dvh;--composer-h:96px;">
     <!-- 手绘风背景装饰 -->
     <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
       <div class="absolute -left-8 top-[12%] text-[80px] opacity-[0.06]" style="transform: rotate(-12deg);">✿</div>
@@ -253,7 +253,7 @@ body {
     </header>
 
     <!-- 消息流 -->
-    <main id="message-stream" class="relative z-10 flex flex-1 flex-col gap-2.5 overflow-y-auto px-3 pb-2 pt-3 [-webkit-overflow-scrolling:touch] md:px-4 md:gap-3 md:pt-4" aria-live="polite">
+    <main id="message-stream" class="relative z-10 flex flex-1 flex-col gap-2.5 overflow-y-auto px-3 pt-3 [-webkit-overflow-scrolling:touch] md:px-4 md:gap-3 md:pt-4" style="padding-bottom:calc(var(--composer-h) + 8px);" aria-live="polite">
       <div id="emptyState" class="empty-state absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-5 text-center">
         <div class="empty-state-icon relative mb-5">
           <span class="heart text-[56px] text-[var(--accent-color)] opacity-50">❤</span>
@@ -927,6 +927,49 @@ body {
       #input-area { border-radius: 18px; margin-left: 10px; margin-right: 10px; margin-bottom: 10px; }
       .settings-panel { border-radius: 20px 20px 0 0; max-height: 88vh; }
       .message-sent, .message-received { max-width: 100%; }
+    }
+
+    /* 顶部栏滚动时：阴影加强 + 轻微上移紧凑 */
+    #partner-info {
+      transition: box-shadow 0.3s ease, transform 0.3s ease, background 0.3s ease, padding-top 0.3s ease, padding-bottom 0.3s ease;
+      will-change: transform, box-shadow;
+    }
+    #partner-info.scrolled {
+      box-shadow: 0 12px 28px -6px rgba(232, 164, 184, 0.18), 0 4px 10px -2px rgba(232, 164, 184, 0.10);
+      transform: translateY(-1px);
+    }
+    @media (max-width: 479px) {
+      #partner-info.scrolled { padding-top: 40px; padding-bottom: 10px; }
+    }
+
+    /* 发送按钮：禁用时灰度+透明，启用时有脉冲光晕 */
+    #send-btn { transition: opacity 0.2s, transform 0.15s, filter 0.2s, box-shadow 0.2s, background 0.2s; }
+    #send-btn:disabled {
+      filter: grayscale(30%);
+      opacity: 0.55;
+      box-shadow: none !important;
+      cursor: not-allowed;
+    }
+    #send-btn:not(:disabled) {
+      animation: sendReadyPulse 2.6s ease-in-out infinite;
+    }
+    @keyframes sendReadyPulse {
+      0%, 100% { box-shadow: 0 4px 14px rgba(232, 164, 184, 0.4); }
+      50% { box-shadow: 0 4px 18px rgba(232, 164, 184, 0.55), 0 0 0 3px rgba(232, 164, 184, 0.12); }
+    }
+
+    /* 输入区展开动画 + safe-area 加强 */
+    #input-area {
+      transition: box-shadow 0.3s ease, transform 0.25s ease;
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    }
+    #input-area.focused {
+      box-shadow: 0 -6px 24px -4px rgba(232, 164, 184, 0.22), var(--shadow-md);
+    }
+
+    /* 输入框高度平滑过渡（max-height 控制动画） */
+    #message-input {
+      transition: height 0.22s cubic-bezier(.2,.8,.2,1), box-shadow 0.2s, border-color 0.2s, min-height 0.22s;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -2189,10 +2232,11 @@ body {
         typings.forEach(function (t) { t.remove(); });
 
         isReplying = false;
-        sendBtn.disabled = false;
         input.disabled = false;
         statusText.textContent = "在线";
         continueBar.style.display = "flex";
+        updateSendBtnState();
+        updateComposerHeight();
         input.focus();
         if (chatSettings.autoSend) resetIdleTimer();
         if (chatSettings.autoPoke) resetPokeTimer();
@@ -2223,6 +2267,8 @@ body {
         input.classList.remove("expanded");
         input.style.height = "36px";
         input.style.overflow = "hidden";
+        updateSendBtnState();
+        updateComposerHeight();
         lastUserText = text;
         resetIdleTimer();
         if (chatSettings.readNoReply) {
@@ -2614,26 +2660,65 @@ body {
       /* ===== 事件绑定 ===== */
       form.addEventListener("submit", function (e) { e.preventDefault(); sendMessage(); });
 
+      /* ===== 测量输入区真实高度 → 写入 --composer-h，供消息区占位使用 ===== */
+      function updateComposerHeight() {
+        try {
+          var area = document.getElementById("input-area");
+          if (area) {
+            var h = area.offsetHeight;
+            document.getElementById("chat-app").style.setProperty("--composer-h", h + "px");
+          }
+        } catch (e) {}
+      }
+      // 初始 + 窗口尺寸变化 + 键盘弹出检测
+      window.addEventListener("resize", updateComposerHeight);
+      window.addEventListener("orientationchange", updateComposerHeight);
+      setInterval(updateComposerHeight, 1500);
+
+      /* ===== 发送按钮状态联动：空内容禁用 ===== */
+      function updateSendBtnState() {
+        var hasText = input.value.trim().length > 0;
+        sendBtn.disabled = !hasText || isReplying;
+      }
+
       function resizeInput() {
         input.style.height = "auto";
-        var newHeight = Math.min(input.scrollHeight, 120);
+        var newHeight = Math.min(input.scrollHeight, 140);
         input.style.height = newHeight + "px";
-        if (input.scrollHeight > 120) input.style.overflowY = "auto";
+        if (input.scrollHeight > 140) input.style.overflowY = "auto";
         else input.style.overflow = "hidden";
         input.classList.toggle("expanded", input.value.trim().length > 0);
+        updateSendBtnState();
+        updateComposerHeight();
       }
       input.addEventListener("input", resizeInput);
       input.addEventListener("focus", function () {
         input.classList.add("expanded");
+        document.getElementById("input-area").classList.add("focused");
         resizeInput();
+        setTimeout(scrollBottom, 200);
+        setTimeout(scrollBottom, 500);
       });
       input.addEventListener("blur", function () {
+        document.getElementById("input-area").classList.remove("focused");
         if (!input.value.trim()) {
           input.classList.remove("expanded");
           input.style.height = "36px";
           input.style.overflow = "hidden";
         }
+        updateComposerHeight();
       });
+
+      /* ===== 消息流滚动 → 顶部栏阴影变化（参考 ZY 滚动处理） ===== */
+      var partnerInfo = document.getElementById("partner-info");
+      var lastScrollTop = 0;
+      stream.addEventListener("scroll", function () {
+        var st = stream.scrollTop;
+        if (partnerInfo) {
+          partnerInfo.classList.toggle("scrolled", st > 4);
+        }
+        lastScrollTop = st;
+      }, { passive: true });
 
       continueBtn.addEventListener("click", function () {
         if (isReplying) return;
@@ -3076,6 +3161,12 @@ body {
       } catch (e) {}
 
       if (getMessages().length > 0) continueBar.style.display = "flex";
+
+      /* ===== 初始同步按钮状态与输入区测量（参考 ZY 初始化） ===== */
+      updateSendBtnState();
+      updateComposerHeight();
+      setTimeout(updateComposerHeight, 200);
+      setTimeout(updateComposerHeight, 800);
 
       /* ===== 拖拽小精灵 ===== */
       (function initCompanion() {

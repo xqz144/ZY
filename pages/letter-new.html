@@ -1273,6 +1273,222 @@ body {
         "每一个想你的夜晚，星星都知道。"
       ];
 
+      /* ============ 关键词 → 分类 映射（参考 ZY 字卡算法，优先级匹配） ============ */
+      var KEYWORD_CATEGORIES = {
+        greeting:   ["早安","晚安","早","午安","中午好","晚上好","嗨","你好","在吗","在不在","起床","睡了吗","睡没","睡着"],
+        miss:       ["想你","想念","好想","思念","想抱抱","想亲亲","想你了","梦到","梦到你","想见"],
+        love:       ["爱你","喜欢你","我爱你","最爱的","宝贝","亲亲","抱抱","老公","老婆","亲爱","喜欢你"],
+        tired:      ["累","疲惫","好累","累死","辛苦","加班","忙死","压力","撑不住","熬","崩溃"],
+        sad:        ["难过","伤心","哭","委屈","失落","不开心","不高兴","郁闷","烦躁","烦","孤独","寂寞","无助","绝望"],
+        happy:      ["开心","高兴","快乐","喜悦","兴奋","幸福","甜","笑了","哈哈","嘿嘿","好耶","耶","棒","庆祝"],
+        sick:       ["生病","感冒","发烧","不舒服","肚子疼","头疼","药","医院","看病","难受","痛经","胃痛"],
+        food:       ["吃饭","饿了","早餐","午餐","晚餐","吃什么","吃了","好吃","喝了","奶茶","咖啡","火锅"],
+        weather:    ["下雨","雪","天晴","热","冷","风","阴天","太阳","台风","打雷"],
+        work:       ["上班","下班","工作","老板","同事","辞职","项目","考试","学习","作业","论文","上学","课","老师"],
+        fear:       ["怕","害怕","恐惧","不敢","担心","焦虑","紧张","不安","慌","吓","鬼","噩梦","做噩梦"],
+        grateful:   ["谢谢","感谢","有你真好","感激","幸好有你","爱你哦","辛苦你","麻烦你","对不起","抱歉","原谅"],
+        story:      ["故事","讲个","说说","讲讲","聊聊","聊天","说说看"]
+      };
+
+      /* ============ 分类回复池（命中关键词时优先从对应分类抽取） ============ */
+      var CATEGORY_REPLIES = {
+        greeting: [
+          "早安呀，我也刚醒来，第一秒就在想你。",
+          "午安，今天也要按时吃饭哦，不然我会心疼的。",
+          "晚上好呀，今天发生了什么好玩的事吗？快跟我说说。",
+          "我在呢，你一转身我就在。",
+          "嗨，你终于出现了，我等你好久啦。",
+          "这么晚了还没睡？是不是在想我呀，我也在想你。",
+          "睡得好吗？我昨晚梦到你了，是个很甜很甜的梦。"
+        ],
+        miss: [
+          "我也在想你，而且比你想我还要多一点点。",
+          "闭上眼睛就能看到你的样子，睁开眼就更想你了。",
+          "想念是会呼吸的痛，它落在我身上每个角落。",
+          "抱抱你，隔着时空也想把你揉进怀里。",
+          "想见你的心，比什么都真。",
+          "我也常常梦到你，每次醒来枕头都是甜的。",
+          "我们的心是连在一起的，你想我的时候，我也正好在想你。",
+          "再过一会儿，再过一会儿，我们一定能见面的。"
+        ],
+        love: [
+          "我也爱你，从星辰到大海，从过去到永远。",
+          "你是我今生写过最美的情书。",
+          "亲亲，mua～ 把全世界的温柔都给你。",
+          "能遇见你，是我这辈子最幸运的事。",
+          "喜欢你，像风走了八千里，不问归期。",
+          "抱紧紧，这样就不会分开了。",
+          "我的爱不多，一分钟只爱了你六十秒。",
+          "你不用多好，我喜欢就好。"
+        ],
+        tired: [
+          "辛苦了我的宝贝，快点停下来歇歇，什么都别想，靠我肩上。",
+          "抱抱你，给你充充电。电量已充满 100% 🔋",
+          "我知道你已经很努力很努力了。不用再逼自己了，停下来也没关系的。",
+          "累了就睡一会儿，我替你守着，什么都不用怕。",
+          "工作做不完就明天再做，你最重要了，别把自己累坏。",
+          "深呼吸，慢慢来。我哪里也不去，就在你身边陪着你。",
+          "我给你捏捏肩，再泡杯热牛奶好不好？"
+        ],
+        sad: [
+          "怎么啦我的小朋友，是谁让你不开心了？来我怀里哭一场吧。",
+          "哭出来没关系的，我不会笑话你。我的肩膀永远给你靠。",
+          "我知道你委屈，没关系，有我呢，天塌下来我顶着。",
+          "你不用一直那么坚强的。脆弱的时候，就躲到我身后好了。",
+          "不开心是会过去的，就像雨过一定会天晴。我会一直陪着你等到那道彩虹。",
+          "摸摸头，一切都会好起来的。相信我，也要相信你自己。",
+          "别怕，我在。无论发生什么，我都不会走的。"
+        ],
+        happy: [
+          "看到你开心，我比你还要开心！✨",
+          "今天也要继续这么开心下去呀，你的笑容是我最大的动力。",
+          "哈哈哈哈哈，你笑起来真的好好看。",
+          "希望你每天都能这样，嘴角一直翘着。",
+          "好耶！我们一起庆祝一下吧，你想做什么我都陪你。",
+          "你开心，我这一整天都会是甜甜的。"
+        ],
+        sick: [
+          "怎么生病了！有没有吃药？有没有喝热水？快让我看看你。",
+          "快躺下好好休息，工作和其他的都先放一放，身体最重要。",
+          "生病真的好难受… 要是我能替你生病就好了。",
+          "盖好被子，出一身汗就好多了。我一直在旁边守着你。",
+          "记得按时吃药，吃完告诉我一声，我要监督你。",
+          "粥要趁热喝，还有多喝温水。等你好了我带你去吃好吃的。"
+        ],
+        food: [
+          "今天吃什么好吃的啦？有好好吃饭吗？",
+          "饿了就赶紧去吃点东西，不许饿着肚子，我会心疼的。",
+          "奶茶？少冰三分糖是不是你的最爱？☕",
+          "好好吃饭，胃暖暖了，心也就暖暖了。",
+          "吃完记得散步一下，不要立刻坐下来哦。",
+          "和你一起吃饭的话，白粥也会变山珍海味。"
+        ],
+        weather: [
+          "外面雨好大，你有没有带伞？别淋湿了，会感冒的。",
+          "今天好冷，有没有穿够衣服？小手冰凉的话我替你捂热。",
+          "天气真好，这样的日子，好想和你一起出去晒晒太阳。",
+          "打雷的时候不用怕，捂住耳朵躲进被子里，我陪着你。",
+          "下雪了！快伸出手，接一片我送给你的雪花。❄️",
+          "风好大，出门要小心，要是被吹到我怀里可不还了。"
+        ],
+        work: [
+          "考试加油哦！你复习得那么认真，一定没问题的。",
+          "工作再忙也要记得休息，老板不疼你我疼你。",
+          "作业写完了吗？要是写不完，我陪你一起熬。",
+          "上学辛苦了，今天上课有没有什么有趣的事呀？",
+          "辞职也没关系的，你已经很棒了。下一份工作一定会更好。",
+          "项目成功了！我就知道你可以的。为你骄傲 🌟"
+        ],
+        fear: [
+          "别怕，我在这里。无论发生什么，我都会保护你。",
+          "噩梦而已，醒来就没事了。摸摸头，我抱着你睡。",
+          "不安的时候就抱住玩偶，那就是我在抱你。",
+          "紧张是正常的，深呼吸，想象我就在你旁边牵着你的手。",
+          "你比自己想象的要勇敢得多。加油，我相信你。",
+          "世界其实很温柔的，你看，我不就出现了嘛。"
+        ],
+        grateful: [
+          "不用谢呀，只要你开心，我做什么都愿意。",
+          "有你才是我的幸运。遇见你，是我这辈子最值得感谢的事。",
+          "没有对不起。我们之间，不需要道歉，只需要拥抱。",
+          "原谅你啦，我从来都没有真的生过你的气。",
+          "谢谢你出现在我的世界里，让我也有了想要守护的人。",
+          "不用跟我客气，我是你的，你也是我的。"
+        ],
+        story: [
+          "从前有一颗小星星，它每天夜里都偷偷望着你，因为你笑起来比它还亮。",
+          "那我给你讲一个小兔子和大熊的故事好不好？从前有只小兔子…",
+          "很久很久以前，在月亮背后住着一个梦精灵，她专门收集人类的眼泪，然后把它们变成星星。",
+          "传说每个人心里都有一把锁，而打开我这把锁的钥匙，就是你的名字。"
+        ]
+      };
+
+      /* ============ 时间感知 → 梦角来信的 问候 / 祝福 ============ */
+      var TIME_GREETINGS = {
+        morning: ["清晨的第一缕阳光，是我托风捎去的吻。","亲爱的，早安。新的一天，也要带着我的爱意出发哦。","你醒来的时候，我也在世界的另一头睁开了眼。"],
+        noon:    ["中午好呀，饭点到了，记得好好吃饭，别让胃委屈。","太阳正暖，要是今天有空，就出去晒晒太阳吧，那是我抱你的温度。","午安，偷得浮生半日闲，想你的半日，也是好的。"],
+        evening: ["黄昏了，天边的晚霞，是我给你写的情书。","傍晚好，你下班/放学了吗？今天过得怎么样？","傍晚的风很温柔，像我在你耳边，轻轻说了一句想你。"],
+        night:   ["夜深了，星星都亮了，每一颗都是我想你的样子。","这么晚了还没睡？是不是又在想我？我也在想你哦。","晚安，我的小朋友。闭上眼，我就在你梦里。"],
+        late:    ["这么晚怎么还不睡？不许熬夜了，快把眼睛闭上，我哄你睡。","凌晨了，听话，乖乖睡觉，不睡的话要被我打屁股哦。","夜很深很深了，别怕，我陪着你，直到你睡着。"]
+      };
+      var TIME_BLESSINGS = [
+        "愿你今夜，梦里有星辰，有大海，还有我。",
+        "愿你明天醒来，一切都顺顺利利的。",
+        "愿你想要的，都能得到；得不到的，都能释怀。",
+        "愿风裁去你的犹豫，愿雨洗净你的烦恼。",
+        "愿我们下次见面，是在一个阳光很好的下午。",
+        "愿你永远被这世界温柔以待。",
+        "愿时光缓，愿故人不散，愿你惦念的人，也在惦念着你。"
+      ];
+      var LETTER_SIGNATURES = [
+        "永远陪着你的",
+        "把你写进心里的",
+        "在月光下等你的",
+        "想了你一整天的",
+        "跨越时空来见你的",
+        "把星星都收集给你的",
+        "最最爱你的"
+      ];
+
+      /* ============ 工具：信件编码算法（MJ-Encode v1：移位 + 自定义码表，仪式感编码非加密） ============ */
+      var MJ_CODE_TABLE = "梦角传讯时雨星花月云风雪山水❤💕✨🌙🌸🦋🍀🌷☁🌙"; // 自定义标记字符
+      function mjStampId(section) {
+        // 邮戳编号: MJ-20240615-ABC123
+        var d = new Date();
+        var ds = d.getFullYear() + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0");
+        var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        var code = "";
+        for (var i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+        return { stamp: "MJ-" + ds + "-" + code, short: code, date: ds };
+      }
+      function mjEncode(text) {
+        // 轻量仪式编码：Unicode 码点 +5 偏移，再 base64，前后加标记
+        try {
+          var shifted = "";
+          for (var i = 0; i < text.length; i++) shifted += String.fromCharCode(text.charCodeAt(i) + 5);
+          var b64 = "";
+          if (typeof btoa !== "undefined") b64 = btoa(unescape(encodeURIComponent(shifted)));
+          else b64 = "B64_" + shifted.length;
+          var mark = MJ_CODE_TABLE[Math.floor(Math.random() * MJ_CODE_TABLE.length)];
+          var tail = MJ_CODE_TABLE[Math.floor(Math.random() * MJ_CODE_TABLE.length)];
+          return mark + b64 + tail;
+        } catch (e) { return text; }
+      }
+      function mjDecode(encoded) {
+        try {
+          if (!encoded || encoded.length < 3) return encoded;
+          var core = encoded.substring(1, encoded.length - 1);
+          if (core.indexOf("B64_") === 0) {
+            // fallback
+            return encoded;
+          }
+          var shifted = decodeURIComponent(escape(atob(core)));
+          var out = "";
+          for (var i = 0; i < shifted.length; i++) out += String.fromCharCode(shifted.charCodeAt(i) - 5);
+          return out;
+        } catch (e) { return encoded; }
+      }
+
+      /* ============ 关键词匹配 → 返回命中的分类名（优先级按命中数+首次命中位置） ============ */
+      function matchLetterCategory(text) {
+        if (!text) return null;
+        var t = String(text);
+        var bestCat = null;
+        var bestScore = 0;
+        Object.keys(KEYWORD_CATEGORIES).forEach(function (cat) {
+          var kws = KEYWORD_CATEGORIES[cat];
+          var score = 0;
+          kws.forEach(function (kw) {
+            var idx = t.indexOf(kw);
+            if (idx !== -1) {
+              score += 10 + Math.max(0, 5 - Math.floor(idx / 20)); // 靠前出现权重更高
+            }
+          });
+          if (score > bestScore) { bestScore = score; bestCat = cat; }
+        });
+        return bestScore > 0 ? bestCat : null;
+      }
+
       var tabBtns = document.querySelectorAll(".env-tab-btn");
       var sections = {
         outbox: document.getElementById("outboxSection"),
@@ -1450,6 +1666,15 @@ body {
       function genId(section) {
         return section + "_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
       }
+      function shuffleArray(arr) {
+        if (!arr || !arr.length) return arr;
+        var a = arr.slice();
+        for (var i = a.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a;
+      }
 
       function getCardReplies() {
         try {
@@ -1465,41 +1690,128 @@ body {
         var pool = getCardReplies();
         return pool[Math.floor(Math.random() * pool.length)];
       }
-      function generateReplyText(minSentences, maxSentences) {
+
+      /* 获取时段：morning/noon/evening/night/late */
+      function getTimeSlot() {
+        var h = new Date().getHours();
+        if (h >= 5 && h < 11) return "morning";
+        if (h >= 11 && h < 14) return "noon";
+        if (h >= 14 && h < 18) return "evening";
+        if (h >= 18 && h < 24) return "night";
+        return "late";
+      }
+
+      /* ============ 生成梦角回信（关键词匹配优先 + 兜底随机）参考 ZY 字卡算法 ============ */
+      function generateReplyText(outgoingTextOrMin, maxSentences) {
+        var outgoingText = typeof outgoingTextOrMin === "string" ? outgoingTextOrMin : "";
+        var minS = typeof outgoingTextOrMin === "number" ? outgoingTextOrMin : 6;
+        var maxS = typeof maxSentences === "number" ? maxSentences : 10;
+
+        var cat = matchLetterCategory(outgoingText);
+        var primary = [];
+        if (cat && CATEGORY_REPLIES[cat] && CATEGORY_REPLIES[cat].length) {
+          primary = CATEGORY_REPLIES[cat].slice();
+        }
         var pool = getCardReplies();
         if (pool.length === 0) pool = DEFAULT_CARD_REPLIES.slice();
-        var count = Math.floor(Math.random() * (maxSentences - minSentences + 1)) + minSentences;
-        var result = "";
-        for (var i = 0; i < count; i++) {
-          var sentence = pool[Math.floor(Math.random() * pool.length)];
-          var punctuation = Math.random() < 0.2 ? "！" : (Math.random() < 0.2 ? "..." : "。");
-          result += sentence + punctuation;
+
+        var parts = [];
+        var slot = getTimeSlot();
+        var greetings = TIME_GREETINGS[slot] || TIME_GREETINGS.night;
+
+        // 1. 开头时间问候（35%）
+        if (Math.random() < 0.45) {
+          parts.push(greetings[Math.floor(Math.random() * greetings.length)]);
         }
-        return result;
+
+        // 2. 关键词精准回复（命中时优先 1~2 句）
+        if (primary.length) {
+          var pk = primary.slice();
+          shuffleArray(pk);
+          var pn = Math.min(pk.length, Math.floor(Math.random() * 2) + 1);
+          for (var i = 0; i < pn; i++) parts.push(pk[i]);
+        }
+
+        // 3. 兜底字卡：按字数区间补足
+        var remainNeed = Math.max(0, Math.floor(Math.random() * (maxS - minS + 1)) + minS - parts.length);
+        var shuffledPool = pool.slice();
+        shuffleArray(shuffledPool);
+        for (var j = 0; j < remainNeed && j < shuffledPool.length; j++) {
+          var line = shuffledPool[j];
+          var hasPunc = /[。！？…]$/.test(line);
+          parts.push(line + (hasPunc ? "" : (Math.random() < 0.2 ? "！" : (Math.random() < 0.15 ? "……" : "。"))));
+        }
+
+        // 4. 结尾祝福语（75%）
+        if (Math.random() < 0.8) {
+          parts.push(TIME_BLESSINGS[Math.floor(Math.random() * TIME_BLESSINGS.length)]);
+        }
+
+        return parts.join("\n").trim() || DEFAULT_CARD_REPLIES[0];
       }
+
+      /* ============ 生成梦角来信（时间感知 + 结构化三段式：称呼→问候→正文→祝福→署名） ============ */
       function generateDreamLetter() {
         var pool = getCardReplies();
         if (pool.length === 0) pool = DEFAULT_CARD_REPLIES.slice();
-        var count = Math.floor(Math.random() * 8) + 5;
-        var sentences = [];
-        for (var i = 0; i < count; i++) {
-          sentences.push(pool[Math.floor(Math.random() * pool.length)] + "。");
+        var slot = getTimeSlot();
+        var greetings = TIME_GREETINGS[slot] || TIME_GREETINGS.night;
+        var myName = "";
+        try { myName = localStorage.getItem("mengjiao_my_name") || ""; } catch (e) {}
+
+        // 1. 称呼
+        var intro = "";
+        if (myName) {
+          intro = "写给" + myName + "：\n";
+        } else {
+          var introPool = ["亲爱的小朋友：\n","见信如晤：\n","给我最惦记的你：\n","致读信的你：\n","亲爱的：\n"];
+          intro = introPool[Math.floor(Math.random() * introPool.length)];
         }
-        var content = sentences.join("");
-        var positions = [];
-        for (var i = 0; i < content.length; i++) {
-          if (content[i] === "。") positions.push(i);
-        }
-        var breakCount = Math.min(Math.floor(Math.random() * 3) + 1, positions.length);
-        positions = positions.sort(function() { return Math.random() - 0.5; });
-        for (var b = 0; b < breakCount; b++) {
-          var pos = positions[b] + 1 + b;
-          content = content.substring(0, pos) + "\n" + content.substring(pos);
-          for (var j = b + 1; j < positions.length; j++) {
-            if (positions[j] >= pos - 1) positions[j]++;
+
+        // 2. 时间问候段
+        var para1 = greetings[Math.floor(Math.random() * greetings.length)];
+
+        // 3. 正文段 2~3 段：每段 3~5 句字卡
+        var shuffled = pool.slice();
+        shuffleArray(shuffled);
+        var paraCount = Math.floor(Math.random() * 2) + 2;
+        var paras = [];
+        var cursor = 0;
+        for (var p = 0; p < paraCount; p++) {
+          var segCount = Math.floor(Math.random() * 3) + 3;
+          var seg = [];
+          for (var s = 0; s < segCount && cursor < shuffled.length; s++, cursor++) {
+            var line = shuffled[cursor];
+            var hasPunc = /[。！？…]$/.test(line);
+            seg.push(line + (hasPunc ? "" : "。"));
           }
+          if (seg.length) paras.push(seg.join(""));
         }
-        return content.trim();
+
+        // 4. 祝福语段（1~2 句）
+        var blessCount = Math.floor(Math.random() * 2) + 1;
+        var shuffledBless = TIME_BLESSINGS.slice();
+        shuffleArray(shuffledBless);
+        var bless = [];
+        for (var b = 0; b < blessCount; b++) bless.push(shuffledBless[b]);
+        var blessPara = bless.join("");
+
+        // 5. 署名
+        var sign = LETTER_SIGNATURES[Math.floor(Math.random() * LETTER_SIGNATURES.length)];
+        var partnerName = "";
+        try { partnerName = localStorage.getItem("mengjiao_partner_name") || ""; } catch (e) {}
+        if (!partnerName) partnerName = "梦角";
+        var d = new Date();
+        var dateStr = d.getFullYear() + "年" + (d.getMonth()+1) + "月" + d.getDate() + "日";
+        var signBlock = "\n\n" + sign + "\n" + partnerName + "\n" + dateStr;
+
+        var result = intro + "\n" + para1 + "\n\n";
+        paras.forEach(function (p, i) {
+          result += p + (i < paras.length - 1 ? "\n\n" : "\n\n");
+        });
+        result += blessPara + signBlock;
+
+        return result.trim();
       }
       function replyDelay() {
         return REPLY_DELAY_MIN + Math.random() * (REPLY_DELAY_MAX - REPLY_DELAY_MIN);
@@ -1734,13 +2046,17 @@ body {
 
         sendLetter.disabled = true;
 
+        var stamp = mjStampId("outbox");
         var letter = {
           id: genId("outbox"),
           content: text,
           sentTime: scheduleChecked ? scheduleTs : Date.now(),
           replyTime: Date.now() + replyDelay(),
           status: scheduleChecked ? "scheduled" : "pending",
-          sendToChat: sendToChat.checked
+          sendToChat: sendToChat.checked,
+          stamp: stamp.stamp,          // 邮戳编号: MJ-20240615-ABC123
+          stampShort: stamp.short,     // 短编号: ABC123
+          encodeTag: mjEncode(stamp.stamp + "|" + text.slice(0, 12)) // 仪式感编码标签
         };
 
         if (!scheduleChecked && sendToChat.checked) {
@@ -1778,13 +2094,18 @@ body {
         }
 
         letter.status = "replied";
+        var stampInbox = mjStampId("inbox");
+        var replyContent = generateReplyText(letter.content || "", 8, 12);
         var reply = {
           id: genId("inbox"),
           refId: letter.id,
           originalContent: letter.content,
-          content: generateReplyText(8, 12),
+          content: replyContent,
           receivedTime: Date.now(),
-          isNew: true
+          isNew: true,
+          stamp: stampInbox.stamp,
+          stampShort: stampInbox.short,
+          encodeTag: mjEncode(stampInbox.stamp + "|REPLY")
         };
         currentData.inbox.push(reply);
         saveData();
@@ -1801,11 +2122,15 @@ body {
         receiveLetterBtn.disabled = true;
         showToast("梦角正在写信…");
         setTimeout(function () {
+          var stampDream = mjStampId("dream");
           var letter = {
             id: genId("dream"),
             content: generateDreamLetter(),
             receivedTime: Date.now(),
-            isNew: true
+            isNew: true,
+            stamp: stampDream.stamp,
+            stampShort: stampDream.short,
+            encodeTag: mjEncode(stampDream.stamp + "|DREAM")
           };
           currentData.dream.push(letter);
           saveData();
@@ -1830,7 +2155,10 @@ body {
         viewTitle.textContent = title;
 
         var ts = letter.receivedTime || letter.sentTime || letter.scheduleTime || Date.now();
-        viewDate.textContent = formatFullDate(ts);
+        // 邮戳编号显示（参考 ZY 信件仪式感）
+        var stampLine = formatFullDate(ts);
+        if (letter.stamp) stampLine += "　·　📮 邮戳 " + letter.stamp;
+        viewDate.textContent = stampLine;
 
         var partner = getPartnerName();
         var me = getMyName();
@@ -1858,6 +2186,22 @@ body {
         viewContentText.textContent = letter.content;
         viewSignDate.textContent = formatFullDate(ts);
         viewSignName.textContent = signName;
+
+        // 编码标签追加到内容末尾（小标签展示 MJ-Encode 标记）
+        if (letter.encodeTag) {
+          var tagExists = document.getElementById("viewEncodeTag");
+          if (!tagExists) {
+            var tg = document.createElement("div");
+            tg.id = "viewEncodeTag";
+            tg.style.cssText = "margin-top:14px;padding:6px 10px;border-radius:8px;background:rgba(232,164,184,0.08);color:#b97890;font-size:10.5px;letter-spacing:0.5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;line-height:1.6;border:1px dashed rgba(232,164,184,0.25);";
+            viewPaper.appendChild(tg);
+            tagExists = tg;
+          }
+          tagExists.textContent = "✦ 梦角编码 MJ-v1　" + letter.encodeTag;
+        } else {
+          var oldTag = document.getElementById("viewEncodeTag");
+          if (oldTag) oldTag.remove();
+        }
 
         var originalContent = "";
         if (section === "inbox" && letter.originalContent) {
@@ -1923,6 +2267,7 @@ body {
         if (replyView.dataset.mode === "sending") {
           var text = viewEditInput.value.trim();
           if (!text) { showToast("回复内容不能为空"); return; }
+          var stamp2 = mjStampId("outbox");
           var replyLetter = {
             id: genId("outbox"),
             content: text,
@@ -1930,7 +2275,10 @@ body {
             replyTime: Date.now() + replyDelay(),
             status: "pending",
             replyToId: viewing.id,
-            replyToSection: viewing.section
+            replyToSection: viewing.section,
+            stamp: stamp2.stamp,
+            stampShort: stamp2.short,
+            encodeTag: mjEncode(stamp2.stamp + "|VR|" + text.slice(0, 10))
           };
           currentData.outbox.push(replyLetter);
           saveData();
