@@ -1,52 +1,370 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>小火人 · 梦角传讯</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小火人 · 梦角传讯</title>
+    <style id="theme-vars">
+/* 梦角传讯 — 动漫手绘风主题 */
+/* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../colors_and_type.css" />
+@font-face {
+  font-family: 'DreamFont';
+  src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            primary: 'hsl(var(--primary))',
-            'primary-foreground': 'hsl(var(--primary-foreground))',
-            secondary: 'hsl(var(--secondary))',
-            accent: 'hsl(var(--accent))',
-            border: 'hsl(var(--border))',
-          },
-          fontFamily: {
-            sans: ['"DreamFont", "Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-            serif: ['"DreamFont", "Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
-          },
-        }
+:root {
+  /* bg — 暖灰白，像素描纸 */
+  --background: 30 20% 97%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+
+  /* text — 柔和深灰，不刺眼 */
+  --foreground: 340 12% 28%;
+  --card-foreground: 340 12% 28%;
+  --popover-foreground: 340 12% 28%;
+  --muted-foreground: 340 10% 55%;
+
+  /* accent — 柔粉蜡笔色 */
+  --primary: 343 55% 78%;
+  --primary-foreground: 340 15% 22%;
+  --secondary: 340 35% 95%;
+  --secondary-foreground: 340 12% 28%;
+  --muted: 30 18% 94%;
+  --accent: 343 40% 92%;
+  --accent-foreground: 340 12% 28%;
+
+  /* status */
+  --destructive: 0 70% 65%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* border — 手绘感浅粉 */
+  --border: 343 45% 78% / 0.25;
+  --input: 30 18% 94%;
+  --ring: 343 55% 78%;
+
+  /* chart */
+  --chart-1: 343 55% 78%;
+  --chart-2: 343 45% 85%;
+  --chart-3: 340 15% 70%;
+  --chart-4: 343 35% 90%;
+  --chart-5: 340 12% 60%;
+
+  /* sidebar */
+  --sidebar: 30 20% 97%;
+  --sidebar-foreground: 340 12% 28%;
+  --sidebar-primary: 343 55% 78%;
+  --sidebar-primary-foreground: 340 15% 22%;
+  --sidebar-accent: 343 40% 92%;
+  --sidebar-accent-foreground: 340 12% 28%;
+  --sidebar-border: 343 45% 78% / 0.25;
+  --sidebar-ring: 343 55% 78%;
+
+  /* typography */
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+
+  --radius: 1.25rem;
+
+  /* shadow — 柔和漂浮感 */
+  --shadow-color: 343 40% 55%;
+  --shadow-2xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-sm: 0 3px 6px -1px hsl(343 30% 40% / 0.06), 0 2px 4px -2px hsl(343 30% 40% / 0.04);
+  --shadow: 0 4px 10px -1px hsl(343 30% 40% / 0.08), 0 2px 4px -2px hsl(343 30% 40% / 0.05);
+  --shadow-md: 0 8px 16px -4px hsl(343 30% 40% / 0.10), 0 4px 8px -4px hsl(343 30% 40% / 0.06);
+  --shadow-lg: 0 15px 25px -6px hsl(343 30% 40% / 0.12), 0 8px 12px -6px hsl(343 30% 40% / 0.08);
+  --shadow-xl: 0 25px 40px -8px hsl(343 30% 40% / 0.14), 0 12px 20px -8px hsl(343 30% 40% / 0.10);
+  --shadow-2xl: 0 35px 60px -12px hsl(343 30% 40% / 0.18);
+
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  /* 直景色值 — 供自定义样式直接引用 */
+  --primary-bg: #f9f7f4;
+  --secondary-bg: #f3f0ec;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #4a3f45;
+  --text-secondary: #9a8a92;
+  --border-color: rgba(232, 164, 184, 0.35);
+  --chat-bg: #fdfbfa;
+}
+
+.dark {
+  --background: 340 12% 12%;
+  --card: 340 10% 16%;
+  --popover: 340 10% 16%;
+  --foreground: 340 15% 92%;
+  --card-foreground: 340 15% 92%;
+  --popover-foreground: 340 15% 92%;
+  --muted-foreground: 340 10% 65%;
+  --primary: 343 45% 72%;
+  --primary-foreground: 340 12% 18%;
+  --secondary: 340 15% 24%;
+  --secondary-foreground: 340 15% 92%;
+  --muted: 340 12% 20%;
+  --accent: 343 25% 28%;
+  --accent-foreground: 340 15% 92%;
+  --destructive: 0 60% 58%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 340 12% 26%;
+  --input: 340 12% 22%;
+  --ring: 343 45% 72%;
+  --chart-1: 343 45% 72%;
+  --chart-2: 343 40% 60%;
+  --chart-3: 340 12% 60%;
+  --chart-4: 343 35% 80%;
+  --chart-5: 340 12% 70%;
+  --sidebar: 340 12% 12%;
+  --sidebar-foreground: 340 15% 92%;
+  --sidebar-primary: 343 45% 72%;
+  --sidebar-primary-foreground: 340 12% 18%;
+  --sidebar-accent: 343 25% 28%;
+  --sidebar-accent-foreground: 340 15% 92%;
+  --sidebar-border: 340 12% 26%;
+  --sidebar-ring: 343 45% 72%;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+  --radius: 1.25rem;
+  --shadow-color: 343 30% 40%;
+  --shadow-2xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-sm: 0 3px 6px -1px hsl(340 12% 5% / 0.30), 0 2px 4px -2px hsl(340 12% 5% / 0.25);
+  --shadow: 0 4px 10px -1px hsl(340 12% 5% / 0.35), 0 2px 4px -2px hsl(340 12% 5% / 0.28);
+  --shadow-md: 0 8px 16px -4px hsl(340 12% 5% / 0.40), 0 4px 8px -4px hsl(340 12% 5% / 0.32);
+  --shadow-lg: 0 15px 25px -6px hsl(340 12% 5% / 0.45), 0 8px 12px -6px hsl(340 12% 5% / 0.36);
+  --shadow-xl: 0 25px 40px -8px hsl(340 12% 5% / 0.50), 0 12px 20px -8px hsl(340 12% 5% / 0.40);
+  --shadow-2xl: 0 35px 60px -12px hsl(340 12% 5% / 0.55);
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  --primary-bg: #1a1619;
+  --secondary-bg: #242024;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #f0e8ec;
+  --text-secondary: #a09098;
+  --border-color: rgba(232, 164, 184, 0.25);
+  --chat-bg: #1a1619;
+}
+
+body {
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232, 164, 184, 0.35); border-radius: 4px; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-foreground: var(--card-foreground);
+  }
+  @layer base {
+    body { background: var(--card-background); color: var(--card-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
       }
-    };
-  </script>
+    </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="app-bg" id="appBg">
+      <header class="top-bar">
+        <a href="index-new-v2.html" class="back-btn" data-dom-id="back-home">
+          <i data-lucide="chevron-left" class="back-icon"></i>
+          <span>返回</span>
+        </a>
+        <h1 class="top-title">小火人</h1>
+        <div class="top-action">
+          <button class="feed-btn" id="feedBtn" data-dom-id="open-feeder">喂食</button>
+        </div>
+      </header>
+
+      <main class="scroll-area" id="scrollArea">
+        <!-- 小火人舞台 -->
+        <section class="creature-stage">
+          <div class="creature-frame" aria-label="小火人">
+            <div class="creature-aura" id="creatureAura"></div>
+            <div class="creature-svg-wrap" id="creatureWrap">
+              <div id="creatureSvg" data-dom-id="pet-creature"></div>
+            </div>
+            <span class="frame-deco deco-1">✨</span>
+            <span class="frame-deco deco-2">♡</span>
+            <span class="frame-deco deco-3">✨</span>
+            <span class="frame-deco deco-4">♡</span>
+          </div>
+          <div class="creature-name" id="creatureName">小火人</div>
+          <div class="creature-status" id="creatureStatusText">和梦角一起成长中</div>
+          <div class="status-badge happy" id="statusBadge">😊 开心</div>
+        </section>
+
+        <!-- 等级经验 -->
+        <section class="level-bar">
+          <div class="level-row">
+            <div class="level-info">
+              <span class="level-label" id="levelLabel">Lv.1</span>
+              <span class="level-title" id="levelTitle">小火苗</span>
+            </div>
+            <span class="exp-text" id="expText">0 / 50</span>
+          </div>
+          <div class="exp-track">
+            <div class="exp-fill" id="expFill" style="width:0%"></div>
+          </div>
+        </section>
+
+        <!-- 饱食度 / 心情 -->
+        <section class="vitals-section">
+          <div class="vital-row">
+            <span class="vital-label"><span class="vital-icon">🍖</span>饱腹度</span>
+            <span class="vital-num" id="fullnessNum">60/100</span>
+          </div>
+          <div class="vital-track"><div class="vital-fill fullness" id="fullnessFill" style="width:60%"></div></div>
+          <div class="vital-row">
+            <span class="vital-label"><span class="vital-icon">💖</span>心情值</span>
+            <span class="vital-num" id="moodNum">60/100</span>
+          </div>
+          <div class="vital-track"><div class="vital-fill mood" id="moodFill" style="width:60%"></div></div>
+        </section>
+
+        <!-- 统计 -->
+        <section class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-num" id="streakNum">0</div>
+            <div class="stat-label">连续天数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✨</div>
+            <div class="stat-num" id="totalExpNum">0</div>
+            <div class="stat-label">总经验</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💬</div>
+            <div class="stat-num" id="totalInteractNum">0</div>
+            <div class="stat-label">总互动</div>
+          </div>
+        </section>
+
+        <!-- 今日互动 -->
+        <section class="today-section">
+          <div class="today-title">今日互动</div>
+          <div class="today-row">
+            <div class="today-left"><span class="emoji">💬</span>对话</div>
+            <div class="today-bar"><div class="today-bar-fill" id="chatBar" style="width:0%"></div></div>
+            <div class="today-count" id="chatCount">0/10</div>
+          </div>
+          <div class="today-row">
+            <div class="today-left"><span class="emoji">🃏</span>抽字卡</div>
+            <div class="today-bar"><div class="today-bar-fill" id="cardBar" style="width:0%"></div></div>
+            <div class="today-count" id="cardCount">0/3</div>
+          </div>
+          <div class="today-row">
+            <div class="today-left"><span class="emoji">🌸</span>发朋友圈</div>
+            <div class="today-bar"><div class="today-bar-fill" id="momentBar" style="width:0%"></div></div>
+            <div class="today-count" id="momentCount">0/2</div>
+          </div>
+        </section>
+
+        <!-- 成长里程碑 -->
+        <section class="milestone-section">
+          <div class="milestone-title">成长里程碑</div>
+          <div class="milestone-list" id="milestoneList"></div>
+        </section>
+
+        <!-- 补签卡 -->
+        <section class="makeup-section">
+          <div class="makeup-info">
+            <div class="makeup-icon">🎫</div>
+            <div class="makeup-text">补签卡 <b id="makeupCount">1</b> 张</div>
+          </div>
+          <button class="makeup-btn" id="makeupBtn" data-dom-id="makeup-action">补昨日</button>
+        </section>
+
+        <!-- 快捷入口 -->
+        <section class="action-section">
+          <a href="chat-new.html" class="action-btn" data-dom-id="go-chat">
+            <span class="action-icon">💬</span>
+            <span class="action-label">去对话</span>
+            <span class="action-exp">+3 exp</span>
+          </a>
+          <a href="cards-new.html" class="action-btn" data-dom-id="go-cards">
+            <span class="action-icon">🃏</span>
+            <span class="action-label">抽字卡</span>
+            <span class="action-exp">+5 exp</span>
+          </a>
+          <a href="moments-new.html" class="action-btn" data-dom-id="go-moments">
+            <span class="action-icon">🌸</span>
+            <span class="action-label">朋友圈</span>
+            <span class="action-exp">+8 exp</span>
+          </a>
+        </section>
+      </main>
+
+      <!-- 喂食面板 -->
+      <div class="modal-overlay" id="feedModal">
+        <div class="modal-sheet">
+          <div class="modal-handle"></div>
+          <div class="modal-title">喂食小火人</div>
+          <div class="feeder-preview" id="feederPreview">
+            <img src="../assets/character.png" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;filter:brightness(1.12) saturate(1.15) contrast(1.05);">
+          </div>
+          <div class="feeder-hint" id="feederHint">选择食物喂给小火人吧～</div>
+
+          <div class="food-grid" id="foodGrid"></div>
+
+          <div class="feeder-detail" id="feederDetail" style="display:none;">
+            <div class="feeder-detail-title" id="detailTitle"></div>
+            <div class="feeder-detail-desc" id="detailDesc"></div>
+          </div>
+
+          <div class="feeder-actions">
+            <button class="feeder-btn secondary" id="feedClose" data-dom-id="feeder-close">关闭</button>
+            <button class="feeder-btn primary" id="feedConfirm" disabled data-dom-id="feeder-confirm">喂食</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 升级特效 -->
+      <div class="levelup-overlay" id="levelupOverlay">
+        <div class="levelup-text" id="levelupText"></div>
+      </div>
+
+      <!-- 轻提示 -->
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
 
   <style>
     * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
     html { -webkit-font-smoothing: antialiased; }
-    body {
-      font-family: var(--font-sans);
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--secondary-bg);
-      color: var(--text-primary);
-      letter-spacing: var(--tracking-normal);
-    }
+    body { margin: 0; }
 
     .phone {
       position: relative;
@@ -58,13 +376,14 @@
       display: flex;
       flex-direction: column;
       background: hsl(var(--background));
+      margin: 0 auto;
     }
     @media (min-width: 480px) {
       .phone {
         height: 860px;
         border-radius: 40px;
-        border: 10px solid hsl(343 30% 22%);
-        box-shadow: 0 25px 60px -15px hsl(343 60% 35% / 0.35), 0 0 0 2px hsl(343 20% 12%);
+        border: 10px solid hsl(var(--foreground));
+        box-shadow: var(--shadow-xl), 0 0 0 2px hsl(var(--foreground) / 0.12);
       }
       .phone::before {
         content: '';
@@ -72,7 +391,7 @@
         top: 0; left: 50%;
         transform: translateX(-50%);
         width: 150px; height: 28px;
-        background: hsl(343 30% 18%);
+        background: hsl(var(--foreground));
         border-radius: 0 0 18px 18px;
         z-index: 100;
       }
@@ -85,8 +404,8 @@
       overflow: hidden;
       position: relative;
       background:
-        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(343 80% 94% / 0.9), transparent 60%),
-        radial-gradient(ellipse 400px 250px at 90% 10%, hsl(343 72% 92% / 0.7), transparent 55%),
+        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(var(--primary) / 0.18), transparent 60%),
+        radial-gradient(ellipse 400px 250px at 90% 10%, hsl(var(--primary) / 0.14), transparent 55%),
         linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
     }
 
@@ -102,15 +421,20 @@
     }
     @media (max-width: 479px) { .top-bar { padding-top: 16px; } }
     .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
       font-size: 15px;
-      color: hsl(var(--primary));
+      color: var(--accent-color);
       text-decoration: none;
       padding: 6px 8px;
       font-weight: 500;
       flex-shrink: 0;
       min-width: 64px;
+      transition: opacity 0.15s ease;
     }
     .back-btn:active { opacity: 0.6; }
+    .back-icon { width: 18px; height: 18px; }
     .top-title {
       font-family: var(--font-serif);
       font-size: 18px;
@@ -118,6 +442,7 @@
       color: var(--text-primary);
       text-align: center;
       flex: 1;
+      letter-spacing: 0.02em;
     }
     .top-action {
       flex-shrink: 0;
@@ -127,29 +452,31 @@
     }
     .feed-btn {
       font-size: 13px;
-      padding: 5px 14px;
+      padding: 6px 16px;
       border-radius: 9999px;
-      border: 1px solid rgba(232,116,154,0.25);
-      background: rgba(255,255,255,0.5);
+      border: 1px solid hsl(var(--primary) / 0.35);
+      background: hsl(var(--card) / 0.72);
       color: var(--accent-color);
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
+      box-shadow: var(--shadow-xs);
+      transition: transform 0.15s ease, background-color 0.15s ease;
     }
-    .feed-btn:active { transform: scale(0.94); }
+    .feed-btn:active { transform: scale(0.94); background: hsl(var(--accent)); }
 
     /* Scroll area */
     .scroll-area {
       flex: 1;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 0 0 20px;
+      padding: 0 16px 24px;
       scrollbar-width: none;
       position: relative;
       z-index: 1;
     }
     .scroll-area::-webkit-scrollbar { display: none; }
 
-    /* Spark creature display */
+    /* Creature */
     .creature-stage {
       position: relative;
       display: flex;
@@ -157,46 +484,67 @@
       align-items: center;
       padding: 8px 0 4px;
     }
+    .creature-frame {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      border-radius: 9999px;
+      border: 3px dashed hsl(var(--primary) / 0.45);
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at center, hsl(var(--primary) / 0.14), transparent 70%);
+      box-shadow: inset 0 0 28px hsl(var(--primary) / 0.1), var(--shadow-sm);
+    }
     .creature-aura {
       position: absolute;
       top: 10px;
       width: 200px;
       height: 200px;
       border-radius: 9999px;
-      background: radial-gradient(circle, rgba(232,116,154,0.18), transparent 70%);
+      background: radial-gradient(circle, hsl(var(--primary) / 0.22), transparent 70%);
       animation: auraPulse 3s ease-in-out infinite;
       pointer-events: none;
     }
+    .frame-deco {
+      position: absolute;
+      font-size: 14px;
+      opacity: 0.8;
+      pointer-events: none;
+      filter: drop-shadow(0 1px 2px hsl(var(--primary) / 0.25));
+    }
+    .frame-deco.deco-1 { top: 18px; left: 24px; transform: rotate(-12deg); }
+    .frame-deco.deco-2 { top: 24px; right: 28px; transform: rotate(8deg); }
+    .frame-deco.deco-3 { bottom: 22px; right: 22px; transform: rotate(15deg); }
+    .frame-deco.deco-4 { bottom: 30px; left: 28px; transform: rotate(-6deg); }
     @keyframes auraPulse {
       0%, 100% { opacity: 0.5; transform: scale(0.92); }
-      50% { opacity: 0.9; transform: scale(1.05); }
-    }
-    @keyframes heartFloat {
-      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
-      50% { opacity: 0.8; transform: translate(-50%, -120%) scale(1.2); }
-      100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
+      50% { opacity: 0.95; transform: scale(1.05); }
     }
     .creature-svg-wrap {
       position: relative;
       z-index: 1;
       animation: creatureBob 2.5s ease-in-out infinite;
     }
+    .creature-svg-wrap.sleeping { animation: creatureSleep 3s ease-in-out infinite; }
     @keyframes creatureBob {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-6px); }
     }
-    .creature-svg-wrap.sleeping { animation: creatureSleep 3s ease-in-out infinite; }
     @keyframes creatureSleep {
       0%, 100% { transform: translateY(0) rotate(-2deg); }
       50% { transform: translateY(2px) rotate(2deg); }
     }
-
+    @keyframes heartFloat {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
+      50% { opacity: 0.8; transform: translate(-50%, -120%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
+    }
     .creature-name {
       font-family: var(--font-serif);
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 600;
       color: var(--text-primary);
-      margin-top: 4px;
+      margin-top: 10px;
     }
     .creature-status {
       font-size: 12px;
@@ -207,25 +555,24 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 3px 10px;
+      padding: 4px 12px;
       border-radius: 9999px;
       font-size: 12px;
       font-weight: 500;
-      margin-top: 6px;
+      margin-top: 8px;
+      background: hsl(var(--accent));
+      color: var(--text-primary);
+      border: 1px solid hsl(var(--primary) / 0.22);
     }
-    .status-badge.happy { background: rgba(255,180,80,0.15); color: #c98a1f; }
-    .status-badge.calm { background: rgba(232,116,154,0.12); color: var(--accent-color); }
-    .status-badge.hungry { background: rgba(200,140,60,0.12); color: #a07420; }
-    .status-badge.weak { background: rgba(150,150,150,0.12); color: #888; }
-    .status-badge.sleeping { background: rgba(100,120,200,0.12); color: #6878a8; }
 
     /* Level & exp */
     .level-bar {
-      margin: 12px 18px 0;
+      margin-top: 14px;
       padding: 14px 16px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.58);
-      border: 1px solid rgba(232,116,154,0.15);
+      border-radius: 24px;
+      background: hsl(var(--card) / 0.78);
+      border: 1px solid hsl(var(--primary) / 0.16);
+      box-shadow: var(--shadow-xs);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
@@ -235,35 +582,37 @@
       justify-content: space-between;
       margin-bottom: 8px;
     }
+    .level-info { display: flex; align-items: baseline; gap: 6px; }
     .level-label {
       font-family: var(--font-serif);
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
       color: var(--accent-color);
     }
     .level-title { font-size: 12px; color: var(--text-secondary); }
     .exp-text { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
     .exp-track {
-      height: 8px;
+      height: 10px;
       border-radius: 9999px;
-      background: rgba(232,116,154,0.12);
+      background: hsl(var(--primary) / 0.12);
       overflow: hidden;
     }
     .exp-fill {
       height: 100%;
       border-radius: 9999px;
-      background: linear-gradient(90deg, #f4a0bc, #e8749a, #ff9a56);
+      background: linear-gradient(90deg, var(--accent-color), hsl(var(--primary)));
       transition: width 0.6s cubic-bezier(0.3,0,0,1);
-      box-shadow: 0 0 10px -2px rgba(232,116,154,0.5);
+      box-shadow: 0 0 10px -2px hsl(var(--primary) / 0.45);
     }
 
-    /* Vitals (fullness & mood) */
+    /* Vitals */
     .vitals-section {
-      margin: 12px 18px 0;
-      padding: 12px 14px;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.55);
-      border: 1px solid rgba(232,116,154,0.12);
+      margin-top: 12px;
+      padding: 14px 16px;
+      border-radius: 24px;
+      background: hsl(var(--card) / 0.78);
+      border: 1px solid hsl(var(--primary) / 0.14);
+      box-shadow: var(--shadow-xs);
     }
     .vital-row {
       display: flex;
@@ -271,19 +620,19 @@
       justify-content: space-between;
       margin-bottom: 4px;
     }
-    .vital-row + .vital-row { margin-top: 8px; margin-bottom: 4px; }
+    .vital-row + .vital-row { margin-top: 10px; margin-bottom: 4px; }
     .vital-label {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text-primary);
-      display: flex; align-items: center; gap: 5px;
+      display: flex; align-items: center; gap: 6px;
     }
-    .vital-icon { font-size: 14px; }
-    .vital-num { font-size: 11px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .vital-icon { font-size: 15px; }
+    .vital-num { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
     .vital-track {
-      height: 6px;
+      height: 8px;
       border-radius: 9999px;
-      background: rgba(232,116,154,0.1);
+      background: hsl(var(--primary) / 0.1);
       overflow: hidden;
     }
     .vital-fill {
@@ -291,91 +640,96 @@
       border-radius: 9999px;
       transition: width 0.5s cubic-bezier(0.3,0,0,1);
     }
-    .vital-fill.fullness { background: linear-gradient(90deg, #f4d03f, #e67e22); }
-    .vital-fill.mood { background: linear-gradient(90deg, #f4a0bc, #e8749a); }
+    .vital-fill.fullness { background: linear-gradient(90deg, var(--accent-color), hsl(var(--primary))); }
+    .vital-fill.mood { background: linear-gradient(90deg, hsl(var(--primary)), var(--accent-color)); }
 
-    /* Stats grid */
+    /* Stats */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin: 12px 18px 0;
+      gap: 10px;
+      margin-top: 12px;
     }
     .stat-card {
-      padding: 12px 8px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.55);
-      border: 1px solid rgba(232,116,154,0.12);
+      padding: 14px 6px;
+      border-radius: 24px;
+      background: hsl(var(--card) / 0.78);
+      border: 1px solid hsl(var(--primary) / 0.14);
       text-align: center;
+      box-shadow: var(--shadow-xs);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    .stat-icon { font-size: 18px; line-height: 1; margin-bottom: 4px; }
+    .stat-card:active { transform: scale(0.96); }
+    .stat-icon { font-size: 20px; line-height: 1; margin-bottom: 5px; }
     .stat-num {
       font-family: var(--font-serif);
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 700;
       color: var(--accent-color);
       line-height: 1;
       font-variant-numeric: tabular-nums;
     }
-    .stat-label { font-size: 10.5px; color: var(--text-secondary); margin-top: 3px; }
+    .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
 
     /* Today interactions */
     .today-section {
-      margin: 12px 18px 0;
-      padding: 14px 16px;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.5);
-      border: 1px solid rgba(232,116,154,0.12);
+      margin-top: 12px;
+      padding: 16px;
+      border-radius: 24px;
+      background: hsl(var(--card) / 0.72);
+      border: 1px solid hsl(var(--primary) / 0.12);
+      box-shadow: var(--shadow-xs);
     }
     .today-title {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .today-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 0;
+      padding: 7px 0;
     }
     .today-left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
-    .today-left .emoji { font-size: 16px; }
+    .today-left .emoji { font-size: 17px; }
     .today-count { font-size: 13px; font-weight: 600; color: var(--accent-color); font-variant-numeric: tabular-nums; }
-    .today-count.done { color: #c98a1f; }
+    .today-count.done { color: var(--accent-color); opacity: 0.85; }
     .today-bar {
       flex: 1;
-      height: 4px;
+      height: 5px;
       border-radius: 9999px;
-      background: rgba(232,116,154,0.1);
-      margin: 0 10px;
+      background: hsl(var(--primary) / 0.1);
+      margin: 0 12px;
       overflow: hidden;
-      max-width: 80px;
+      max-width: 100px;
     }
     .today-bar-fill {
       height: 100%;
       border-radius: 9999px;
-      background: linear-gradient(90deg, #f4a0bc, #e8749a);
+      background: linear-gradient(90deg, var(--accent-color), hsl(var(--primary)));
       transition: width 0.4s ease;
     }
 
     /* Milestones */
     .milestone-section {
-      margin: 12px 18px 0;
-      padding: 14px 16px;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.5);
-      border: 1px solid rgba(232,116,154,0.12);
+      margin-top: 12px;
+      padding: 16px;
+      border-radius: 24px;
+      background: hsl(var(--card) / 0.72);
+      border: 1px solid hsl(var(--primary) / 0.12);
+      box-shadow: var(--shadow-xs);
     }
     .milestone-title {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .milestone-list {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       overflow-x: auto;
       scrollbar-width: none;
       padding-bottom: 2px;
@@ -387,95 +741,110 @@
       text-align: center;
     }
     .milestone-circle {
-      width: 48px; height: 48px;
+      width: 52px; height: 52px;
       border-radius: 9999px;
       display: grid; place-items: center;
-      font-size: 22px;
-      margin: 0 auto 4px;
-      border: 2px solid rgba(232,116,154,0.15);
-      background: rgba(255,255,255,0.5);
+      font-size: 24px;
+      margin: 0 auto 5px;
+      border: 2px dashed hsl(var(--primary) / 0.22);
+      background: hsl(var(--card) / 0.7);
       position: relative;
+      transition: transform 0.15s ease;
     }
     .milestone-item.unlocked .milestone-circle {
-      border-color: #e8a83a;
-      background: linear-gradient(135deg, #fff8e8, #ffe8c8);
-      box-shadow: 0 2px 10px -3px rgba(255,180,80,0.35);
+      border-style: solid;
+      border-color: var(--accent-color);
+      background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary) / 0.35));
+      box-shadow: 0 4px 12px -4px hsl(var(--primary) / 0.35);
     }
     .milestone-item.unlocked .milestone-circle::after {
       content: '✓';
       position: absolute;
       top: -2px; right: -2px;
-      width: 16px; height: 16px;
+      width: 18px; height: 18px;
       border-radius: 9999px;
-      background: #e8a83a;
-      color: #fff;
+      background: var(--accent-color);
+      color: hsl(var(--card));
       font-size: 10px;
       display: grid; place-items: center;
+      font-weight: 700;
     }
-    .milestone-label { font-size: 10px; color: var(--text-secondary); line-height: 1.3; }
-    .milestone-item.unlocked .milestone-label { color: #c98a1f; font-weight: 600; }
+    .milestone-label { font-size: 10.5px; color: var(--text-secondary); line-height: 1.3; }
+    .milestone-item.unlocked .milestone-label { color: var(--accent-color); font-weight: 600; }
 
     /* Makeup card */
     .makeup-section {
-      margin: 12px 18px 0;
+      margin-top: 12px;
       padding: 14px 16px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, rgba(255,248,232,0.7), rgba(255,232,200,0.6));
-      border: 1px solid rgba(255,180,80,0.2);
+      border-radius: 24px;
+      background: hsl(var(--secondary) / 0.85);
+      border: 1px solid hsl(var(--primary) / 0.18);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      box-shadow: var(--shadow-xs);
     }
     .makeup-info { display: flex; align-items: center; gap: 10px; }
     .makeup-icon { font-size: 26px; }
-    .makeup-text { font-size: 13px; color: #a07420; }
-    .makeup-text b { font-family: var(--font-serif); font-size: 15px; }
+    .makeup-text { font-size: 13px; color: var(--text-primary); }
+    .makeup-text b { font-family: var(--font-serif); font-size: 15px; color: var(--accent-color); }
     .makeup-btn {
       font-size: 12px;
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: 9999px;
-      border: 1px solid rgba(255,180,80,0.3);
-      background: #fff;
-      color: #c98a1f;
+      border: 1px solid hsl(var(--primary) / 0.35);
+      background: hsl(var(--card));
+      color: var(--accent-color);
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.12s ease, background-color 0.12s ease;
     }
-    .makeup-btn:active { transform: scale(0.94); }
+    .makeup-btn:active { transform: scale(0.94); background: hsl(var(--accent)); }
     .makeup-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* Interaction buttons */
+    /* Quick actions */
     .action-section {
-      margin: 14px 18px 0;
+      margin-top: 14px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 10px;
     }
     .action-btn {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 12px 4px;
-      border-radius: 14px;
-      border: 1px solid rgba(232,116,154,0.15);
-      background: rgba(255,255,255,0.55);
+      gap: 5px;
+      padding: 14px 4px;
+      border-radius: 26px;
+      border: 1px solid hsl(var(--primary) / 0.15);
+      background: hsl(var(--card) / 0.72);
       text-decoration: none;
       cursor: pointer;
-      transition: all 0.15s;
+      box-shadow: var(--shadow-xs);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
     }
-    .action-btn:active { transform: scale(0.95); background: rgba(232,116,154,0.08); }
-    .action-icon { font-size: 22px; }
-    .action-label { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
-    .action-exp { font-size: 10px; color: var(--accent-color); }
+    .action-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+    .action-btn:active { transform: scale(0.95); background: hsl(var(--accent)); }
+    .action-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 9999px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      background: hsl(var(--accent));
+      border: 2px dashed hsl(var(--primary) / 0.25);
+    }
+    .action-label { font-size: 12px; color: var(--text-primary); font-weight: 500; }
+    .action-exp { font-size: 10px; color: var(--text-secondary); }
 
-    /* Dresser modal */
+    /* Modal */
     .modal-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(40,20,32,0.45);
-      backdrop-filter: blur(3px);
-      -webkit-backdrop-filter: blur(3px);
+      background: hsl(var(--foreground) / 0.35);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       z-index: 100;
       opacity: 0;
       pointer-events: none;
@@ -485,22 +854,23 @@
     .modal-sheet {
       position: absolute;
       left: 0; right: 0; bottom: 0;
-      background: #fff;
-      border-radius: 24px 24px 0 0;
-      padding: 20px 18px 26px;
+      background: hsl(var(--card) / 0.96);
+      border-radius: 32px 32px 0 0;
+      padding: 20px 18px 28px;
       transform: translateY(100%);
       transition: transform 0.3s cubic-bezier(0.3,0,0,1);
       z-index: 101;
       max-height: 85vh;
       overflow-y: auto;
       scrollbar-width: none;
+      box-shadow: var(--shadow-lg);
     }
     .modal-sheet::-webkit-scrollbar { display: none; }
     .modal-overlay.show .modal-sheet { transform: translateY(0); }
     .modal-handle {
-      width: 42px; height: 4px;
+      width: 44px; height: 4px;
       border-radius: 9999px;
-      background: rgba(0,0,0,0.12);
+      background: hsl(var(--foreground) / 0.12);
       margin: 0 auto 16px;
     }
     .modal-title {
@@ -530,96 +900,102 @@
       font-size: 12px;
       color: var(--text-secondary);
       text-align: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .food-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 16px;
     }
     .food-card {
       position: relative;
-      border-radius: 16px;
-      border: 1.5px solid rgba(232,116,154,0.12);
-      background: rgba(255,255,255,0.6);
-      padding: 10px 6px;
+      border-radius: 24px;
+      border: 2px dashed hsl(var(--primary) / 0.22);
+      background: hsl(var(--card) / 0.65);
+      padding: 12px 6px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     .food-card:active { transform: scale(0.95); }
     .food-card.active {
+      border-style: solid;
       border-color: var(--accent-color);
-      background: rgba(232,116,154,0.08);
+      background: hsl(var(--accent));
     }
     .food-card.locked {
-      opacity: 0.5;
+      opacity: 0.45;
       cursor: not-allowed;
     }
     .food-card.locked::after {
       content: '🔒';
       position: absolute;
-      top: 6px; right: 6px;
-      font-size: 10px;
+      top: 8px; right: 8px;
+      font-size: 11px;
     }
-    .food-emoji { font-size: 28px; line-height: 1; margin-bottom: 4px; }
+    .food-emoji { font-size: 32px; line-height: 1; margin-bottom: 5px; }
     .food-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
     .food-effect { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
     .food-stock {
       position: absolute;
-      top: 6px; left: 6px;
-      min-width: 18px; height: 18px;
+      top: 8px; left: 8px;
+      min-width: 20px; height: 20px;
       padding: 0 5px;
       border-radius: 9999px;
       background: var(--accent-color);
-      color: #fff;
+      color: hsl(var(--card));
       font-size: 10px;
       font-weight: 700;
       display: grid; place-items: center;
     }
 
     .feeder-detail {
-      background: rgba(255,248,232,0.6);
-      border: 1px solid rgba(255,180,80,0.2);
-      border-radius: 16px;
-      padding: 12px;
+      background: hsl(var(--secondary) / 0.75);
+      border: 1px solid hsl(var(--primary) / 0.18);
+      border-radius: 20px;
+      padding: 14px;
       margin-bottom: 16px;
     }
     .feeder-detail-title {
       font-family: var(--font-serif);
       font-size: 15px;
       font-weight: 600;
-      color: #a07420;
+      color: var(--text-primary);
       margin-bottom: 6px;
     }
     .feeder-detail-desc {
       font-size: 12px;
-      color: #a07420;
+      color: var(--text-secondary);
       line-height: 1.5;
     }
 
     .feeder-actions {
-      display: flex; gap: 10px;
+      display: flex; gap: 12px;
       margin-top: 6px;
     }
     .feeder-btn {
       flex: 1;
-      height: 44px;
-      border-radius: 12px;
+      height: 46px;
+      border-radius: 16px;
       border: none;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.12s;
+      transition: transform 0.12s ease, opacity 0.12s ease;
     }
     .feeder-btn:active { transform: scale(0.97); }
-    .feeder-btn.secondary { background: rgba(232,116,154,0.1); color: var(--accent-color); }
+    .feeder-btn.secondary { background: hsl(var(--accent)); color: var(--accent-color); }
     .feeder-btn.primary {
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      color: #fff;
-      box-shadow: 0 4px 14px -4px rgba(232,116,154,0.45);
+      background: linear-gradient(135deg, hsl(var(--primary)), var(--accent-color));
+      color: hsl(var(--card));
+      box-shadow: 0 4px 14px -4px hsl(var(--primary) / 0.45);
     }
     .feeder-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -627,19 +1003,20 @@
     .toast {
       position: absolute;
       left: 50%;
-      bottom: 30px;
+      bottom: 34px;
       transform: translateX(-50%) translateY(12px);
-      background: rgba(61,32,48,0.88);
-      color: #fff;
+      background: hsl(var(--foreground) / 0.88);
+      color: hsl(var(--background));
       font-size: 13px;
-      padding: 8px 18px;
+      padding: 9px 20px;
       border-radius: 9999px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.25s, transform 0.25s;
+      transition: opacity 0.25s ease, transform 0.25s ease;
       z-index: 50;
       white-space: nowrap;
       backdrop-filter: blur(6px);
+      box-shadow: var(--shadow-md);
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -658,9 +1035,11 @@
       font-family: var(--font-serif);
       font-size: 28px;
       font-weight: 700;
-      color: #fff;
-      text-shadow: 0 0 20px rgba(255,180,80,0.8), 0 2px 8px rgba(0,0,0,0.3);
+      color: hsl(var(--card));
+      text-shadow: 0 0 20px hsl(var(--primary) / 0.8), 0 2px 8px hsl(var(--foreground) / 0.3);
       animation: levelupPop 1.5s ease-out forwards;
+      text-align: center;
+      padding: 0 16px;
     }
     @keyframes levelupPop {
       0% { opacity: 0; transform: scale(0.5); }
@@ -674,165 +1053,6 @@
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
-</head>
-<body>
-  <div class="phone">
-    <div class="app-bg" id="appBg">
-      <div class="top-bar">
-        <a href="index-new.html" class="back-btn">← 返回</a>
-        <div class="top-title">小火人</div>
-        <div class="top-action">
-          <button class="feed-btn" id="feedBtn">喂食</button>
-        </div>
-      </div>
-
-      <div class="scroll-area" id="scrollArea">
-        <!-- Creature display -->
-        <div class="creature-stage">
-          <div class="creature-aura" id="creatureAura"></div>
-          <div class="creature-svg-wrap" id="creatureWrap">
-            <div id="creatureSvg"></div>
-          </div>
-          <div class="creature-name" id="creatureName">小火人</div>
-          <div class="creature-status" id="creatureStatusText">和梦角一起成长中</div>
-          <div class="status-badge happy" id="statusBadge">😊 开心</div>
-        </div>
-
-        <!-- Level & exp -->
-        <div class="level-bar">
-          <div class="level-row">
-            <div>
-              <span class="level-label" id="levelLabel">Lv.1</span>
-              <span class="level-title" id="levelTitle">小火苗</span>
-            </div>
-            <span class="exp-text" id="expText">0 / 50</span>
-          </div>
-          <div class="exp-track">
-            <div class="exp-fill" id="expFill" style="width:0%"></div>
-          </div>
-        </div>
-
-        <!-- Vitals -->
-        <div class="vitals-section">
-          <div class="vital-row">
-            <span class="vital-label"><span class="vital-icon">🍖</span>饱食度</span>
-            <span class="vital-num" id="fullnessNum">60/100</span>
-          </div>
-          <div class="vital-track"><div class="vital-fill fullness" id="fullnessFill" style="width:60%"></div></div>
-          <div class="vital-row">
-            <span class="vital-label"><span class="vital-icon">💖</span>心情</span>
-            <span class="vital-num" id="moodNum">60/100</span>
-          </div>
-          <div class="vital-track"><div class="vital-fill mood" id="moodFill" style="width:60%"></div></div>
-        </div>
-
-        <!-- Stats -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">🔥</div>
-            <div class="stat-num" id="streakNum">0</div>
-            <div class="stat-label">连续天数</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">✨</div>
-            <div class="stat-num" id="totalExpNum">0</div>
-            <div class="stat-label">总经验</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">💬</div>
-            <div class="stat-num" id="totalInteractNum">0</div>
-            <div class="stat-label">总互动</div>
-          </div>
-        </div>
-
-        <!-- Today interactions -->
-        <div class="today-section">
-          <div class="today-title">今日互动</div>
-          <div class="today-row">
-            <div class="today-left"><span class="emoji">💬</span> 对话</div>
-            <div class="today-bar"><div class="today-bar-fill" id="chatBar" style="width:0%"></div></div>
-            <div class="today-count" id="chatCount">0/10</div>
-          </div>
-          <div class="today-row">
-            <div class="today-left"><span class="emoji">🃏</span> 抽字卡</div>
-            <div class="today-bar"><div class="today-bar-fill" id="cardBar" style="width:0%"></div></div>
-            <div class="today-count" id="cardCount">0/3</div>
-          </div>
-          <div class="today-row">
-            <div class="today-left"><span class="emoji">🌸</span> 发朋友圈</div>
-            <div class="today-bar"><div class="today-bar-fill" id="momentBar" style="width:0%"></div></div>
-            <div class="today-count" id="momentCount">0/2</div>
-          </div>
-        </div>
-
-        <!-- Milestones -->
-        <div class="milestone-section">
-          <div class="milestone-title">成长里程碑</div>
-          <div class="milestone-list" id="milestoneList"></div>
-        </div>
-
-        <!-- Makeup card -->
-        <div class="makeup-section">
-          <div class="makeup-info">
-            <div class="makeup-icon">🎫</div>
-            <div class="makeup-text">补签卡 <b id="makeupCount">1</b> 张</div>
-          </div>
-          <button class="makeup-btn" id="makeupBtn">补昨日</button>
-        </div>
-
-        <!-- Quick actions -->
-        <div class="action-section">
-          <a href="chat-new.html" class="action-btn">
-            <span class="action-icon">💬</span>
-            <span class="action-label">去对话</span>
-            <span class="action-exp">+3 exp</span>
-          </a>
-          <a href="cards-new.html" class="action-btn">
-            <span class="action-icon">🃏</span>
-            <span class="action-label">抽字卡</span>
-            <span class="action-exp">+5 exp</span>
-          </a>
-          <a href="moments-new.html" class="action-btn">
-            <span class="action-icon">🌸</span>
-            <span class="action-label">发朋友圈</span>
-            <span class="action-exp">+8 exp</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Feeder modal -->
-      <div class="modal-overlay" id="feedModal">
-        <div class="modal-sheet">
-          <div class="modal-handle"></div>
-          <div class="modal-title">喂食小火人</div>
-          <div class="feeder-preview" id="feederPreview">
-            <img src="character.png?v=2" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;filter:brightness(1.12) saturate(1.15) contrast(1.05);">
-          </div>
-          <div class="feeder-hint" id="feederHint">选择食物喂给小火人吧～</div>
-
-          <div class="food-grid" id="foodGrid"></div>
-
-          <div class="feeder-detail" id="feederDetail" style="display:none;">
-            <div class="feeder-detail-title" id="detailTitle"></div>
-            <div class="feeder-detail-desc" id="detailDesc"></div>
-          </div>
-
-          <div class="feeder-actions">
-            <button class="feeder-btn secondary" id="feedClose">关闭</button>
-            <button class="feeder-btn primary" id="feedConfirm" disabled>喂食</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Level up overlay -->
-      <div class="levelup-overlay" id="levelupOverlay">
-        <div class="levelup-text" id="levelupText"></div>
-      </div>
-
-      <!-- Toast -->
-      <div class="toast" id="toast"></div>
-    </div>
-  </div>
 
   <script>
     (function () {
@@ -1203,55 +1423,39 @@
           bodySvg + legsSvg + armsSvg +
           /* Head group */
           '<g opacity="' + bodyOpacity + '">' +
-            /* Unified hair crown - 统一发冠，所有头发从发旋生长 */
+            /* Unified hair crown */
             '<path d="M 44 92 Q 36 64 44 44 Q 56 20 80 24 Q 94 14 112 18 Q 140 20 154 44 Q 162 64 156 92 Q 152 106 146 100 Q 138 110 128 102 Q 120 112 108 104 Q 100 108 92 104 Q 80 112 72 102 Q 62 110 54 100 Q 48 106 44 92 Z" fill="url(#hairGrad)"/>' +
-            /* Crown shadow for depth */
             '<ellipse cx="100" cy="54" rx="48" ry="34" fill="' + darkenColor(hair, 22) + '" opacity="0.18"/>' +
-            /* Head */
             '<circle cx="100" cy="82" r="40" fill="' + skin + '"/>' +
-            /* Cat ears */
             '<path d="M 58 44 Q 46 16 68 22 Q 80 34 78 50 Z" fill="' + earColor + '"/>' +
             '<path d="M 142 44 Q 154 16 132 22 Q 120 34 122 50 Z" fill="' + earColor + '"/>' +
             '<path d="M 61 41 Q 52 22 66 24 Q 75 36 74 46 Z" fill="' + earInner + '" opacity="0.8"/>' +
             '<path d="M 139 41 Q 148 22 134 24 Q 125 36 126 46 Z" fill="' + earInner + '" opacity="0.8"/>' +
-            /* Ahoge 呆毛 */
             '<path d="M 96 22 Q 88 6 102 4 Q 114 8 104 22 Z" fill="url(#hairGrad)"/>' +
             '<path d="M 98 20 Q 96 10 102 8" stroke="' + darkenColor(hair, 18) + '" stroke-width="1" fill="none" opacity="0.3"/>' +
-            /* Middle-parted bangs - 中分刘海，从头顶向两侧分开有体积感 */
-            /* 左半边 - 从中分线向左蓬松延伸，露出部分额头 */
             '<path d="M 100 30 Q 78 28 60 38 Q 44 50 46 74 Q 50 86 58 92 Q 54 74 62 64 Q 74 50 92 48 Q 96 40 100 30 Z" fill="url(#hairGrad)"/>' +
             '<path d="M 58 92 Q 50 70 60 52 Q 74 40 88 42 Q 82 56 76 72 Q 66 86 58 92 Z" fill="url(#hairGrad)"/>' +
             '<path d="M 50 86 Q 46 64 54 48 Q 64 38 72 42 Q 66 58 58 74 Q 52 84 50 86 Z" fill="url(#hairGrad)"/>' +
-            /* 右半边 - 镜像 */
             '<path d="M 100 30 Q 122 28 140 38 Q 156 50 154 74 Q 150 86 142 92 Q 146 74 138 64 Q 126 50 108 48 Q 104 40 100 30 Z" fill="url(#hairGrad)"/>' +
             '<path d="M 142 92 Q 150 70 140 52 Q 126 40 112 42 Q 118 56 124 72 Q 134 86 142 92 Z" fill="url(#hairGrad)"/>' +
             '<path d="M 150 86 Q 154 64 146 48 Q 136 38 128 42 Q 134 58 142 74 Q 148 84 150 86 Z" fill="url(#hairGrad)"/>' +
-            /* Middle part line - 中分发缝 */
             '<path d="M 100 28 L 100 52" stroke="' + darkenColor(hair, 28) + '" stroke-width="1.3" fill="none" opacity="0.22" stroke-linecap="round"/>' +
-            /* Hair flow lines 发丝流向 */
             '<path d="M 84 36 Q 74 50 66 70" stroke="' + darkenColor(hair, 26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
             '<path d="M 116 36 Q 126 50 134 70" stroke="' + darkenColor(hair, 26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
-            /* Hair shine highlights */
             '<ellipse cx="72" cy="42" rx="4.5" ry="2.5" fill="' + lightenColor(hair, 42) + '" opacity="0.32" transform="rotate(-28 72 42)"/>' +
             '<ellipse cx="128" cy="42" rx="4.5" ry="2.5" fill="' + lightenColor(hair, 42) + '" opacity="0.32" transform="rotate(28 128 42)"/>' +
             '<ellipse cx="88" cy="44" rx="3" ry="1.8" fill="' + lightenColor(hair, 36) + '" opacity="0.22"/>' +
             '<ellipse cx="112" cy="44" rx="3" ry="1.8" fill="' + lightenColor(hair, 36) + '" opacity="0.22"/>' +
-            /* Side hair - 男孩短发，短而蓬松，不垂长 */
             '<path d="M 46 86 Q 36 98 40 112 Q 50 106 54 92 Z" fill="url(#hairGrad)"/>' +
             '<path d="M 154 86 Q 164 98 160 112 Q 150 106 146 92 Z" fill="url(#hairGrad)"/>' +
             '<path d="M 42 102 Q 44 108 48 110" stroke="' + darkenColor(hair, 20) + '" stroke-width="1" fill="none" opacity="0.18"/>' +
             '<path d="M 158 102 Q 156 108 152 110" stroke="' + darkenColor(hair, 20) + '" stroke-width="1" fill="none" opacity="0.18"/>' +
-            /* Blush */
             '<ellipse cx="72" cy="92" rx="7" ry="4.5" fill="#ff8aa0" opacity="0.35"/>' +
             '<ellipse cx="128" cy="92" rx="7" ry="4.5" fill="#ff8aa0" opacity="0.35"/>' +
-            /* Eyes */
             eyeSvg +
-            /* Mouth */
             mouthSvg +
           '</g>' +
-          /* Accessory */
           accSvg +
-          /* Zzz for sleeping */
           (isSleeping ? '<text x="148" y="52" font-size="14" fill="#aaa" opacity="0.6" font-family="serif">Z</text>' +
            '<text x="158" y="42" font-size="10" fill="#bbb" opacity="0.4" font-family="serif">z</text>' : '') +
         '</svg>';
@@ -1284,11 +1488,8 @@
             '</g>';
         }
         return '<g opacity="' + opacity + '">' +
-          /* Torso */
           '<path d="M 76 128 Q 76 120 100 120 Q 124 120 124 128 L 128 165 Q 128 172 100 172 Q 72 172 72 165 Z" fill="' + outfit + '"/>' +
-          /* Collar V-neck */
           '<path d="M 88 120 L 100 132 L 112 120" fill="none" stroke="' + dark + '" stroke-width="2"/>' +
-          /* White lower */
           '<rect x="78" y="158" width="44" height="14" rx="6" fill="' + skin + '"/>' +
           '</g>';
       }
@@ -1529,7 +1730,7 @@
         var state = SparkTracker.getState();
         var info = STATE_INFO[state];
 
-        creatureSvg.innerHTML = '<img src="character.png?v=2" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
+        creatureSvg.innerHTML = '<img src="../assets/character.png" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
         creatureWrap.className = "creature-svg-wrap" + (state === "sleeping" ? " sleeping" : "");
         creatureName.textContent = "Lv." + data.level + " " + LEVELS[Math.min(data.level-1, LEVELS.length-1)].title;
         creatureStatusText.textContent = info.text;
@@ -1688,7 +1889,7 @@
       function spawnHeart(x, y) {
         var heart = document.createElement("div");
         heart.textContent = "♡";
-        heart.style.cssText = "position:fixed;left:" + x + "px;top:" + y + "px;font-size:20px;color:#e8749a;pointer-events:none;z-index:200;animation:heartFloat 1s ease-out forwards;";
+        heart.style.cssText = "position:fixed;left:" + x + "px;top:" + y + "px;font-size:20px;color:var(--accent-color);pointer-events:none;z-index:200;animation:heartFloat 1s ease-out forwards;";
         document.body.appendChild(heart);
         setTimeout(function(){ if (heart.parentNode) heart.parentNode.removeChild(heart); }, 1000);
       }
@@ -1701,5 +1902,6 @@
       });
     })();
   </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

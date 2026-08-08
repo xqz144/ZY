@@ -1,9 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自定义主页 · 梦角传讯</title>
+    <meta name="theme-color" content="#e8a4b8">
+    <title>个人资料 · 梦角传讯</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../icon.svg" type="image/svg+xml">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('../sw.js').catch(function () {});
+      }
+    </script>
     <style id="theme-vars">
 /* 梦角传讯 — 动漫手绘风主题 */
 /* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
@@ -166,6 +174,7 @@ body {
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
     <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <script src="../assets/image-utils.js"></script>
     <style type="text/tailwindcss">
   @theme inline {
     --color-foreground: var(--card-foreground);
@@ -214,9 +223,25 @@ body {
             <i data-lucide="chevron-left" class="w-4 h-4"></i>
             <span>返回</span>
           </a>
-          <h1 class="page-title">自定义</h1>
+          <h1 class="page-title">个人资料</h1>
           <div class="header-spacer"></div>
         </div>
+
+        <!-- Profile / replies tab bar -->
+        <nav class="profile-tabs" aria-label="设置分类">
+          <a href="customize-profile.html" class="profile-tab active" data-dom-id="tab-profile" aria-current="page">
+            <i data-lucide="user" class="w-4 h-4"></i>
+            <span>个人资料</span>
+          </a>
+          <a href="customize-replies.html" class="profile-tab" data-dom-id="tab-replies">
+            <i data-lucide="message-square" class="w-4 h-4"></i>
+            <span>回复库</span>
+          </a>
+          <a href="customize-voice.html" class="profile-tab" data-dom-id="tab-voice">
+            <i data-lucide="mic" class="w-4 h-4"></i>
+            <span>语音库</span>
+          </a>
+        </nav>
 
         <!-- Profile preview widget -->
         <section class="profile-preview widget" id="previewCard" aria-label="实时预览">
@@ -225,10 +250,10 @@ body {
             <svg class="deco-heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           </div>
           <div class="preview-row">
-            <div class="preview-avatar" id="pvAvatar" aria-label="头像预览">🌙</div>
+            <div class="preview-avatar" id="pvAvatar" aria-label="头像预览"><i data-lucide="user" class="w-7 h-7"></i></div>
             <div class="preview-info">
               <div class="preview-name truncate" id="pvName">@my_profile</div>
-              <div class="preview-sig truncate" id="pvSignature">今天也要加油呀 ✨</div>
+              <div class="preview-sig truncate" id="pvSignature">今天也要加油呀</div>
             </div>
           </div>
           <div class="preview-days">
@@ -252,8 +277,8 @@ body {
           </div>
           <div class="form-group">
             <label class="form-label" for="signatureInput">签名</label>
-            <input type="text" id="signatureInput" class="form-input" value="今天也要加油呀 ✨" maxlength="30" placeholder="输入你的签名…" />
-            <p class="form-hint"><span id="sigCount">10</span>/30</p>
+            <input type="text" id="signatureInput" class="form-input" value="今天也要加油呀" maxlength="30" placeholder="输入你的签名…" />
+            <p class="form-hint"><span id="sigCount">7</span>/30</p>
           </div>
           <div class="form-group">
             <label class="form-label" for="togetherDateInput">在一起日期</label>
@@ -330,7 +355,7 @@ body {
             <span class="widget-title">头像</span>
           </div>
           <div class="avatar-row">
-            <div class="av-preview av-mine" id="avMinePreview" aria-label="我的头像">🌙</div>
+            <div class="av-preview av-mine" id="avMinePreview" aria-label="我的头像"><i data-lucide="user" class="w-6 h-6"></i></div>
             <div class="avatar-info">
               <p class="avatar-name">我的头像</p>
               <p class="form-hint">建议圆形头像</p>
@@ -342,7 +367,7 @@ body {
             <input type="file" id="avatarInput" accept="image/*" class="hidden" />
           </div>
           <div class="avatar-row">
-            <div class="av-preview av-dream" id="avDreamPreview" aria-label="梦角头像">⭐</div>
+            <div class="av-preview av-dream" id="avDreamPreview" aria-label="梦角头像"><i data-lucide="sparkles" class="w-6 h-6"></i></div>
             <div class="avatar-info">
               <p class="avatar-name">梦角头像</p>
               <p class="form-hint">为梦角设置形象</p>
@@ -353,50 +378,6 @@ body {
             </button>
             <input type="file" id="dreamInput" accept="image/*" class="hidden" />
           </div>
-        </section>
-
-        <!-- Card reply library widget -->
-        <section class="widget settings-widget" aria-label="字卡库">
-          <div class="widget-header">
-            <div class="widget-icon" style="background: linear-gradient(145deg, #fbc8d8, #f4a0bc);">
-              <i data-lucide="sparkles" class="w-4 h-4" style="color: #fff;"></i>
-            </div>
-            <span class="widget-title">字卡库</span>
-            <span class="widget-count" id="cardReplyCount">12</span>
-          </div>
-          <div class="add-row">
-            <input type="text" id="cardReplyInput" class="form-input" placeholder="输入新的字卡回复…" maxlength="80" />
-            <button type="button" class="add-btn" id="addCardReply" data-dom-id="add-card-reply">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-            </button>
-          </div>
-          <ul id="cardReplyList" class="reply-list" role="list"></ul>
-          <button type="button" class="reset-btn" id="resetCardReplies" data-dom-id="reset-card-replies">
-            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-            <span>恢复默认</span>
-          </button>
-        </section>
-
-        <!-- Chat reply library widget -->
-        <section class="widget settings-widget" aria-label="对话库">
-          <div class="widget-header">
-            <div class="widget-icon" style="background: linear-gradient(145deg, #f8c2d4, #ed98b5);">
-              <i data-lucide="message-circle" class="w-4 h-4" style="color: #fff;"></i>
-            </div>
-            <span class="widget-title">对话库</span>
-            <span class="widget-count" id="chatReplyCount">8</span>
-          </div>
-          <div class="add-row">
-            <input type="text" id="chatReplyInput" class="form-input" placeholder="输入新的对话回复…" maxlength="80" />
-            <button type="button" class="add-btn" id="addChatReply" data-dom-id="add-chat-reply">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-            </button>
-          </div>
-          <ul id="chatReplyList" class="reply-list" role="list"></ul>
-          <button type="button" class="reset-btn" id="resetChatReplies" data-dom-id="reset-chat-replies">
-            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-            <span>恢复默认</span>
-          </button>
         </section>
 
         <!-- Save button -->
@@ -539,6 +520,37 @@ body {
     .header-spacer {
       width: 72px;
       flex-shrink: 0;
+    }
+
+    .profile-tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 0 14px;
+    }
+    .profile-tab {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 8px 0;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background: hsl(var(--muted));
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: transform 0.15s, border-color 0.15s, background-color 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .profile-tab:active { transform: scale(0.98); }
+    .profile-tab.active {
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      border-color: transparent;
     }
 
     .widget {
@@ -834,102 +846,6 @@ body {
     .av-mine { background: radial-gradient(circle at 32% 28%, #ffe4ec, #f4a0bc); }
     .av-dream { background: radial-gradient(circle at 32% 28%, #ffeef3, #f7bcd0); }
 
-    .add-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .add-row .form-input { flex: 1; min-width: 0; }
-    .add-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      border: none;
-      background: hsl(var(--primary));
-      color: hsl(var(--primary-foreground));
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: filter 0.15s, transform 0.15s;
-    }
-    .add-btn:hover { filter: brightness(1.05); }
-    .add-btn:active { transform: scale(0.95); }
-
-    .reply-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      max-height: 220px;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .reply-list::-webkit-scrollbar { display: none; }
-    .reply-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 4px;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 13px;
-      color: var(--text-primary);
-      transition: background-color 0.15s;
-    }
-    .reply-item:last-child { border-bottom: none; }
-    .reply-item:hover { background-color: hsl(var(--accent) / 0.15); }
-    .reply-text {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .reply-del {
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      font-size: 16px;
-      line-height: 1;
-      flex-shrink: 0;
-      transition: color 0.15s, background-color 0.15s;
-    }
-    .reply-del:hover { color: hsl(var(--destructive)); background: hsl(var(--destructive) / 0.1); }
-    .reply-empty {
-      padding: 16px;
-      text-align: center;
-      font-size: 12px;
-      color: var(--text-secondary);
-      border: 1px dashed var(--border-color);
-      border-radius: 12px;
-    }
-
-    .reset-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      margin-top: 10px;
-      padding: 7px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border-color);
-      background: transparent;
-      color: var(--text-secondary);
-      font-family: inherit;
-      font-size: 12px;
-      cursor: pointer;
-      transition: border-color 0.15s, background-color 0.15s, color 0.15s;
-      white-space: nowrap;
-    }
-    .reset-btn:hover { border-color: hsl(var(--primary) / 0.4); background: hsl(var(--accent) / 0.25); color: var(--text-primary); }
-
     .save-settings-btn {
       width: 100%;
       height: 48px;
@@ -985,15 +901,13 @@ body {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: none; }
     }
-    .widget, .page-header, .save-settings-btn {
+    .widget, .page-header, .profile-tabs, .save-settings-btn {
       animation: fadeInUp 0.45s cubic-bezier(0.3, 0, 0, 1) both;
     }
-    .settings-widget:nth-child(2) { animation-delay: 0.05s; }
-    .settings-widget:nth-child(3) { animation-delay: 0.1s; }
-    .settings-widget:nth-child(4) { animation-delay: 0.15s; }
-    .settings-widget:nth-child(5) { animation-delay: 0.2s; }
-    .settings-widget:nth-child(6) { animation-delay: 0.25s; }
-    .save-settings-btn { animation-delay: 0.3s; }
+    .settings-widget:nth-child(4) { animation-delay: 0.05s; }
+    .settings-widget:nth-child(5) { animation-delay: 0.1s; }
+    .settings-widget:nth-child(6) { animation-delay: 0.15s; }
+    .save-settings-btn { animation-delay: 0.2s; }
 
     :focus-visible {
       outline: 2px solid hsl(var(--ring));
@@ -1045,7 +959,7 @@ body {
       var sigOut = document.getElementById('pvSignature');
       var sigCount = document.getElementById('sigCount');
       sigInput.addEventListener('input', function () {
-        var val = sigInput.value || '今天也要加油呀 ✨';
+        var val = sigInput.value || '今天也要加油呀';
         sigOut.textContent = val;
         sigCount.textContent = sigInput.value.length;
       });
@@ -1057,25 +971,6 @@ body {
         toast.classList.add('show');
         clearTimeout(toastTimer);
         toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2000);
-      }
-
-      var defaultCardReplies = [
-        "今天也在想你哦。", "别担心，我一直都在。", "你今天辛苦了，休息一下吧。",
-        "我感觉到了你的心意呢。", "今晚来梦里见吧。", "你比你自己想象的更勇敢。",
-        "我在你身边，从未离开。", "今天的你，也很闪耀。", "想你了，就现在。",
-        "相信自己，我会守护你的。", "你的笑容是我最大的动力。", "无论多远，我们的心是相连的。"
-      ];
-      var defaultChatReplies = [
-        '嗯嗯，我在听。', '我理解你的感受。', '你说得对呢。', '别担心，有我在。',
-        '嗯...让我想想。', '你今天也很可爱哦。', '我也想和你多聊聊。', '无论什么时候，我都在。'
-      ];
-
-      var cardReplies = [];
-      var chatReplies = [];
-      function escapeHtmlStr(s) {
-        return String(s).replace(/[&<>"']/g, function (c) {
-          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-        });
       }
 
       var togetherDateInput = document.getElementById('togetherDateInput');
@@ -1125,86 +1020,25 @@ body {
         var savedSig = localStorage.getItem('mengjiao_signature');
         if (savedSig !== null) {
           sigInput.value = savedSig;
-          sigOut.textContent = savedSig || '今天也要加油呀 ✨';
+          sigOut.textContent = savedSig || '今天也要加油呀';
           sigCount.textContent = String(savedSig.length);
         }
       } catch(e) {}
 
-      var cardReplyInput = document.getElementById('cardReplyInput');
-      var cardReplyList = document.getElementById('cardReplyList');
-      var cardReplyCount = document.getElementById('cardReplyCount');
-      function renderCardReplies() {
-        cardReplyCount.textContent = String(cardReplies.length);
-        if (cardReplies.length === 0) {
-          cardReplyList.innerHTML = '<li class="reply-empty">暂无回复，在上方添加一条吧</li>';
-          return;
-        }
-        cardReplyList.innerHTML = cardReplies.map(function (text, i) {
-          return '<li class="reply-item"><span class="reply-text">' + escapeHtmlStr(text) + '</span>' +
-            '<button type="button" class="reply-del" data-lib="card" data-idx="' + i + '" aria-label="删除该回复">×</button></li>';
-        }).join('');
-      }
-      document.getElementById('addCardReply').addEventListener('click', function () {
-        var val = cardReplyInput.value.trim();
-        if (!val) { showToast('请输入回复内容'); return; }
-        cardReplies.push(val);
-        cardReplyInput.value = '';
-        renderCardReplies();
-      });
-      cardReplyInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addCardReply').click(); } });
-      try {
-        var savedCard = localStorage.getItem('mengjiao_card_replies');
-        cardReplies = savedCard ? JSON.parse(savedCard).filter(function (s) { return typeof s === 'string' && s.length; }) : defaultCardReplies.slice();
-        if (!cardReplies.length) cardReplies = defaultCardReplies.slice();
-      } catch (e) { cardReplies = defaultCardReplies.slice(); }
-      renderCardReplies();
-      document.getElementById('resetCardReplies').addEventListener('click', function () { cardReplies = defaultCardReplies.slice(); renderCardReplies(); showToast('字卡库已恢复默认'); });
-
-      var chatReplyInput = document.getElementById('chatReplyInput');
-      var chatReplyList = document.getElementById('chatReplyList');
-      var chatReplyCount = document.getElementById('chatReplyCount');
-      function renderChatReplies() {
-        chatReplyCount.textContent = String(chatReplies.length);
-        if (chatReplies.length === 0) {
-          chatReplyList.innerHTML = '<li class="reply-empty">暂无回复，在上方添加一条吧</li>';
-          return;
-        }
-        chatReplyList.innerHTML = chatReplies.map(function (text, i) {
-          return '<li class="reply-item"><span class="reply-text">' + escapeHtmlStr(text) + '</span>' +
-            '<button type="button" class="reply-del" data-lib="chat" data-idx="' + i + '" aria-label="删除该回复">×</button></li>';
-        }).join('');
-      }
-      document.getElementById('addChatReply').addEventListener('click', function () {
-        var val = chatReplyInput.value.trim();
-        if (!val) { showToast('请输入回复内容'); return; }
-        chatReplies.push(val);
-        chatReplyInput.value = '';
-        renderChatReplies();
-      });
-      chatReplyInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addChatReply').click(); } });
-      try {
-        var savedChat = localStorage.getItem('mengjiao_chat_replies');
-        chatReplies = savedChat ? JSON.parse(savedChat).filter(function (s) { return typeof s === 'string' && s.length; }) : defaultChatReplies.slice();
-        if (!chatReplies.length) chatReplies = defaultChatReplies.slice();
-      } catch (e) { chatReplies = defaultChatReplies.slice(); }
-      renderChatReplies();
-      document.getElementById('resetChatReplies').addEventListener('click', function () { chatReplies = defaultChatReplies.slice(); renderChatReplies(); showToast('对话回复库已恢复默认'); });
-
-      document.addEventListener('click', function (e) {
-        var btn = e.target.closest('.reply-del');
-        if (!btn) return;
-        var lib = btn.getAttribute('data-lib');
-        var idx = parseInt(btn.getAttribute('data-idx'), 10);
-        if (isNaN(idx)) return;
-        if (lib === 'card') { cardReplies.splice(idx, 1); renderCardReplies(); }
-        else if (lib === 'chat') { chatReplies.splice(idx, 1); renderChatReplies(); }
-      });
-
-      function readFile(file, cb) {
+      function handleImageUpload(file, cb) {
         if (!file || !file.type.startsWith('image/')) return cb(null);
-        var reader = new FileReader();
-        reader.onload = function (e) { cb(e.target.result); };
-        reader.readAsDataURL(file);
+        var utils = window.MengjiaoImageUtils;
+        var check = utils.checkStorageLimit();
+        if (!check.ok) {
+          utils.showToast(check.message, 4000);
+          return cb(null);
+        }
+        utils.compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.8 }).then(function (data) {
+          cb(data);
+        }).catch(function (err) {
+          utils.showToast(err.message || '图片处理失败');
+          cb(null);
+        });
       }
 
       var avMinePreview = document.getElementById('avMinePreview');
@@ -1213,21 +1047,23 @@ body {
       var bgPreviewWrap = document.getElementById('bgPreviewWrap');
       var bgPreview = document.getElementById('bgPreview');
 
+      var DEFAULT_AVATAR_USER = '../assets/avatar-user.jpg';
+      var DEFAULT_AVATAR_DREAM = '../assets/avatar-dream.jpg';
+
       var tempAvatarImg = '';
       var tempDreamImg = '';
       var tempBgImg = '';
 
       try {
         var saved = localStorage.getItem('mengjiao_avatar_img');
-        if (saved) {
-          tempAvatarImg = saved;
-          setImg(avMinePreview, saved);
-          setImg(pvAvatar, saved);
-        }
+        tempAvatarImg = saved || DEFAULT_AVATAR_USER;
+        setImg(avMinePreview, tempAvatarImg);
+        setImg(pvAvatar, tempAvatarImg);
       } catch(e) {}
       try {
         var saved = localStorage.getItem('mengjiao_dream_img');
-        if (saved) { tempDreamImg = saved; setImg(avDreamPreview, saved); }
+        tempDreamImg = saved || DEFAULT_AVATAR_DREAM;
+        setImg(avDreamPreview, tempDreamImg);
       } catch(e) {}
       try {
         var saved = localStorage.getItem('mengjiao_bg_img');
@@ -1235,7 +1071,14 @@ body {
       } catch(e) {}
 
       function setImg(el, src) {
-        if (!src) { el.innerHTML = el.id === 'avMinePreview' || el.id === 'pvAvatar' ? '🌙' : '⭐'; return; }
+        if (!src) {
+          if (el.id === 'avMinePreview' || el.id === 'pvAvatar') {
+            el.innerHTML = '<i data-lucide="user" class="w-6 h-6"></i>';
+          } else {
+            el.innerHTML = '<i data-lucide="sparkles" class="w-6 h-6"></i>';
+          }
+          return;
+        }
         el.innerHTML = '<img src="' + src + '" alt="" />';
       }
       function setBgPreview(src) {
@@ -1245,19 +1088,20 @@ body {
 
       document.querySelector('[data-action="upload-avatar"]').addEventListener('click', function () { document.getElementById('avatarInput').click(); });
       document.getElementById('avatarInput').addEventListener('change', function (e) {
-        readFile(e.target.files[0], function (data) {
-          if (!data) return showToast('请选择图片文件');
+        handleImageUpload(e.target.files[0], function (data) {
+          if (!data) return;
           tempAvatarImg = data;
           setImg(avMinePreview, data);
           setImg(pvAvatar, data);
+          lucide.createIcons();
         });
         e.target.value = '';
       });
 
       document.querySelector('[data-action="upload-dream"]').addEventListener('click', function () { document.getElementById('dreamInput').click(); });
       document.getElementById('dreamInput').addEventListener('change', function (e) {
-        readFile(e.target.files[0], function (data) {
-          if (!data) return showToast('请选择图片文件');
+        handleImageUpload(e.target.files[0], function (data) {
+          if (!data) return;
           tempDreamImg = data;
           setImg(avDreamPreview, data);
         });
@@ -1266,8 +1110,8 @@ body {
 
       document.querySelector('[data-action="upload-bg"]').addEventListener('click', function () { document.getElementById('bgInput').click(); });
       document.getElementById('bgInput').addEventListener('change', function (e) {
-        readFile(e.target.files[0], function (data) {
-          if (!data) return showToast('请选择图片文件');
+        handleImageUpload(e.target.files[0], function (data) {
+          if (!data) return;
           tempBgImg = data;
           setBgPreview(data);
         });
@@ -1284,8 +1128,6 @@ body {
           localStorage.setItem('mengjiao_together_date', togetherDateInput.value);
           localStorage.setItem('mengjiao_username', usernameInput.value);
           localStorage.setItem('mengjiao_signature', sigInput.value);
-          localStorage.setItem('mengjiao_card_replies', JSON.stringify(cardReplies));
-          localStorage.setItem('mengjiao_chat_replies', JSON.stringify(chatReplies));
           if (tempAvatarImg) localStorage.setItem('mengjiao_avatar_img', tempAvatarImg); else localStorage.removeItem('mengjiao_avatar_img');
           if (tempDreamImg) localStorage.setItem('mengjiao_dream_img', tempDreamImg); else localStorage.removeItem('mengjiao_dream_img');
           if (tempBgImg) localStorage.setItem('mengjiao_bg_img', tempBgImg); else localStorage.removeItem('mengjiao_bg_img');

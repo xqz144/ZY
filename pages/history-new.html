@@ -1,52 +1,255 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>传讯记录 · 梦角传讯</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>传讯记录 · 梦角传讯</title>
+    <style id="theme-vars">
+/* 梦角传讯 — 动漫手绘风主题 */
+/* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
 
-  <!-- Fonts: Noto Sans SC (body) + Noto Serif SC (headings) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+@font-face {
+  font-family: 'DreamFont';
+  src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
-  <!-- Project token system (single hue: 柔粉 #e8749a) -->
-  <link rel="stylesheet" href="../colors_and_type.css" />
+:root {
+  /* bg — 暖灰白，像素描纸 */
+  --background: 30 20% 97%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
 
-  <!-- Tailwind + token bridge -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            card: 'hsl(var(--card))',
-            'card-foreground': 'hsl(var(--card-foreground))',
-            primary: 'hsl(var(--primary))',
-            'primary-foreground': 'hsl(var(--primary-foreground))',
-            secondary: 'hsl(var(--secondary))',
-            'secondary-foreground': 'hsl(var(--secondary-foreground))',
-            muted: 'hsl(var(--muted))',
-            'muted-foreground': 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--accent))',
-            'accent-foreground': 'hsl(var(--accent-foreground))',
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-            destructive: 'hsl(var(--destructive))',
-            'destructive-foreground': 'hsl(var(--destructive-foreground))',
-          },
-          fontFamily: {
-            sans: ['"DreamFont"', '"Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-            serif: ['"DreamFont"', '"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
-          },
-          borderRadius: { sm: '4px', md: '8px', lg: '12px', xl: '12px' },
-        }
+  /* text — 柔和深灰，不刺眼 */
+  --foreground: 340 12% 28%;
+  --card-foreground: 340 12% 28%;
+  --popover-foreground: 340 12% 28%;
+  --muted-foreground: 340 10% 55%;
+
+  /* accent — 柔粉蜡笔色 */
+  --primary: 343 55% 78%;
+  --primary-foreground: 340 15% 22%;
+  --secondary: 340 35% 95%;
+  --secondary-foreground: 340 12% 28%;
+  --muted: 30 18% 94%;
+  --accent: 343 40% 92%;
+  --accent-foreground: 340 12% 28%;
+
+  /* status */
+  --destructive: 0 70% 65%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* border — 手绘感浅粉 */
+  --border: 343 45% 78% / 0.25;
+  --input: 30 18% 94%;
+  --ring: 343 55% 78%;
+
+  /* chart */
+  --chart-1: 343 55% 78%;
+  --chart-2: 343 45% 85%;
+  --chart-3: 340 15% 70%;
+  --chart-4: 343 35% 90%;
+  --chart-5: 340 12% 60%;
+
+  /* sidebar */
+  --sidebar: 30 20% 97%;
+  --sidebar-foreground: 340 12% 28%;
+  --sidebar-primary: 343 55% 78%;
+  --sidebar-primary-foreground: 340 15% 22%;
+  --sidebar-accent: 343 40% 92%;
+  --sidebar-accent-foreground: 340 12% 28%;
+  --sidebar-border: 343 45% 78% / 0.25;
+  --sidebar-ring: 343 55% 78%;
+
+  /* typography */
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+
+  --radius: 1.25rem;
+
+  /* shadow — 柔和漂浮感 */
+  --shadow-color: 343 40% 55%;
+  --shadow-2xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-sm: 0 3px 6px -1px hsl(343 30% 40% / 0.06), 0 2px 4px -2px hsl(343 30% 40% / 0.04);
+  --shadow: 0 4px 10px -1px hsl(343 30% 40% / 0.08), 0 2px 4px -2px hsl(343 30% 40% / 0.05);
+  --shadow-md: 0 8px 16px -4px hsl(343 30% 40% / 0.10), 0 4px 8px -4px hsl(343 30% 40% / 0.06);
+  --shadow-lg: 0 15px 25px -6px hsl(343 30% 40% / 0.12), 0 8px 12px -6px hsl(343 30% 40% / 0.08);
+  --shadow-xl: 0 25px 40px -8px hsl(343 30% 40% / 0.14), 0 12px 20px -8px hsl(343 30% 40% / 0.10);
+  --shadow-2xl: 0 35px 60px -12px hsl(343 30% 40% / 0.18);
+
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  /* 直景色值 — 供自定义样式直接引用 */
+  --primary-bg: #f9f7f4;
+  --secondary-bg: #f3f0ec;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #4a3f45;
+  --text-secondary: #9a8a92;
+  --border-color: rgba(232, 164, 184, 0.35);
+  --chat-bg: #fdfbfa;
+}
+
+.dark {
+  --background: 340 12% 12%;
+  --card: 340 10% 16%;
+  --popover: 340 10% 16%;
+  --foreground: 340 15% 92%;
+  --card-foreground: 340 15% 92%;
+  --popover-foreground: 340 15% 92%;
+  --muted-foreground: 340 10% 65%;
+  --primary: 343 45% 72%;
+  --primary-foreground: 340 12% 18%;
+  --secondary: 340 15% 24%;
+  --secondary-foreground: 340 15% 92%;
+  --muted: 340 12% 20%;
+  --accent: 343 25% 28%;
+  --accent-foreground: 340 15% 92%;
+  --destructive: 0 60% 58%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 340 12% 26%;
+  --input: 340 12% 22%;
+  --ring: 343 45% 72%;
+  --chart-1: 343 45% 72%;
+  --chart-2: 343 40% 60%;
+  --chart-3: 340 12% 60%;
+  --chart-4: 343 35% 80%;
+  --chart-5: 340 12% 70%;
+  --sidebar: 340 12% 12%;
+  --sidebar-foreground: 340 15% 92%;
+  --sidebar-primary: 343 45% 72%;
+  --sidebar-primary-foreground: 340 12% 18%;
+  --sidebar-accent: 343 25% 28%;
+  --sidebar-accent-foreground: 340 15% 92%;
+  --sidebar-border: 340 12% 26%;
+  --sidebar-ring: 343 45% 72%;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+  --radius: 1.25rem;
+  --shadow-color: 343 30% 40%;
+  --shadow-2xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-sm: 0 3px 6px -1px hsl(340 12% 5% / 0.30), 0 2px 4px -2px hsl(340 12% 5% / 0.25);
+  --shadow: 0 4px 10px -1px hsl(340 12% 5% / 0.35), 0 2px 4px -2px hsl(340 12% 5% / 0.28);
+  --shadow-md: 0 8px 16px -4px hsl(340 12% 5% / 0.40), 0 4px 8px -4px hsl(340 12% 5% / 0.32);
+  --shadow-lg: 0 15px 25px -6px hsl(340 12% 5% / 0.45), 0 8px 12px -6px hsl(340 12% 5% / 0.36);
+  --shadow-xl: 0 25px 40px -8px hsl(340 12% 5% / 0.50), 0 12px 20px -8px hsl(340 12% 5% / 0.40);
+  --shadow-2xl: 0 35px 60px -12px hsl(340 12% 5% / 0.55);
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  --primary-bg: #1a1619;
+  --secondary-bg: #242024;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #f0e8ec;
+  --text-secondary: #a09098;
+  --border-color: rgba(232, 164, 184, 0.25);
+  --chat-bg: #1a1619;
+}
+
+body {
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232, 164, 184, 0.35); border-radius: 4px; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-foreground: var(--card-foreground);
+  }
+  @layer base {
+    body { background: var(--card-background); color: var(--card-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
       }
-    };
-  </script>
+    </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="app-bg">
+
+      <!-- Hand-drawn decorative doodles -->
+      <div class="doodles" aria-hidden="true">
+        <svg class="doodle" style="top:5%;right:10%;width:26px;height:26px;animation-delay:0s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg class="doodle" style="top:12%;left:7%;width:20px;height:20px;animation-delay:0.6s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <svg class="doodle" style="top:28%;right:6%;width:18px;height:18px;animation-delay:1.2s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+        <svg class="doodle" style="top:48%;left:5%;width:22px;height:22px;animation-delay:1.8s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg class="doodle" style="top:68%;right:9%;width:24px;height:24px;animation-delay:0.9s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <svg class="doodle" style="top:86%;left:11%;width:18px;height:18px;animation-delay:2.4s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+      </div>
+
+      <!-- Top bar -->
+      <header class="top-bar">
+        <a href="index-new-v2.html" class="back-btn" data-dom-id="back-home">返回</a>
+        <h1 class="top-title">传讯记录</h1>
+        <button type="button" class="clear-btn" id="clearBtn" data-dom-id="clear-history">清空</button>
+      </header>
+
+      <!-- Stats widgets -->
+      <section class="stats-grid" aria-label="统计概览">
+        <div class="stat-widget">
+          <div class="stat-icon"><i data-lucide="sparkles" class="stat-svg"></i></div>
+          <div class="stat-num" id="statCards">0</div>
+          <div class="stat-label">字卡记录</div>
+        </div>
+        <div class="stat-widget">
+          <div class="stat-icon"><i data-lucide="message-circle-heart" class="stat-svg"></i></div>
+          <div class="stat-num" id="statChats">0</div>
+          <div class="stat-label">对话条数</div>
+        </div>
+        <div class="stat-widget">
+          <div class="stat-icon"><i data-lucide="calendar-heart" class="stat-svg"></i></div>
+          <div class="stat-num" id="statDays">0</div>
+          <div class="stat-label">传讯天数</div>
+        </div>
+      </section>
+
+      <!-- Tab bar -->
+      <nav class="tab-bar" role="tablist" aria-label="记录类型">
+        <button type="button" class="tab-btn active" role="tab" aria-selected="true" id="tab-card" data-tab="card" data-dom-id="tab-card">字卡传讯</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" id="tab-chat" data-tab="chat" data-dom-id="tab-chat">梦角对话</button>
+      </nav>
+
+      <!-- Content area -->
+      <main class="content-area" id="contentArea">
+        <div class="tab-panel active" id="cardPanel" role="tabpanel" aria-labelledby="tab-card"></div>
+        <div class="tab-panel" id="chatPanel" role="tabpanel" aria-labelledby="tab-chat"></div>
+      </main>
+
+      <!-- Toast -->
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    </div>
+  </div>
 
   <style>
     * { -webkit-tap-highlight-color: transparent; }
@@ -64,7 +267,7 @@
     }
 
     /* ===== Phone frame ===== */
-    .phone {
+    .phone-frame {
       position: relative;
       width: 100%;
       max-width: 420px;
@@ -73,28 +276,28 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      background: hsl(var(--background));
+      background: var(--primary-bg);
     }
     @media (min-width: 480px) {
-      .phone {
+      .phone-frame {
         height: 860px;
         border-radius: 40px;
-        border: 10px solid hsl(343 30% 22%);
-        box-shadow: 0 25px 60px -15px hsl(343 60% 35% / 0.35), 0 0 0 2px hsl(343 20% 12%);
+        border: 10px solid #e8ddd8;
+        box-shadow: var(--shadow-xl), 0 0 0 4px hsl(var(--primary) / 0.12);
       }
-      .phone::before {
+      .phone-frame::before {
         content: '';
         position: absolute;
         top: 0; left: 50%;
         transform: translateX(-50%);
         width: 150px; height: 28px;
-        background: hsl(343 30% 18%);
+        background: #d8ccc8;
         border-radius: 0 0 18px 18px;
         z-index: 100;
       }
     }
 
-    /* ===== App background — dreamy pink gradient ===== */
+    /* ===== App background ===== */
     .app-bg {
       flex: 1;
       overflow: hidden;
@@ -102,22 +305,14 @@
       display: flex;
       flex-direction: column;
       background:
-        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(343 80% 94% / 0.9), transparent 60%),
-        radial-gradient(ellipse 400px 250px at 90% 10%, hsl(343 72% 92% / 0.7), transparent 55%),
-        linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
+        radial-gradient(ellipse 480px 280px at 15% 0%, hsl(var(--primary) / 0.14), transparent 60%),
+        radial-gradient(ellipse 360px 220px at 95% 8%, hsl(var(--primary) / 0.10), transparent 55%),
+        var(--primary-bg);
     }
 
-    /* ===== Starlight background (sparse, low opacity, twinkle) ===== */
-    .starlight { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .starlight span {
-      position: absolute; border-radius: 9999px;
-      background: hsl(343 72% 68% / 0.35);
-      animation: twinkle 4s ease-in-out infinite;
-    }
-    @keyframes twinkle {
-      0%, 100% { opacity: 0.15; transform: scale(0.7); }
-      50% { opacity: 0.6; transform: scale(1.1); }
-    }
+    /* ===== Doodles ===== */
+    .doodles { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; color: hsl(var(--primary) / 0.28); }
+    .doodle { position: absolute; animation: float 5s ease-in-out infinite; }
 
     /* ===== Top bar ===== */
     .top-bar {
@@ -133,16 +328,22 @@
       .top-bar { padding-top: 16px; }
     }
     .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
       font-size: 15px;
       color: hsl(var(--primary));
       text-decoration: none;
-      padding: 6px 8px;
+      padding: 6px 10px;
       font-weight: 500;
       flex-shrink: 0;
-      min-width: 64px;
-      transition: opacity 0.15s;
+      min-width: 56px;
+      border-radius: 9999px;
+      transition: background 0.15s;
     }
-    .back-btn:active { opacity: 0.6; }
+    .back-btn::before { content: '←'; margin-right: 2px; }
+    .back-btn:active { background: hsl(var(--primary) / 0.12); }
     .top-title {
       font-family: var(--font-serif);
       font-size: 18px;
@@ -150,114 +351,207 @@
       color: hsl(var(--foreground));
       text-align: center;
       flex: 1;
+      margin: 0;
+      text-wrap: balance;
+      word-break: keep-all;
     }
     .clear-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       font-size: 14px;
       color: hsl(var(--destructive));
-      background: hsl(var(--destructive) / 0.1);
-      border: 1px solid hsl(var(--destructive) / 0.22);
+      background: hsl(var(--destructive) / 0.08);
+      border: 1px solid hsl(var(--destructive) / 0.18);
       border-radius: 9999px;
       padding: 6px 14px;
       cursor: pointer;
       flex-shrink: 0;
-      min-width: 64px;
+      min-width: 56px;
       font-family: var(--font-sans);
+      font-weight: 500;
       transition: background 0.2s, color 0.2s, border-color 0.2s;
+      white-space: nowrap;
     }
-    .clear-btn:active { background: hsl(var(--destructive) / 0.2); }
+    .clear-btn:active { background: hsl(var(--destructive) / 0.16); }
     .clear-btn.armed {
       background: hsl(var(--destructive));
       color: hsl(var(--destructive-foreground));
       border-color: transparent;
-      box-shadow: 0 4px 12px -2px hsl(var(--destructive) / 0.4);
+      box-shadow: 0 4px 12px -2px hsl(var(--destructive) / 0.35);
+    }
+
+    /* ===== Stats widgets ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 0 16px 14px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 5;
+    }
+    .stat-widget {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: hsl(var(--card));
+      border-radius: 20px;
+      padding: 12px 6px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid hsl(var(--border));
+      min-width: 0;
+    }
+    .stat-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: hsl(var(--accent));
+      color: hsl(var(--primary));
+    }
+    .stat-svg { width: 15px; height: 15px; }
+    .stat-num {
+      font-size: 22px;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      white-space: nowrap;
     }
 
     /* ===== Tab bar ===== */
     .tab-bar {
       display: flex;
-      gap: 8px;
-      padding: 8px 16px;
+      gap: 4px;
+      padding: 5px;
       flex-shrink: 0;
       position: relative;
       z-index: 5;
+      background: hsl(var(--muted));
+      border-radius: 9999px;
+      margin: 0 16px 14px;
+      border: 1px solid hsl(var(--border));
     }
     .tab-btn {
       flex: 1;
-      padding: 9px 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0;
       border-radius: 9999px;
-      border: 1px solid rgba(232, 116, 154, 0.2);
-      background: #fff;
+      border: none;
+      background: transparent;
       font-size: 14px;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
       cursor: pointer;
       font-family: var(--font-sans);
-      transition: all 0.2s;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      font-weight: 500;
+      white-space: nowrap;
     }
     .tab-btn.active {
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      color: #fff;
-      border-color: transparent;
-      box-shadow: 0 4px 12px -2px rgba(232, 116, 154, 0.35);
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      box-shadow: var(--shadow-sm);
     }
+    .tab-btn:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
 
-    /* ===== Content area (scrollable) ===== */
+    /* ===== Content area ===== */
     .content-area {
       flex: 1;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 8px 16px 16px;
+      padding: 0 16px 16px;
       scrollbar-width: none;
       position: relative;
       z-index: 1;
     }
     .content-area::-webkit-scrollbar { display: none; }
-
-    /* ===== Tab panels ===== */
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* ===== Card history list ===== */
-    .card-list { display: flex; flex-direction: column; gap: 10px; }
-    .card-item {
+    /* ===== Timeline (card history) ===== */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      padding-left: 4px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 10px;
+      bottom: 10px;
+      width: 2px;
+      background: linear-gradient(to bottom, hsl(var(--primary) / 0.35), hsl(var(--primary) / 0.08));
+      border-radius: 9999px;
+    }
+    .timeline-item {
       display: flex;
       gap: 12px;
       align-items: flex-start;
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.72);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(232, 116, 154, 0.15);
-      border-radius: 16px;
-      box-shadow: 0 4px 14px -6px rgba(232, 116, 154, 0.18);
-      animation: fadeUp 0.4s cubic-bezier(.3, 0, 0, 1) both;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.45s cubic-bezier(.3, 0, 0, 1) both;
     }
-    .card-icon {
-      width: 40px; height: 40px;
-      border-radius: 12px;
+    .timeline-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       flex-shrink: 0;
-      display: grid; place-items: center;
-      font-size: 1.4rem;
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      box-shadow: 0 4px 10px -3px rgba(232, 116, 154, 0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: hsl(var(--card));
+      border: 2px solid hsl(var(--primary) / 0.35);
+      box-shadow: var(--shadow-sm);
+      color: hsl(var(--primary));
     }
-    .card-body { flex: 1; min-width: 0; }
-    .card-reply {
-      font-family: var(--font-serif);
-      font-size: 15px;
+    .timeline-dot svg { width: 18px; height: 18px; }
+    .timeline-card {
+      flex: 1;
+      min-width: 0;
+      background: hsl(var(--card));
+      border-radius: 20px;
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid hsl(var(--border));
+    }
+    .timeline-date {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: hsl(var(--primary));
+      margin-bottom: 8px;
+      background: hsl(var(--accent));
+      padding: 3px 10px;
+      border-radius: 9999px;
+      width: fit-content;
       font-weight: 500;
-      line-height: 1.6;
-      color: var(--text-primary);
-      margin: 0 0 6px;
+      white-space: nowrap;
+    }
+    .timeline-date svg { width: 11px; height: 11px; }
+    .timeline-text {
+      font-size: 15px;
+      line-height: 1.65;
+      color: hsl(var(--foreground));
+      margin: 0;
       word-break: break-word;
     }
-    .card-meta {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin: 0;
-      font-variant-numeric: tabular-nums;
-    }
 
-    /* ===== Chat history list ===== */
+    /* ===== Chat history ===== */
     .chat-list {
       display: flex;
       flex-direction: column;
@@ -269,68 +563,66 @@
       padding: 10px 0 2px;
     }
     .date-sep span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       font-size: 12px;
-      color: var(--text-secondary);
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--accent));
       padding: 3px 14px;
       border-radius: 9999px;
-      border: 1px solid rgba(232, 116, 154, 0.12);
+      white-space: nowrap;
     }
-
     .msg-row {
-      display: flex; align-items: flex-end; gap: 8px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
       max-width: 100%;
       animation: msgFadeIn 0.3s cubic-bezier(.3, 0, 0, 1) both;
     }
-    @keyframes msgFadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
     .msg-row.right { justify-content: flex-end; }
-
     .msg-avatar {
-      width: 30px; height: 30px; border-radius: 9999px;
-      flex-shrink: 0; display: grid; place-items: center;
-      font-size: 1rem;
-      background: radial-gradient(circle at 30% 25%, #ffe4ec, #f4a0bc);
-      border: 2px solid #fff;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: hsl(var(--primary));
+      background: hsl(var(--accent));
+      border: 2px solid hsl(var(--card));
       overflow: hidden;
     }
     .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
     .msg-col {
-      display: flex; flex-direction: column; gap: 3px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
       max-width: 76%;
     }
     .msg-row.right .msg-col { align-items: flex-end; }
-
-    /* 玻璃气泡 (matches chat page) */
-    .message-sent, .message-received {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12));
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      border-top: 1px solid rgba(255, 255, 255, 0.65);
-      border-left: 1px solid rgba(255, 255, 255, 0.65);
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
-      color: #333333;
-      background-color: transparent;
+    .message-sent,
+    .message-received {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
       padding: 10px 14px;
       font-size: 14px;
       line-height: 1.55;
       word-break: break-word;
-      overflow-wrap: break-word;
+      color: hsl(var(--foreground));
+      box-shadow: var(--shadow-sm);
     }
-    .message-received { border-radius: 20px 20px 20px 5px; }
-    .message-sent { border-radius: 20px 20px 5px 20px; }
-
+    .message-received { border-radius: 18px 18px 18px 4px; }
+    .message-sent { border-radius: 18px 18px 4px 18px; background: hsl(var(--primary) / 0.14); }
     .msg-time {
       font-size: 11px;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
       padding: 0 4px;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
 
     /* ===== Empty state ===== */
@@ -341,19 +633,25 @@
       justify-content: center;
       text-align: center;
       padding: 64px 24px 32px;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
     }
     .empty-icon {
-      font-size: 3rem;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: hsl(var(--accent));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: hsl(var(--primary));
       margin-bottom: 16px;
-      opacity: 0.5;
-      filter: grayscale(0.2);
     }
+    .empty-icon svg { width: 38px; height: 38px; }
     .empty-title {
       font-family: var(--font-serif);
       font-size: 16px;
-      font-weight: 500;
-      color: var(--text-primary);
+      font-weight: 600;
+      color: hsl(var(--foreground));
       margin: 0 0 6px;
     }
     .empty-sub {
@@ -364,17 +662,20 @@
     .empty-link {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 4px;
       font-size: 14px;
       color: hsl(var(--primary-foreground));
       text-decoration: none;
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      background: hsl(var(--primary));
       padding: 9px 22px;
       border-radius: 9999px;
-      box-shadow: 0 4px 14px -3px rgba(232, 116, 154, 0.4);
+      box-shadow: var(--shadow-sm);
       transition: transform 0.15s;
+      white-space: nowrap;
     }
     .empty-link:active { transform: scale(0.96); }
+    .empty-link svg { width: 14px; height: 14px; }
 
     /* ===== Toast ===== */
     .toast {
@@ -398,13 +699,19 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ===== Entrance ===== */
+    /* ===== Animations ===== */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(12px); }
       to { opacity: 1; transform: none; }
     }
-    .tab-bar { animation: fadeUp 0.4s cubic-bezier(.3, 0, 0, 1) both; }
-
+    @keyframes msgFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-5px) rotate(4deg); }
+    }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -413,47 +720,10 @@
       }
     }
   </style>
-</head>
-<body>
-  <div class="phone">
-    <div class="app-bg">
 
-      <!-- Starlight background -->
-      <div class="starlight" aria-hidden="true">
-        <span style="top:8%;left:12%;width:3px;height:3px;animation-delay:0s"></span>
-        <span style="top:15%;left:78%;width:2px;height:2px;animation-delay:0.6s"></span>
-        <span style="top:28%;left:88%;width:3px;height:3px;animation-delay:1.2s"></span>
-        <span style="top:42%;left:6%;width:2px;height:2px;animation-delay:1.8s"></span>
-        <span style="top:58%;left:92%;width:3px;height:3px;animation-delay:0.9s"></span>
-        <span style="top:72%;left:14%;width:2px;height:2px;animation-delay:2.4s"></span>
-        <span style="top:85%;left:70%;width:3px;height:3px;animation-delay:1.5s"></span>
-        <span style="top:92%;left:40%;width:2px;height:2px;animation-delay:0.3s"></span>
-      </div>
-
-      <!-- Top bar -->
-      <div class="top-bar">
-        <a href="index-new.html" class="back-btn">← 返回</a>
-        <span class="top-title">传讯记录</span>
-        <button type="button" class="clear-btn" id="clearBtn">清空</button>
-      </div>
-
-      <!-- Tab bar -->
-      <div class="tab-bar">
-        <button type="button" class="tab-btn active" data-tab="card">字卡传讯</button>
-        <button type="button" class="tab-btn" data-tab="chat">梦角对话</button>
-      </div>
-
-      <!-- Content area -->
-      <div class="content-area" id="contentArea">
-        <div class="tab-panel active" id="cardPanel"></div>
-        <div class="tab-panel" id="chatPanel"></div>
-      </div>
-
-      <!-- Toast -->
-      <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-    </div>
-  </div>
+  <script>
+    lucide.createIcons();
+  </script>
 
   <script>
     (function () {
@@ -469,6 +739,9 @@
       var clearBtn = document.getElementById("clearBtn");
       var toast = document.getElementById("toast");
       var tabBtns = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
+      var statCards = document.getElementById("statCards");
+      var statChats = document.getElementById("statChats");
+      var statDays = document.getElementById("statDays");
 
       var currentTab = "card";
       var toastTimer;
@@ -500,7 +773,6 @@
           String(d.getDate()).padStart(2, "0");
       }
 
-      /* "7月31日" for today, "2026年7月31日" for other dates */
       function formatDateLabel(dateStr) {
         if (!dateStr) return "";
         var parts = String(dateStr).split("-");
@@ -511,9 +783,12 @@
         if (!y || !m || !d) return escapeHtml(dateStr);
         var now = new Date();
         if (y === now.getFullYear() && m === (now.getMonth() + 1) && d === now.getDate()) {
-          return m + "月" + d + "日";
+          return "今天";
         }
-        return y + "年" + m + "月" + d + "日";
+        if (y === now.getFullYear() && m === (now.getMonth() + 1) && d === now.getDate() - 1) {
+          return "昨天";
+        }
+        return m + "月" + d + "日";
       }
 
       function showToast(msg) {
@@ -523,7 +798,6 @@
         toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200);
       }
 
-      /* ---- avatar (梦角 dream avatar image or 梦 emoji) ---- */
       function avatarHtml() {
         var img = "";
         try { img = localStorage.getItem(DREAM_IMG_KEY) || ""; } catch (e) {}
@@ -534,48 +808,65 @@
         return '<div class="msg-avatar" aria-hidden="true">梦</div>';
       }
 
+      /* ---- stats ---- */
+      function updateStats() {
+        var cards = readJSON(CARD_KEY, []);
+        var chats = readJSON(CHAT_KEY, []);
+        var dates = {};
+        cards.forEach(function (item) { if (item.date) dates[item.date] = true; });
+        chats.forEach(function (msg) { if (msg.date) dates[msg.date] = true; });
+        statCards.textContent = String(cards.length);
+        statChats.textContent = String(chats.length);
+        statDays.textContent = String(Object.keys(dates).length);
+      }
+
       /* ---- empty state ---- */
-      function emptyState(title, sub, link, linkLabel, icon) {
+      function emptyState(title, sub, link, linkLabel, iconName) {
         return '<div class="empty-state">' +
-          '<div class="empty-icon">' + icon + '</div>' +
+          '<div class="empty-icon"><i data-lucide="' + iconName + '"></i></div>' +
           '<p class="empty-title">' + escapeHtml(title) + '</p>' +
           '<p class="empty-sub">' + escapeHtml(sub) + '</p>' +
-          '<a href="' + escapeHtml(link) + '" class="empty-link">' + escapeHtml(linkLabel) + ' →</a>' +
+          '<a href="' + escapeHtml(link) + '" class="empty-link">' + escapeHtml(linkLabel) + '<i data-lucide="arrow-right"></i></a>' +
         '</div>';
       }
 
-      /* ---- render: card history ---- */
+      /* ---- render: card history (timeline) ---- */
       function renderCard() {
         var data = readJSON(CARD_KEY, []);
+        updateStats();
         if (!data.length) {
           cardPanel.innerHTML = emptyState(
-            "还没有字卡记录", "去抽一张字卡吧", "cards-new.html", "去抽字卡", "🃏");
+            "字卡记录为空", "去抽一张字卡，把梦角的寄语留下来吧", "cards-new.html", "去抽字卡", "sparkles");
+          lucide.createIcons();
           return;
         }
-        var html = '<div class="card-list">';
+        var html = '<div class="timeline">';
         data.forEach(function (item, i) {
-          var delay = Math.min(i * 0.05, 0.4);
+          var delay = Math.min(i * 0.05, 0.45);
           var dateLabel = formatDateLabel(item.date || todayStr());
           var time = escapeHtml(item.time || "");
           var meta = dateLabel + (time ? (" · " + time) : "");
-          html += '<div class="card-item" style="animation-delay:' + delay + 's">' +
-            '<div class="card-icon" aria-hidden="true">🃏</div>' +
-            '<div class="card-body">' +
-              '<p class="card-reply">' + escapeHtml(item.reply || "") + '</p>' +
-              '<p class="card-meta">' + meta + '</p>' +
+          html += '<article class="timeline-item" style="animation-delay:' + delay + 's">' +
+            '<div class="timeline-dot" aria-hidden="true"><i data-lucide="sparkles"></i></div>' +
+            '<div class="timeline-card">' +
+              '<div class="timeline-date"><i data-lucide="calendar-heart"></i><span>' + meta + '</span></div>' +
+              '<p class="timeline-text">' + escapeHtml(item.reply || "") + '</p>' +
             '</div>' +
-          '</div>';
+          '</article>';
         });
         html += '</div>';
         cardPanel.innerHTML = html;
+        lucide.createIcons();
       }
 
       /* ---- render: chat history ---- */
       function renderChat() {
         var data = readJSON(CHAT_KEY, []);
+        updateStats();
         if (!data.length) {
           chatPanel.innerHTML = emptyState(
-            "还没有对话记录", "去和梦角聊聊天吧", "chat-new.html", "去聊天", "💬");
+            "对话记录为空", "和梦角说说话，把每个温柔的瞬间都存下来", "chat-new.html", "去聊天", "message-circle-heart");
+          lucide.createIcons();
           return;
         }
         var html = '<div class="chat-list">';
@@ -611,7 +902,9 @@
         if (tab === currentTab) return;
         currentTab = tab;
         tabBtns.forEach(function (b) {
-          b.classList.toggle("active", b.getAttribute("data-tab") === tab);
+          var active = b.getAttribute("data-tab") === tab;
+          b.classList.toggle("active", active);
+          b.setAttribute("aria-selected", active ? "true" : "false");
         });
         cardPanel.classList.toggle("active", tab === "card");
         chatPanel.classList.toggle("active", tab === "chat");
@@ -643,6 +936,7 @@
           renderChat();
           showToast("已清空对话记录");
         }
+        updateStats();
         contentArea.scrollTop = 0;
       }
 

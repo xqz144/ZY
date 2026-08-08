@@ -1,0 +1,19 @@
+{
+  "name": "梦角传讯",
+  "short_name": "梦角传讯",
+  "description": "与梦角的温馨对话空间",
+  "start_url": "./index.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#f9f7f4",
+  "theme_color": "#e8a4b8",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

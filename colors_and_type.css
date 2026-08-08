@@ -1,5 +1,5 @@
-/* 梦角传讯 — 柔粉恋歌主题 */
-/* 主色：e8749a；辅色：#fdf6f8 / #fff0f4 */
+/* 梦角传讯 — 动漫手绘风主题 */
+/* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
 
 @font-face {
   font-family: 'DreamFont';
@@ -10,142 +10,141 @@
 }
 
 :root {
-  /* bg */
-  --background: 340 60% 98%;
+  /* bg — 暖灰白，像素描纸 */
+  --background: 30 20% 97%;
   --card: 0 0% 100%;
   --popover: 0 0% 100%;
 
-  /* text */
-  --foreground: 340 30% 18%;
-  --card-foreground: 340 30% 18%;
-  --popover-foreground: 340 30% 18%;
-  --muted-foreground: 340 20% 50%;
+  /* text — 柔和深灰，不刺眼 */
+  --foreground: 340 12% 28%;
+  --card-foreground: 340 12% 28%;
+  --popover-foreground: 340 12% 28%;
+  --muted-foreground: 340 10% 55%;
 
-  /* accent — 柔粉主色 e8749a */
-  --primary: 343 72% 68%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 340 70% 95%;
-  --secondary-foreground: 340 30% 18%;
-  --muted: 340 45% 96%;
-  --accent: 343 65% 91%;
-  --accent-foreground: 340 30% 18%;
+  /* accent — 柔粉蜡笔色 */
+  --primary: 343 55% 78%;
+  --primary-foreground: 340 15% 22%;
+  --secondary: 340 35% 95%;
+  --secondary-foreground: 340 12% 28%;
+  --muted: 30 18% 94%;
+  --accent: 343 40% 92%;
+  --accent-foreground: 340 12% 28%;
 
   /* status */
-  --destructive: 0 84% 60%;
+  --destructive: 0 70% 65%;
   --destructive-foreground: 0 0% 98%;
 
-  /* border */
-  --border: 343 72% 68% / 0.15;
-  --input: 340 45% 96%;
-  --ring: 343 72% 68%;
+  /* border — 手绘感浅粉 */
+  --border: 343 45% 78% / 0.25;
+  --input: 30 18% 94%;
+  --ring: 343 55% 78%;
 
   /* chart */
-  --chart-1: 343 72% 68%;
-  --chart-2: 343 60% 78%;
-  --chart-3: 340 30% 70%;
-  --chart-4: 343 50% 85%;
-  --chart-5: 340 25% 55%;
+  --chart-1: 343 55% 78%;
+  --chart-2: 343 45% 85%;
+  --chart-3: 340 15% 70%;
+  --chart-4: 343 35% 90%;
+  --chart-5: 340 12% 60%;
 
   /* sidebar */
-  --sidebar: 340 60% 98%;
-  --sidebar-foreground: 340 30% 18%;
-  --sidebar-primary: 343 72% 68%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 343 65% 91%;
-  --sidebar-accent-foreground: 340 30% 18%;
-  --sidebar-border: 343 72% 68% / 0.15;
-  --sidebar-ring: 343 72% 68%;
+  --sidebar: 30 20% 97%;
+  --sidebar-foreground: 340 12% 28%;
+  --sidebar-primary: 343 55% 78%;
+  --sidebar-primary-foreground: 340 15% 22%;
+  --sidebar-accent: 343 40% 92%;
+  --sidebar-accent-foreground: 340 12% 28%;
+  --sidebar-border: 343 45% 78% / 0.25;
+  --sidebar-ring: 343 55% 78%;
 
   /* typography */
-  --font-sans: "DreamFont", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
   --font-mono: ui-monospace, "SFMono-Regular", monospace;
 
-  --radius: 0.75rem;
+  --radius: 1.25rem;
 
-  /* shadow */
-  --shadow-color: 343 72% 68%;
-  --shadow-2xs: 0px 1px 2px 0px hsl(343 72% 68% / 0.04);
-  --shadow-xs: 0px 1px 2px 0px hsl(343 72% 68% / 0.04);
-  --shadow-sm: 0px 1px 3px 0px hsl(343 72% 68% / 0.04), 0px 1px 2px -1px hsl(343 72% 68% / 0.04);
-  --shadow: 0px 1px 3px 0px hsl(343 72% 68% / 0.05), 0px 1px 2px -1px hsl(343 72% 68% / 0.05);
-  --shadow-md: 0px 4px 6px -1px hsl(343 72% 45% / 0.08), 0px 2px 4px -2px hsl(343 72% 45% / 0.06);
-  --shadow-lg: 0px 10px 15px -3px hsl(343 72% 45% / 0.10), 0px 4px 6px -4px hsl(343 72% 45% / 0.08);
-  --shadow-xl: 0px 20px 25px -5px hsl(343 72% 45% / 0.12), 0px 8px 10px -6px hsl(343 72% 45% / 0.10);
-  --shadow-2xl: 0px 25px 50px -12px hsl(343 72% 45% / 0.15);
+  /* shadow — 柔和漂浮感 */
+  --shadow-color: 343 40% 55%;
+  --shadow-2xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-sm: 0 3px 6px -1px hsl(343 30% 40% / 0.06), 0 2px 4px -2px hsl(343 30% 40% / 0.04);
+  --shadow: 0 4px 10px -1px hsl(343 30% 40% / 0.08), 0 2px 4px -2px hsl(343 30% 40% / 0.05);
+  --shadow-md: 0 8px 16px -4px hsl(343 30% 40% / 0.10), 0 4px 8px -4px hsl(343 30% 40% / 0.06);
+  --shadow-lg: 0 15px 25px -6px hsl(343 30% 40% / 0.12), 0 8px 12px -6px hsl(343 30% 40% / 0.08);
+  --shadow-xl: 0 25px 40px -8px hsl(343 30% 40% / 0.14), 0 12px 20px -8px hsl(343 30% 40% / 0.10);
+  --shadow-2xl: 0 35px 60px -12px hsl(343 30% 40% / 0.18);
 
-  --tracking-normal: 0.01em;
+  --tracking-normal: 0.02em;
   --spacing: 0.3rem;
 
   /* 直景色值 — 供自定义样式直接引用 */
-  --primary-bg: #fdf6f8;
-  --secondary-bg: #fff0f4;
-  --accent-color: #e8749a;
-  --accent-color-rgb: 232, 116, 154;
-  --text-primary: #3d2030;
-  --text-secondary: #a08090;
-  --border-color: rgba(232, 116, 154, 0.15);
-  --chat-bg: #fef8fa;
+  --primary-bg: #f9f7f4;
+  --secondary-bg: #f3f0ec;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #4a3f45;
+  --text-secondary: #9a8a92;
+  --border-color: rgba(232, 164, 184, 0.35);
+  --chat-bg: #fdfbfa;
 }
 
 .dark {
-  --background: 340 30% 10%;
-  --card: 340 28% 14%;
-  --popover: 340 28% 14%;
-  --foreground: 340 25% 92%;
-  --card-foreground: 340 25% 92%;
-  --popover-foreground: 340 25% 92%;
-  --muted-foreground: 340 15% 65%;
-  --primary: 343 70% 72%;
-  --primary-foreground: 340 30% 12%;
-  --secondary: 340 25% 22%;
-  --secondary-foreground: 340 25% 92%;
-  --muted: 340 25% 18%;
-  --accent: 343 30% 28%;
-  --accent-foreground: 340 25% 92%;
-  --destructive: 0 70% 55%;
+  --background: 340 12% 12%;
+  --card: 340 10% 16%;
+  --popover: 340 10% 16%;
+  --foreground: 340 15% 92%;
+  --card-foreground: 340 15% 92%;
+  --popover-foreground: 340 15% 92%;
+  --muted-foreground: 340 10% 65%;
+  --primary: 343 45% 72%;
+  --primary-foreground: 340 12% 18%;
+  --secondary: 340 15% 24%;
+  --secondary-foreground: 340 15% 92%;
+  --muted: 340 12% 20%;
+  --accent: 343 25% 28%;
+  --accent-foreground: 340 15% 92%;
+  --destructive: 0 60% 58%;
   --destructive-foreground: 0 0% 98%;
-  --border: 340 20% 24%;
-  --input: 340 25% 20%;
-  --ring: 343 70% 72%;
-  --chart-1: 343 70% 72%;
-  --chart-2: 343 55% 60%;
-  --chart-3: 340 20% 60%;
-  --chart-4: 343 45% 80%;
-  --chart-5: 340 20% 70%;
-  --sidebar: 340 30% 10%;
-  --sidebar-foreground: 340 25% 92%;
-  --sidebar-primary: 343 70% 72%;
-  --sidebar-primary-foreground: 340 30% 12%;
-  --sidebar-accent: 343 30% 28%;
-  --sidebar-accent-foreground: 340 25% 92%;
-  --sidebar-border: 340 20% 24%;
-  --sidebar-ring: 343 70% 72%;
-  --font-sans: "DreamFont", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --border: 340 12% 26%;
+  --input: 340 12% 22%;
+  --ring: 343 45% 72%;
+  --chart-1: 343 45% 72%;
+  --chart-2: 343 40% 60%;
+  --chart-3: 340 12% 60%;
+  --chart-4: 343 35% 80%;
+  --chart-5: 340 12% 70%;
+  --sidebar: 340 12% 12%;
+  --sidebar-foreground: 340 15% 92%;
+  --sidebar-primary: 343 45% 72%;
+  --sidebar-primary-foreground: 340 12% 18%;
+  --sidebar-accent: 343 25% 28%;
+  --sidebar-accent-foreground: 340 15% 92%;
+  --sidebar-border: 340 12% 26%;
+  --sidebar-ring: 343 45% 72%;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
   --font-mono: ui-monospace, "SFMono-Regular", monospace;
-  --radius: 0.75rem;
-  --shadow-color: 343 70% 72%;
-  --shadow-2xs: 0px 1px 2px 0px hsl(340 30% 5% / 0.30);
-  --shadow-xs: 0px 1px 2px 0px hsl(340 30% 5% / 0.30);
-  --shadow-sm: 0px 1px 3px 0px hsl(340 30% 5% / 0.35), 0px 1px 2px -1px hsl(340 30% 5% / 0.30);
-  --shadow: 0px 1px 3px 0px hsl(340 30% 5% / 0.40), 0px 1px 2px -1px hsl(340 30% 5% / 0.35);
-  --shadow-md: 0px 4px 6px -1px hsl(340 30% 5% / 0.45), 0px 2px 4px -2px hsl(340 30% 5% / 0.40);
-  --shadow-lg: 0px 10px 15px -3px hsl(340 30% 5% / 0.50), 0px 4px 6px -4px hsl(340 30% 5% / 0.45);
-  --shadow-xl: 0px 20px 25px -5px hsl(340 30% 5% / 0.55), 0px 8px 10px -6px hsl(340 30% 5% / 0.50);
-  --shadow-2xl: 0px 25px 50px -12px hsl(340 30% 5% / 0.60);
-  --tracking-normal: 0.01em;
+  --radius: 1.25rem;
+  --shadow-color: 343 30% 40%;
+  --shadow-2xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-sm: 0 3px 6px -1px hsl(340 12% 5% / 0.30), 0 2px 4px -2px hsl(340 12% 5% / 0.25);
+  --shadow: 0 4px 10px -1px hsl(340 12% 5% / 0.35), 0 2px 4px -2px hsl(340 12% 5% / 0.28);
+  --shadow-md: 0 8px 16px -4px hsl(340 12% 5% / 0.40), 0 4px 8px -4px hsl(340 12% 5% / 0.32);
+  --shadow-lg: 0 15px 25px -6px hsl(340 12% 5% / 0.45), 0 8px 12px -6px hsl(340 12% 5% / 0.36);
+  --shadow-xl: 0 25px 40px -8px hsl(340 12% 5% / 0.50), 0 12px 20px -8px hsl(340 12% 5% / 0.40);
+  --shadow-2xl: 0 35px 60px -12px hsl(340 12% 5% / 0.55);
+  --tracking-normal: 0.02em;
   --spacing: 0.3rem;
 
-  /* 暗色模式直景色值 */
-  --primary-bg: #1a1218;
-  --secondary-bg: #241a22;
-  --accent-color: #e8749a;
-  --accent-color-rgb: 232, 116, 154;
-  --text-primary: #f0e0e8;
-  --text-secondary: #a08090;
-  --border-color: rgba(232, 116, 154, 0.2);
-  --chat-bg: #1a1218;
+  --primary-bg: #1a1619;
+  --secondary-bg: #242024;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #f0e8ec;
+  --text-secondary: #a09098;
+  --border-color: rgba(232, 164, 184, 0.25);
+  --chat-bg: #1a1619;
 }
 
 body {
@@ -155,4 +154,4 @@ body {
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(232, 116, 154, 0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(232, 164, 184, 0.35); border-radius: 4px; }

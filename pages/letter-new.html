@@ -1,45 +1,209 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>给梦角的信 · 梦角传讯</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>给梦角的信 · 梦角传讯</title>
+    <style id="theme-vars">
+/* 梦角传讯 — 动漫手绘风主题 */
+/* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+@font-face {
+  font-family: 'DreamFont';
+  src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
-  <link rel="stylesheet" href="../colors_and_type.css" />
+:root {
+  /* bg — 暖灰白，像素描纸 */
+  --background: 30 20% 97%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            card: 'hsl(var(--card))',
-            primary: 'hsl(var(--primary))',
-            'primary-foreground': 'hsl(var(--primary-foreground))',
-            secondary: 'hsl(var(--secondary))',
-            muted: 'hsl(var(--muted))',
-            'muted-foreground': 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--accent))',
-            border: 'hsl(var(--border))',
-          },
-          fontFamily: {
-            sans: ['"DreamFont", "Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-            serif: ['"DreamFont", "Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
-          },
-        }
+  /* text — 柔和深灰，不刺眼 */
+  --foreground: 340 12% 28%;
+  --card-foreground: 340 12% 28%;
+  --popover-foreground: 340 12% 28%;
+  --muted-foreground: 340 10% 55%;
+
+  /* accent — 柔粉蜡笔色 */
+  --primary: 343 55% 78%;
+  --primary-foreground: 340 15% 22%;
+  --secondary: 340 35% 95%;
+  --secondary-foreground: 340 12% 28%;
+  --muted: 30 18% 94%;
+  --accent: 343 40% 92%;
+  --accent-foreground: 340 12% 28%;
+
+  /* status */
+  --destructive: 0 70% 65%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* border — 手绘感浅粉 */
+  --border: 343 45% 78% / 0.25;
+  --input: 30 18% 94%;
+  --ring: 343 55% 78%;
+
+  /* chart */
+  --chart-1: 343 55% 78%;
+  --chart-2: 343 45% 85%;
+  --chart-3: 340 15% 70%;
+  --chart-4: 343 35% 90%;
+  --chart-5: 340 12% 60%;
+
+  /* sidebar */
+  --sidebar: 30 20% 97%;
+  --sidebar-foreground: 340 12% 28%;
+  --sidebar-primary: 343 55% 78%;
+  --sidebar-primary-foreground: 340 15% 22%;
+  --sidebar-accent: 343 40% 92%;
+  --sidebar-accent-foreground: 340 12% 28%;
+  --sidebar-border: 343 45% 78% / 0.25;
+  --sidebar-ring: 343 55% 78%;
+
+  /* typography */
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+
+  --radius: 1.25rem;
+
+  /* shadow — 柔和漂浮感 */
+  --shadow-color: 343 40% 55%;
+  --shadow-2xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-sm: 0 3px 6px -1px hsl(343 30% 40% / 0.06), 0 2px 4px -2px hsl(343 30% 40% / 0.04);
+  --shadow: 0 4px 10px -1px hsl(343 30% 40% / 0.08), 0 2px 4px -2px hsl(343 30% 40% / 0.05);
+  --shadow-md: 0 8px 16px -4px hsl(343 30% 40% / 0.10), 0 4px 8px -4px hsl(343 30% 40% / 0.06);
+  --shadow-lg: 0 15px 25px -6px hsl(343 30% 40% / 0.12), 0 8px 12px -6px hsl(343 30% 40% / 0.08);
+  --shadow-xl: 0 25px 40px -8px hsl(343 30% 40% / 0.14), 0 12px 20px -8px hsl(343 30% 40% / 0.10);
+  --shadow-2xl: 0 35px 60px -12px hsl(343 30% 40% / 0.18);
+
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  /* 直景色值 — 供自定义样式直接引用 */
+  --primary-bg: #f9f7f4;
+  --secondary-bg: #f3f0ec;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #4a3f45;
+  --text-secondary: #9a8a92;
+  --border-color: rgba(232, 164, 184, 0.35);
+  --chat-bg: #fdfbfa;
+}
+
+.dark {
+  --background: 340 12% 12%;
+  --card: 340 10% 16%;
+  --popover: 340 10% 16%;
+  --foreground: 340 15% 92%;
+  --card-foreground: 340 15% 92%;
+  --popover-foreground: 340 15% 92%;
+  --muted-foreground: 340 10% 65%;
+  --primary: 343 45% 72%;
+  --primary-foreground: 340 12% 18%;
+  --secondary: 340 15% 24%;
+  --secondary-foreground: 340 15% 92%;
+  --muted: 340 12% 20%;
+  --accent: 343 25% 28%;
+  --accent-foreground: 340 15% 92%;
+  --destructive: 0 60% 58%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 340 12% 26%;
+  --input: 340 12% 22%;
+  --ring: 343 45% 72%;
+  --chart-1: 343 45% 72%;
+  --chart-2: 343 40% 60%;
+  --chart-3: 340 12% 60%;
+  --chart-4: 343 35% 80%;
+  --chart-5: 340 12% 70%;
+  --sidebar: 340 12% 12%;
+  --sidebar-foreground: 340 15% 92%;
+  --sidebar-primary: 343 45% 72%;
+  --sidebar-primary-foreground: 340 12% 18%;
+  --sidebar-accent: 343 25% 28%;
+  --sidebar-accent-foreground: 340 15% 92%;
+  --sidebar-border: 340 12% 26%;
+  --sidebar-ring: 343 45% 72%;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+  --radius: 1.25rem;
+  --shadow-color: 343 30% 40%;
+  --shadow-2xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-sm: 0 3px 6px -1px hsl(340 12% 5% / 0.30), 0 2px 4px -2px hsl(340 12% 5% / 0.25);
+  --shadow: 0 4px 10px -1px hsl(340 12% 5% / 0.35), 0 2px 4px -2px hsl(340 12% 5% / 0.28);
+  --shadow-md: 0 8px 16px -4px hsl(340 12% 5% / 0.40), 0 4px 8px -4px hsl(340 12% 5% / 0.32);
+  --shadow-lg: 0 15px 25px -6px hsl(340 12% 5% / 0.45), 0 8px 12px -6px hsl(340 12% 5% / 0.36);
+  --shadow-xl: 0 25px 40px -8px hsl(340 12% 5% / 0.50), 0 12px 20px -8px hsl(340 12% 5% / 0.40);
+  --shadow-2xl: 0 35px 60px -12px hsl(340 12% 5% / 0.55);
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  --primary-bg: #1a1619;
+  --secondary-bg: #242024;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #f0e8ec;
+  --text-secondary: #a09098;
+  --border-color: rgba(232, 164, 184, 0.25);
+  --chat-bg: #1a1619;
+}
+
+body {
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232, 164, 184, 0.35); border-radius: 4px; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-foreground: var(--card-foreground);
+  }
+  @layer base {
+    body { background: var(--card-background); color: var(--card-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
       }
-    };
-  </script>
-
+    </style>
+</head>
+<body>
   <style>
-    * { -webkit-tap-highlight-color: transparent; }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
     html { -webkit-font-smoothing: antialiased; }
+
+    :root {
+      --mj-paper-line: hsl(var(--primary) / .14);
+      --mj-paper-red: hsl(350 55% 68% / .35);
+      --mj-card-bg: hsl(var(--card) / .86);
+    }
+
     body {
       font-family: var(--font-sans);
       margin: 0;
@@ -47,8 +211,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--secondary-bg);
-      color: var(--text-primary);
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
       letter-spacing: var(--tracking-normal);
     }
 
@@ -56,29 +220,18 @@
       position: relative;
       width: 100%;
       max-width: 420px;
-      height: 100vh;
-      max-height: 880px;
+      min-height: 100vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      background: hsl(var(--background));
+      background: var(--primary-bg);
     }
     @media (min-width: 480px) {
       .phone {
+        min-height: 860px;
         height: 860px;
-        border-radius: 40px;
-        border: 10px solid hsl(343 30% 22%);
-        box-shadow: 0 25px 60px -15px hsl(343 60% 35% / 0.35), 0 0 0 2px hsl(343 20% 12%);
-      }
-      .phone::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 50%;
-        transform: translateX(-50%);
-        width: 150px; height: 28px;
-        background: hsl(343 30% 18%);
-        border-radius: 0 0 18px 18px;
-        z-index: 100;
+        border-radius: 34px;
+        box-shadow: var(--shadow-xl);
       }
     }
 
@@ -90,9 +243,10 @@
       display: flex;
       flex-direction: column;
       background:
-        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(343 80% 94% / 0.9), transparent 60%),
-        radial-gradient(ellipse 400px 250px at 90% 10%, hsl(343 72% 92% / 0.7), transparent 55%),
-        linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
+        radial-gradient(ellipse 420px 260px at 15% 5%, hsl(var(--primary) / .16), transparent 60%),
+        radial-gradient(ellipse 320px 220px at 95% 12%, hsl(var(--primary) / .12), transparent 55%),
+        radial-gradient(ellipse 260px 180px at 80% 92%, hsl(var(--primary) / .10), transparent 55%),
+        linear-gradient(180deg, var(--primary-bg), hsl(var(--secondary)));
       scrollbar-width: none;
     }
     .app-bg::-webkit-scrollbar { display: none; }
@@ -107,17 +261,22 @@
       flex-shrink: 0;
     }
     @media (max-width: 479px) { .top-bar { padding-top: 16px; } }
+
     .back-btn {
       font-size: 15px;
       color: hsl(var(--primary));
       text-decoration: none;
-      padding: 6px 8px;
+      padding: 8px 10px;
       font-weight: 500;
       flex-shrink: 0;
       min-width: 64px;
-      transition: opacity 0.15s;
+      transition: opacity .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
-    .back-btn:active { opacity: 0.6; }
+    .back-btn:active { opacity: .6; }
+
     .top-title {
       font-family: var(--font-serif);
       font-size: 18px;
@@ -126,110 +285,131 @@
       text-align: center;
       flex: 1;
     }
+
     .top-action {
       flex-shrink: 0;
       min-width: 64px;
       display: flex;
       justify-content: flex-end;
-      gap: 8px;
     }
+
     .top-action-btn {
       font-size: 13px;
-      padding: 5px 14px;
-      border-radius: 9999px;
-      border: 1px solid rgba(232,116,154,0.25);
-      background: rgba(255,255,255,0.5);
-      color: var(--accent-color);
-      font-weight: 500;
+      padding: 7px 15px;
+      border-radius: 999px;
+      border: 1.5px solid hsl(var(--primary) / .35);
+      background: hsl(var(--card) / .70);
+      color: hsl(var(--primary));
+      font-weight: 600;
       cursor: pointer;
+      transition: transform .15s, background .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
-    .top-action-btn:active { transform: scale(0.94); }
+    .top-action-btn:active { transform: scale(.94); }
+    .top-action-btn:disabled { opacity: .55; cursor: not-allowed; }
 
     .letter-stage {
       flex: 1;
-      padding: 8px 16px 16px;
+      padding: 6px 16px 20px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       min-height: 0;
     }
 
     /* envelope flap header */
     .env-header {
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      border-radius: 20px 20px 6px 6px;
-      padding: 22px 20px 34px;
-      text-align: center;
-      color: #fff;
       position: relative;
-      clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
-      box-shadow: 0 8px 24px rgba(232,116,154,0.25);
+      height: 118px;
+      border-radius: 24px;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-md);
     }
-    .env-header::before {
-      content: "";
+    .env-header-bg {
       position: absolute;
       inset: 0;
-      background: linear-gradient(160deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.06) 55%, transparent 100%);
-      pointer-events: none;
-      border-radius: 20px 20px 0 0;
+      width: 100%;
+      height: 100%;
+      fill: hsl(var(--primary) / .92);
     }
-    .env-header-icon { margin: 0 auto 8px; opacity: 0.95; display: block; }
-    .env-header-title { font-size: 16px; font-weight: 700; letter-spacing: 3px; text-shadow: 0 1px 6px rgba(0,0,0,0.2); }
-    .env-header-subtitle { font-size: 10px; opacity: 0.75; letter-spacing: 2px; margin-top: 3px; text-transform: uppercase; font-style: italic; }
+    .env-header-content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: hsl(var(--primary-foreground));
+      padding-bottom: 10px;
+    }
+    .env-header-icon { margin-bottom: 6px; opacity: .95; }
+    .env-header-title { font-size: 17px; font-weight: 700; letter-spacing: 4px; }
+    .env-header-subtitle { font-size: 10px; opacity: .75; letter-spacing: 2px; margin-top: 4px; font-style: italic; }
 
     /* tabs */
     .env-tab-bar {
       display: flex;
-      gap: 6px;
-      margin: 4px 0 6px;
+      gap: 8px;
+      margin: 2px 0 4px;
     }
     .env-tab-btn {
       flex: 1;
-      padding: 9px 4px;
-      background: rgba(255,255,255,0.5);
-      border: 1.5px solid rgba(232,116,154,0.18);
-      border-radius: 10px;
+      padding: 10px 4px;
+      background: hsl(var(--card) / .62);
+      border: 1.5px solid hsl(var(--primary) / .18);
+      border-radius: 16px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 13px;
       font-family: var(--font-sans);
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
       position: relative;
-      transition: 0.25s;
-      letter-spacing: 0.3px;
+      transition: .2s;
+      letter-spacing: .3px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
     }
     .env-tab-btn.active {
-      background: rgba(232,116,154,0.1);
-      border-color: var(--accent-color);
-      color: var(--accent-color);
-      font-weight: 600;
+      background: hsl(var(--primary) / .18);
+      border-color: hsl(var(--primary) / .55);
+      color: hsl(var(--primary));
+      font-weight: 700;
+      box-shadow: var(--shadow-sm);
     }
     .env-badge {
       position: absolute;
       top: -5px;
       right: -5px;
-      background: #ff4757;
-      color: #fff;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
       border-radius: 8px;
       font-size: 10px;
       padding: 1px 5px;
       min-width: 16px;
       text-align: center;
-      border: 2px solid rgba(255,255,255,0.85);
-      font-weight: 600;
+      border: 2px solid hsl(var(--card));
+      font-weight: 700;
     }
 
     .env-card {
-      background: rgba(255,255,255,0.58);
-      border: 1px solid rgba(232,116,154,0.15);
-      border-radius: 20px;
-      padding: 14px 16px 16px;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: var(--mj-card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 14px 14px 16px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       flex: 1;
       display: flex;
       flex-direction: column;
       min-height: 0;
       overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
 
     .env-section {
@@ -243,72 +423,116 @@
 
     .env-empty {
       text-align: center;
-      padding: 38px 20px;
-      color: var(--text-secondary);
+      padding: 44px 22px;
+      color: hsl(var(--muted-foreground));
       font-size: 13px;
-      opacity: 0.75;
     }
-    .env-empty svg { display: block; margin: 0 auto 12px; opacity: 0.45; }
+    .env-empty svg { display: block; margin: 0 auto 14px; opacity: .45; }
+    .env-empty-title { font-size: 15px; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 6px; }
 
     .env-letter-item {
-      background: rgba(255,255,255,0.7);
-      border-radius: 14px;
-      border: 1px solid rgba(232,116,154,0.14);
-      margin-bottom: 10px;
+      background: hsl(var(--card) / .78);
+      border-radius: 18px;
+      border: 1px solid hsl(var(--primary) / .16);
+      margin-bottom: 12px;
       cursor: pointer;
-      transition: 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+      transition: transform .2s cubic-bezier(.25,.8,.25,1), box-shadow .2s, border-color .2s;
       position: relative;
       overflow: hidden;
-      animation: fadeUp 0.35s cubic-bezier(.3,0,0,1) both;
+      animation: fadeUp .35s cubic-bezier(.3,0,0,1) both;
     }
-    .env-letter-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,116,154,0.14); border-color: rgba(232,116,154,0.3); }
-    .env-letter-item.new { border-color: rgba(232,116,154,0.42); }
+    .env-letter-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: hsl(var(--primary) / .35); }
+    .env-letter-item.new { border-color: hsl(var(--primary) / .45); }
+    .env-letter-seal {
+      position: absolute;
+      top: -9px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-sm);
+      border: 2px solid hsl(var(--card));
+      z-index: 3;
+    }
+    .env-letter-seal.replied { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
     .env-letter-header {
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      padding: 8px 12px 7px;
+      background: hsl(var(--primary) / .88);
+      padding: 9px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 8px;
     }
-    .env-letter-header-from {
+    .env-letter-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+    .env-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1.5px solid hsl(var(--card) / .80);
+      background: hsl(var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 11px;
       font-weight: 700;
-      color: rgba(255,255,255,0.95);
-      letter-spacing: 0.5px;
+      color: hsl(var(--primary));
+      overflow: hidden;
+    }
+    .env-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .env-letter-header-from {
+      font-size: 12px;
+      font-weight: 700;
+      color: hsl(var(--primary-foreground));
+      letter-spacing: .3px;
       display: flex;
       align-items: center;
       gap: 4px;
+      min-width: 0;
     }
+    .env-letter-header-from span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .env-stamp {
-      width: 28px;
-      height: 34px;
-      border: 1.5px solid rgba(255,255,255,0.7);
+      width: 30px;
+      height: 36px;
+      border: 1.5px solid hsl(var(--primary-foreground) / .55);
       border-radius: 3px;
-      background: rgba(255,255,255,0.15);
+      background: hsl(var(--primary-foreground) / .12);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 0 0 2px rgba(255,255,255,0.12), 1px 1px 0 2px rgba(255,255,255,0.12), -1px 1px 0 2px rgba(255,255,255,0.12);
+      box-shadow: 0 0 0 2px hsl(var(--primary-foreground) / .08), 1px 1px 0 2px hsl(var(--primary-foreground) / .08), -1px 1px 0 2px hsl(var(--primary-foreground) / .08);
     }
-    .env-letter-body { padding: 10px 12px; }
+    .env-letter-body { padding: 12px 12px 14px; }
     .env-letter-preview {
       font-size: 13px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 92%;
       font-style: italic;
-      color: var(--text-primary);
+      color: hsl(var(--foreground));
       font-family: var(--font-serif);
     }
     .env-letter-status {
-      font-size: 10px;
-      color: var(--accent-color);
-      margin-top: 6px;
+      font-size: 11px;
+      color: hsl(var(--primary));
+      margin-top: 8px;
       display: flex;
       align-items: center;
       gap: 4px;
+      font-weight: 500;
     }
     .env-letter-delete-btn {
       position: absolute;
@@ -316,53 +540,46 @@
       right: 10px;
       background: none;
       border: none;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
       cursor: pointer;
       font-size: 12px;
-      opacity: 0.35;
-      padding: 4px;
-      border-radius: 4px;
-      transition: 0.2s;
+      opacity: .45;
+      padding: 5px;
+      border-radius: 6px;
+      transition: .2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-    .env-letter-delete-btn:hover { color: #ff4757; opacity: 1; }
-    .env-letter-item.reply .env-letter-status::before {
-      content: "已回信";
-      font-size: 9px;
-      color: #6bcb77;
-      border: 1px solid #6bcb77;
-      border-radius: 4px;
-      padding: 1px 5px;
-      letter-spacing: 0.5px;
-      margin-right: 4px;
-    }
+    .env-letter-delete-btn:hover { color: hsl(var(--destructive)); opacity: 1; }
 
     .env-send-area {
-      margin-top: 6px;
+      margin-top: 2px;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
     .env-write-btn {
       width: 100%;
-      padding: 13px;
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      color: #fff;
+      padding: 14px;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
       border: none;
-      border-radius: 14px;
-      font-size: 14px;
-      font-weight: 600;
+      border-radius: 18px;
+      font-size: 15px;
+      font-weight: 700;
       font-family: var(--font-sans);
       cursor: pointer;
       letter-spacing: 1px;
-      transition: 0.25s;
-      box-shadow: 0 4px 16px rgba(232,116,154,0.35);
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: var(--shadow-md);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
     }
-    .env-write-btn:active { transform: scale(0.98); }
-    .env-write-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .env-write-btn:active { transform: scale(.98); }
+    .env-write-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
     /* compose form */
     .env-compose-form {
@@ -374,50 +591,51 @@
     }
     .env-compose-form.active { display: flex; }
     .env-compose-paper {
-      background: rgba(255,255,255,0.72);
-      border-radius: 14px;
-      border: 1px solid rgba(232,116,154,0.2);
+      background: hsl(var(--card) / .80);
+      border-radius: 18px;
+      border: 1px solid hsl(var(--primary) / .20);
       padding: 16px 16px 12px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       position: relative;
       overflow: hidden;
     }
     .env-compose-paper::before {
       content: "";
       position: absolute;
-      left: 38px;
+      left: 42px;
       top: 0;
       bottom: 0;
-      width: 1px;
-      background: rgba(220,80,80,0.22);
+      width: 1.5px;
+      background: var(--mj-paper-red);
       pointer-events: none;
     }
     .env-compose-paper::after {
       content: "";
       position: absolute;
       inset: 0;
-      background: repeating-linear-gradient(transparent, transparent 28px, rgba(232,116,154,0.06) 28px, rgba(232,116,154,0.06) 29px);
+      background: repeating-linear-gradient(transparent, transparent 28px, var(--mj-paper-line) 28px, var(--mj-paper-line) 29px);
       pointer-events: none;
-      border-radius: 14px;
+      border-radius: 18px;
     }
     .env-compose-heading {
-      font-size: 11px;
-      color: var(--accent-color);
+      font-size: 12px;
+      color: hsl(var(--primary));
       letter-spacing: 2px;
       text-transform: uppercase;
       margin-bottom: 10px;
-      opacity: 0.8;
+      opacity: .85;
       position: relative;
       z-index: 1;
       display: flex;
       align-items: center;
       gap: 6px;
+      font-weight: 600;
     }
     #letterInput {
       width: 100%;
       resize: none;
-      padding-left: 16px;
-      min-height: 160px;
+      padding-left: 20px;
+      min-height: 180px;
       position: relative;
       z-index: 1;
       background: transparent;
@@ -426,33 +644,34 @@
       font-family: var(--font-serif) !important;
       font-size: 15px !important;
       line-height: 2 !important;
-      color: var(--text-primary) !important;
+      color: hsl(var(--foreground)) !important;
     }
-    #letterInput::placeholder { color: var(--text-secondary); opacity: 0.65; }
+    #letterInput::placeholder { color: hsl(var(--muted-foreground)); opacity: .65; }
     .env-option-row {
       display: flex;
       align-items: center;
       gap: 8px;
       margin: 4px 0 6px;
-      font-size: 12px;
+      font-size: 13px;
       padding: 0 2px;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
     }
     .env-option-row input[type="checkbox"] {
-      width: 15px; height: 15px;
+      width: 16px; height: 16px;
       cursor: pointer;
-      accent-color: var(--accent-color);
+      accent-color: hsl(var(--primary));
+      flex-shrink: 0;
     }
     .env-option-row label { cursor: pointer; }
-    #scheduleTimeWrap { display: none; margin: 4px 0 8px; padding: 0 2px; }
+    #scheduleTimeWrap { display: none; margin: 4px 0 10px; padding: 0 2px; }
     #scheduleTimeWrap.open { display: block; }
     #scheduleTime {
       width: 100%;
-      padding: 8px 10px;
-      border: 1px solid rgba(232,116,154,0.2);
-      border-radius: 10px;
-      background: rgba(255,255,255,0.7);
-      color: var(--text-primary);
+      padding: 10px 12px;
+      border: 1px solid hsl(var(--primary) / .22);
+      border-radius: 12px;
+      background: hsl(var(--card) / .72);
+      color: hsl(var(--foreground));
       font-size: 13px;
       outline: none;
       font-family: var(--font-sans);
@@ -460,57 +679,61 @@
     .env-send-info {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-bottom: 10px;
-      padding: 8px 10px;
-      background: rgba(255,255,255,0.55);
-      border-radius: 10px;
+      gap: 8px;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      background: hsl(var(--card) / .62);
+      border-radius: 12px;
+      border: 1px dashed hsl(var(--primary) / .22);
     }
     .env-compose-actions {
       display: flex;
-      gap: 8px;
+      gap: 10px;
     }
     .env-btn-secondary {
       flex: 1;
-      padding: 11px;
-      background: rgba(255,255,255,0.6);
-      border: 1px solid rgba(232,116,154,0.2);
-      border-radius: 12px;
+      padding: 12px;
+      background: hsl(var(--card) / .70);
+      border: 1.5px solid hsl(var(--primary) / .20);
+      border-radius: 14px;
       font-size: 14px;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
       cursor: pointer;
       font-family: var(--font-sans);
-      transition: 0.2s;
+      transition: .15s;
+      font-weight: 500;
     }
-    .env-btn-secondary:active { transform: scale(0.98); }
+    .env-btn-secondary:active { transform: scale(.98); }
     .env-btn-primary {
       flex: 2;
-      padding: 11px;
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      padding: 12px;
+      background: hsl(var(--primary));
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
       font-size: 14px;
-      font-weight: 600;
-      color: #fff;
+      font-weight: 700;
+      color: hsl(var(--primary-foreground));
       cursor: pointer;
       font-family: var(--font-sans);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      transition: 0.2s;
-      box-shadow: 0 4px 14px rgba(232,116,154,0.32);
+      transition: .15s;
+      box-shadow: var(--shadow-md);
     }
-    .env-btn-primary:active { transform: scale(0.98); }
-    .env-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .env-btn-primary:active { transform: scale(.98); }
+    .env-btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
     /* view modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.55);
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -520,25 +743,26 @@
     .modal-overlay.open { display: flex; }
     .env-view-card {
       background: hsl(var(--background));
-      border-radius: 20px;
+      border-radius: 24px;
       overflow: hidden;
       width: 100%;
       max-width: 380px;
       max-height: 84vh;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-      animation: modalIn 0.35s cubic-bezier(.3,0,0,1) both;
+      box-shadow: var(--shadow-2xl);
+      animation: modalIn .35s cubic-bezier(.3,0,0,1) both;
+      border: 1px solid var(--border-color);
     }
     @keyframes modalIn {
-      from { opacity: 0; transform: translateY(24px) scale(0.96); }
+      from { opacity: 0; transform: translateY(24px) scale(.96); }
       to { opacity: 1; transform: none; }
     }
     .env-view-header {
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      background: hsl(var(--primary) / .88);
       padding: 14px 18px;
       position: relative;
-      color: #fff;
+      color: hsl(var(--primary-foreground));
       flex-shrink: 0;
     }
     .env-view-header-top {
@@ -547,21 +771,25 @@
       justify-content: space-between;
       position: relative;
       z-index: 1;
+      gap: 10px;
     }
     .env-view-title { font-size: 15px; font-weight: 700; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; }
     .env-view-stamp {
-      border: 2px solid rgba(255,255,255,0.55);
+      border: 2px solid hsl(var(--primary-foreground) / .45);
       border-radius: 50%;
-      width: 48px;
-      height: 48px;
+      width: 52px;
+      height: 52px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      opacity: 0.85;
+      opacity: .95;
       font-size: 8px;
       line-height: 1.3;
       text-align: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: hsl(var(--card) / .25);
     }
     .env-view-body {
       flex: 1;
@@ -572,27 +800,28 @@
     .env-view-original {
       display: none;
       margin: 0 0 12px;
-      background: rgba(232,116,154,0.07);
-      border: 1px solid rgba(232,116,154,0.16);
-      border-radius: 10px;
+      background: hsl(var(--accent) / .55);
+      border: 1px solid hsl(var(--primary) / .16);
+      border-radius: 12px;
       padding: 10px 12px;
-      border-left: 3px solid rgba(232,116,154,0.45);
+      border-left: 3px solid hsl(var(--primary) / .45);
     }
     .env-view-original.open { display: block; }
     .env-view-original-label {
       font-size: 10px;
-      color: var(--accent-color);
+      color: hsl(var(--primary));
       letter-spacing: 1px;
       text-transform: uppercase;
       margin-bottom: 6px;
-      opacity: 0.85;
+      opacity: .85;
       display: flex;
       align-items: center;
       gap: 4px;
+      font-weight: 600;
     }
     .env-view-original-text {
       font-size: 12px;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
       line-height: 1.7;
       font-style: italic;
       white-space: pre-wrap;
@@ -600,39 +829,39 @@
       overflow: hidden;
     }
     .env-letter-paper {
-      background: #fff;
-      border-radius: 12px;
-      padding: 18px 18px 18px 46px;
+      background: hsl(var(--card));
+      border-radius: 14px;
+      padding: 18px 18px 18px 48px;
       font-size: 15px;
       line-height: 31px;
       min-height: 140px;
       position: relative;
-      border: 1px solid rgba(232,116,154,0.14);
-      background-image: repeating-linear-gradient(transparent, transparent 30px, rgba(232,116,154,0.07) 30px, rgba(232,116,154,0.07) 31px);
-      color: var(--text-primary);
+      border: 1px solid hsl(var(--primary) / .14);
+      background-image: repeating-linear-gradient(transparent, transparent 30px, var(--mj-paper-line) 30px, var(--mj-paper-line) 31px);
+      color: hsl(var(--foreground));
       font-family: var(--font-serif);
     }
     .env-letter-paper::before {
       content: "";
       position: absolute;
-      left: 36px;
+      left: 38px;
       top: 0;
       bottom: 0;
-      width: 1px;
-      background: rgba(220,80,80,0.2);
+      width: 1.5px;
+      background: var(--mj-paper-red);
     }
     .env-paper-to {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
       margin-bottom: 4px;
     }
     .env-paper-greeting {
       font-size: 13px;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
       margin-bottom: 14px;
       font-style: italic;
-      opacity: 0.85;
+      opacity: .85;
     }
     .env-paper-content {
       white-space: pre-wrap;
@@ -640,40 +869,41 @@
       margin-bottom: 16px;
     }
     .env-paper-divider {
-      border-top: 1px dashed rgba(232,116,154,0.25);
+      border-top: 1px dashed hsl(var(--primary) / .25);
       margin: 12px 0;
     }
     .env-paper-sign-date {
       font-size: 11px;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
       text-align: right;
       margin-bottom: 4px;
-      letter-spacing: 0.5px;
+      letter-spacing: .5px;
     }
     .env-paper-sign-name {
-      font-size: 14px;
-      color: var(--accent-color);
+      font-size: 15px;
+      color: hsl(var(--primary));
       text-align: right;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 1px;
     }
     .env-view-date {
       font-size: 11px;
-      color: var(--text-secondary);
+      color: hsl(var(--muted-foreground));
       margin-top: 12px;
       text-align: right;
     }
     .env-original-expand {
       font-size: 11px;
-      color: var(--accent-color);
+      color: hsl(var(--primary));
       margin-top: 5px;
       cursor: pointer;
       display: none;
+      font-weight: 500;
     }
     .env-original-expand.open { display: block; }
     .env-view-actions {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       padding: 12px 16px 16px;
       flex-shrink: 0;
     }
@@ -685,10 +915,10 @@
       width: 100%;
       min-height: 120px;
       padding: 12px;
-      border: 1px solid rgba(232,116,154,0.2);
-      border-radius: 10px;
-      background: rgba(255,255,255,0.7);
-      color: var(--text-primary);
+      border: 1px solid hsl(var(--primary) / .20);
+      border-radius: 12px;
+      background: hsl(var(--card) / .72);
+      color: hsl(var(--foreground));
       font-size: 14px;
       font-family: var(--font-serif);
       line-height: 1.7;
@@ -699,19 +929,20 @@
 
     .toast {
       position: fixed;
-      bottom: 30px;
+      bottom: 34px;
       left: 50%;
       transform: translateX(-50%) translateY(12px);
-      background: rgba(61,32,48,0.88);
-      color: #fff;
+      background: hsl(var(--foreground) / .88);
+      color: hsl(var(--background));
       font-size: 13px;
-      padding: 9px 18px;
-      border-radius: 9999px;
+      padding: 10px 20px;
+      border-radius: 999px;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.25s, transform 0.25s;
+      transition: opacity .25s, transform .25s;
       z-index: 2000;
       white-space: nowrap;
+      box-shadow: var(--shadow-lg);
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -719,7 +950,9 @@
     .reply-popup-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0,0,0,.40);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
       display: none;
       align-items: flex-end;
       justify-content: center;
@@ -728,54 +961,95 @@
     }
     .reply-popup-overlay.open { display: flex; }
     .reply-popup {
-      background: var(--secondary-bg);
+      background: hsl(var(--background));
       border: 1px solid var(--border-color);
-      border-radius: 22px;
-      padding: 20px;
+      border-radius: 26px 26px 26px 26px;
+      padding: 22px 20px;
       max-width: 360px;
       width: 100%;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-      animation: slideUpPopup 0.4s cubic-bezier(0.22,1,0.36,1);
+      box-shadow: var(--shadow-xl);
+      animation: slideUpPopup .4s cubic-bezier(.22,1,.36,1);
+      position: relative;
+    }
+    .reply-popup::before {
+      content: "";
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 56px;
+      height: 56px;
+      background: hsl(var(--primary));
+      border-radius: 50%;
+      box-shadow: var(--shadow-md);
+      border: 3px solid hsl(var(--background));
+    }
+    .reply-popup-icon {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: hsl(var(--primary-foreground));
+      z-index: 2;
     }
     @keyframes slideUpPopup {
-      from { opacity: 0; transform: translateY(24px) scale(0.96); }
+      from { opacity: 0; transform: translateY(24px) scale(.96); }
       to { opacity: 1; transform: none; }
     }
     .reply-popup-title {
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: center;
+      gap: 8px;
       font-size: 16px;
       font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 6px;
+      color: hsl(var(--foreground));
+      margin: 18px 0 6px;
+      text-align: center;
     }
-    .reply-popup-title span { font-size: 28px; }
     .reply-popup-desc {
       font-size: 13px;
-      color: var(--text-secondary);
-      margin-bottom: 16px;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 18px;
       line-height: 1.5;
+      text-align: center;
     }
     .reply-popup-actions { display: flex; gap: 10px; }
     .reply-popup-actions button {
       flex: 1;
-      padding: 10px 0;
-      border-radius: 12px;
+      padding: 11px 0;
+      border-radius: 14px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       border: none;
       font-family: var(--font-sans);
+      transition: .15s;
     }
+    .reply-popup-actions button:active { transform: scale(.98); }
     .reply-popup-later {
-      background: var(--primary-bg);
-      color: var(--text-secondary);
-      border: 1px solid var(--border-color);
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      border: 1.5px solid hsl(var(--primary) / .15);
     }
     .reply-popup-now {
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      color: #fff;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+    }
+
+    /* little decorative helpers */
+    .heart-deco { color: hsl(var(--primary)); }
+    .washi-tape {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-2deg);
+      width: 76px;
+      height: 22px;
+      background: hsl(var(--primary) / .35);
+      border-radius: 4px;
+      z-index: 4;
+      pointer-events: none;
     }
 
     @keyframes fadeUp {
@@ -788,49 +1062,57 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
   </style>
-</head>
-<body>
+
   <div class="phone">
     <div class="app-bg">
 
       <div class="top-bar">
-        <a href="index-new.html" class="back-btn">← 返回</a>
+        <a href="index-new-v2.html" class="back-btn" data-dom-id="back-home">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          返回
+        </a>
         <div class="top-title">信封投递</div>
         <div class="top-action">
-          <button class="top-action-btn" id="receiveLetterBtn" type="button">收信</button>
+          <button class="top-action-btn" id="receiveLetterBtn" type="button" data-dom-id="receive-dream-letter">收信</button>
         </div>
       </div>
 
       <div class="letter-stage">
-        <!-- envelope header -->
+        <!-- envelope flap header -->
         <div class="env-header">
-          <svg class="env-header-icon" width="40" height="30" viewBox="0 0 40 30" fill="none">
-            <rect x="1" y="7" width="38" height="22" rx="3" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.65)" stroke-width="1.5"/>
-            <path d="M1 9 L20 20 L39 9" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" fill="none"/>
-            <path d="M1 29 L14 18" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-            <path d="M39 29 L26 18" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+          <svg class="env-header-bg" preserveAspectRatio="none" viewBox="0 0 320 118">
+            <path d="M16,0 L304,0 Q320,0 320,16 L320,86 Q320,98 308,98 L186,98 L160,118 L134,98 L12,98 Q0,98 0,86 L0,16 Q0,0 16,0 Z" />
           </svg>
-          <div class="env-header-title">信 封 投 递</div>
-          <div class="env-header-subtitle">Letters · Correspondence</div>
+          <div class="env-header-content">
+            <svg class="env-header-icon" width="42" height="30" viewBox="0 0 40 30" fill="none">
+              <rect x="1" y="7" width="38" height="22" rx="4" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.70)" stroke-width="1.5"/>
+              <path d="M1 9 L20 21 L39 9" stroke="rgba(255,255,255,0.58)" stroke-width="1.3" fill="none"/>
+              <path d="M1 29 L14 17" stroke="rgba(255,255,255,0.38)" stroke-width="1"/>
+              <path d="M39 29 L26 17" stroke="rgba(255,255,255,0.38)" stroke-width="1"/>
+              <circle cx="20" cy="4" r="2.5" fill="rgba(255,255,255,0.85)"/>
+            </svg>
+            <div class="env-header-title">信 封 投 递</div>
+            <div class="env-header-subtitle">Letters · Correspondence</div>
+          </div>
         </div>
 
         <!-- tabs -->
         <div class="env-tab-bar" id="tabBar">
-          <button class="env-tab-btn active" data-tab="outbox" type="button">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+          <button class="env-tab-btn active" data-tab="outbox" type="button" data-dom-id="tab-outbox">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
             寄出的信
             <span class="env-badge" id="outboxBadge" style="display:none;">0</span>
           </button>
-          <button class="env-tab-btn" data-tab="inbox" type="button">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;"><path d="M22 13V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6"/><polyline points="15 3 21 3 21 9"/><line x1="21" y1="3" x2="10" y2="14"/></svg>
+          <button class="env-tab-btn" data-tab="inbox" type="button" data-dom-id="tab-inbox">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 13V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6"/><polyline points="15 3 21 3 21 9"/><line x1="21" y1="3" x2="10" y2="14"/></svg>
             收到的信
             <span class="env-badge" id="inboxBadge" style="display:none;">0</span>
           </button>
-          <button class="env-tab-btn" data-tab="dream" type="button">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+          <button class="env-tab-btn" data-tab="dream" type="button" data-dom-id="tab-dream">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
             梦角来信
             <span class="env-badge" id="dreamBadge" style="display:none;">0</span>
           </button>
@@ -853,8 +1135,9 @@
           <!-- compose form -->
           <div class="env-compose-form" id="composeForm">
             <div class="env-compose-paper">
+              <div class="washi-tape"></div>
               <div class="env-compose-heading">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                 <span id="composeTitle">写一封信</span>
               </div>
               <textarea id="letterInput" placeholder="亲爱的，&#10;&#10;今天想跟你说…" maxlength="800"></textarea>
@@ -871,13 +1154,13 @@
               <input type="datetime-local" id="scheduleTime" />
             </div>
             <div class="env-send-info">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span id="replyTimeInfo">梦角将在 5-20 秒内回信</span>
             </div>
             <div class="env-compose-actions">
-              <button class="env-btn-secondary" id="cancelCompose" type="button">取消</button>
-              <button class="env-btn-primary" id="sendLetter" type="button">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+              <button class="env-btn-secondary" id="cancelCompose" type="button" data-dom-id="cancel-compose">取消</button>
+              <button class="env-btn-primary" id="sendLetter" type="button" data-dom-id="send-letter">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
                 封 · 寄出
               </button>
             </div>
@@ -886,8 +1169,8 @@
 
         <!-- main action -->
         <div class="env-send-area" id="mainActionArea">
-          <button class="env-write-btn" id="writeLetterBtn" type="button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <button class="env-write-btn" id="writeLetterBtn" type="button" data-dom-id="open-compose">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             提笔写信
           </button>
         </div>
@@ -905,9 +1188,7 @@
             <span id="viewTitle">信件内容</span>
           </div>
           <div class="env-view-stamp">
-            <span style="font-size:7px;letter-spacing:0.5px;">已送达</span>
-            <span id="viewStampDate" style="font-size:8px;font-weight:600;"></span>
-            <span style="font-size:6px;opacity:0.8;">DELIVERED</span>
+            <div id="viewStampAvatar" class="env-avatar" style="width:46px;height:46px;border:none;background:transparent;"></div>
           </div>
         </div>
       </div>
@@ -934,9 +1215,9 @@
           <div class="env-view-date" id="viewDate"></div>
         </div>
       <div class="env-view-actions" id="viewActions">
-        <button class="env-btn-secondary" id="closeView" type="button">关闭</button>
-        <button class="env-btn-secondary" id="editView" type="button">编辑</button>
-        <button class="env-btn-primary" id="replyView" type="button">回复</button>
+        <button class="env-btn-secondary" id="closeView" type="button" data-dom-id="close-view">关闭</button>
+        <button class="env-btn-secondary" id="editView" type="button" data-dom-id="edit-letter">编辑</button>
+        <button class="env-btn-primary" id="replyView" type="button" data-dom-id="reply-letter">回复</button>
       </div>
     </div>
   </div>
@@ -944,11 +1225,14 @@
   <!-- reply arrival popup -->
   <div class="reply-popup-overlay" id="replyPopupOverlay">
     <div class="reply-popup">
-      <div class="reply-popup-title"><span>💌</span><span id="replyPopupTitle">收到了一封回信</span></div>
+      <div class="reply-popup-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <div class="reply-popup-title" id="replyPopupTitle">收到了一封回信</div>
       <div class="reply-popup-desc" id="replyPopupDesc">Ta 给你写了回信，快去看看吧~</div>
       <div class="reply-popup-actions">
-        <button class="reply-popup-later" id="replyPopupLater" type="button">稍后查看</button>
-        <button class="reply-popup-now" id="replyPopupNow" type="button">立即阅读 ✉</button>
+        <button class="reply-popup-later" id="replyPopupLater" type="button" data-dom-id="reply-later">稍后查看</button>
+        <button class="reply-popup-now" id="replyPopupNow" type="button" data-dom-id="reply-now">立即阅读</button>
       </div>
     </div>
   </div>
@@ -962,10 +1246,12 @@
       var LETTER_KEY = "mengjiao_letters_v2";
       var OLD_LETTER_KEY = "mengjiao_letters";
       var PARTNER_NAME_KEY = "mengjiao_partner_name";
+      var PARTNER_AVATAR_KEY = "mengjiao_partner_avatar";
+      var MY_NAME_KEY = "mengjiao_my_name";
+      var MY_AVATAR_KEY = "mengjiao_my_avatar";
       var CARD_REPLIES_KEY = "mengjiao_card_replies";
       var CHAT_MESSAGES_KEY = "mengjiao_chat_messages";
 
-      /* 回信延迟：最短 5 秒，最长 20 秒 */
       var REPLY_DELAY_MIN = 5000;
       var REPLY_DELAY_MAX = 20000;
 
@@ -987,7 +1273,6 @@
         "每一个想你的夜晚，星星都知道。"
       ];
 
-      /* DOM refs */
       var tabBtns = document.querySelectorAll(".env-tab-btn");
       var sections = {
         outbox: document.getElementById("outboxSection"),
@@ -1018,7 +1303,7 @@
       var receiveLetterBtn = document.getElementById("receiveLetterBtn");
       var viewModal = document.getElementById("viewModal");
       var viewTitle = document.getElementById("viewTitle");
-      var viewStampDate = document.getElementById("viewStampDate");
+      var viewStampAvatar = document.getElementById("viewStampAvatar");
       var viewOriginalCtx = document.getElementById("viewOriginalCtx");
       var viewOriginalLabel = document.getElementById("viewOriginalLabel");
       var viewOriginalText = document.getElementById("viewOriginalText");
@@ -1083,10 +1368,25 @@
       }
       function getMyName() {
         try {
-          var n = localStorage.getItem("mengjiao_my_name");
+          var n = localStorage.getItem(MY_NAME_KEY);
           if (n) return n;
         } catch (e) {}
         return "你";
+      }
+      function getPartnerAvatar() {
+        try { return localStorage.getItem(PARTNER_AVATAR_KEY) || ""; } catch (e) { return ""; }
+      }
+      function getMyAvatar() {
+        try { return localStorage.getItem(MY_AVATAR_KEY) || ""; } catch (e) { return ""; }
+      }
+      function initials(name) {
+        return (name || "?").slice(0, 1);
+      }
+      function avatarHtml(avatarUrl, name, sizeClass) {
+        var s = sizeClass || "26px";
+        var style = "width:" + s + ";height:" + s + ";font-size:calc(" + s + " * .4);";
+        var img = avatarUrl ? '<img src="' + escapeHtml(avatarUrl) + '" alt="" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'has-fallback\')">' : "";
+        return '<div class="env-avatar has-fallback" style="' + style + '">' + img + '<span>' + escapeHtml(initials(name)) + '</span></div>';
       }
 
       function nowTime() {
@@ -1180,7 +1480,7 @@
       function generateDreamLetter() {
         var pool = getCardReplies();
         if (pool.length === 0) pool = DEFAULT_CARD_REPLIES.slice();
-        var count = Math.floor(Math.random() * 8) + 5; // 5-12 sentences
+        var count = Math.floor(Math.random() * 8) + 5;
         var sentences = [];
         for (var i = 0; i < count; i++) {
           sentences.push(pool[Math.floor(Math.random() * pool.length)] + "。");
@@ -1250,12 +1550,15 @@
         var list = lists.outbox;
         if (currentData.outbox.length === 0) {
           list.innerHTML = '<div class="env-empty">' +
-            '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>' +
-            '<div style="font-size:14px;font-weight:500;margin-top:4px;">还没有寄出任何信件</div>' +
-            '<div style="font-size:12px;margin-top:6px;opacity:0.6;">提笔写下心意，寄送给 Ta 吧~</div>' +
+            '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>' +
+            '<div class="env-empty-title">还没有寄出任何信件</div>' +
+            '<div>提笔写下心意，寄送给 Ta 吧~</div>' +
           '</div>';
           return;
         }
+        var partner = getPartnerName();
+        var me = getMyName();
+        var myAvatar = getMyAvatar();
         list.innerHTML = currentData.outbox.slice().reverse().map(function (letter) {
           var date = formatShortTime(letter.sentTime || letter.scheduleTime || Date.now());
           var isScheduled = letter.status === "scheduled";
@@ -1275,16 +1578,20 @@
             if (orig) {
               var op = orig.length > 30 ? orig.substring(0, 30) + "…" : orig;
               origCtx = '<div style="padding:6px 12px 0;display:flex;align-items:flex-start;gap:6px;">' +
-                '<div style="width:2px;border-radius:2px;background:rgba(232,116,154,0.4);flex-shrink:0;align-self:stretch;min-height:14px;margin-top:1px;"></div>' +
-                '<div style="font-size:11px;color:var(--text-secondary);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 14px);opacity:0.75;">回复: ' + escapeHtml(op) + '</div>' +
+                '<div style="width:2px;border-radius:2px;background:hsl(var(--primary) / .4);flex-shrink:0;align-self:stretch;min-height:14px;margin-top:1px;"></div>' +
+                '<div style="font-size:11px;color:hsl(var(--muted-foreground));font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 14px);opacity:.75;">回复: ' + escapeHtml(op) + '</div>' +
               '</div>';
             }
           }
+          var seal = isScheduled || isPending ?
+            '<div class="env-letter-seal"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>' :
+            '<div class="env-letter-seal"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>';
           return '<div class="env-letter-item ' + (isScheduled || isPending ? "" : "reply") + '" onclick="window._openView(\'outbox\',\'' + letter.id + '\')">' +
+            seal +
             '<div class="env-letter-header">' +
-              '<div class="env-letter-header-from">' +
-                '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>' +
-                (isScheduled ? "定时" : "寄出") + " · " + date +
+              '<div class="env-letter-header-left">' +
+                avatarHtml(myAvatar, me, "28px") +
+                '<div class="env-letter-header-from"><span>' + (isScheduled ? "定时" : "寄出") + " · " + date + '</span></div>' +
               '</div>' +
               '<div class="env-stamp"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>' +
             '</div>' +
@@ -1294,7 +1601,7 @@
               '<div class="env-letter-status">' + statusHtml + '</div>' +
             '</div>' +
             '<button class="env-letter-delete-btn" onclick="event.stopPropagation();window._deleteLetter(\'outbox\',\'' + letter.id + '\')">' +
-              '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
             '</button>' +
           '</div>';
         }).join("");
@@ -1304,26 +1611,29 @@
         var list = lists.inbox;
         if (currentData.inbox.length === 0) {
           list.innerHTML = '<div class="env-empty">' +
-            '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/><polyline points="22 13 12 13"/><path d="M19 16l-5-3-5 3"/></svg>' +
-            '<div style="font-size:14px;font-weight:500;margin-top:4px;">还没有收到回信</div>' +
-            '<div style="font-size:12px;margin-top:6px;opacity:0.6;">对方正在认真回复中，请稍候~</div>' +
+            '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/><polyline points="22 13 12 13"/><path d="M19 16l-5-3-5 3"/></svg>' +
+            '<div class="env-empty-title">还没有收到回信</div>' +
+            '<div>对方正在认真回复中，请稍候~</div>' +
           '</div>';
           return;
         }
+        var partner = getPartnerName();
+        var partnerAvatar = getPartnerAvatar();
         list.innerHTML = currentData.inbox.slice().reverse().map(function (letter) {
           var date = formatShortTime(letter.receivedTime || Date.now());
           var preview = letter.content.length > 52 ? letter.content.substring(0, 52) + "…" : letter.content;
-          var newTag = letter.isNew ? '<span style="background:rgba(232,116,154,0.25);color:#fff;font-size:9px;padding:1px 5px;border-radius:6px;margin-left:6px;">新</span>' : "";
+          var newTag = letter.isNew ? '<span style="background:hsl(var(--primary));color:hsl(var(--primary-foreground));font-size:9px;padding:1px 5px;border-radius:6px;margin-left:6px;font-weight:700;">新</span>' : "";
           var origPreview = letter.originalContent ? (letter.originalContent.length > 32 ? letter.originalContent.substring(0, 32) + "…" : letter.originalContent) : "";
           var origCtx = origPreview ? '<div style="padding:6px 12px 0;display:flex;align-items:flex-start;gap:6px;">' +
-            '<div style="width:2px;border-radius:2px;background:rgba(232,116,154,0.4);flex-shrink:0;align-self:stretch;min-height:14px;margin-top:1px;"></div>' +
-            '<div style="font-size:11px;color:var(--text-secondary);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 14px);opacity:0.75;">原信: ' + escapeHtml(origPreview) + '</div>' +
+            '<div style="width:2px;border-radius:2px;background:hsl(var(--primary) / .4);flex-shrink:0;align-self:stretch;min-height:14px;margin-top:1px;"></div>' +
+            '<div style="font-size:11px;color:hsl(var(--muted-foreground));font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 14px);opacity:.75;">原信: ' + escapeHtml(origPreview) + '</div>' +
           '</div>' : "";
           return '<div class="env-letter-item ' + (letter.isNew ? "new" : "") + '" onclick="window._openView(\'inbox\',\'' + letter.id + '\')">' +
+            '<div class="env-letter-seal"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>' +
             '<div class="env-letter-header">' +
-              '<div class="env-letter-header-from">' +
-                '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>' +
-                "收到 · " + date + newTag +
+              '<div class="env-letter-header-left">' +
+                avatarHtml(partnerAvatar, partner, "28px") +
+                '<div class="env-letter-header-from"><span>收到 · ' + date + newTag + '</span></div>' +
               '</div>' +
               '<div class="env-stamp"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>' +
             '</div>' +
@@ -1332,7 +1642,7 @@
               '<div class="env-letter-preview">' + escapeHtml(preview) + '</div>' +
             '</div>' +
             '<button class="env-letter-delete-btn" onclick="event.stopPropagation();window._deleteLetter(\'inbox\',\'' + letter.id + '\')">' +
-              '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
             '</button>' +
           '</div>';
         }).join("");
@@ -1342,31 +1652,36 @@
         var list = lists.dream;
         if (currentData.dream.length === 0) {
           list.innerHTML = '<div class="env-empty">' +
-            '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>' +
-            '<div style="font-size:14px;font-weight:500;margin-top:4px;">还没有收到梦角来信</div>' +
-            '<div style="font-size:12px;margin-top:6px;opacity:0.6;">点击右上角“收信”，让梦角给你写一封信~</div>' +
+            '<svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>' +
+            '<div class="env-empty-title">还没有收到梦角来信</div>' +
+            '<div>点击右上角“收信”，让梦角给你写一封信~</div>' +
           '</div>';
           return;
         }
+        var partner = getPartnerName();
+        var partnerAvatar = getPartnerAvatar();
         list.innerHTML = currentData.dream.slice().reverse().map(function (letter) {
           var date = formatShortTime(letter.receivedTime || Date.now());
           var preview = letter.content.length > 52 ? letter.content.substring(0, 52) + "…" : letter.content;
-          var newTag = letter.isNew ? '<span style="background:rgba(232,116,154,0.25);color:#fff;font-size:9px;padding:1px 5px;border-radius:6px;margin-left:6px;">新</span>' : "";
+          var newTag = letter.isNew ? '<span style="background:hsl(var(--primary));color:hsl(var(--primary-foreground));font-size:9px;padding:1px 5px;border-radius:6px;margin-left:6px;font-weight:700;">新</span>' : "";
           var hasReplied = currentData.outbox.some(function (l) { return l.replyToId === letter.id; });
           return '<div class="env-letter-item ' + (letter.isNew ? "new" : "") + (hasReplied ? " reply" : "") + '" onclick="window._openView(\'dream\',\'' + letter.id + '\')">' +
+            '<div class="env-letter-seal ' + (hasReplied ? "replied" : "") + '">' +
+              (hasReplied ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>') +
+            '</div>' +
             '<div class="env-letter-header">' +
-              '<div class="env-letter-header-from">' +
-                '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>' +
-                "梦角 · " + date + newTag +
+              '<div class="env-letter-header-left">' +
+                avatarHtml(partnerAvatar, partner, "28px") +
+                '<div class="env-letter-header-from"><span>梦角 · ' + date + newTag + '</span></div>' +
               '</div>' +
               '<div class="env-stamp"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></div>' +
             '</div>' +
             '<div class="env-letter-body">' +
               '<div class="env-letter-preview">' + escapeHtml(preview) + '</div>' +
-              (hasReplied ? '<div class="env-letter-status"></div>' : "") +
+              (hasReplied ? '<div class="env-letter-status"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 已回复</div>' : "") +
             '</div>' +
             '<button class="env-letter-delete-btn" onclick="event.stopPropagation();window._deleteLetter(\'dream\',\'' + letter.id + '\')">' +
-              '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
             '</button>' +
           '</div>';
         }).join("");
@@ -1390,7 +1705,6 @@
         scheduleSend.checked = false;
         scheduleTimeWrap.classList.remove("open");
         document.getElementById("composeTitle").textContent = "写一封信";
-        // schedule default = now + 1 hour rounded to minutes
         var d = new Date(Date.now() + 3600000);
         d.setSeconds(0, 0);
         scheduleTime.value = toDateTimeLocal(d);
@@ -1429,7 +1743,6 @@
           sendToChat: sendToChat.checked
         };
 
-        // 如果立即发送且勾选同步到聊天，直接写入聊天记录
         if (!scheduleChecked && sendToChat.checked) {
           addMessageToChat("【寄出的信】\n" + text);
         }
@@ -1437,14 +1750,12 @@
         currentData.outbox.push(letter);
         saveData();
 
-        // 埋点：小火人互动
         bumpSparkInteraction();
 
         if (scheduleChecked) {
           showToast("信件已设定，将在 " + formatShortTime(scheduleTs) + " 寄出 ✉️");
         } else {
           showToast("信件已寄出，正在加急寄给 " + getPartnerName() + " ✉️");
-          // 安排回信
           setTimeout(function () { processReply(letter.id); }, letter.replyTime - Date.now());
         }
 
@@ -1458,7 +1769,6 @@
         var letter = currentData.outbox.find(function (l) { return l.id === outboxId; });
         if (!letter || letter.status !== "pending") return;
 
-        // Replying to a dream letter has only 30% chance of receiving a reply back
         if (letter.replyToSection === "dream" && letter.replyToId && Math.random() >= 0.3) {
           letter.status = "replied";
           saveData();
@@ -1520,24 +1830,28 @@
         viewTitle.textContent = title;
 
         var ts = letter.receivedTime || letter.sentTime || letter.scheduleTime || Date.now();
-        viewStampDate.textContent = String(new Date(ts).getMonth()+1).padStart(2,"0") + "/" + String(new Date(ts).getDate()).padStart(2,"0");
         viewDate.textContent = formatFullDate(ts);
 
         var partner = getPartnerName();
         var me = getMyName();
+        var partnerAvatar = getPartnerAvatar();
+        var myAvatar = getMyAvatar();
         var toLine = "", greeting = "", signName = "";
         if (section === "outbox") {
           toLine = "致 " + partner + "：";
           greeting = "见字如面，望君安好。";
           signName = me;
+          viewStampAvatar.innerHTML = avatarHtml(myAvatar, me, "46px");
         } else if (section === "dream") {
           toLine = "致 " + me + "：";
           greeting = "见字如面，时空流转。";
           signName = partner;
+          viewStampAvatar.innerHTML = avatarHtml(partnerAvatar, partner, "46px");
         } else {
           toLine = "致 " + me + "：";
           greeting = "见字如面，一切皆好。";
           signName = partner;
+          viewStampAvatar.innerHTML = avatarHtml(partnerAvatar, partner, "46px");
         }
         viewToLine.textContent = toLine;
         viewGreetingLine.textContent = greeting;
@@ -1635,12 +1949,6 @@
         editView.style.display = "none";
       }
 
-      function resetReplyButton() {
-        replyView.textContent = "回复";
-        replyView.dataset.mode = "";
-        replyView.className = "env-btn-primary";
-      }
-
       function deleteLetter(section, id) {
         if (!confirm("确定要删除这封信吗？")) return;
         currentData[section] = currentData[section].filter(function (l) { return l.id !== id; });
@@ -1698,7 +2006,6 @@
         } catch (e) {}
       }
 
-      // schedule checker
       function checkScheduled() {
         loadData();
         var now = Date.now();
@@ -1718,7 +2025,6 @@
         renderLists();
       }
 
-      /* event bindings */
       tabBtns.forEach(function (btn) {
         btn.addEventListener("click", function () { switchTab(btn.dataset.tab); });
       });
@@ -1743,11 +2049,9 @@
       window._openView = openView;
       window._deleteLetter = deleteLetter;
 
-      /* init */
       loadData();
       switchTab("outbox");
       setInterval(checkScheduled, 3000);
-      // restore pending timers
       currentData.outbox.forEach(function (l) {
         if (l.status === "pending" && l.replyTime && l.replyTime > Date.now()) {
           setTimeout(function () { processReply(l.id); }, l.replyTime - Date.now());

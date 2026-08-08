@@ -1,9 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>自定义主页 · 梦角传讯</title>
+    <meta name="theme-color" content="#e8a4b8">
+    <title>回复库 · 梦角传讯</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../icon.svg" type="image/svg+xml">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('../sw.js').catch(function () {});
+      }
+    </script>
     <style id="theme-vars">
 /* 梦角传讯 — 动漫手绘风主题 */
 /* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
@@ -177,8 +185,6 @@ body {
   }
     </style>
     <style>
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       [data-icon] {
         display: inline-flex;
         align-items: center;
@@ -214,146 +220,16 @@ body {
             <i data-lucide="chevron-left" class="w-4 h-4"></i>
             <span>返回</span>
           </a>
-          <h1 class="page-title">自定义</h1>
+          <h1 class="page-title">回复库</h1>
           <div class="header-spacer"></div>
         </div>
 
-        <!-- Profile preview widget -->
-        <section class="profile-preview widget" id="previewCard" aria-label="实时预览">
-          <div class="preview-deco">
-            <svg class="deco-cloud" viewBox="0 0 48 28" fill="currentColor"><path d="M40 22H10c-4.4 0-8-3.6-8-8s3.6-8 8-8c.4 0 .8 0 1.1.1C12.3 2.5 17.3 0 23 0c6.8 0 12.6 4.2 14.7 10.1C41.3 9.3 44 11.9 44 15c0 3.9-3.1 7-7 7z"/></svg>
-            <svg class="deco-heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-          </div>
-          <div class="preview-row">
-            <div class="preview-avatar" id="pvAvatar" aria-label="头像预览">🌙</div>
-            <div class="preview-info">
-              <div class="preview-name truncate" id="pvName">@my_profile</div>
-              <div class="preview-sig truncate" id="pvSignature">今天也要加油呀 ✨</div>
-            </div>
-          </div>
-          <div class="preview-days">
-            <span class="days-num" id="pvDays">769</span>
-            <span class="days-label">天 · 在一起</span>
-          </div>
-          <div class="preview-date" id="pvTime">2026.07.30</div>
-        </section>
-
-        <!-- Basic info widget -->
-        <section class="widget settings-widget" aria-label="基础资料">
-          <div class="widget-header">
-            <div class="widget-icon" style="background: linear-gradient(145deg, #f4a0bc, #e8749a);">
-              <i data-lucide="user" class="w-4 h-4" style="color: #fff;"></i>
-            </div>
-            <span class="widget-title">基础资料</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="usernameInput">昵称</label>
-            <input type="text" id="usernameInput" class="form-input" value="@my_profile" maxlength="20" placeholder="输入你的昵称…" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="signatureInput">签名</label>
-            <input type="text" id="signatureInput" class="form-input" value="今天也要加油呀 ✨" maxlength="30" placeholder="输入你的签名…" />
-            <p class="form-hint"><span id="sigCount">10</span>/30</p>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="togetherDateInput">在一起日期</label>
-            <input type="date" id="togetherDateInput" class="form-input" />
-            <p class="form-hint">已在一起 <span class="days-highlight" id="togetherDaysDisplay">769</span> 天</p>
-          </div>
-        </section>
-
-        <!-- Appearance widget -->
-        <section class="widget settings-widget" aria-label="外观">
-          <div class="widget-header">
-            <div class="widget-icon" style="background: linear-gradient(145deg, #f7b6ce, #f091b2);">
-              <i data-lucide="palette" class="w-4 h-4" style="color: #fff;"></i>
-            </div>
-            <span class="widget-title">外观</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">主题配色</label>
-            <div class="theme-grid" id="themeGrid">
-              <button type="button" class="theme-chip" data-theme="default" aria-pressed="true">
-                <span class="chip-dot" style="background:linear-gradient(135deg,#f4a0bc,#e8749a)"></span>
-                <span class="chip-name">默认</span>
-                <span class="chip-check"><i data-lucide="check" class="w-3 h-3"></i></span>
-              </button>
-              <button type="button" class="theme-chip" data-theme="sakura" aria-pressed="false">
-                <span class="chip-dot" style="background:linear-gradient(135deg,#e8a0bf,#d98aae)"></span>
-                <span class="chip-name">樱花</span>
-                <span class="chip-check"><i data-lucide="check" class="w-3 h-3"></i></span>
-              </button>
-              <button type="button" class="theme-chip" data-theme="ocean" aria-pressed="false">
-                <span class="chip-dot" style="background:linear-gradient(135deg,#6ba3c5,#4f8aab)"></span>
-                <span class="chip-name">海洋</span>
-                <span class="chip-check"><i data-lucide="check" class="w-3 h-3"></i></span>
-              </button>
-              <button type="button" class="theme-chip" data-theme="forest" aria-pressed="false">
-                <span class="chip-dot" style="background:linear-gradient(135deg,#7fa68c,#5f8a6c)"></span>
-                <span class="chip-name">森林</span>
-                <span class="chip-check"><i data-lucide="check" class="w-3 h-3"></i></span>
-              </button>
-              <button type="button" class="theme-chip" data-theme="sunset" aria-pressed="false">
-                <span class="chip-dot" style="background:linear-gradient(135deg,#d4956b,#b87a52)"></span>
-                <span class="chip-name">日落</span>
-                <span class="chip-check"><i data-lucide="check" class="w-3 h-3"></i></span>
-              </button>
-              <button type="button" class="theme-chip" data-theme="night" aria-pressed="false">
-                <span class="chip-dot" style="background:linear-gradient(135deg,#4a4570,#343052)"></span>
-                <span class="chip-name">暗夜</span>
-                <span class="chip-check"><i data-lucide="check" class="w-3 h-3"></i></span>
-              </button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">页面背景</label>
-            <div class="upload-row">
-              <button type="button" class="upload-btn" data-action="upload-bg" data-dom-id="upload-bg">
-                <i data-lucide="image-plus" class="w-4 h-4"></i>
-                <span>上传背景</span>
-              </button>
-              <button type="button" class="upload-btn ghost" id="clearBg">清除</button>
-              <input type="file" id="bgInput" accept="image/*" class="hidden" />
-            </div>
-            <div id="bgPreviewWrap" class="bg-preview-wrap hidden">
-              <img id="bgPreview" src="" alt="" />
-            </div>
-          </div>
-        </section>
-
-        <!-- Avatar widget -->
-        <section class="widget settings-widget" aria-label="头像">
-          <div class="widget-header">
-            <div class="widget-icon" style="background: linear-gradient(145deg, #f5acc6, #ec80a3);">
-              <i data-lucide="camera" class="w-4 h-4" style="color: #fff;"></i>
-            </div>
-            <span class="widget-title">头像</span>
-          </div>
-          <div class="avatar-row">
-            <div class="av-preview av-mine" id="avMinePreview" aria-label="我的头像">🌙</div>
-            <div class="avatar-info">
-              <p class="avatar-name">我的头像</p>
-              <p class="form-hint">建议圆形头像</p>
-            </div>
-            <button type="button" class="upload-btn" data-action="upload-avatar" data-dom-id="upload-avatar">
-              <i data-lucide="upload" class="w-4 h-4"></i>
-              <span>上传</span>
-            </button>
-            <input type="file" id="avatarInput" accept="image/*" class="hidden" />
-          </div>
-          <div class="avatar-row">
-            <div class="av-preview av-dream" id="avDreamPreview" aria-label="梦角头像">⭐</div>
-            <div class="avatar-info">
-              <p class="avatar-name">梦角头像</p>
-              <p class="form-hint">为梦角设置形象</p>
-            </div>
-            <button type="button" class="upload-btn" data-action="upload-dream" data-dom-id="upload-dream">
-              <i data-lucide="upload" class="w-4 h-4"></i>
-              <span>上传</span>
-            </button>
-            <input type="file" id="dreamInput" accept="image/*" class="hidden" />
-          </div>
-        </section>
+        <!-- Section tabs -->
+        <div class="section-tabs" role="tablist" aria-label="自定义分类">
+          <a href="customize-profile.html" class="tab" role="tab" data-dom-id="tab-profile">个人资料</a>
+          <span class="tab active" role="tab" aria-selected="true">回复库</span>
+          <a href="customize-voice.html" class="tab" role="tab" data-dom-id="tab-voice">语音库</a>
+        </div>
 
         <!-- Card reply library widget -->
         <section class="widget settings-widget" aria-label="字卡库">
@@ -541,6 +417,35 @@ body {
       flex-shrink: 0;
     }
 
+    .section-tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0 10px;
+    }
+    .section-tabs .tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 16px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: hsl(var(--card));
+      border: 1px solid var(--border-color);
+      text-decoration: none;
+      transition: color 0.15s, background-color 0.15s, border-color 0.15s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .section-tabs .tab:active { transform: scale(0.97); }
+    .section-tabs .tab.active {
+      color: hsl(var(--primary-foreground));
+      background: hsl(var(--primary));
+      border-color: transparent;
+    }
+
     .widget {
       background: hsl(var(--card));
       border-radius: var(--radius);
@@ -551,101 +456,6 @@ body {
       transition: transform 0.15s, box-shadow 0.15s;
     }
     .widget:hover { box-shadow: var(--shadow-md); }
-
-    .profile-preview {
-      margin-top: 6px;
-      padding: 18px 16px;
-      background: linear-gradient(135deg, var(--pv-banner-1, #f4a0bc), var(--pv-banner-2, #e8749a));
-      color: #fff;
-      border: none;
-    }
-    .preview-deco {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      color: hsl(0 0% 100% / 0.22);
-    }
-    .deco-cloud {
-      position: absolute;
-      top: 10px;
-      right: 18px;
-      width: 56px;
-      height: 32px;
-    }
-    .deco-heart {
-      position: absolute;
-      bottom: 14px;
-      right: 52px;
-      width: 18px;
-      height: 18px;
-    }
-    .preview-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      position: relative;
-      z-index: 1;
-    }
-    .preview-avatar {
-      width: 60px;
-      height: 60px;
-      border-radius: 9999px;
-      flex-shrink: 0;
-      display: grid;
-      place-items: center;
-      font-size: 1.7rem;
-      background: linear-gradient(135deg, var(--pv-avatar-1, #fbc8d8), var(--pv-avatar-2, #f4a0bc));
-      outline: 3px solid hsl(0 0% 100% / 0.3);
-      outline-offset: 1px;
-      overflow: hidden;
-      transition: background 0.3s cubic-bezier(0.3, 0, 0, 1);
-    }
-    .preview-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .preview-info {
-      min-width: 0;
-      flex: 1;
-    }
-    .preview-name {
-      font-size: 17px;
-      font-weight: 600;
-      color: hsl(0 0% 100%);
-    }
-    .preview-sig {
-      font-size: 12px;
-      color: hsl(0 0% 100% / 0.85);
-      margin-top: 3px;
-    }
-    .preview-days {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      margin-top: 16px;
-      position: relative;
-      z-index: 1;
-    }
-    .days-num {
-      font-family: var(--font-serif);
-      font-size: 2.2rem;
-      font-weight: 700;
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-    }
-    .days-label {
-      font-size: 13px;
-      opacity: 0.9;
-    }
-    .preview-date {
-      font-size: 11px;
-      opacity: 0.75;
-      margin-top: 4px;
-      position: relative;
-      z-index: 1;
-      font-variant-numeric: tabular-nums;
-    }
 
     .settings-widget {
       margin-top: 10px;
@@ -680,15 +490,6 @@ body {
       border-radius: 9999px;
     }
 
-    .form-group { margin-bottom: 12px; }
-    .form-group:last-child { margin-bottom: 0; }
-    .form-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      margin-bottom: 5px;
-    }
     .form-input {
       width: 100%;
       height: 40px;
@@ -707,132 +508,6 @@ body {
       border-color: var(--accent-color);
       box-shadow: 0 0 0 3px hsl(343 55% 78% / 0.2);
     }
-    .form-hint {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin: 5px 0 0;
-    }
-    .days-highlight {
-      color: hsl(var(--primary));
-      font-weight: 600;
-    }
-
-    .theme-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .theme-chip {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      padding: 10px 4px;
-      border-radius: 14px;
-      border: 1px solid var(--border-color);
-      background: transparent;
-      cursor: pointer;
-      position: relative;
-      transition: border-color 0.15s, background-color 0.15s, transform 0.15s;
-    }
-    .theme-chip:hover { border-color: hsl(var(--primary) / 0.5); background: hsl(var(--accent) / 0.35); }
-    .theme-chip:active { transform: scale(0.98); }
-    .theme-chip[aria-pressed="true"] { border-color: hsl(var(--primary)); background: hsl(var(--accent) / 0.5); }
-    .chip-dot {
-      width: 30px;
-      height: 30px;
-      border-radius: 9999px;
-      box-shadow: inset 0 0 0 2px hsl(var(--card));
-    }
-    .chip-name {
-      font-size: 11px;
-      color: var(--text-primary);
-    }
-    .chip-check {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      width: 16px;
-      height: 16px;
-      border-radius: 9999px;
-      background: hsl(var(--primary));
-      color: hsl(var(--primary-foreground));
-      display: grid;
-      place-items: center;
-      opacity: 0;
-      transform: scale(0.4);
-      transition: opacity 0.2s cubic-bezier(0.3, 0, 0, 1), transform 0.2s cubic-bezier(0.3, 0, 0, 1);
-    }
-    .theme-chip[aria-pressed="true"] .chip-check { opacity: 1; transform: scale(1); }
-
-    .upload-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .upload-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      padding: 8px 14px;
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
-      background: hsl(var(--muted));
-      color: var(--text-primary);
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: border-color 0.15s, background-color 0.15s, transform 0.15s;
-      white-space: nowrap;
-    }
-    .upload-btn:hover { border-color: hsl(var(--primary) / 0.5); background: hsl(var(--accent) / 0.4); }
-    .upload-btn:active { transform: scale(0.98); }
-    .upload-btn.ghost { background: transparent; }
-    .hidden { display: none !important; }
-    .bg-preview-wrap {
-      margin-top: 10px;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border-color);
-    }
-    .bg-preview-wrap img {
-      width: 100%;
-      height: 96px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .avatar-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0;
-      border-top: 1px solid var(--border-color);
-    }
-    .avatar-row:first-of-type { border-top: none; padding-top: 0; }
-    .avatar-info { flex: 1; min-width: 0; }
-    .avatar-name {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin: 0 0 2px;
-    }
-    .av-preview {
-      width: 52px;
-      height: 52px;
-      border-radius: 9999px;
-      display: grid;
-      place-items: center;
-      font-size: 1.4rem;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-    .av-preview img { width: 100%; height: 100%; object-fit: cover; }
-    .av-mine { background: radial-gradient(circle at 32% 28%, #ffe4ec, #f4a0bc); }
-    .av-dream { background: radial-gradient(circle at 32% 28%, #ffeef3, #f7bcd0); }
 
     .add-row {
       display: flex;
@@ -985,15 +660,13 @@ body {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: none; }
     }
-    .widget, .page-header, .save-settings-btn {
+    .widget, .page-header, .section-tabs, .save-settings-btn {
       animation: fadeInUp 0.45s cubic-bezier(0.3, 0, 0, 1) both;
     }
-    .settings-widget:nth-child(2) { animation-delay: 0.05s; }
+    .section-tabs { animation-delay: 0.04s; }
     .settings-widget:nth-child(3) { animation-delay: 0.1s; }
-    .settings-widget:nth-child(4) { animation-delay: 0.15s; }
-    .settings-widget:nth-child(5) { animation-delay: 0.2s; }
-    .settings-widget:nth-child(6) { animation-delay: 0.25s; }
-    .save-settings-btn { animation-delay: 0.3s; }
+    .settings-widget:nth-child(4) { animation-delay: 0.16s; }
+    .save-settings-btn { animation-delay: 0.22s; }
 
     :focus-visible {
       outline: 2px solid hsl(var(--ring));
@@ -1012,43 +685,6 @@ body {
   <script>
     (function () {
       "use strict";
-
-      var themes = {
-        default: { banner1:'#f4a0bc', banner2:'#e8749a', av1:'#fbc8d8', av2:'#f4a0bc', tint:'#fff8fa', accent:'#e8749a' },
-        sakura:  { banner1:'#e8a0bf', banner2:'#d98aae', av1:'#f3c8d8', av2:'#e8a0bf', tint:'#fdf6f9', accent:'#e8a0bf' },
-        ocean:   { banner1:'#6ba3c5', banner2:'#4f8aab', av1:'#a8c8dd', av2:'#6ba3c5', tint:'#f6fafc', accent:'#6ba3c5' },
-        forest:  { banner1:'#7fa68c', banner2:'#5f8a6c', av1:'#aecab9', av2:'#7fa68c', tint:'#f6faf7', accent:'#7fa68c' },
-        sunset:  { banner1:'#d4956b', banner2:'#b87a52', av1:'#e6bb9b', av2:'#d4956b', tint:'#fcf8f5', accent:'#d4956b' },
-        night:   { banner1:'#4a4570', banner2:'#343052', av1:'#7a75a0', av2:'#4a4570', tint:'#f7f7fb', accent:'#4a4570' }
-      };
-
-      var previewCard = document.getElementById('previewCard');
-
-      function applyTheme(key) {
-        var t = themes[key];
-        if (!t) return;
-        previewCard.style.setProperty('--pv-banner-1', t.banner1);
-        previewCard.style.setProperty('--pv-banner-2', t.banner2);
-        previewCard.style.setProperty('--pv-avatar-1', t.av1);
-        previewCard.style.setProperty('--pv-avatar-2', t.av2);
-      }
-
-      document.getElementById('themeGrid').addEventListener('click', function (e) {
-        var chip = e.target.closest('.theme-chip');
-        if (!chip) return;
-        document.querySelectorAll('.theme-chip').forEach(function (c) { c.setAttribute('aria-pressed', 'false'); });
-        chip.setAttribute('aria-pressed', 'true');
-        applyTheme(chip.dataset.theme);
-      });
-
-      var sigInput = document.getElementById('signatureInput');
-      var sigOut = document.getElementById('pvSignature');
-      var sigCount = document.getElementById('sigCount');
-      sigInput.addEventListener('input', function () {
-        var val = sigInput.value || '今天也要加油呀 ✨';
-        sigOut.textContent = val;
-        sigCount.textContent = sigInput.value.length;
-      });
 
       var toast = document.getElementById('toast');
       var toastTimer;
@@ -1077,58 +713,6 @@ body {
           return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
         });
       }
-
-      var togetherDateInput = document.getElementById('togetherDateInput');
-      var togetherDaysDisplay = document.getElementById('togetherDaysDisplay');
-      var pvDays = document.getElementById('pvDays');
-      var pvTime = document.getElementById('pvTime');
-
-      function calcDays(dateStr) {
-        if (!dateStr) return null;
-        var start = new Date(dateStr + 'T00:00:00');
-        var today = new Date();
-        today.setHours(0, 0, 0, 0);
-        var diff = Math.floor((today - start) / 86400000);
-        return diff >= 0 ? diff : null;
-      }
-
-      function updateDays() {
-        var days = calcDays(togetherDateInput.value);
-        var display = days !== null ? String(days) : '—';
-        togetherDaysDisplay.textContent = display;
-        if (pvDays) pvDays.textContent = display;
-        if (pvTime && togetherDateInput.value) {
-          var d = new Date(togetherDateInput.value + 'T00:00:00');
-          pvTime.textContent = d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
-        }
-      }
-
-      togetherDateInput.addEventListener('change', updateDays);
-
-      try {
-        var savedDate = localStorage.getItem('mengjiao_together_date');
-        if (savedDate) togetherDateInput.value = savedDate;
-      } catch(e) {}
-      updateDays();
-
-      var usernameInput = document.getElementById('usernameInput');
-      var pvName = document.getElementById('pvName');
-      usernameInput.addEventListener('input', function () {
-        if (pvName) pvName.textContent = usernameInput.value || '@my_profile';
-      });
-      try {
-        var savedUsername = localStorage.getItem('mengjiao_username');
-        if (savedUsername) { usernameInput.value = savedUsername; if (pvName) pvName.textContent = savedUsername; }
-      } catch(e) {}
-
-      try {
-        var savedSig = localStorage.getItem('mengjiao_signature');
-        if (savedSig !== null) {
-          sigInput.value = savedSig;
-          sigOut.textContent = savedSig || '今天也要加油呀 ✨';
-          sigCount.textContent = String(savedSig.length);
-        }
-      } catch(e) {}
 
       var cardReplyInput = document.getElementById('cardReplyInput');
       var cardReplyList = document.getElementById('cardReplyList');
@@ -1200,96 +784,11 @@ body {
         else if (lib === 'chat') { chatReplies.splice(idx, 1); renderChatReplies(); }
       });
 
-      function readFile(file, cb) {
-        if (!file || !file.type.startsWith('image/')) return cb(null);
-        var reader = new FileReader();
-        reader.onload = function (e) { cb(e.target.result); };
-        reader.readAsDataURL(file);
-      }
-
-      var avMinePreview = document.getElementById('avMinePreview');
-      var avDreamPreview = document.getElementById('avDreamPreview');
-      var pvAvatar = document.getElementById('pvAvatar');
-      var bgPreviewWrap = document.getElementById('bgPreviewWrap');
-      var bgPreview = document.getElementById('bgPreview');
-
-      var tempAvatarImg = '';
-      var tempDreamImg = '';
-      var tempBgImg = '';
-
-      try {
-        var saved = localStorage.getItem('mengjiao_avatar_img');
-        if (saved) {
-          tempAvatarImg = saved;
-          setImg(avMinePreview, saved);
-          setImg(pvAvatar, saved);
-        }
-      } catch(e) {}
-      try {
-        var saved = localStorage.getItem('mengjiao_dream_img');
-        if (saved) { tempDreamImg = saved; setImg(avDreamPreview, saved); }
-      } catch(e) {}
-      try {
-        var saved = localStorage.getItem('mengjiao_bg_img');
-        if (saved) { tempBgImg = saved; setBgPreview(saved); }
-      } catch(e) {}
-
-      function setImg(el, src) {
-        if (!src) { el.innerHTML = el.id === 'avMinePreview' || el.id === 'pvAvatar' ? '🌙' : '⭐'; return; }
-        el.innerHTML = '<img src="' + src + '" alt="" />';
-      }
-      function setBgPreview(src) {
-        if (src) { bgPreview.src = src; bgPreviewWrap.classList.remove('hidden'); }
-        else { bgPreview.src = ''; bgPreviewWrap.classList.add('hidden'); }
-      }
-
-      document.querySelector('[data-action="upload-avatar"]').addEventListener('click', function () { document.getElementById('avatarInput').click(); });
-      document.getElementById('avatarInput').addEventListener('change', function (e) {
-        readFile(e.target.files[0], function (data) {
-          if (!data) return showToast('请选择图片文件');
-          tempAvatarImg = data;
-          setImg(avMinePreview, data);
-          setImg(pvAvatar, data);
-        });
-        e.target.value = '';
-      });
-
-      document.querySelector('[data-action="upload-dream"]').addEventListener('click', function () { document.getElementById('dreamInput').click(); });
-      document.getElementById('dreamInput').addEventListener('change', function (e) {
-        readFile(e.target.files[0], function (data) {
-          if (!data) return showToast('请选择图片文件');
-          tempDreamImg = data;
-          setImg(avDreamPreview, data);
-        });
-        e.target.value = '';
-      });
-
-      document.querySelector('[data-action="upload-bg"]').addEventListener('click', function () { document.getElementById('bgInput').click(); });
-      document.getElementById('bgInput').addEventListener('change', function (e) {
-        readFile(e.target.files[0], function (data) {
-          if (!data) return showToast('请选择图片文件');
-          tempBgImg = data;
-          setBgPreview(data);
-        });
-        e.target.value = '';
-      });
-
-      document.getElementById('clearBg').addEventListener('click', function () {
-        tempBgImg = '';
-        setBgPreview('');
-      });
-
       document.getElementById('saveBtn').addEventListener('click', function () {
         try {
-          localStorage.setItem('mengjiao_together_date', togetherDateInput.value);
-          localStorage.setItem('mengjiao_username', usernameInput.value);
-          localStorage.setItem('mengjiao_signature', sigInput.value);
           localStorage.setItem('mengjiao_card_replies', JSON.stringify(cardReplies));
           localStorage.setItem('mengjiao_chat_replies', JSON.stringify(chatReplies));
-          if (tempAvatarImg) localStorage.setItem('mengjiao_avatar_img', tempAvatarImg); else localStorage.removeItem('mengjiao_avatar_img');
-          if (tempDreamImg) localStorage.setItem('mengjiao_dream_img', tempDreamImg); else localStorage.removeItem('mengjiao_dream_img');
-          if (tempBgImg) localStorage.setItem('mengjiao_bg_img', tempBgImg); else localStorage.removeItem('mengjiao_bg_img');
-          showToast('设置已保存');
+          showToast('回复库已保存');
         } catch(e) {
           showToast('保存失败，请重试');
         }

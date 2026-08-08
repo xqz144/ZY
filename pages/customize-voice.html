@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#e8a4b8">
+    <title>语音库 · 梦角传讯</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../icon.svg" type="image/svg+xml">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('../sw.js').catch(function () {});
+      }
+    </script>
+    <style id="theme-vars">
+/* 梦角传讯 — 动漫手绘风主题 */
+/* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
+
+@font-face {
+  font-family: 'DreamFont';
+  src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* bg — 暖灰白，像素描纸 */
+  --background: 30 20% 97%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+
+  /* text — 柔和深灰，不刺眼 */
+  --foreground: 340 12% 28%;
+  --card-foreground: 340 12% 28%;
+  --popover-foreground: 340 12% 28%;
+  --muted-foreground: 340 10% 55%;
+
+  /* accent — 柔粉蜡笔色 */
+  --primary: 343 55% 78%;
+  --primary-foreground: 340 15% 22%;
+  --secondary: 340 35% 95%;
+  --secondary-foreground: 340 12% 28%;
+  --muted: 30 18% 94%;
+  --accent: 343 40% 92%;
+  --accent-foreground: 340 12% 28%;
+
+  /* status */
+  --destructive: 0 70% 65%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* border — 手绘感浅粉 */
+  --border: 343 45% 78% / 0.25;
+  --input: 30 18% 94%;
+  --ring: 343 55% 78%;
+
+  /* chart */
+  --chart-1: 343 55% 78%;
+  --chart-2: 343 45% 85%;
+  --chart-3: 340 15% 70%;
+  --chart-4: 343 35% 90%;
+  --chart-5: 340 12% 60%;
+
+  /* sidebar */
+  --sidebar: 30 20% 97%;
+  --sidebar-foreground: 340 12% 28%;
+  --sidebar-primary: 343 55% 78%;
+  --sidebar-primary-foreground: 340 15% 22%;
+  --sidebar-accent: 343 40% 92%;
+  --sidebar-accent-foreground: 340 12% 28%;
+  --sidebar-border: 343 45% 78% / 0.25;
+  --sidebar-ring: 343 55% 78%;
+
+  /* typography */
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+
+  --radius: 1.25rem;
+
+  /* shadow — 柔和漂浮感 */
+  --shadow-color: 343 40% 55%;
+  --shadow-2xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-sm: 0 3px 6px -1px hsl(343 30% 40% / 0.06), 0 2px 4px -2px hsl(343 30% 40% / 0.04);
+  --shadow: 0 4px 10px -1px hsl(343 30% 40% / 0.08), 0 2px 4px -2px hsl(343 30% 40% / 0.05);
+  --shadow-md: 0 8px 16px -4px hsl(343 30% 40% / 0.10), 0 4px 8px -4px hsl(343 30% 40% / 0.06);
+  --shadow-lg: 0 15px 25px -6px hsl(343 30% 40% / 0.12), 0 8px 12px -6px hsl(343 30% 40% / 0.08);
+  --shadow-xl: 0 25px 40px -8px hsl(343 30% 40% / 0.14), 0 12px 20px -8px hsl(343 30% 40% / 0.10);
+  --shadow-2xl: 0 35px 60px -12px hsl(343 30% 40% / 0.18);
+
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  /* 直景色值 — 供自定义样式直接引用 */
+  --primary-bg: #f9f7f4;
+  --secondary-bg: #f3f0ec;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #4a3f45;
+  --text-secondary: #9a8a92;
+  --border-color: rgba(232, 164, 184, 0.35);
+  --chat-bg: #fdfbfa;
+}
+
+.dark {
+  --background: 340 12% 12%;
+  --card: 340 10% 16%;
+  --popover: 340 10% 16%;
+  --foreground: 340 15% 92%;
+  --card-foreground: 340 15% 92%;
+  --popover-foreground: 340 15% 92%;
+  --muted-foreground: 340 10% 65%;
+  --primary: 343 45% 72%;
+  --primary-foreground: 340 12% 18%;
+  --secondary: 340 15% 24%;
+  --secondary-foreground: 340 15% 92%;
+  --muted: 340 12% 20%;
+  --accent: 343 25% 28%;
+  --accent-foreground: 340 15% 92%;
+  --destructive: 0 60% 58%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 340 12% 26%;
+  --input: 340 12% 22%;
+  --ring: 343 45% 72%;
+  --chart-1: 343 45% 72%;
+  --chart-2: 343 40% 60%;
+  --chart-3: 340 12% 60%;
+  --chart-4: 343 35% 80%;
+  --chart-5: 340 12% 70%;
+  --sidebar: 340 12% 12%;
+  --sidebar-foreground: 340 15% 92%;
+  --sidebar-primary: 343 45% 72%;
+  --sidebar-primary-foreground: 340 12% 18%;
+  --sidebar-accent: 343 25% 28%;
+  --sidebar-accent-foreground: 340 15% 92%;
+  --sidebar-border: 340 12% 26%;
+  --sidebar-ring: 343 45% 72%;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+  --radius: 1.25rem;
+  --shadow-color: 343 30% 40%;
+  --shadow-2xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-sm: 0 3px 6px -1px hsl(340 12% 5% / 0.30), 0 2px 4px -2px hsl(340 12% 5% / 0.25);
+  --shadow: 0 4px 10px -1px hsl(340 12% 5% / 0.35), 0 2px 4px -2px hsl(340 12% 5% / 0.28);
+  --shadow-md: 0 8px 16px -4px hsl(340 12% 5% / 0.40), 0 4px 8px -4px hsl(340 12% 5% / 0.32);
+  --shadow-lg: 0 15px 25px -6px hsl(340 12% 5% / 0.45), 0 8px 12px -6px hsl(340 12% 5% / 0.36);
+  --shadow-xl: 0 25px 40px -8px hsl(340 12% 5% / 0.50), 0 12px 20px -8px hsl(340 12% 5% / 0.40);
+  --shadow-2xl: 0 35px 60px -12px hsl(340 12% 5% / 0.55);
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  --primary-bg: #1a1619;
+  --secondary-bg: #242024;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #f0e8ec;
+  --text-secondary: #a09098;
+  --border-color: rgba(232, 164, 184, 0.25);
+  --chat-bg: #1a1619;
+}
+
+body {
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232, 164, 184, 0.35); border-radius: 4px; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <script src="../assets/image-utils.js"></script>
+    <script src="../assets/voice-utils.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-foreground: var(--card-foreground);
+  }
+  @layer base {
+    body { background: var(--card-background); color: var(--card-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <main>
+    <div class="phone-frame" id="phoneFrame">
+      <div class="dynamic-notch"></div>
+
+      <div class="status-bar">
+        <span class="status-time" id="statusTime">09:41</span>
+        <div class="status-icons">
+          <i data-lucide="signal" class="status-icon"></i>
+          <i data-lucide="wifi" class="status-icon"></i>
+          <i data-lucide="battery-medium" class="status-icon"></i>
+        </div>
+      </div>
+
+      <div class="screen" id="screen">
+        <!-- Page header -->
+        <div class="page-header">
+          <a href="index-new-v2.html" class="back-btn" data-dom-id="nav-back" aria-label="返回">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            <span>返回</span>
+          </a>
+          <h1 class="page-title">语音库</h1>
+          <div class="header-spacer"></div>
+        </div>
+
+        <!-- Section tabs -->
+        <div class="section-tabs" role="tablist" aria-label="自定义分类">
+          <a href="customize-profile.html" class="tab" role="tab" data-dom-id="tab-profile">个人资料</a>
+          <a href="customize-replies.html" class="tab" role="tab" data-dom-id="tab-replies">回复库</a>
+          <span class="tab active" role="tab" aria-selected="true">语音库</span>
+        </div>
+
+        <!-- Voice card library widget -->
+        <section class="widget settings-widget" aria-label="语音字卡库">
+          <div class="widget-header">
+            <div class="widget-icon" style="background: linear-gradient(145deg, #f7b6ce, #f091b2);">
+              <i data-lucide="mic" class="w-4 h-4" style="color: #fff;"></i>
+            </div>
+            <span class="widget-title">梦角语音字卡</span>
+            <span class="widget-count" id="voiceCardCount">0</span>
+          </div>
+          <p class="widget-desc">上传音频片段并填写对应文案，梦角会在聊天中随机发送这些语音消息，用户可以“转文字”查看文案。</p>
+
+          <div class="upload-area" id="voiceUploadArea">
+            <input type="file" id="voiceFileInput" accept="audio/*" class="hidden" />
+            <div class="upload-box" id="voiceUploadBox">
+              <i data-lucide="upload" class="w-6 h-6" style="color: var(--accent-color);"></i>
+              <span>点击上传音频</span>
+              <span class="upload-hint">支持 mp3 / m4a / wav / ogg，建议每条 10 秒内</span>
+            </div>
+          </div>
+
+          <div id="voiceForm" class="voice-form hidden">
+            <div class="audio-player-row">
+              <button type="button" class="play-preview" id="voicePreviewBtn">
+                <i data-lucide="play" class="w-4 h-4"></i>
+              </button>
+              <span id="voicePreviewName">音频片段</span>
+            </div>
+            <div class="add-row">
+              <input type="text" id="voiceTextInput" class="form-input" placeholder="输入这条语音对应的文本…" maxlength="80" />
+              <button type="button" class="add-btn" id="addVoiceCard" data-dom-id="add-voice-card">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <button type="button" class="reset-btn" id="voiceCancelAdd">重新选择</button>
+          </div>
+
+          <ul id="voiceCardList" class="reply-list" role="list"></ul>
+          <button type="button" class="reset-btn" id="resetVoiceCards" data-dom-id="reset-voice-cards">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>清空语音库</span>
+          </button>
+        </section>
+
+        <!-- Save button -->
+        <button type="button" class="save-settings-btn" id="saveBtn" data-dom-id="save-settings">
+          <i data-lucide="check" class="w-5 h-5"></i>
+          <span>保存语音库</span>
+        </button>
+
+        <div class="home-indicator"><span></span></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html { -webkit-font-smoothing: antialiased; }
+
+    body {
+      font-family: var(--font-sans);
+      letter-spacing: var(--tracking-normal);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: hsl(var(--background));
+    }
+
+    .phone-frame {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      max-height: 880px;
+      overflow: hidden;
+      background: var(--primary-bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 480px) {
+      .phone-frame {
+        height: 860px;
+        border-radius: 44px;
+        border: 10px solid #4a3f45;
+        box-shadow: 0 25px 60px -15px hsl(340 12% 28% / 0.25), 0 0 0 2px hsl(340 12% 22%);
+      }
+      .dynamic-notch {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 126px;
+        height: 30px;
+        background: #4a3f45;
+        border-radius: 0 0 20px 20px;
+        z-index: 100;
+      }
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 22px 6px;
+      color: var(--text-primary);
+      z-index: 50;
+    }
+    .status-time {
+      font-size: 14px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .status-icon {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.2;
+    }
+
+    .screen {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      padding: 0 16px 0;
+      scrollbar-width: none;
+      background:
+        radial-gradient(ellipse 520px 320px at 10% 0%, hsl(343 70% 92% / 0.7), transparent 55%),
+        radial-gradient(ellipse 420px 260px at 95% 8%, hsl(343 60% 90% / 0.5), transparent 50%),
+        linear-gradient(180deg, var(--primary-bg) 0%, #fdf8fa 100%);
+    }
+    .screen::-webkit-scrollbar { display: none; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 0 6px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 7px 12px;
+      border-radius: 9999px;
+      flex-shrink: 0;
+      min-width: 72px;
+      color: hsl(var(--primary));
+      background: hsl(var(--accent));
+      text-decoration: none;
+      transition: transform 0.15s, background-color 0.15s;
+      white-space: nowrap;
+    }
+    .back-btn:active { transform: scale(0.96); }
+    .page-title {
+      flex: 1;
+      min-width: 0;
+      font-family: var(--font-serif);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 0;
+    }
+    .header-spacer {
+      width: 72px;
+      flex-shrink: 0;
+    }
+
+    .section-tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0 10px;
+    }
+    .section-tabs .tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      padding: 0 16px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: hsl(var(--card));
+      border: 1px solid var(--border-color);
+      text-decoration: none;
+      transition: color 0.15s, background-color 0.15s, border-color 0.15s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .section-tabs .tab:active { transform: scale(0.97); }
+    .section-tabs .tab.active {
+      color: hsl(var(--primary-foreground));
+      background: hsl(var(--primary));
+      border-color: transparent;
+    }
+
+    .widget {
+      background: hsl(var(--card));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .widget:hover { box-shadow: var(--shadow-md); }
+
+    .settings-widget {
+      margin-top: 10px;
+      padding: 14px 14px 16px;
+    }
+    .widget-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .widget-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .widget-title {
+      flex: 1;
+      min-width: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .widget-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: hsl(var(--muted));
+      padding: 2px 8px;
+      border-radius: 9999px;
+    }
+    .widget-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 0 0 12px;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: hsl(var(--muted));
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-input::placeholder { color: var(--text-secondary); }
+    .form-input:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px hsl(343 55% 78% / 0.2);
+    }
+
+    .upload-area { margin-bottom: 12px; }
+    .upload-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 24px 16px;
+      border-radius: 14px;
+      border: 2px dashed var(--border-color);
+      background: hsl(var(--muted));
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .upload-box:active { transform: scale(0.99); }
+    .upload-box:hover { border-color: hsl(var(--primary) / 0.5); background: hsl(var(--accent) / 0.15); }
+    .upload-hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .voice-form { animation: fadeInUp 0.3s ease both; }
+    .audio-player-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: hsl(var(--muted));
+      margin-bottom: 10px;
+    }
+    .play-preview {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.1s;
+    }
+    .play-preview:active { transform: scale(0.95); }
+
+    .add-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .add-row .form-input { flex: 1; min-width: 0; }
+    .add-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: filter 0.15s, transform 0.15s;
+    }
+    .add-btn:hover { filter: brightness(1.05); }
+    .add-btn:active { transform: scale(0.95); }
+
+    .reply-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .reply-list::-webkit-scrollbar { display: none; }
+    .reply-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 4px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+      color: var(--text-primary);
+      transition: background-color 0.15s;
+    }
+    .reply-item:last-child { border-bottom: none; }
+    .reply-item:hover { background-color: hsl(var(--accent) / 0.15); }
+    .reply-text {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .reply-del {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: color 0.15s, background-color 0.15s;
+    }
+    .reply-del:hover { color: hsl(var(--destructive)); background: hsl(var(--destructive) / 0.1); }
+    .reply-empty {
+      padding: 16px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border: 1px dashed var(--border-color);
+      border-radius: 12px;
+    }
+
+    .reset-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 10px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .reset-btn:hover { border-color: hsl(var(--primary) / 0.4); background: hsl(var(--accent) / 0.25); color: var(--text-primary); }
+
+    .save-settings-btn {
+      width: 100%;
+      height: 48px;
+      margin-top: 14px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.1s, box-shadow 0.15s;
+    }
+    .save-settings-btn:hover { box-shadow: 0 6px 16px -4px hsl(343 55% 60% / 0.35); }
+    .save-settings-btn:active { transform: scale(0.98); }
+
+    .home-indicator {
+      display: flex;
+      justify-content: center;
+      padding: 14px 0 10px;
+    }
+    .home-indicator span {
+      width: 130px;
+      height: 4px;
+      border-radius: 9999px;
+      background: hsl(var(--foreground) / 0.2);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 32px;
+      transform: translateX(-50%) translateY(20px);
+      background: hsl(var(--foreground));
+      color: hsl(var(--background));
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .hidden { display: none !important; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+    .widget, .page-header, .section-tabs, .save-settings-btn {
+      animation: fadeInUp 0.45s cubic-bezier(0.3, 0, 0, 1) both;
+    }
+    .section-tabs { animation-delay: 0.04s; }
+    .settings-widget:nth-child(3) { animation-delay: 0.1s; }
+    .save-settings-btn { animation-delay: 0.22s; }
+
+    :focus-visible {
+      outline: 2px solid hsl(var(--ring));
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var toast = document.getElementById('toast');
+      var toastTimer;
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2000);
+      }
+
+      var voiceCards = [];
+      var pendingAudio = null;
+      var pendingDuration = 0;
+      var previewAudio = null;
+
+      var voiceFileInput = document.getElementById('voiceFileInput');
+      var voiceUploadArea = document.getElementById('voiceUploadArea');
+      var voiceUploadBox = document.getElementById('voiceUploadBox');
+      var voiceForm = document.getElementById('voiceForm');
+      var voicePreviewBtn = document.getElementById('voicePreviewBtn');
+      var voicePreviewName = document.getElementById('voicePreviewName');
+      var voiceTextInput = document.getElementById('voiceTextInput');
+      var addVoiceCard = document.getElementById('addVoiceCard');
+      var voiceCancelAdd = document.getElementById('voiceCancelAdd');
+      var voiceCardList = document.getElementById('voiceCardList');
+      var voiceCardCount = document.getElementById('voiceCardCount');
+
+      function escapeHtmlStr(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+      function formatDuration(sec) {
+        var s = parseInt(sec, 10) || 0;
+        var m = Math.floor(s / 60);
+        s = s % 60;
+        return (m > 0 ? m + ":" : "0:") + String(s).padStart(2, "0");
+      }
+
+      function renderVoiceCards() {
+        voiceCardCount.textContent = String(voiceCards.length);
+        if (voiceCards.length === 0) {
+          voiceCardList.innerHTML = '<li class="reply-empty">暂无语音字卡，点击上方上传音频并添加文案</li>';
+          return;
+        }
+        voiceCardList.innerHTML = voiceCards.map(function (card, i) {
+          return '<li class="reply-item">' +
+            '<button type="button" class="play-preview" style="width:28px;height:28px;" data-play="' + escapeHtmlStr(card.id) + '">' +
+              '<i data-lucide="play" class="w-3.5 h-3.5"></i>' +
+            '</button>' +
+            '<span class="reply-text">' + escapeHtmlStr(card.text) + ' <span style="color:var(--text-secondary)">(' + formatDuration(card.duration) + ')</span></span>' +
+            '<button type="button" class="reply-del" data-idx="' + i + '" aria-label="删除该语音">×</button>' +
+          '</li>';
+        }).join('');
+        lucide.createIcons();
+      }
+
+      function loadCards() {
+        if (window.MengjiaoVoiceUtils) {
+          voiceCards = window.MengjiaoVoiceUtils.getCards();
+        }
+        renderVoiceCards();
+      }
+
+      voiceUploadBox.addEventListener('click', function () { voiceFileInput.click(); });
+      voiceFileInput.addEventListener('change', function () {
+        var file = voiceFileInput.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('audio/')) {
+          showToast('请选择音频文件');
+          return;
+        }
+        if (window.MengjiaoImageUtils) {
+          var check = window.MengjiaoImageUtils.checkStorageLimit();
+          if (!check.ok) {
+            showToast('存储空间不足');
+            return;
+          }
+        }
+        var url = URL.createObjectURL(file);
+        var audio = new Audio(url);
+        audio.addEventListener('loadedmetadata', function () {
+          pendingDuration = Math.round(audio.duration) || 0;
+          if (pendingDuration > 60) {
+            showToast('音频过长，建议控制在 60 秒内');
+            pendingAudio = null;
+            pendingDuration = 0;
+            URL.revokeObjectURL(url);
+            return;
+          }
+          pendingAudio = { url: url, file: file };
+          voiceUploadArea.classList.add('hidden');
+          voiceForm.classList.remove('hidden');
+          voicePreviewName.textContent = file.name;
+          voiceTextInput.value = '';
+          voiceTextInput.focus();
+        });
+        audio.addEventListener('error', function () {
+          showToast('无法读取该音频文件');
+          URL.revokeObjectURL(url);
+        });
+      });
+
+      voicePreviewBtn.addEventListener('click', function () {
+        if (!pendingAudio) return;
+        if (previewAudio && !previewAudio.paused) {
+          previewAudio.pause();
+          previewAudio.currentTime = 0;
+          voicePreviewBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i>';
+          lucide.createIcons();
+          return;
+        }
+        previewAudio = new Audio(pendingAudio.url);
+        previewAudio.play();
+        voicePreviewBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4"></i>';
+        lucide.createIcons();
+        previewAudio.addEventListener('ended', function () {
+          voicePreviewBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i>';
+          lucide.createIcons();
+        });
+      });
+
+      function resetAddForm() {
+        pendingAudio = null;
+        pendingDuration = 0;
+        voiceUploadArea.classList.remove('hidden');
+        voiceForm.classList.add('hidden');
+        voiceFileInput.value = '';
+        voiceTextInput.value = '';
+        if (previewAudio) {
+          previewAudio.pause();
+          previewAudio = null;
+        }
+      }
+      voiceCancelAdd.addEventListener('click', resetAddForm);
+
+      function addCardFromForm() {
+        var text = voiceTextInput.value.trim();
+        if (!text) { showToast('请输入这条语音对应的文本'); return; }
+        if (!pendingAudio) { showToast('请先上传音频'); return; }
+
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var base64 = e.target.result;
+          if (window.MengjiaoVoiceUtils) {
+            var card = window.MengjiaoVoiceUtils.addCard(text, base64, pendingDuration);
+            if (card) {
+              voiceCards = window.MengjiaoVoiceUtils.getCards();
+              renderVoiceCards();
+              resetAddForm();
+              showToast('已添加语音字卡');
+            } else {
+              showToast('保存失败，可能存储空间不足');
+            }
+          }
+        };
+        reader.readAsDataURL(pendingAudio.file);
+      }
+      addVoiceCard.addEventListener('click', addCardFromForm);
+      voiceTextInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addCardFromForm(); } });
+
+      voiceCardList.addEventListener('click', function (e) {
+        var delBtn = e.target.closest('.reply-del');
+        if (delBtn) {
+          var idx = parseInt(delBtn.getAttribute('data-idx'), 10);
+          if (isNaN(idx)) return;
+          voiceCards.splice(idx, 1);
+          if (window.MengjiaoVoiceUtils) window.MengjiaoVoiceUtils.saveCards(voiceCards);
+          renderVoiceCards();
+          showToast('已删除');
+          return;
+        }
+        var playBtn = e.target.closest('[data-play]');
+        if (playBtn) {
+          var id = playBtn.getAttribute('data-play');
+          var card = window.MengjiaoVoiceUtils ? window.MengjiaoVoiceUtils.getCardById(id) : null;
+          if (!card) return;
+          if (previewAudio && !previewAudio.paused) {
+            previewAudio.pause();
+            previewAudio.currentTime = 0;
+            playBtn.innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i>';
+            lucide.createIcons();
+            return;
+          }
+          previewAudio = new Audio(card.audio);
+          previewAudio.play();
+          playBtn.innerHTML = '<i data-lucide="pause" class="w-3.5 h-3.5"></i>';
+          lucide.createIcons();
+          previewAudio.addEventListener('ended', function () {
+            playBtn.innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i>';
+            lucide.createIcons();
+          });
+        }
+      });
+
+      document.getElementById('resetVoiceCards').addEventListener('click', function () {
+        if (!confirm('确定清空所有语音字卡吗？')) return;
+        voiceCards = [];
+        if (window.MengjiaoVoiceUtils) window.MengjiaoVoiceUtils.saveCards(voiceCards);
+        renderVoiceCards();
+        showToast('语音库已清空');
+      });
+
+      document.getElementById('saveBtn').addEventListener('click', function () {
+        if (window.MengjiaoVoiceUtils) {
+          window.MengjiaoVoiceUtils.saveCards(voiceCards);
+          showToast('语音库已保存');
+        }
+      });
+
+      function updateClock() {
+        var now = new Date();
+        var h = String(now.getHours()).padStart(2, '0');
+        var m = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('statusTime').textContent = h + ':' + m;
+      }
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      loadCards();
+      lucide.createIcons();
+
+      document.body.addEventListener('touchmove', function (e) {
+        if (e.target.closest('.screen') || e.target.closest('.toast')) return;
+        e.preventDefault();
+      }, { passive: false });
+    })();
+  </script>
+</body>
+</html>

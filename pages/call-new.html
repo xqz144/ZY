@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2d2428">
+    <title>梦角来电 · 梦角传讯</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../icon.svg" type="image/svg+xml">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('../sw.js').catch(function () {});
+      }
+    </script>
+    <style id="theme-vars">
+/* 梦角传讯 — 动漫手绘风主题 */
+@font-face {
+  font-family: 'DreamFont';
+  src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --background: 340 18% 14%;
+  --card: 340 15% 18%;
+  --popover: 340 15% 18%;
+  --foreground: 340 15% 94%;
+  --card-foreground: 340 15% 94%;
+  --popover-foreground: 340 15% 94%;
+  --muted-foreground: 340 12% 65%;
+  --primary: 343 55% 78%;
+  --primary-foreground: 340 15% 22%;
+  --secondary: 340 15% 24%;
+  --secondary-foreground: 340 15% 92%;
+  --muted: 340 12% 22%;
+  --accent: 343 30% 32%;
+  --accent-foreground: 340 15% 92%;
+  --destructive: 0 70% 65%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 340 12% 26%;
+  --input: 340 12% 22%;
+  --ring: 343 55% 78%;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --radius: 1.25rem;
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #f0e8ec;
+  --text-secondary: #a09098;
+  --call-bg: #1f191d;
+}
+
+body {
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
+}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <script src="../assets/image-utils.js"></script>
+    <script src="../assets/voice-utils.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-foreground: var(--card-foreground);
+  }
+  @layer base {
+    body { background: var(--call-bg); color: var(--text-primary); }
+  }
+    </style>
+    <style>
+      * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+      html { -webkit-font-smoothing: antialiased; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--call-bg);
+        overflow: hidden;
+      }
+
+      .phone-frame {
+        position: relative;
+        width: 100%;
+        max-width: 420px;
+        height: 100vh;
+        max-height: 880px;
+        overflow: hidden;
+        background: var(--call-bg);
+        display: flex;
+        flex-direction: column;
+      }
+
+      @media (min-width: 480px) {
+        .phone-frame {
+          height: 860px;
+          border-radius: 44px;
+          border: 10px solid #4a3f45;
+          box-shadow: 0 25px 60px -15px hsl(340 12% 28% / 0.25), 0 0 0 2px hsl(340 12% 22%);
+        }
+        .dynamic-notch {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 126px;
+          height: 30px;
+          background: #4a3f45;
+          border-radius: 0 0 20px 20px;
+          z-index: 100;
+        }
+      }
+
+      .status-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 22px 6px;
+        color: var(--text-primary);
+        z-index: 50;
+      }
+      .status-time {
+        font-size: 14px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .status-icons {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .status-icon {
+        width: 16px;
+        height: 16px;
+        stroke-width: 2.2;
+      }
+
+      .call-screen {
+        flex: 1;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 40px 28px 32px;
+        background:
+          radial-gradient(ellipse 520px 360px at 50% -10%, hsl(343 50% 30% / 0.45), transparent 60%),
+          radial-gradient(ellipse 360px 280px at 50% 110%, hsl(343 45% 28% / 0.35), transparent 55%),
+          var(--call-bg);
+      }
+
+      .call-glow {
+        position: absolute;
+        top: 18%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, hsl(343 55% 78% / 0.22) 0%, transparent 70%);
+        animation: pulse-glow 3s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      @keyframes pulse-glow {
+        0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
+        50% { transform: translateX(-50%) scale(1.15); opacity: 1; }
+      }
+
+      .call-avatar-wrap {
+        position: relative;
+        margin-top: 60px;
+        z-index: 2;
+      }
+
+      .call-avatar {
+        width: 136px;
+        height: 136px;
+        border-radius: 50%;
+        border: 4px solid rgba(255, 255, 255, 0.18);
+        background: linear-gradient(145deg, #ffe4ec, #f4a0bc);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 64px;
+        box-shadow: 0 12px 40px rgba(232, 164, 184, 0.28);
+        overflow: hidden;
+      }
+      .call-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .call-ring {
+        position: absolute;
+        inset: -18px;
+        border-radius: 50%;
+        border: 2px solid rgba(232, 164, 184, 0.25);
+        animation: call-ring 2.2s ease-out infinite;
+      }
+      .call-ring:nth-child(2) { animation-delay: 0.6s; }
+      .call-ring:nth-child(3) { animation-delay: 1.2s; }
+
+      @keyframes call-ring {
+        0% { transform: scale(0.92); opacity: 0.6; }
+        100% { transform: scale(1.28); opacity: 0; }
+      }
+
+      .call-name {
+        margin-top: 28px;
+        font-size: 26px;
+        font-weight: 600;
+        color: var(--text-primary);
+        letter-spacing: 0.04em;
+      }
+
+      .call-status {
+        margin-top: 10px;
+        font-size: 15px;
+        color: var(--text-secondary);
+        min-height: 22px;
+      }
+
+      .call-timer {
+        margin-top: 8px;
+        font-size: 17px;
+        font-weight: 500;
+        color: var(--accent-color);
+        font-variant-numeric: tabular-nums;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .call-timer.show { opacity: 1; }
+
+      .call-wave {
+        margin-top: 32px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 5px;
+        height: 42px;
+        opacity: 0;
+        transition: opacity 0.4s;
+      }
+      .call-wave.show { opacity: 1; }
+      .call-wave span {
+        width: 5px;
+        border-radius: 99px;
+        background: linear-gradient(to top, #f4a0bc, #e8a4b8);
+        animation: wave-bar 0.9s ease-in-out infinite;
+      }
+      .call-wave span:nth-child(1) { height: 12px; animation-delay: 0s; }
+      .call-wave span:nth-child(2) { height: 22px; animation-delay: 0.1s; }
+      .call-wave span:nth-child(3) { height: 16px; animation-delay: 0.2s; }
+      .call-wave span:nth-child(4) { height: 30px; animation-delay: 0.3s; }
+      .call-wave span:nth-child(5) { height: 18px; animation-delay: 0.15s; }
+      .call-wave span:nth-child(6) { height: 26px; animation-delay: 0.25s; }
+      .call-wave span:nth-child(7) { height: 14px; animation-delay: 0.05s; }
+
+      @keyframes wave-bar {
+        0%, 100% { transform: scaleY(0.6); }
+        50% { transform: scaleY(1); }
+      }
+
+      .call-controls {
+        margin-top: auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+      }
+
+      .call-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 32px;
+      }
+
+      .call-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-family: inherit;
+        cursor: pointer;
+        transition: transform 0.15s, opacity 0.15s;
+      }
+      .call-action:active { transform: scale(0.94); }
+      .call-action .icon-wrap {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        transition: background 0.2s;
+      }
+      .call-action.active .icon-wrap {
+        background: rgba(232, 164, 184, 0.25);
+      }
+      .call-action i {
+        width: 24px;
+        height: 24px;
+        stroke-width: 2;
+      }
+      .call-action span {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .hangup-btn {
+        width: 74px;
+        height: 74px;
+        border-radius: 50%;
+        border: none;
+        background: linear-gradient(145deg, #ff6b6b, #ee5253);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 30px rgba(238, 82, 83, 0.35);
+        transition: transform 0.15s, box-shadow 0.15s;
+        cursor: pointer;
+      }
+      .hangup-btn:active { transform: scale(0.93); }
+      .hangup-btn i {
+        width: 32px;
+        height: 32px;
+        stroke-width: 2.2;
+      }
+
+      .call-hint {
+        position: absolute;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.45);
+        color: rgba(255, 255, 255, 0.85);
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 13px;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+      .call-hint.show { opacity: 1; }
+
+      .home-indicator {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 134px;
+        height: 5px;
+        border-radius: 99px;
+        background: rgba(255, 255, 255, 0.2);
+        z-index: 50;
+      }
+
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <main>
+    <div class="phone-frame" id="phoneFrame">
+      <div class="dynamic-notch"></div>
+
+      <div class="status-bar">
+        <span class="status-time" id="statusTime">09:41</span>
+        <div class="status-icons">
+          <i data-lucide="signal" class="status-icon"></i>
+          <i data-lucide="wifi" class="status-icon"></i>
+          <i data-lucide="battery-medium" class="status-icon"></i>
+        </div>
+      </div>
+
+      <div class="call-screen">
+        <div class="call-glow"></div>
+
+        <div class="call-avatar-wrap">
+          <div class="call-ring"></div>
+          <div class="call-ring"></div>
+          <div class="call-ring"></div>
+          <div class="call-avatar" id="callAvatar">梦</div>
+        </div>
+
+        <div class="call-name" id="callName">梦角</div>
+        <div class="call-status" id="callStatus">正在呼叫…</div>
+        <div class="call-timer" id="callTimer">00:00</div>
+
+        <div class="call-wave" id="callWave">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="call-controls">
+          <div class="call-actions">
+            <button type="button" class="call-action" id="muteBtn" aria-label="静音" title="静音">
+              <div class="icon-wrap"><i data-lucide="mic"></i></div>
+              <span>静音</span>
+            </button>
+            <button type="button" class="call-action" id="speakerBtn" aria-label="免提" title="免提">
+              <div class="icon-wrap"><i data-lucide="volume-2"></i></div>
+              <span>免提</span>
+            </button>
+          </div>
+
+          <button type="button" class="hangup-btn" id="hangupBtn" aria-label="挂断">
+            <i data-lucide="phone-off"></i>
+          </button>
+        </div>
+
+        <div class="call-hint" id="callHint"></div>
+      </div>
+
+      <div class="home-indicator"><span></span></div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      lucide.createIcons();
+
+      // 状态栏时间
+      function updateTime() {
+        var now = new Date();
+        var h = String(now.getHours()).padStart(2, "0");
+        var m = String(now.getMinutes()).padStart(2, "0");
+        var el = document.getElementById("statusTime");
+        if (el) el.textContent = h + ":" + m;
+      }
+      updateTime();
+      setInterval(updateTime, 60000);
+
+      // 读取设置
+      var profile = {};
+      try {
+        var raw = localStorage.getItem("mengjiao_profile");
+        if (raw) profile = JSON.parse(raw);
+      } catch (e) {}
+
+      var partnerName = profile.partnerName || "梦角";
+      var partnerAvatar = profile.partnerAvatar || "";
+
+      var callNameEl = document.getElementById("callName");
+      var callAvatarEl = document.getElementById("callAvatar");
+      callNameEl.textContent = partnerName;
+      if (partnerAvatar) {
+        callAvatarEl.innerHTML = '<img src="' + partnerAvatar.replace(/"/g, "&quot;") + '" alt="">';
+      }
+
+      var callStatus = document.getElementById("callStatus");
+      var callTimer = document.getElementById("callTimer");
+      var callWave = document.getElementById("callWave");
+      var hangupBtn = document.getElementById("hangupBtn");
+      var muteBtn = document.getElementById("muteBtn");
+      var speakerBtn = document.getElementById("speakerBtn");
+      var callHint = document.getElementById("callHint");
+
+      var audio = null;
+      var timerInterval = null;
+      var connected = false;
+      var callStartAt = 0;
+      var muted = false;
+      var speaker = false;
+
+      function showHint(text) {
+        callHint.textContent = text;
+        callHint.classList.add("show");
+        setTimeout(function () { callHint.classList.remove("show"); }, 2200);
+      }
+
+      function formatCallTime(sec) {
+        var s = sec % 60;
+        var m = Math.floor(sec / 60) % 60;
+        var h = Math.floor(sec / 3600);
+        var part = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+        return h > 0 ? String(h).padStart(2, "0") + ":" + part : part;
+      }
+
+      function startTimer() {
+        callStartAt = Date.now();
+        callTimer.classList.add("show");
+        timerInterval = setInterval(function () {
+          var sec = Math.floor((Date.now() - callStartAt) / 1000);
+          callTimer.textContent = formatCallTime(sec);
+        }, 1000);
+      }
+
+      function stopTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      function endCall() {
+        stopTimer();
+        if (audio) {
+          audio.pause();
+          audio = null;
+        }
+        try {
+          if (window.navigator.vibrate) window.navigator.vibrate(80);
+        } catch (e) {}
+        history.back();
+      }
+
+      function onConnected() {
+        connected = true;
+        callStatus.textContent = "通话中";
+        callWave.classList.add("show");
+        startTimer();
+      }
+
+      function playVoiceCard() {
+        var VoiceUtils = window.MengjiaoVoiceUtils;
+        var card = VoiceUtils && VoiceUtils.pickCard ? VoiceUtils.pickCard() : null;
+
+        if (!card || !card.audio) {
+          callStatus.textContent = "对方未接听";
+          setTimeout(endCall, 1600);
+          return;
+        }
+
+        audio = new Audio(card.audio);
+        audio.oncanplaythrough = function () {
+          if (!connected) onConnected();
+        };
+        audio.onplay = function () {
+          if (!connected) onConnected();
+        };
+        audio.onended = function () {
+          // 一条语音播放完，模拟挂断
+          callStatus.textContent = "通话结束";
+          callWave.classList.remove("show");
+          stopTimer();
+          setTimeout(endCall, 900);
+        };
+        audio.onerror = function () {
+          callStatus.textContent = "播放失败";
+          setTimeout(endCall, 1200);
+        };
+
+        // 先响铃 1.2s 再接通
+        setTimeout(function () {
+          if (audio) {
+            audio.play().catch(function (err) {
+              console.warn("播放失败", err);
+              callStatus.textContent = "播放失败";
+              setTimeout(endCall, 1200);
+            });
+          }
+        }, 1200);
+      }
+
+      // 响铃震动提示
+      try {
+        if (window.navigator.vibrate) window.navigator.vibrate([200, 300, 200]);
+      } catch (e) {}
+
+      hangupBtn.addEventListener("click", endCall);
+
+      muteBtn.addEventListener("click", function () {
+        muted = !muted;
+        muteBtn.classList.toggle("active", muted);
+        muteBtn.querySelector("i").setAttribute("data-lucide", muted ? "mic-off" : "mic");
+        lucide.createIcons();
+        showHint(muted ? "已静音" : "已取消静音");
+      });
+
+      speakerBtn.addEventListener("click", function () {
+        speaker = !speaker;
+        speakerBtn.classList.toggle("active", speaker);
+        if (audio) {
+          try { audio.volume = speaker ? 1 : 0.85; } catch (e) {}
+        }
+        showHint(speaker ? "已开启免提" : "已关闭免提");
+      });
+
+      // 页面可见时开始播放流程
+      document.addEventListener("visibilitychange", function () {
+        if (!document.hidden && !connected && !audio) {
+          playVoiceCard();
+        }
+      });
+
+      // 初始化
+      setTimeout(playVoiceCard, 400);
+    })();
+  </script>
+</body>
+</html>

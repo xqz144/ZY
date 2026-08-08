@@ -1,256 +1,734 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>梦角对话 · 梦角传讯</title>
-
-  <link rel="stylesheet" href="../colors_and_type.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            card: 'hsl(var(--card))',
-            primary: 'hsl(var(--primary))',
-            'primary-foreground': 'hsl(var(--primary-foreground))',
-            muted: 'hsl(var(--muted))',
-            'muted-foreground': 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--accent))',
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-          },
-          fontFamily: {
-            sans: ['"DreamFont"', '"Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-            serif: ['"DreamFont"', '"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif'],
-          },
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#e8a4b8">
+    <title>梦角对话 · 梦角传讯</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../icon.svg" type="image/svg+xml">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('../sw.js').catch(function () {});
       }
-    };
-  </script>
+    </script>
+    <style id="theme-vars">
+/* 梦角传讯 — 动漫手绘风主题 */
+/* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
+
+@font-face {
+  font-family: 'DreamFont';
+  src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* bg — 暖灰白，像素描纸 */
+  --background: 30 20% 97%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+
+  /* text — 柔和深灰，不刺眼 */
+  --foreground: 340 12% 28%;
+  --card-foreground: 340 12% 28%;
+  --popover-foreground: 340 12% 28%;
+  --muted-foreground: 340 10% 55%;
+
+  /* accent — 柔粉蜡笔色 */
+  --primary: 343 55% 78%;
+  --primary-foreground: 340 15% 22%;
+  --secondary: 340 35% 95%;
+  --secondary-foreground: 340 12% 28%;
+  --muted: 30 18% 94%;
+  --accent: 343 40% 92%;
+  --accent-foreground: 340 12% 28%;
+
+  /* status */
+  --destructive: 0 70% 65%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* border — 手绘感浅粉 */
+  --border: 343 45% 78% / 0.25;
+  --input: 30 18% 94%;
+  --ring: 343 55% 78%;
+
+  /* chart */
+  --chart-1: 343 55% 78%;
+  --chart-2: 343 45% 85%;
+  --chart-3: 340 15% 70%;
+  --chart-4: 343 35% 90%;
+  --chart-5: 340 12% 60%;
+
+  /* sidebar */
+  --sidebar: 30 20% 97%;
+  --sidebar-foreground: 340 12% 28%;
+  --sidebar-primary: 343 55% 78%;
+  --sidebar-primary-foreground: 340 15% 22%;
+  --sidebar-accent: 343 40% 92%;
+  --sidebar-accent-foreground: 340 12% 28%;
+  --sidebar-border: 343 45% 78% / 0.25;
+  --sidebar-ring: 343 55% 78%;
+
+  /* typography */
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+
+  --radius: 1.25rem;
+
+  /* shadow — 柔和漂浮感 */
+  --shadow-color: 343 40% 55%;
+  --shadow-2xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-sm: 0 3px 6px -1px hsl(343 30% 40% / 0.06), 0 2px 4px -2px hsl(343 30% 40% / 0.04);
+  --shadow: 0 4px 10px -1px hsl(343 30% 40% / 0.08), 0 2px 4px -2px hsl(343 30% 40% / 0.05);
+  --shadow-md: 0 8px 16px -4px hsl(343 30% 40% / 0.10), 0 4px 8px -4px hsl(343 30% 40% / 0.06);
+  --shadow-lg: 0 15px 25px -6px hsl(343 30% 40% / 0.12), 0 8px 12px -6px hsl(343 30% 40% / 0.08);
+  --shadow-xl: 0 25px 40px -8px hsl(343 30% 40% / 0.14), 0 12px 20px -8px hsl(343 30% 40% / 0.10);
+  --shadow-2xl: 0 35px 60px -12px hsl(343 30% 40% / 0.18);
+
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  /* 直景色值 — 供自定义样式直接引用 */
+  --primary-bg: #f9f7f4;
+  --secondary-bg: #f3f0ec;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #4a3f45;
+  --text-secondary: #9a8a92;
+  --border-color: rgba(232, 164, 184, 0.35);
+  --chat-bg: #fdfbfa;
+}
+
+.dark {
+  --background: 340 12% 12%;
+  --card: 340 10% 16%;
+  --popover: 340 10% 16%;
+  --foreground: 340 15% 92%;
+  --card-foreground: 340 15% 92%;
+  --popover-foreground: 340 15% 92%;
+  --muted-foreground: 340 10% 65%;
+  --primary: 343 45% 72%;
+  --primary-foreground: 340 12% 18%;
+  --secondary: 340 15% 24%;
+  --secondary-foreground: 340 15% 92%;
+  --muted: 340 12% 20%;
+  --accent: 343 25% 28%;
+  --accent-foreground: 340 15% 92%;
+  --destructive: 0 60% 58%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 340 12% 26%;
+  --input: 340 12% 22%;
+  --ring: 343 45% 72%;
+  --chart-1: 343 45% 72%;
+  --chart-2: 343 40% 60%;
+  --chart-3: 340 12% 60%;
+  --chart-4: 343 35% 80%;
+  --chart-5: 340 12% 70%;
+  --sidebar: 340 12% 12%;
+  --sidebar-foreground: 340 15% 92%;
+  --sidebar-primary: 343 45% 72%;
+  --sidebar-primary-foreground: 340 12% 18%;
+  --sidebar-accent: 343 25% 28%;
+  --sidebar-accent-foreground: 340 15% 92%;
+  --sidebar-border: 340 12% 26%;
+  --sidebar-ring: 343 45% 72%;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+  --radius: 1.25rem;
+  --shadow-color: 343 30% 40%;
+  --shadow-2xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-sm: 0 3px 6px -1px hsl(340 12% 5% / 0.30), 0 2px 4px -2px hsl(340 12% 5% / 0.25);
+  --shadow: 0 4px 10px -1px hsl(340 12% 5% / 0.35), 0 2px 4px -2px hsl(340 12% 5% / 0.28);
+  --shadow-md: 0 8px 16px -4px hsl(340 12% 5% / 0.40), 0 4px 8px -4px hsl(340 12% 5% / 0.32);
+  --shadow-lg: 0 15px 25px -6px hsl(340 12% 5% / 0.45), 0 8px 12px -6px hsl(340 12% 5% / 0.36);
+  --shadow-xl: 0 25px 40px -8px hsl(340 12% 5% / 0.50), 0 12px 20px -8px hsl(340 12% 5% / 0.40);
+  --shadow-2xl: 0 35px 60px -12px hsl(340 12% 5% / 0.55);
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  --primary-bg: #1a1619;
+  --secondary-bg: #242024;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #f0e8ec;
+  --text-secondary: #a09098;
+  --border-color: rgba(232, 164, 184, 0.25);
+  --chat-bg: #1a1619;
+}
+
+body {
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232, 164, 184, 0.35); border-radius: 4px; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <script src="../assets/image-utils.js"></script>
+    <script src="../assets/sticker-utils.js"></script>
+    <script src="../assets/voice-utils.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-foreground: var(--card-foreground);
+  }
+  @layer base {
+    body { background: var(--card-background); color: var(--card-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="m-0 h-screen overflow-hidden bg-[var(--chat-bg)] text-[var(--text-primary)] antialiased">
+  <div id="chat-app" class="relative flex h-screen w-full flex-col bg-[var(--chat-bg)]">
+    <!-- 手绘风背景装饰 -->
+    <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <div class="absolute -left-8 top-[12%] text-[80px] opacity-[0.06]" style="transform: rotate(-12deg);">✿</div>
+      <div class="absolute right-4 top-[22%] text-[60px] opacity-[0.05]" style="transform: rotate(18deg);">♡</div>
+      <div class="absolute left-[12%] top-[45%] text-[48px] opacity-[0.04]" style="transform: rotate(8deg);">✧</div>
+      <div class="absolute right-[10%] top-[62%] text-[56px] opacity-[0.05]" style="transform: rotate(-6deg);">☁</div>
+      <div class="absolute left-[6%] bottom-[18%] text-[64px] opacity-[0.04]" style="transform: rotate(10deg);">✨</div>
+      <div class="absolute right-[6%] bottom-[26%] text-[52px] opacity-[0.05]" style="transform: rotate(-15deg);">❀</div>
+    </div>
+
+    <!-- 小火人 -->
+    <div id="spark-companion" aria-label="小精灵拖拽"></div>
+
+    <!-- 顶部导航 -->
+    <header id="partner-info" class="relative z-20 mx-3 mt-2 flex shrink-0 items-center gap-3 rounded-[22px] border border-[rgba(255,255,255,0.55)] bg-gradient-to-br from-[rgba(255,255,255,0.85)] to-[rgba(255,240,245,0.78)] px-3 pb-3 pt-11 shadow-[var(--shadow-md)] backdrop-blur-md md:mx-4 md:mt-3 md:gap-4 md:rounded-[26px] md:px-4 md:pb-3.5 md:pt-12">
+      <a href="index-new-v2.html" class="back-btn inline-flex shrink-0 items-center gap-1 rounded-xl px-2 py-1.5 text-sm font-medium text-[var(--accent-color)] transition active:scale-95 active:opacity-70 md:text-[15px]" data-dom-id="back-home">
+        <i data-lucide="chevron-left" class="h-[18px] w-[18px]"></i>
+        <span>返回</span>
+      </a>
+
+      <div id="partnerAvatar" class="partner-avatar relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gradient-to-br from-[#ffe4ec] to-[#f4a0bc] text-xl shadow-[0_2px_10px_rgba(232,164,184,0.28)] md:h-12 md:w-12" aria-hidden="true">梦</div>
+
+      <div class="partner-meta min-w-0 flex-1">
+        <div id="partnerName" class="font-serif text-base font-semibold leading-tight text-[var(--text-primary)] md:text-[17px]">梦角</div>
+        <div class="partner-status mt-0.5 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+          <span class="status-dot h-2 w-2 rounded-full bg-[var(--accent-color)]"></span>
+          <span id="statusText">在线</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="searchBtn" class="header-action flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(232,164,184,0.18)] bg-[rgba(232,164,184,0.1)] text-[var(--accent-color)] transition active:scale-92 active:bg-[rgba(232,164,184,0.2)] md:h-10 md:w-10" aria-label="搜索消息" title="搜索消息">
+          <i data-lucide="search" class="h-[18px] w-[18px]"></i>
+        </button>
+        <button id="settingsBtn" class="header-action flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(232,164,184,0.18)] bg-[rgba(232,164,184,0.1)] text-[var(--accent-color)] transition active:scale-92 active:bg-[rgba(232,164,184,0.2)] md:h-10 md:w-10" aria-label="聊天设置" title="聊天设置">
+          <i data-lucide="settings" class="h-[18px] w-[18px]"></i>
+        </button>
+        <button id="clearBtn" class="header-action flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(232,164,184,0.18)] bg-[rgba(232,164,184,0.1)] text-[var(--accent-color)] transition active:scale-92 active:bg-[rgba(232,164,184,0.2)] md:h-10 md:w-10" aria-label="清空对话" title="清空对话">
+          <i data-lucide="trash-2" class="h-[18px] w-[18px]"></i>
+        </button>
+        <a href="call-new.html" id="callBtn" class="header-action flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(232,164,184,0.18)] bg-[rgba(232,164,184,0.1)] text-[var(--accent-color)] transition active:scale-92 active:bg-[rgba(232,164,184,0.2)] md:h-10 md:w-10" aria-label="梦角来电" title="梦角来电">
+          <i data-lucide="phone" class="h-[18px] w-[18px]"></i>
+        </a>
+      </div>
+    </header>
+
+    <!-- 消息流 -->
+    <main id="message-stream" class="relative z-10 flex flex-1 flex-col gap-2.5 overflow-y-auto px-3 pb-2 pt-3 [-webkit-overflow-scrolling:touch] md:px-4 md:gap-3 md:pt-4" aria-live="polite">
+      <div id="emptyState" class="empty-state absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center px-5 text-center">
+        <div class="empty-state-icon relative mb-5">
+          <span class="heart text-[56px] text-[var(--accent-color)] opacity-50">❤</span>
+          <span class="chat-bubble absolute -bottom-1 -right-3 text-[28px] text-[var(--accent-color)] opacity-60">💬</span>
+        </div>
+        <p class="empty-state-title text-[15px] font-semibold tracking-wider text-[var(--accent-color)] opacity-90">✦ 我们的故事，始于此刻 ✦</p>
+        <p class="empty-state-hint mt-2 text-xs tracking-wide text-[var(--text-secondary)] opacity-70">说点什么，让对话开始吧</p>
+      </div>
+    </main>
+
+    <!-- 继续对话 -->
+    <div id="continueBar" class="continue-bar z-10 flex shrink-0 justify-center px-4 pb-2" style="display:none;">
+      <button id="continueBtn" type="button" class="continue-btn inline-flex items-center gap-1.5 rounded-full border border-[var(--border-color)] bg-white/70 px-5 py-1.5 text-[13px] font-medium text-[var(--accent-color)] shadow-[var(--shadow-sm)] backdrop-blur-sm transition active:scale-96 active:bg-[rgba(232,164,184,0.08)] disabled:cursor-not-allowed disabled:opacity-40">
+        <i data-lucide="chevron-down" class="h-4 w-4"></i>
+        让梦角继续说
+      </button>
+    </div>
+
+    <!-- 快捷回复面板 -->
+    <div id="quickPanel" class="quick-panel z-10 hidden shrink-0 gap-2 overflow-x-auto border-t border-[rgba(232,164,184,0.1)] bg-[var(--secondary-bg)]/80 px-3 py-2 backdrop-blur-sm [-webkit-overflow-scrolling:touch]"></div>
+
+    <!-- 底部输入区 -->
+    <footer id="input-area" class="relative z-20 mx-3 mb-3 mt-1 flex items-end gap-2 rounded-[22px] border border-[rgba(255,255,255,0.55)] bg-gradient-to-br from-[rgba(255,255,255,0.88)] to-[rgba(255,240,245,0.76)] px-2.5 pb-3 pt-2.5 shadow-[var(--shadow-md)] backdrop-blur-md md:mx-4 md:mb-4 md:gap-2.5 md:rounded-[26px] md:px-3 md:pb-3.5 md:pt-3">
+      <!-- 拍一拍面板 -->
+      <div id="pokePanel" class="poke-panel absolute bottom-full left-0 right-0 z-30 hidden max-h-[200px] flex-col gap-2 overflow-y-auto rounded-t-[20px] border-t border-[rgba(232,164,184,0.15)] bg-[var(--secondary-bg)]/95 p-4 shadow-[var(--shadow-lg)] backdrop-blur-md"></div>
+
+      <button id="pokeBtn" class="input-tool mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(232,164,184,0.18)] bg-[rgba(232,164,184,0.08)] text-[var(--accent-color)] transition active:scale-92 active:bg-[rgba(232,164,184,0.18)]" aria-label="拍一拍" title="拍一拍">
+        <i data-lucide="hand" class="h-5 w-5"></i>
+      </button>
+      <button id="quickBtn" class="input-tool mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(232,164,184,0.18)] bg-[rgba(232,164,184,0.08)] text-[var(--accent-color)] transition active:scale-92 active:bg-[rgba(232,164,184,0.18)]" aria-label="快捷回复" title="快捷回复">
+        <i data-lucide="message-square-plus" class="h-5 w-5"></i>
+      </button>
+
+      <form id="chat-form" class="flex flex-1 flex-col">
+        <label for="message-input" class="sr-only absolute h-px w-px overflow-hidden whitespace-nowrap" style="clip:rect(0,0,0,0);">输入消息</label>
+        <div id="quotePreview" class="quote-preview mb-1.5 hidden items-center gap-2 rounded-xl border-l-[3px] border-[var(--accent-color)] bg-[rgba(232,164,184,0.08)] px-3 py-1.5 text-xs text-[var(--text-secondary)]">
+          <span class="quote-preview-text flex-1 truncate"></span>
+          <button type="button" class="quote-preview-close flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(232,164,184,0.15)] text-[var(--accent-color)]" aria-label="取消引用">
+            <i data-lucide="x" class="h-3 w-3"></i>
+          </button>
+        </div>
+        <div class="flex items-end gap-2">
+          <div class="relative flex flex-1 items-end gap-2">
+            <textarea id="message-input" placeholder="说点什么…" autocomplete="off" maxlength="500" rows="1" class="min-h-[42px] flex-1 resize-none rounded-[20px] border border-[var(--border-color)] bg-white px-4 py-2.5 text-sm leading-relaxed text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--accent-color)] focus:shadow-[0_0_0_3px_rgba(232,164,184,0.12)] [-webkit-scrollbar]:hidden"></textarea>
+            <div class="absolute right-2 bottom-2.5 flex items-center gap-1">
+              <button type="button" id="stickerBtn" class="input-tool-mini flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-secondary)] transition active:scale-92 hover:text-[var(--accent-color)]" aria-label="表情" title="表情">
+                <i data-lucide="smile" class="h-4 w-4"></i>
+              </button>
+              <button type="button" id="imageBtn" class="input-tool-mini flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-secondary)] transition active:scale-92 hover:text-[var(--accent-color)]" aria-label="发送图片" title="发送图片">
+                <i data-lucide="image" class="h-4 w-4"></i>
+              </button>
+              <button type="button" id="voiceBtn" class="input-tool-mini flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-secondary)] transition active:scale-92 hover:text-[var(--accent-color)]" aria-label="语音消息" title="语音消息">
+                <i data-lucide="mic" class="h-4 w-4"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" id="send-btn" class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#f4a0bc] to-[#e8a4b8] text-white shadow-[0_4px_14px_rgba(232,164,184,0.4)] transition active:scale-94 disabled:cursor-not-allowed disabled:opacity-50 disabled:transform-none" aria-label="发送">
+            <i data-lucide="send" class="h-[18px] w-[18px]"></i>
+          </button>
+        </div>
+      </form>
+    </footer>
+
+    <!-- 表情面板 -->
+    <div id="stickerPanel" class="sticker-panel absolute bottom-[80px] left-3 right-3 z-30 hidden max-h-[260px] flex-col rounded-[20px] border border-[rgba(232,164,184,0.15)] bg-[var(--secondary-bg)]/95 p-3 shadow-[var(--shadow-lg)] backdrop-blur-md md:bottom-[90px] md:left-4 md:right-4">
+      <div class="mb-2 flex items-center justify-between px-1">
+        <span class="text-xs font-medium text-[var(--text-secondary)]">表情包</span>
+        <button type="button" id="stickerManageBtn" class="text-xs text-[var(--accent-color)] active:opacity-70">管理</button>
+      </div>
+      <div id="stickerList" class="grid flex-1 grid-cols-6 gap-2 overflow-y-auto p-1"></div>
+    </div>
+
+    <!-- 图片上传隐藏 input -->
+    <input type="file" id="imageInput" accept="image/*" class="hidden" />
+
+    <!-- 语音录制面板 -->
+    <div id="voicePanel" class="voice-panel fixed inset-x-0 bottom-0 z-40 hidden flex-col items-center rounded-t-[24px] bg-white/95 p-5 shadow-[0_-8px_40px_rgba(31,38,135,0.12)] backdrop-blur-md" aria-hidden="true">
+      <div class="mb-1 h-1 w-10 rounded-full bg-[var(--border-color)]"></div>
+      <div id="voiceHint" class="mt-4 text-[15px] font-medium text-[var(--text-primary)]">按住按钮开始录音</div>
+      <div id="voiceTimer" class="mt-2 text-2xl font-medium text-[var(--accent-color)] tabular-nums">00:00</div>
+      <div class="mt-5 flex items-center gap-3">
+        <div id="voiceWave" class="flex h-8 items-end gap-[3px]">
+          <span class="voice-bar h-2 w-[3px] rounded-full bg-[var(--accent-color)]"></span>
+          <span class="voice-bar h-4 w-[3px] rounded-full bg-[var(--accent-color)]"></span>
+          <span class="voice-bar h-3 w-[3px] rounded-full bg-[var(--accent-color)]"></span>
+          <span class="voice-bar h-5 w-[3px] rounded-full bg-[var(--accent-color)]"></span>
+          <span class="voice-bar h-2 w-[3px] rounded-full bg-[var(--accent-color)]"></span>
+          <span class="voice-bar h-4 w-[3px] rounded-full bg-[var(--accent-color)]"></span>
+          <span class="voice-bar h-3 w-[3px] rounded-full bg-[var(--accent-color)]"></span>
+        </div>
+      </div>
+      <button type="button" id="voiceRecordBtn" class="voice-record-btn mt-6 flex h-[72px] w-[72px] items-center justify-center rounded-full bg-gradient-to-br from-[#f4a0bc] to-[#e8a4b8] text-white shadow-[0_8px_24px_rgba(232,164,184,0.45)] transition active:scale-95">
+        <i data-lucide="mic" class="h-8 w-8"></i>
+      </button>
+      <button type="button" id="voiceCancelBtn" class="mt-4 text-sm text-[var(--text-secondary)] active:text-[var(--accent-color)]">取消</button>
+    </div>
+  </div>
+
+  <!-- 消息搜索面板 -->
+  <div id="searchModal" class="settings-modal fixed inset-0 z-50 hidden items-end justify-center" aria-hidden="true">
+    <div class="settings-backdrop absolute inset-0 bg-black/25 backdrop-blur-sm"></div>
+    <div class="settings-panel relative flex w-full max-w-[520px] max-h-[85vh] flex-col rounded-t-[24px] bg-white shadow-[0_-8px_40px_rgba(31,38,135,0.12)]" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+      <div class="settings-header flex items-center justify-between border-b border-[rgba(232,164,184,0.1)] px-5 pb-2.5 pt-5">
+        <h2 id="searchTitle" class="m-0 text-lg font-semibold text-[var(--text-primary)]">搜索消息</h2>
+        <button id="searchClose" class="settings-close flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-[var(--accent-color)]" aria-label="关闭搜索">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+      <div class="flex flex-col gap-3 px-4 pb-6 pt-4">
+        <div class="relative">
+          <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-secondary)]"></i>
+          <input id="searchInput" type="text" placeholder="搜索关键词…" class="w-full rounded-xl border border-[rgba(232,164,184,0.2)] bg-white py-2.5 pl-9 pr-8 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)] focus:border-[var(--accent-color)]" />
+          <button id="searchClear" type="button" class="absolute right-2 top-1/2 hidden h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[var(--text-secondary)]" aria-label="清空">
+            <i data-lucide="x" class="h-3.5 w-3.5"></i>
+          </button>
+        </div>
+        <div id="searchStats" class="px-1 text-xs text-[var(--text-secondary)]"></div>
+        <div id="searchResults" class="flex flex-col gap-2 overflow-y-auto rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)] p-3 max-h-[50vh]"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 聊天设置面板 -->
+  <div id="settingsModal" class="settings-modal fixed inset-0 z-50 hidden items-end justify-center" aria-hidden="true">
+    <div class="settings-backdrop absolute inset-0 bg-black/25 backdrop-blur-sm"></div>
+    <div class="settings-panel relative flex w-full max-w-[520px] max-h-[85vh] flex-col rounded-t-[24px] bg-white shadow-[0_-8px_40px_rgba(31,38,135,0.12)]" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="settings-header flex items-center justify-between border-b border-[rgba(232,164,184,0.1)] px-5 pb-2.5 pt-5">
+        <h2 id="settingsTitle" class="m-0 text-lg font-semibold text-[var(--text-primary)]">聊天设置</h2>
+        <button id="settingsClose" class="settings-close flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-[var(--accent-color)]" aria-label="关闭设置">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+      <div class="settings-tabs flex gap-2 overflow-x-auto border-b border-[rgba(232,164,184,0.08)] px-4 py-2.5 [-webkit-overflow-scrolling:touch]">
+        <button class="settings-tab active shrink-0 rounded-full border border-[rgba(232,164,184,0.15)] bg-white px-4 py-2 text-sm text-[var(--text-secondary)] transition active:scale-95" data-tab="features">功能</button>
+        <button class="settings-tab shrink-0 rounded-full border border-[rgba(232,164,184,0.15)] bg-white px-4 py-2 text-sm text-[var(--text-secondary)] transition active:scale-95" data-tab="rhythm">节奏</button>
+        <button class="settings-tab shrink-0 rounded-full border border-[rgba(232,164,184,0.15)] bg-white px-4 py-2 text-sm text-[var(--text-secondary)] transition active:scale-95" data-tab="sound">音效</button>
+        <button class="settings-tab shrink-0 rounded-full border border-[rgba(232,164,184,0.15)] bg-white px-4 py-2 text-sm text-[var(--text-secondary)] transition active:scale-95" data-tab="display">显示</button>
+        <button class="settings-tab shrink-0 rounded-full border border-[rgba(232,164,184,0.15)] bg-white px-4 py-2 text-sm text-[var(--text-secondary)] transition active:scale-95" data-tab="nickname">昵称</button>
+        <button class="settings-tab shrink-0 rounded-full border border-[rgba(232,164,184,0.15)] bg-white px-4 py-2 text-sm text-[var(--text-secondary)] transition active:scale-95" data-tab="data">数据</button>
+      </div>
+      <div class="settings-body flex-1 overflow-y-auto px-4 pb-6 pt-4 [scrollbar-width:thin]">
+        <!-- 功能 -->
+        <div class="settings-content active flex flex-col gap-4" data-content="features">
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">消息交互</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <label class="setting-pill-row flex cursor-pointer items-center gap-3 px-4 py-3.5 transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">💬</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">引用回复</span>
+                <input type="checkbox" class="setting-switch" data-key="quoteReply" />
+              </label>
+              <label class="setting-pill-row flex cursor-pointer items-center gap-3 border-t border-[rgba(232,164,184,0.08)] px-4 py-3.5 transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">✓</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">已读回执</span>
+                <input type="checkbox" class="setting-switch" data-key="readReceipts" />
+              </label>
+              <label class="setting-pill-row flex cursor-pointer items-center gap-3 border-t border-[rgba(232,164,184,0.08)] px-4 py-3.5 transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">👁</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">已读不回</span>
+                <input type="checkbox" class="setting-switch" data-key="readNoReply" />
+              </label>
+              <label class="setting-pill-row flex cursor-pointer items-center gap-3 border-t border-[rgba(232,164,184,0.08)] px-4 py-3.5 transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">⌨️</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">正在输入</span>
+                <input type="checkbox" class="setting-switch" data-key="typingIndicator" />
+              </label>
+              <label class="setting-pill-row flex cursor-pointer items-center gap-3 border-t border-[rgba(232,164,184,0.08)] px-4 py-3.5 transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">⏎</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">回车键发送</span>
+                <input type="checkbox" class="setting-switch" data-key="enterToSend" />
+              </label>
+            </div>
+          </div>
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">时间戳</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <div class="cs-option-row flex flex-wrap gap-2 p-3" data-key="timeFormat">
+                <button class="cs-option-btn rounded-full border border-[rgba(232,164,184,0.18)] bg-white px-3 py-1.5 text-xs text-[var(--text-primary)] transition active:scale-95" data-value="HH:mm">HH:mm</button>
+                <button class="cs-option-btn rounded-full border border-[rgba(232,164,184,0.18)] bg-white px-3 py-1.5 text-xs text-[var(--text-primary)] transition active:scale-95" data-value="HH:mm:ss">HH:mm:ss</button>
+                <button class="cs-option-btn rounded-full border border-[rgba(232,164,184,0.18)] bg-white px-3 py-1.5 text-xs text-[var(--text-primary)] transition active:scale-95" data-value="h:mm A">h:mm AM/PM</button>
+                <button class="cs-option-btn rounded-full border border-[rgba(232,164,184,0.18)] bg-white px-3 py-1.5 text-xs text-[var(--text-primary)] transition active:scale-95" data-value="h:mm:ss A">h:mm:ss AM/PM</button>
+                <button class="cs-option-btn rounded-full border border-[rgba(232,164,184,0.18)] bg-white px-3 py-1.5 text-xs text-[var(--text-primary)] transition active:scale-95" data-value="off">关闭时间戳</button>
+              </div>
+            </div>
+          </div>
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">拍一拍</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <label class="setting-pill-row flex cursor-pointer items-center gap-3 px-4 py-3.5 transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">👋</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">梦角主动拍一拍我</span>
+                <input type="checkbox" class="setting-switch" data-key="autoPoke" />
+              </label>
+              <div class="flex flex-col gap-2 border-t border-[rgba(232,164,184,0.08)] px-4 py-3.5">
+                <label for="pokeMessagesInput" class="text-sm text-[var(--text-primary)]">自定义拍一拍文案</label>
+                <textarea id="pokeMessagesInput" class="w-full resize-none rounded-xl border border-[rgba(232,164,184,0.2)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)] focus:border-[var(--accent-color)]" rows="4" placeholder="每行一条，例如：&#10;拍了拍梦角&#10;抱住了梦角&#10;戳了戳梦角的脸"></textarea>
+                <p class="m-0 text-xs text-[var(--text-secondary)]">留空则使用默认文案。梦角拍你时会在前面加上“梦角”。</p>
+              </div>
+              <div class="cs-slider-row flex items-center gap-3 border-t border-[rgba(232,164,184,0.08)] px-4 py-3.5">
+                <span class="cs-slider-label w-[72px] shrink-0 text-sm text-[var(--text-primary)]">主动间隔</span>
+                <input type="range" class="cs-slider flex-1" data-key="autoPokeInterval" min="1" max="60" />
+                <span class="cs-slider-value min-w-[52px] text-right text-sm font-medium text-[var(--accent-color)]" data-value-for="autoPokeInterval"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 节奏 -->
+        <div class="settings-content hidden flex-col gap-4" data-content="rhythm">
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">回复速度</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <div class="cs-slider-row flex items-center gap-3 border-b border-[rgba(232,164,184,0.08)] px-4 py-3.5">
+                <span class="cs-slider-label w-[72px] shrink-0 text-sm text-[var(--text-primary)]">最短等待</span>
+                <input type="range" class="cs-slider flex-1" data-key="replyDelayMin" min="1" max="600" />
+                <span class="cs-slider-value min-w-[52px] text-right text-sm font-medium text-[var(--accent-color)]" data-value-for="replyDelayMin"></span>
+              </div>
+              <div class="cs-slider-row flex items-center gap-3 px-4 py-3.5">
+                <span class="cs-slider-label w-[72px] shrink-0 text-sm text-[var(--text-primary)]">最长等待</span>
+                <input type="range" class="cs-slider flex-1" data-key="replyDelayMax" min="1" max="600" />
+                <span class="cs-slider-value min-w-[52px] text-right text-sm font-medium text-[var(--accent-color)]" data-value-for="replyDelayMax"></span>
+              </div>
+            </div>
+          </div>
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">主动发送</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <label class="setting-pill-row flex cursor-pointer items-center gap-3 px-4 py-3.5 transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">🕊</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">主动发消息给我</span>
+                <input type="checkbox" class="setting-switch" data-key="autoSend" />
+              </label>
+              <div class="cs-slider-row flex items-center gap-3 border-t border-[rgba(232,164,184,0.08)] px-4 py-3.5">
+                <span class="cs-slider-label w-[72px] shrink-0 text-sm text-[var(--text-primary)]">间隔</span>
+                <input type="range" class="cs-slider flex-1" data-key="autoSendInterval" min="1" max="120" />
+                <span class="cs-slider-value min-w-[52px] text-right text-sm font-medium text-[var(--accent-color)]" data-value-for="autoSendInterval"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 音效 -->
+        <div class="settings-content hidden flex-col gap-4" data-content="sound">
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">开关</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <label class="setting-pill-row flex cursor-pointer items-center gap-3 px-4 py-3.5 transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">🔔</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">消息音效</span>
+                <input type="checkbox" class="setting-switch" data-key="soundEnabled" />
+              </label>
+            </div>
+          </div>
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">音量</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <div class="cs-slider-row flex items-center gap-3 px-4 py-3.5">
+                <span class="cs-slider-label w-[72px] shrink-0 text-sm text-[var(--text-primary)]">音量</span>
+                <input type="range" class="cs-slider flex-1" data-key="soundVolume" min="0" max="100" />
+                <span class="cs-slider-value min-w-[52px] text-right text-sm font-medium text-[var(--accent-color)]" data-value-for="soundVolume"></span>
+              </div>
+            </div>
+          </div>
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">提示音选择</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <div class="cs-option-row flex flex-wrap gap-2 p-3" data-key="soundPreset">
+                <button class="cs-option-btn rounded-full border border-[rgba(232,164,184,0.18)] bg-white px-3 py-1.5 text-xs text-[var(--text-primary)] transition active:scale-95" data-value="default">默认</button>
+                <button class="cs-option-btn rounded-full border border-[rgba(232,164,184,0.18)] bg-white px-3 py-1.5 text-xs text-[var(--text-primary)] transition active:scale-95" data-value="soft">柔和</button>
+                <button class="cs-option-btn rounded-full border border-[rgba(232,164,184,0.18)] bg-white px-3 py-1.5 text-xs text-[var(--text-primary)] transition active:scale-95" data-value="crisp">清脆</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 显示 -->
+        <div class="settings-content hidden flex-col gap-4" data-content="display">
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">字体大小</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <div class="cs-slider-row flex items-center gap-3 px-4 py-3.5">
+                <span class="cs-slider-label w-[72px] shrink-0 text-sm text-[var(--text-primary)]">字体大小</span>
+                <input type="range" class="cs-slider flex-1" data-key="fontSize" min="12" max="22" />
+                <span class="cs-slider-value min-w-[52px] text-right text-sm font-medium text-[var(--accent-color)]" data-value-for="fontSize"></span>
+              </div>
+            </div>
+          </div>
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">气泡大小</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <div class="cs-slider-row flex items-center gap-3 px-4 py-3.5">
+                <span class="cs-slider-label w-[72px] shrink-0 text-sm text-[var(--text-primary)]">气泡缩放</span>
+                <input type="range" class="cs-slider flex-1" data-key="bubbleScale" min="80" max="120" />
+                <span class="cs-slider-value min-w-[52px] text-right text-sm font-medium text-[var(--accent-color)]" data-value-for="bubbleScale"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 昵称 -->
+        <div class="settings-content hidden flex-col gap-4" data-content="nickname">
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">当前头像</div>
+            <div class="cs-card cs-avatar-row flex justify-around rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)] p-4">
+              <div class="cs-avatar-item flex flex-col items-center gap-2 text-xs text-[var(--text-secondary)]">
+                <div id="csPartnerAvatar" class="cs-avatar flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gradient-to-br from-[#ffe4ec] to-[#f4a0bc] text-2xl shadow-[0_2px_10px_rgba(232,164,184,0.2)]">梦</div>
+                <span>梦角</span>
+              </div>
+              <div class="cs-avatar-item flex flex-col items-center gap-2 text-xs text-[var(--text-secondary)]">
+                <div id="csMyAvatar" class="cs-avatar flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gradient-to-br from-[#fff0f4] to-[#e8d5e0] text-2xl text-[var(--text-primary)] shadow-[0_2px_10px_rgba(232,164,184,0.2)]">我</div>
+                <span>我</span>
+              </div>
+            </div>
+          </div>
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">梦角名称</div>
+            <div class="cs-card cs-input-row flex items-center gap-2.5 rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)] p-2.5">
+              <input type="text" id="partnerNameInput" maxlength="12" placeholder="梦角名称" class="min-w-0 flex-1 rounded-xl border border-[rgba(232,164,184,0.2)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-color)]" />
+              <button class="cs-save-btn shrink-0 rounded-xl bg-[rgba(232,164,184,0.12)] px-4 py-2 text-sm font-medium text-[var(--accent-color)] transition active:bg-[rgba(232,164,184,0.22)]" data-save="partnerName">保存</button>
+            </div>
+          </div>
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">我方名称</div>
+            <div class="cs-card cs-input-row flex items-center gap-2.5 rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)] p-2.5">
+              <input type="text" id="myNameInput" maxlength="12" placeholder="我方名称" class="min-w-0 flex-1 rounded-xl border border-[rgba(232,164,184,0.2)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent-color)]" />
+              <button class="cs-save-btn shrink-0 rounded-xl bg-[rgba(232,164,184,0.12)] px-4 py-2 text-sm font-medium text-[var(--accent-color)] transition active:bg-[rgba(232,164,184,0.22)]" data-save="myName">保存</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据 -->
+        <div class="settings-content hidden flex-col gap-4" data-content="data">
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">聊天记录</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)]">
+              <button id="exportChatBtn" type="button" class="setting-pill-row flex w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-left transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">⬇️</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">导出聊天记录</span>
+                <i data-lucide="download" class="h-4 w-4 text-[var(--text-secondary)]"></i>
+              </button>
+              <label class="setting-pill-row flex cursor-pointer items-center gap-3 border-t border-[rgba(232,164,184,0.08)] px-4 py-3.5 transition active:bg-[rgba(232,164,184,0.06)]">
+                <span class="setting-icon flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(232,164,184,0.1)] text-sm">⬆️</span>
+                <span class="setting-label flex-1 text-sm text-[var(--text-primary)]">导入聊天记录</span>
+                <i data-lucide="upload" class="h-4 w-4 text-[var(--text-secondary)]"></i>
+                <input type="file" id="importChatInput" accept=".json,application/json" class="hidden" />
+              </label>
+            </div>
+            <p class="px-1 text-xs text-[var(--text-secondary)]">导出为 JSON 文件，可用于备份或迁移到其它设备。</p>
+          </div>
+          <div class="cs-group flex flex-col gap-2">
+            <div class="cs-group-label px-1 text-xs font-semibold text-[var(--text-secondary)]">存储空间</div>
+            <div class="cs-card overflow-hidden rounded-2xl border border-[rgba(232,164,184,0.1)] bg-[rgba(232,164,184,0.05)] px-4 py-3.5">
+              <div id="storageInfo" class="text-sm text-[var(--text-primary)]">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 消息上下文菜单 -->
+  <div id="msgContextMenu" class="msg-context-menu fixed z-[100] hidden min-w-[120px] overflow-hidden rounded-[14px] border border-[rgba(232,164,184,0.18)] bg-white/95 shadow-[0_10px_30px_rgba(31,38,135,0.12)] backdrop-blur-md" style="display:none;">
+    <button class="msg-context-item block w-full px-4 py-3 text-left text-sm text-[var(--text-primary)] transition active:bg-[rgba(232,164,184,0.1)]" data-action="quote">引用回复</button>
+    <button class="msg-context-item block w-full border-t border-[rgba(232,164,184,0.1)] px-4 py-3 text-left text-sm text-[var(--text-primary)] transition active:bg-[rgba(232,164,184,0.1)]" data-action="recall">撤回</button>
+  </div>
+
+  <!-- 图片预览 -->
+  <div id="imagePreviewModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-sm" aria-hidden="true">
+    <img id="imagePreviewImg" src="" alt="预览" class="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl" />
+  </div>
 
   <style>
     * { -webkit-tap-highlight-color: transparent; }
-    html { -webkit-font-smoothing: antialiased; }
-    body {
-      font-family: var(--font-sans);
-      margin: 0;
-      height: 100vh;
-      overflow: hidden;
-      background: var(--chat-bg);
-      color: var(--text-primary);
-    }
 
     #chat-app {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
       background:
-        radial-gradient(ellipse 600px 360px at 20% 0%, hsl(343 80% 94% / 0.95), transparent 60%),
-        radial-gradient(ellipse 480px 300px at 90% 10%, hsl(343 72% 92% / 0.8), transparent 55%),
+        radial-gradient(ellipse 560px 340px at 18% 0%, hsl(343 80% 94% / 0.92), transparent 60%),
+        radial-gradient(ellipse 440px 280px at 88% 8%, hsl(343 72% 92% / 0.78), transparent 55%),
         linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
     }
 
-    /* 顶部信息栏 */
-    #partner-info {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 44px 16px 12px;
-      background: linear-gradient(135deg, #fff0f4 0%, #fde8ef 100%);
-      border-bottom: 1px solid rgba(232, 116, 154, 0.2);
-      box-shadow: 0 2px 12px rgba(232, 116, 154, 0.08);
-      position: relative;
-      z-index: 10;
-    }
-    @media (max-width: 479px) {
-      #partner-info { padding-top: 16px; }
-    }
-    .back-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: 15px; color: var(--accent-color);
-      text-decoration: none; padding: 6px 4px;
-      font-weight: 500; flex-shrink: 0;
-      transition: opacity 0.15s;
-    }
-    .back-btn:active { opacity: 0.6; }
-
-    .partner-avatar {
-      width: 40px; height: 40px; border-radius: 9999px;
-      flex-shrink: 0; display: grid; place-items: center;
-      font-size: 1.25rem;
-      background: radial-gradient(circle at 30% 25%, #ffe4ec, #f4a0bc);
-      border: 2px solid #fff;
-      box-shadow: 0 2px 8px -2px rgba(232, 116, 154, 0.25);
-      overflow: hidden;
-    }
-    .partner-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .partner-meta { flex: 1; min-width: 0; }
-    .partner-name {
-      font-family: var(--font-serif);
-      font-size: 16px; font-weight: 600;
-      color: var(--text-primary); line-height: 1.3;
-    }
-    .partner-status {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 12px; color: var(--text-secondary);
-    }
-    .status-dot {
-      width: 7px; height: 7px; border-radius: 9999px;
-      background: var(--accent-color);
-      animation: pulse 2.4s cubic-bezier(.2,.8,.2,1) infinite;
-    }
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.5; transform: scale(0.8); }
     }
+    .status-dot { animation: pulse 2.4s cubic-bezier(.2,.8,.2,1) infinite; }
 
-    .header-action {
-      flex-shrink: 0; width: 36px; height: 36px;
-      border-radius: 9999px; border: none;
-      background: rgba(232, 116, 154, 0.1);
-      color: var(--accent-color);
-      font-size: 1.1rem; cursor: pointer;
-      display: grid; place-items: center;
-      transition: background 0.15s, transform 0.1s;
-    }
-    .header-action:active { transform: scale(0.92); background: rgba(232, 116, 154, 0.2); }
-
-    /* 消息流 */
-    #message-stream {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 16px 14px 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      scrollbar-width: thin;
-    }
-    #message-stream::-webkit-scrollbar { width: 4px; }
-    #message-stream::-webkit-scrollbar-track { background: transparent; }
-    #message-stream::-webkit-scrollbar-thumb { background: rgba(232, 116, 154, 0.3); border-radius: 4px; }
-
-    /* 空状态 */
-    .empty-state {
-      position: absolute;
-      left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center; padding: 20px;
-      pointer-events: none; z-index: 1;
-    }
-    .empty-state-icon { position: relative; margin-bottom: 20px; }
-    .empty-state-icon .heart { font-size: 52px; opacity: 0.55; color: var(--accent-color); }
-    .empty-state-icon .chat-bubble {
-      position: absolute; bottom: -6px; right: -10px;
-      font-size: 26px; opacity: 0.65; color: var(--accent-color);
-    }
-    .empty-state-title {
-      font-size: 15px; font-weight: 600;
-      color: var(--accent-color); opacity: 0.9;
-      letter-spacing: 1px;
-    }
-    .empty-state-hint {
-      font-size: 12px; margin-top: 8px;
-      opacity: 0.65; letter-spacing: 0.5px;
-      color: var(--text-secondary);
+    @keyframes msgFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .msg-row {
       display: flex; align-items: flex-end; gap: 8px;
       max-width: 100%;
-      animation: msgFadeIn 0.3s cubic-bezier(.3,0,0,1) both;
-    }
-    @keyframes msgFadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      animation: msgFadeIn 0.32s cubic-bezier(.3,0,0,1) both;
     }
     .msg-row.right { justify-content: flex-end; }
+
+    .msg-col {
+      display: flex; flex-direction: column; gap: 3px;
+      max-width: 78%;
+    }
+    .msg-row.right .msg-col { align-items: flex-end; }
 
     .msg-avatar {
       width: 30px; height: 30px; border-radius: 9999px;
       flex-shrink: 0; display: grid; place-items: center;
       font-size: 1rem;
-      background: radial-gradient(circle at 30% 25%, #ffe4ec, #f4a0bc);
+      background: linear-gradient(135deg, #ffe4ec, #f4a0bc);
       border: 2px solid #fff;
+      box-shadow: 0 2px 8px -2px rgba(232, 164, 184, 0.25);
       overflow: hidden;
     }
     .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-    .msg-col {
-      display: flex; flex-direction: column; gap: 3px;
-      max-width: 76%;
-    }
-    .msg-row.right .msg-col { align-items: flex-end; }
-
-    /* 引用回复预览 */
-    .reply-quote {
-      font-size: 12px;
-      color: var(--text-secondary);
-      background: rgba(232, 116, 154, 0.06);
-      border-left: 2px solid rgba(232, 116, 154, 0.3);
-      padding: 4px 8px;
-      border-radius: 6px;
-      margin-bottom: 2px;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* 毛玻璃气泡 */
+    /* 手绘风消息气泡 */
     .message-sent, .message-received {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12));
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      border-top: 1px solid rgba(255, 255, 255, 0.65);
-      border-left: 1px solid rgba(255, 255, 255, 0.65);
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
-      color: #333333;
-      background-color: transparent;
+      position: relative;
       padding: 10px 14px;
       font-size: 14px;
       line-height: 1.55;
       word-break: break-word;
       overflow-wrap: break-word;
+      box-shadow: 0 6px 18px -4px rgba(232, 164, 184, 0.18), 0 2px 6px -2px rgba(232, 164, 184, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      color: var(--text-primary);
     }
-    .message-received { border-radius: 20px 20px 20px 5px; }
-    .message-sent { border-radius: 20px 20px 5px 20px; }
 
-    /* 纯表情/颜文字小气泡 */
+    .message-received {
+      background: linear-gradient(135deg, #fff 0%, #fff8fa 100%);
+      border-radius: 20px 20px 20px 5px;
+    }
+    .message-received::after {
+      content: "";
+      position: absolute;
+      left: -6px;
+      bottom: 8px;
+      width: 12px;
+      height: 12px;
+      background: #fff8fa;
+      border-left: 1px solid rgba(255,255,255,0.65);
+      border-bottom: 1px solid rgba(255,255,255,0.65);
+      border-radius: 0 0 0 10px;
+      transform: rotate(18deg);
+      box-shadow: -2px 2px 4px -2px rgba(232, 164, 184, 0.1);
+    }
+
+    .message-sent {
+      background: linear-gradient(135deg, #fff0f5 0%, #ffe4ed 100%);
+      border-radius: 20px 20px 5px 20px;
+    }
+    .message-sent::after {
+      content: "";
+      position: absolute;
+      right: -6px;
+      bottom: 8px;
+      width: 12px;
+      height: 12px;
+      background: #ffe4ed;
+      border-right: 1px solid rgba(255,255,255,0.65);
+      border-bottom: 1px solid rgba(255,255,255,0.65);
+      border-radius: 0 0 10px 0;
+      transform: rotate(-18deg);
+      box-shadow: 2px 2px 4px -2px rgba(232, 164, 184, 0.1);
+    }
+
     .message-emoji {
       font-size: 22px;
-      padding: 6px 12px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12));
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      border-radius: 16px;
+      padding: 7px 13px;
+      background: linear-gradient(135deg, #fff 0%, #fff8fa 100%);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: 18px;
       line-height: 1.4;
-    }
-
-    /* 表情图片气泡 */
-    .message-emoji-img {
-      padding: 6px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.12));
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      border-radius: 16px;
-      line-height: 0;
-    }
-    .message-emoji-img img {
-      max-width: 100px;
-      max-height: 100px;
-      border-radius: 10px;
-      display: block;
+      box-shadow: 0 5px 14px -4px rgba(232, 164, 184, 0.15);
     }
 
     .msg-meta {
@@ -268,33 +746,43 @@
     }
     .msg-status.read { color: var(--accent-color); }
 
-    /* 系统消息（拍一拍等） */
+    .reply-quote {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(232, 164, 184, 0.08);
+      border-left: 2px solid rgba(232, 164, 184, 0.35);
+      padding: 5px 10px;
+      border-radius: 10px;
+      margin-bottom: 2px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .system-msg {
       text-align: center;
       font-size: 12px;
       color: var(--text-secondary);
-      padding: 4px 12px;
+      padding: 5px 14px;
       margin: 4px auto;
-      background: rgba(232, 116, 154, 0.06);
+      background: rgba(232, 164, 184, 0.08);
       border-radius: 9999px;
       max-width: 90%;
       animation: msgFadeIn 0.3s ease both;
     }
 
-    /* 输入中指示器 */
     .typing-row {
       display: flex; align-items: flex-end; gap: 8px;
-      animation: msgFadeIn 0.3s cubic-bezier(.3,0,0,1) both;
+      animation: msgFadeIn 0.32s cubic-bezier(.3,0,0,1) both;
     }
     .typing-bubble {
-      background: linear-gradient(135deg, rgba(255,255,255,0.45), rgba(255,255,255,0.12));
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.45);
-      border-top: 1px solid rgba(255,255,255,0.65);
-      border-left: 1px solid rgba(255,255,255,0.65);
+      background: linear-gradient(135deg, #fff 0%, #fff8fa 100%);
+      border: 1px solid rgba(255, 255, 255, 0.65);
       border-radius: 20px 20px 20px 5px;
       padding: 14px 16px;
       display: flex; align-items: center; gap: 4px;
+      box-shadow: 0 5px 14px -4px rgba(232, 164, 184, 0.12);
     }
     .typing-dot {
       display: inline-block; width: 6px; height: 6px;
@@ -308,260 +796,6 @@
       30% { opacity: 1; transform: translateY(-3px); }
     }
 
-    /* 底部输入区 */
-    #input-area {
-      flex-shrink: 0;
-      display: flex; align-items: flex-end; gap: 8px;
-      padding: 10px 12px 24px;
-      background: var(--secondary-bg);
-      border-top: 1px solid rgba(232, 116, 154, 0.15);
-      position: relative; z-index: 10;
-    }
-    @media (max-width: 479px) {
-      #input-area { padding-bottom: 14px; }
-    }
-
-    .input-tool {
-      flex-shrink: 0; width: 38px; height: 38px;
-      border-radius: 9999px; border: none;
-      background: rgba(232, 116, 154, 0.08);
-      color: var(--accent-color);
-      font-size: 1.1rem; cursor: pointer;
-      display: grid; place-items: center;
-      transition: background 0.15s, transform 0.1s;
-    }
-    .input-tool:active { transform: scale(0.92); background: rgba(232, 116, 154, 0.18); }
-
-    #message-input {
-      flex: 1;
-      min-height: 42px;
-      max-height: 120px;
-      padding: 10px 16px;
-      border-radius: 20px;
-      border: 1.5px solid rgba(232, 116, 154, 0.25);
-      background: #fff;
-      color: var(--text-primary);
-      font-size: 14px;
-      font-family: var(--font-sans);
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      resize: none;
-      line-height: 1.4;
-      overflow-y: auto;
-      scrollbar-width: none;
-    }
-    #message-input::-webkit-scrollbar { display: none; }
-    #message-input::placeholder { color: var(--text-secondary); }
-    #message-input:focus {
-      border-color: var(--accent-color);
-      box-shadow: 0 0 0 3px rgba(232, 116, 154, 0.1);
-    }
-
-    #send-btn {
-      width: 42px; height: 42px;
-      flex-shrink: 0;
-      border-radius: 14px;
-      border: none;
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      display: grid; place-items: center;
-      transition: transform 0.15s, filter 0.15s;
-      box-shadow: 0 4px 14px rgba(232, 116, 154, 0.4);
-    }
-    #send-btn:active { transform: scale(0.94); }
-    #send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    /* 继续对话按钮 */
-    .continue-bar {
-      flex-shrink: 0;
-      display: flex; justify-content: center;
-      padding: 6px 16px 0;
-      background: var(--secondary-bg);
-    }
-    .continue-btn {
-      padding: 6px 20px;
-      border-radius: 9999px;
-      border: 1px solid rgba(232, 116, 154, 0.2);
-      background: rgba(255, 255, 255, 0.6);
-      color: var(--accent-color);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-      display: inline-flex; align-items: center; gap: 4px;
-    }
-    .continue-btn:active { transform: scale(0.96); background: rgba(232, 116, 154, 0.08); }
-    .continue-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* 快捷回复面板 */
-    .quick-panel {
-      flex-shrink: 0;
-      display: none;
-      padding: 8px 12px;
-      background: var(--secondary-bg);
-      border-top: 1px solid rgba(232, 116, 154, 0.1);
-      gap: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .quick-panel::-webkit-scrollbar { display: none; }
-    .quick-panel.show { display: flex; }
-    .quick-chip {
-      flex-shrink: 0;
-      padding: 7px 14px;
-      border-radius: 9999px;
-      border: 1px solid rgba(232, 116, 154, 0.2);
-      background: #fff;
-      color: var(--text-primary);
-      font-size: 13px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s, transform 0.1s;
-    }
-    .quick-chip:active { transform: scale(0.95); border-color: var(--accent-color); background: rgba(232, 116, 154, 0.06); }
-
-    /* 拍一拍面板 */
-    .poke-panel {
-      position: absolute;
-      bottom: 100%;
-      left: 0; right: 0;
-      background: var(--secondary-bg);
-      border-top: 1px solid rgba(232, 116, 154, 0.15);
-      padding: 12px 16px;
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 20;
-      max-height: 200px;
-      overflow-y: auto;
-      scrollbar-width: none;
-    }
-    .poke-panel::-webkit-scrollbar { display: none; }
-    .poke-panel.show { display: flex; }
-    .poke-item {
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(232, 116, 154, 0.12);
-      background: #fff;
-      color: var(--text-primary);
-      font-size: 14px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s, transform 0.1s;
-    }
-    .poke-item:active { transform: scale(0.98); border-color: var(--accent-color); background: rgba(232, 116, 154, 0.04); }
-
-    /* 表情包面板 */
-    .emoji-panel {
-      position: absolute;
-      bottom: 100%;
-      left: 0; right: 0;
-      background: var(--secondary-bg);
-      border-top: 1px solid rgba(232, 116, 154, 0.15);
-      padding: 12px 16px;
-      display: none;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 10px;
-      z-index: 20;
-      max-height: 240px;
-      overflow-y: auto;
-      scrollbar-width: thin;
-    }
-    .emoji-panel::-webkit-scrollbar { width: 4px; }
-    .emoji-panel::-webkit-scrollbar-thumb { background: rgba(232, 116, 154, 0.25); border-radius: 4px; }
-    .emoji-panel.show { display: grid; }
-    .emoji-item {
-      width: 100%;
-      aspect-ratio: 1;
-      border-radius: 10px;
-      border: 1px solid rgba(232, 116, 154, 0.12);
-      background: #fff;
-      padding: 6px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .emoji-item:hover { border-color: var(--accent-color); background: rgba(232, 116, 154, 0.04); }
-    .emoji-item:active { transform: scale(0.95); }
-    .emoji-item img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
-    .emoji-empty {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 20px;
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-
-    /* ===== 引用预览（输入区） ===== */
-    .quote-preview {
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      margin: 0 0 6px;
-      background: rgba(232, 116, 154, 0.08);
-      border-left: 3px solid rgba(232, 116, 154, 0.45);
-      border-radius: 10px;
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-    .quote-preview.show { display: flex !important; }
-    .quote-preview-text {
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .quote-preview-close {
-      width: 20px; height: 20px;
-      border-radius: 9999px;
-      border: none;
-      background: rgba(232, 116, 154, 0.15);
-      color: var(--accent-color);
-      font-size: 14px;
-      line-height: 1;
-      cursor: pointer;
-      display: grid; place-items: center;
-    }
-
-    /* ===== 上下文菜单 ===== */
-    .msg-context-menu {
-      position: fixed;
-      z-index: 100;
-      min-width: 120px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(232, 116, 154, 0.18);
-      border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(31, 38, 135, 0.12);
-      overflow: hidden;
-      animation: ctxFadeIn 0.15s ease both;
-    }
-    @keyframes ctxFadeIn {
-      from { opacity: 0; transform: scale(0.96); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .msg-context-item {
-      display: block; width: 100%;
-      padding: 11px 16px;
-      border: none;
-      background: transparent;
-      color: var(--text-primary);
-      font-size: 14px;
-      text-align: left;
-      cursor: pointer;
-      transition: background 0.12s;
-    }
-    .msg-context-item + .msg-context-item { border-top: 1px solid rgba(232, 116, 154, 0.1); }
-    .msg-context-item:active { background: rgba(232, 116, 154, 0.1); }
-
-    /* ===== 撤回消息样式 ===== */
     .message-recalled {
       font-size: 12px !important;
       font-style: italic;
@@ -570,134 +804,40 @@
       padding: 8px 14px !important;
     }
 
-    /* ===== 聊天设置面板 ===== */
-    .settings-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 80;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    .settings-modal.show { display: flex; }
-    .settings-backdrop {
-      position: absolute; inset: 0;
-      background: rgba(0, 0, 0, 0.25);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-    }
-    .settings-panel {
-      position: relative;
-      width: 100%;
-      max-width: 520px;
-      max-height: 85vh;
+    .poke-panel::-webkit-scrollbar, .quick-panel::-webkit-scrollbar, .settings-body::-webkit-scrollbar, #message-stream::-webkit-scrollbar, #message-input::-webkit-scrollbar { display: none; }
+
+    .poke-item {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(232, 164, 184, 0.12);
       background: #fff;
-      border-radius: 22px 22px 0 0;
-      box-shadow: 0 -8px 40px rgba(31, 38, 135, 0.12);
-      display: flex;
-      flex-direction: column;
-      animation: slideUp 0.25s cubic-bezier(.2,.8,.2,1) both;
-    }
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-    .settings-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 20px 10px;
-      border-bottom: 1px solid rgba(232, 116, 154, 0.1);
-    }
-    .settings-header h2 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
       color: var(--text-primary);
-    }
-    .settings-close {
-      width: 32px; height: 32px;
-      border-radius: 9999px;
-      border: none;
-      background: rgba(232, 116, 154, 0.1);
-      color: var(--accent-color);
-      font-size: 22px;
-      line-height: 1;
+      font-size: 14px;
       cursor: pointer;
-      display: grid; place-items: center;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
     }
-    .settings-tabs {
-      display: flex;
-      gap: 6px;
-      padding: 10px 14px 4px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      border-bottom: 1px solid rgba(232, 116, 154, 0.08);
-    }
-    .settings-tabs::-webkit-scrollbar { display: none; }
-    .settings-tab {
+    .poke-item:active { transform: scale(0.98); border-color: var(--accent-color); background: rgba(232, 164, 184, 0.04); }
+
+    .quick-chip {
       flex-shrink: 0;
-      padding: 8px 16px;
+      padding: 7px 14px;
       border-radius: 9999px;
-      border: 1px solid rgba(232, 116, 154, 0.15);
+      border: 1px solid rgba(232, 164, 184, 0.2);
       background: #fff;
-      color: var(--text-secondary);
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .settings-tab.active {
-      background: rgba(232, 116, 154, 0.12);
-      border-color: rgba(232, 116, 154, 0.3);
-      color: var(--accent-color);
-      font-weight: 500;
-    }
-    .settings-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 14px 16px 24px;
-      scrollbar-width: thin;
-    }
-    .settings-body::-webkit-scrollbar { width: 4px; }
-    .settings-body::-webkit-scrollbar-thumb { background: rgba(232, 116, 154, 0.25); border-radius: 4px; }
-    .settings-content { display: none; flex-direction: column; gap: 16px; }
-    .settings-content.active { display: flex; }
-
-    .cs-group { display: flex; flex-direction: column; gap: 8px; }
-    .cs-group-label {
+      color: var(--text-primary);
       font-size: 13px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      padding: 0 4px;
-    }
-    .cs-card {
-      background: rgba(232, 116, 154, 0.05);
-      border: 1px solid rgba(232, 116, 154, 0.1);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .setting-pill-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 13px 14px;
       cursor: pointer;
-      transition: background 0.12s;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      white-space: nowrap;
     }
-    .setting-pill-row + .setting-pill-row { border-top: 1px solid rgba(232, 116, 154, 0.08); }
-    .setting-pill-row:active { background: rgba(232, 116, 154, 0.06); }
-    .setting-icon {
-      width: 28px; height: 28px;
-      border-radius: 9999px;
-      background: rgba(232, 116, 154, 0.1);
-      display: grid; place-items: center;
-      font-size: 14px;
-      flex-shrink: 0;
-    }
-    .setting-label { flex: 1; font-size: 14px; color: var(--text-primary); }
+    .quick-chip:active { transform: scale(0.95); border-color: var(--accent-color); background: rgba(232, 164, 184, 0.06); }
+
     .setting-switch {
       appearance: none;
       -webkit-appearance: none;
       width: 46px; height: 26px;
       border-radius: 9999px;
-      background: rgba(0,0,0,0.12);
+      background: rgba(0,0,0,0.1);
       position: relative;
       cursor: pointer;
       flex-shrink: 0;
@@ -710,25 +850,18 @@
       width: 22px; height: 22px;
       border-radius: 9999px;
       background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
       transition: transform 0.2s;
     }
     .setting-switch:checked { background: var(--accent-color); }
     .setting-switch:checked::after { transform: translateX(20px); }
 
-    .cs-slider-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 13px 14px;
-    }
-    .cs-slider-row + .cs-slider-row { border-top: 1px solid rgba(232, 116, 154, 0.08); }
-    .cs-slider-label { width: 72px; font-size: 14px; color: var(--text-primary); flex-shrink: 0; }
     .cs-slider {
-      flex: 1;
       -webkit-appearance: none;
       appearance: none;
       height: 5px;
       border-radius: 9999px;
-      background: rgba(232, 116, 154, 0.15);
+      background: rgba(232, 164, 184, 0.15);
       outline: none;
     }
     .cs-slider::-webkit-slider-thumb {
@@ -737,7 +870,7 @@
       border-radius: 9999px;
       background: var(--accent-color);
       cursor: pointer;
-      box-shadow: 0 1px 4px rgba(232, 116, 154, 0.35);
+      box-shadow: 0 1px 4px rgba(232, 164, 184, 0.35);
     }
     .cs-slider::-moz-range-thumb {
       width: 18px; height: 18px;
@@ -745,90 +878,55 @@
       background: var(--accent-color);
       cursor: pointer;
       border: none;
-      box-shadow: 0 1px 4px rgba(232, 116, 154, 0.35);
-    }
-    .cs-slider-value {
-      min-width: 52px;
-      text-align: right;
-      font-size: 13px;
-      color: var(--accent-color);
-      font-weight: 500;
+      box-shadow: 0 1px 4px rgba(232, 164, 184, 0.35);
     }
 
-    .cs-option-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 12px 14px;
-    }
-    .cs-option-btn {
-      padding: 7px 12px;
-      border-radius: 9999px;
-      border: 1px solid rgba(232, 116, 154, 0.18);
-      background: #fff;
-      color: var(--text-primary);
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
     .cs-option-btn.active {
-      background: rgba(232, 116, 154, 0.14);
-      border-color: rgba(232, 116, 154, 0.45);
+      background: rgba(232, 164, 184, 0.14);
+      border-color: rgba(232, 164, 184, 0.45);
       color: var(--accent-color);
       font-weight: 500;
     }
 
-    .cs-avatar-row {
-      display: flex;
-      justify-content: space-around;
-      padding: 16px 14px;
-    }
-    .cs-avatar-item {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      font-size: 13px; color: var(--text-secondary);
-    }
-    .cs-avatar {
-      width: 56px; height: 56px; border-radius: 9999px;
-      display: grid; place-items: center;
-      font-size: 1.5rem;
-      background: radial-gradient(circle at 30% 25%, #ffe4ec, #f4a0bc);
-      border: 2px solid #fff;
-      box-shadow: 0 2px 10px rgba(232, 116, 154, 0.2);
-      overflow: hidden;
-    }
-    .cs-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .cs-input-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px;
-    }
-    .cs-input-row input {
-      flex: 1;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(232, 116, 154, 0.2);
-      background: #fff;
-      color: var(--text-primary);
-      font-size: 14px;
-      outline: none;
-    }
-    .cs-input-row input:focus { border-color: var(--accent-color); }
-    .cs-save-btn {
-      padding: 9px 16px;
-      border-radius: 12px;
-      border: none;
-      background: rgba(232, 116, 154, 0.12);
+    .settings-tab.active {
+      background: rgba(232, 164, 184, 0.14);
+      border-color: rgba(232, 164, 184, 0.45);
       color: var(--accent-color);
-      font-size: 13px;
       font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s;
     }
-    .cs-save-btn:active { background: rgba(232, 116, 154, 0.22); }
+
+    .settings-content.active { display: flex; }
+    .settings-modal.show { display: flex; }
+    .poke-panel.show { display: flex; }
+    .quick-panel.show { display: flex; }
+    .quote-preview.show { display: flex; }
+
+    /* 输入框默认收缩，聚焦/有内容时展开 */
+    #message-input {
+      min-height: 36px !important;
+      height: 36px;
+      transition: height 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.2s, border-color 0.2s;
+    }
+    #message-input:focus,
+    #message-input.expanded {
+      min-height: 42px !important;
+      height: auto;
+    }
+    #input-area {
+      padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .settings-panel { animation: slideUp 0.25s cubic-bezier(.2,.8,.2,1) both; }
 
     @media (max-width: 479px) {
-      .settings-panel { max-height: 88vh; border-radius: 18px 18px 0 0; }
-      .settings-header { padding: 14px 16px 8px; }
-      .settings-body { padding: 10px 12px 20px; }
+      #partner-info { padding-top: 44px; border-radius: 18px; margin-left: 10px; margin-right: 10px; }
+      #input-area { border-radius: 18px; margin-left: 10px; margin-right: 10px; margin-bottom: 10px; }
+      .settings-panel { border-radius: 20px 20px 0 0; max-height: 88vh; }
+      .message-sent, .message-received { max-width: 100%; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -839,7 +937,180 @@
       }
     }
 
-    /* ===== 拖拽小精灵 ===== */
+    /* 输入区小工具按钮 */
+    .input-tool-mini {
+      background: rgba(232, 164, 184, 0.08);
+    }
+    .input-tool-mini:active {
+      background: rgba(232, 164, 184, 0.18);
+    }
+
+    /* 表情面板 */
+    .sticker-panel.show { display: flex; }
+    .sticker-panel::-webkit-scrollbar { display: none; }
+    .sticker-item {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid rgba(232, 164, 184, 0.12);
+      cursor: pointer;
+      transition: transform 0.1s, background 0.15s;
+    }
+    .sticker-item:active { transform: scale(0.92); background: rgba(232, 164, 184, 0.08); }
+
+    /* 图片消息 */
+    .message-image {
+      max-width: 220px;
+      max-height: 320px;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      background: rgba(232, 164, 184, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 6px 18px -4px rgba(232, 164, 184, 0.18), 0 2px 6px -2px rgba(232, 164, 184, 0.1);
+    }
+    .message-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* 语音消息 */
+    .message-voice {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #fff 0%, #fff8fa 100%);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 6px 18px -4px rgba(232, 164, 184, 0.18), 0 2px 6px -2px rgba(232, 164, 184, 0.1);
+      cursor: pointer;
+      min-width: 120px;
+      max-width: 260px;
+      transition: transform 0.1s;
+    }
+    .message-voice:active { transform: scale(0.98); }
+    .message-sent.message-voice {
+      background: linear-gradient(135deg, #fff0f5 0%, #ffe4ed 100%);
+      flex-direction: row-reverse;
+    }
+    .voice-play-icon {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(232, 164, 184, 0.18);
+      color: var(--accent-color);
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .voice-wave-mini {
+      display: flex; align-items: center; gap: 2px;
+      flex: 1;
+    }
+    .voice-wave-mini span {
+      width: 3px; border-radius: 2px;
+      background: var(--accent-color);
+      opacity: 0.6;
+    }
+    .voice-wave-mini.playing span {
+      animation: voiceBar 0.8s ease-in-out infinite alternate;
+    }
+    .voice-wave-mini.playing span:nth-child(1) { animation-delay: 0s; }
+    .voice-wave-mini.playing span:nth-child(2) { animation-delay: 0.1s; }
+    .voice-wave-mini.playing span:nth-child(3) { animation-delay: 0.2s; }
+    .voice-wave-mini.playing span:nth-child(4) { animation-delay: 0.3s; }
+    .voice-wave-mini.playing span:nth-child(5) { animation-delay: 0.15s; }
+    @keyframes voiceBar {
+      from { height: 4px; opacity: 0.4; }
+      to { height: 16px; opacity: 1; }
+    }
+    .voice-duration {
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .voice-transcript {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      padding: 6px 10px;
+      background: rgba(232, 164, 184, 0.08);
+      border-radius: 10px;
+      border-left: 2px solid rgba(232, 164, 184, 0.35);
+      line-height: 1.5;
+    }
+    .voice-transcript-btn {
+      font-size: 11px;
+      color: var(--accent-color);
+      margin-top: 4px;
+      padding: 2px 0;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    /* 语音录制面板 */
+    .voice-panel.show { display: flex; }
+    .voice-record-btn.recording {
+      animation: voicePulse 1.2s ease-in-out infinite;
+      background: linear-gradient(135deg, #e8749a, #f4a0bc) !important;
+    }
+    @keyframes voicePulse {
+      0%, 100% { box-shadow: 0 8px 24px rgba(232, 164, 184, 0.45); transform: scale(1); }
+      50% { box-shadow: 0 8px 32px rgba(232, 164, 184, 0.65); transform: scale(1.05); }
+    }
+    .voice-bar {
+      animation: voiceWave 0.9s ease-in-out infinite alternate;
+    }
+    .voice-bar:nth-child(1) { animation-delay: 0s; }
+    .voice-bar:nth-child(2) { animation-delay: 0.15s; }
+    .voice-bar:nth-child(3) { animation-delay: 0.3s; }
+    .voice-bar:nth-child(4) { animation-delay: 0.45s; }
+    .voice-bar:nth-child(5) { animation-delay: 0.2s; }
+    .voice-bar:nth-child(6) { animation-delay: 0.35s; }
+    .voice-bar:nth-child(7) { animation-delay: 0.5s; }
+    .voice-panel:not(.recording) .voice-bar { animation-play-state: paused; opacity: 0.3; }
+    @keyframes voiceWave {
+      from { transform: scaleY(0.4); opacity: 0.5; }
+      to { transform: scaleY(1); opacity: 1; }
+    }
+
+    /* 搜索结果 */
+    .search-result-item {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid rgba(232, 164, 184, 0.1);
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .search-result-item:active { transform: scale(0.98); background: rgba(232, 164, 184, 0.06); }
+    .search-result-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .search-result-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.5;
+      word-break: break-all;
+    }
+    .search-highlight {
+      background: rgba(232, 164, 184, 0.35);
+      border-radius: 4px;
+      padding: 0 2px;
+    }
+
+    /* 图片预览 */
+    #imagePreviewModal.show { display: flex; }
+
     #spark-companion {
       position: absolute;
       width: 92px;
@@ -876,275 +1147,10 @@
       #spark-companion { animation: none !important; }
     }
   </style>
-</head>
-<body>
-  <div id="chat-app">
-    <div id="spark-companion" aria-label="小精灵拖拽"></div>
-
-    <header id="partner-info">
-      <a href="index-new.html" class="back-btn">← 返回</a>
-      <div class="partner-avatar" id="partnerAvatar" aria-hidden="true">梦</div>
-      <div class="partner-meta">
-        <div class="partner-name" id="partnerName">梦角</div>
-        <div class="partner-status">
-          <span class="status-dot"></span>
-          <span id="statusText">在线</span>
-        </div>
-      </div>
-      <button class="header-action" id="settingsBtn" aria-label="聊天设置" title="聊天设置">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
-      <button class="header-action" id="clearBtn" aria-label="清空对话" title="清空对话">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-      </button>
-    </header>
-
-    <main id="message-stream" aria-live="polite" style="position:relative;">
-      <div class="empty-state" id="emptyState">
-        <div class="empty-state-icon">
-          <span class="heart">❤</span>
-          <span class="chat-bubble">💬</span>
-        </div>
-        <p class="empty-state-title">✦ 我们的故事，始于此刻 ✦</p>
-        <p class="empty-state-hint">说点什么，让对话开始吧</p>
-      </div>
-    </main>
-
-    <div class="continue-bar" id="continueBar" style="display:none;">
-      <button class="continue-btn" id="continueBtn" type="button">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
-        让梦角继续说
-      </button>
-    </div>
-
-    <div class="quick-panel" id="quickPanel"></div>
-
-    <footer id="input-area" style="position:relative;">
-      <div class="poke-panel" id="pokePanel"></div>
-      <div class="emoji-panel" id="emojiPanel"></div>
-      <button class="input-tool" id="pokeBtn" aria-label="拍一拍" title="拍一拍">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
-      </button>
-      <button class="input-tool" id="emojiBtn" aria-label="表情包" title="表情包">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-      </button>
-      <button class="input-tool" id="quickBtn" aria-label="快捷回复" title="快捷回复">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      </button>
-      <form id="chat-form" style="display:flex; flex-direction:column; flex:1; margin:0;">
-        <label for="message-input" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">输入消息</label>
-        <div id="quotePreview" class="quote-preview" style="display:none;">
-          <span class="quote-preview-text"></span>
-          <button type="button" class="quote-preview-close" aria-label="取消引用">×</button>
-        </div>
-        <div style="display:flex; align-items:flex-end; gap:8px;">
-          <textarea id="message-input" placeholder="说点什么…" autocomplete="off" maxlength="500" rows="1"></textarea>
-          <button type="submit" id="send-btn" aria-label="发送">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
-            </svg>
-          </button>
-        </div>
-      </form>
-    </footer>
-
-  </div>
-
-  <!-- 聊天设置面板 -->
-  <div id="settingsModal" class="settings-modal" aria-hidden="true">
-    <div class="settings-backdrop"></div>
-    <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-      <div class="settings-header">
-        <h2 id="settingsTitle">聊天设置</h2>
-        <button class="settings-close" id="settingsClose" aria-label="关闭设置">×</button>
-      </div>
-      <div class="settings-tabs">
-        <button class="settings-tab active" data-tab="features">功能</button>
-        <button class="settings-tab" data-tab="rhythm">节奏</button>
-        <button class="settings-tab" data-tab="sound">音效</button>
-        <button class="settings-tab" data-tab="display">显示</button>
-        <button class="settings-tab" data-tab="nickname">昵称</button>
-      </div>
-      <div class="settings-body">
-        <!-- 功能 -->
-        <div class="settings-content active" data-content="features">
-          <div class="cs-group">
-            <div class="cs-group-label">消息交互</div>
-            <div class="cs-card">
-              <label class="setting-pill-row">
-                <span class="setting-icon">💬</span>
-                <span class="setting-label">引用回复</span>
-                <input type="checkbox" class="setting-switch" data-key="quoteReply" />
-              </label>
-              <label class="setting-pill-row">
-                <span class="setting-icon">✓</span>
-                <span class="setting-label">已读回执</span>
-                <input type="checkbox" class="setting-switch" data-key="readReceipts" />
-              </label>
-              <label class="setting-pill-row">
-                <span class="setting-icon">👁</span>
-                <span class="setting-label">已读不回</span>
-                <input type="checkbox" class="setting-switch" data-key="readNoReply" />
-              </label>
-              <label class="setting-pill-row">
-                <span class="setting-icon">⌨️</span>
-                <span class="setting-label">正在输入</span>
-                <input type="checkbox" class="setting-switch" data-key="typingIndicator" />
-              </label>
-              <label class="setting-pill-row">
-                <span class="setting-icon">⏎</span>
-                <span class="setting-label">回车键发送</span>
-                <input type="checkbox" class="setting-switch" data-key="enterToSend" />
-              </label>
-            </div>
-          </div>
-          <div class="cs-group">
-            <div class="cs-group-label">时间戳</div>
-            <div class="cs-card">
-              <div class="cs-option-row" data-key="timeFormat">
-                <button class="cs-option-btn" data-value="HH:mm">HH:mm</button>
-                <button class="cs-option-btn" data-value="HH:mm:ss">HH:mm:ss</button>
-                <button class="cs-option-btn" data-value="h:mm A">h:mm AM/PM</button>
-                <button class="cs-option-btn" data-value="h:mm:ss A">h:mm:ss AM/PM</button>
-                <button class="cs-option-btn" data-value="off">关闭时间戳</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 节奏 -->
-        <div class="settings-content" data-content="rhythm">
-          <div class="cs-group">
-            <div class="cs-group-label">回复速度</div>
-            <div class="cs-card">
-              <div class="cs-slider-row">
-                <span class="cs-slider-label">最短等待</span>
-                <input type="range" class="cs-slider" data-key="replyDelayMin" min="1" max="600" />
-                <span class="cs-slider-value" data-value-for="replyDelayMin"></span>
-              </div>
-              <div class="cs-slider-row">
-                <span class="cs-slider-label">最长等待</span>
-                <input type="range" class="cs-slider" data-key="replyDelayMax" min="1" max="600" />
-                <span class="cs-slider-value" data-value-for="replyDelayMax"></span>
-              </div>
-            </div>
-          </div>
-          <div class="cs-group">
-            <div class="cs-group-label">主动发送</div>
-            <div class="cs-card">
-              <label class="setting-pill-row">
-                <span class="setting-icon">🕊</span>
-                <span class="setting-label">主动发消息给我</span>
-                <input type="checkbox" class="setting-switch" data-key="autoSend" />
-              </label>
-              <div class="cs-slider-row">
-                <span class="cs-slider-label">间隔</span>
-                <input type="range" class="cs-slider" data-key="autoSendInterval" min="1" max="120" />
-                <span class="cs-slider-value" data-value-for="autoSendInterval"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 音效 -->
-        <div class="settings-content" data-content="sound">
-          <div class="cs-group">
-            <div class="cs-group-label">开关</div>
-            <div class="cs-card">
-              <label class="setting-pill-row">
-                <span class="setting-icon">🔔</span>
-                <span class="setting-label">消息音效</span>
-                <input type="checkbox" class="setting-switch" data-key="soundEnabled" />
-              </label>
-            </div>
-          </div>
-          <div class="cs-group">
-            <div class="cs-group-label">音量</div>
-            <div class="cs-card">
-              <div class="cs-slider-row">
-                <span class="cs-slider-label">音量</span>
-                <input type="range" class="cs-slider" data-key="soundVolume" min="0" max="100" />
-                <span class="cs-slider-value" data-value-for="soundVolume"></span>
-              </div>
-            </div>
-          </div>
-          <div class="cs-group">
-            <div class="cs-group-label">提示音选择</div>
-            <div class="cs-card">
-              <div class="cs-option-row" data-key="soundPreset">
-                <button class="cs-option-btn" data-value="default">默认</button>
-                <button class="cs-option-btn" data-value="soft">柔和</button>
-                <button class="cs-option-btn" data-value="crisp">清脆</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 显示 -->
-        <div class="settings-content" data-content="display">
-          <div class="cs-group">
-            <div class="cs-group-label">字体大小</div>
-            <div class="cs-card">
-              <div class="cs-slider-row">
-                <span class="cs-slider-label">字体大小</span>
-                <input type="range" class="cs-slider" data-key="fontSize" min="12" max="22" />
-                <span class="cs-slider-value" data-value-for="fontSize"></span>
-              </div>
-            </div>
-          </div>
-          <div class="cs-group">
-            <div class="cs-group-label">气泡大小</div>
-            <div class="cs-card">
-              <div class="cs-slider-row">
-                <span class="cs-slider-label">气泡缩放</span>
-                <input type="range" class="cs-slider" data-key="bubbleScale" min="80" max="120" />
-                <span class="cs-slider-value" data-value-for="bubbleScale"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 昵称 -->
-        <div class="settings-content" data-content="nickname">
-          <div class="cs-group">
-            <div class="cs-group-label">当前头像</div>
-            <div class="cs-card cs-avatar-row">
-              <div class="cs-avatar-item">
-                <div class="cs-avatar" id="csPartnerAvatar">梦</div>
-                <span>梦角</span>
-              </div>
-              <div class="cs-avatar-item">
-                <div class="cs-avatar" id="csMyAvatar">我</div>
-                <span>我</span>
-              </div>
-            </div>
-          </div>
-          <div class="cs-group">
-            <div class="cs-group-label">梦角名称</div>
-            <div class="cs-card cs-input-row">
-              <input type="text" id="partnerNameInput" maxlength="12" placeholder="梦角名称" />
-              <button class="cs-save-btn" data-save="partnerName">保存</button>
-            </div>
-          </div>
-          <div class="cs-group">
-            <div class="cs-group-label">我方名称</div>
-            <div class="cs-card cs-input-row">
-              <input type="text" id="myNameInput" maxlength="12" placeholder="我方名称" />
-              <button class="cs-save-btn" data-save="myName">保存</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 消息上下文菜单 -->
-  <div id="msgContextMenu" class="msg-context-menu" style="display:none;">
-    <button class="msg-context-item" data-action="quote">引用回复</button>
-    <button class="msg-context-item" data-action="recall">撤回</button>
-  </div>
 
   <script>
+    lucide.createIcons();
+
     (function () {
       "use strict";
 
@@ -1175,6 +1181,9 @@
         replyDelayMax: 20000,
         autoSend: false,
         autoSendInterval: 5,
+        autoPoke: true,
+        autoPokeInterval: 5,
+        customPokeMessages: [],
         soundEnabled: true,
         soundVolume: 50,
         soundPreset: "default",
@@ -1275,17 +1284,31 @@
       ];
 
       /* ===== 对方主动拍一拍文案 ===== */
-      var PARTNER_POKE_MESSAGES = [
+      var DEFAULT_PARTNER_POKE_MESSAGES = [
         "梦角拍了拍你的头", "梦角戳了戳你的脸", "梦角靠在你的肩上",
         "梦角牵起了你的手", "梦角揉了揉你的头发", "梦角抱了抱你",
         "梦角捏了捏你的脸", "梦角拉了拉你的衣角"
       ];
 
       /* ===== 用户拍一拍选项 ===== */
-      var POKE_OPTIONS = [
+      var DEFAULT_POKE_OPTIONS = [
         "拍了拍梦角", "抱住了梦角", "戳了戳梦角的脸", "牵着梦角的手",
         "靠在梦角肩上", "摸了摸梦角的头", "拉了拉梦角的衣角", "揉了揉梦角的头发"
       ];
+
+      function getPokeOptions() {
+        var customs = chatSettings.customPokeMessages;
+        if (Array.isArray(customs) && customs.length > 0) return customs;
+        return DEFAULT_POKE_OPTIONS;
+      }
+      function getPartnerPokeMessages() {
+        var customs = chatSettings.customPokeMessages;
+        var pName = chatSettings.partnerName || "梦角";
+        if (Array.isArray(customs) && customs.length > 0) {
+          return customs.map(function (m) { return pName + m; });
+        }
+        return DEFAULT_PARTNER_POKE_MESSAGES;
+      }
 
       /* ===== 快捷回复 ===== */
       var QUICK_REPLIES = [
@@ -1316,6 +1339,44 @@
       var quotePreviewText = quotePreview.querySelector(".quote-preview-text");
       var quotePreviewClose = quotePreview.querySelector(".quote-preview-close");
       var msgContextMenu = document.getElementById("msgContextMenu");
+      var pokeMessagesInput = document.getElementById("pokeMessagesInput");
+
+      // 搜索
+      var searchBtn = document.getElementById("searchBtn");
+      var searchModal = document.getElementById("searchModal");
+      var searchClose = document.getElementById("searchClose");
+      var searchInput = document.getElementById("searchInput");
+      var searchClear = document.getElementById("searchClear");
+      var searchResults = document.getElementById("searchResults");
+      var searchStats = document.getElementById("searchStats");
+
+      // 图片
+      var imageBtn = document.getElementById("imageBtn");
+      var imageInput = document.getElementById("imageInput");
+
+      // 语音
+      var voiceBtn = document.getElementById("voiceBtn");
+      var voicePanel = document.getElementById("voicePanel");
+      var voiceRecordBtn = document.getElementById("voiceRecordBtn");
+      var voiceCancelBtn = document.getElementById("voiceCancelBtn");
+      var voiceHint = document.getElementById("voiceHint");
+      var voiceTimer = document.getElementById("voiceTimer");
+      var voiceWave = document.getElementById("voiceWave");
+
+      // 表情
+      var stickerBtn = document.getElementById("stickerBtn");
+      var stickerPanel = document.getElementById("stickerPanel");
+      var stickerList = document.getElementById("stickerList");
+      var stickerManageBtn = document.getElementById("stickerManageBtn");
+
+      // 导入导出
+      var exportChatBtn = document.getElementById("exportChatBtn");
+      var importChatInput = document.getElementById("importChatInput");
+      var storageInfo = document.getElementById("storageInfo");
+
+      // 图片预览
+      var imagePreviewModal = document.getElementById("imagePreviewModal");
+      var imagePreviewImg = document.getElementById("imagePreviewImg");
 
       /* ===== 状态 ===== */
       var isReplying = false;
@@ -1325,7 +1386,20 @@
       var pendingQuote = null;
       var contextTarget = null;
       var autoSendTimer = null;
+      var pokeTimer = null;
       var lastActivity = Date.now();
+      var lastPartnerMessageAt = Date.now();
+
+      // 语音状态
+      var voiceRecorder = null;
+      var voiceStream = null;
+      var voiceChunks = [];
+      var voiceStartTime = 0;
+      var voiceTimerInterval = null;
+      var voiceMaxDuration = 60;
+      var voiceCancelled = false;
+      var currentPlayingAudio = null;
+      var currentPlayingWave = null;
 
       /* ===== 存储工具 ===== */
       function getMessages() {
@@ -1433,7 +1507,7 @@
         var saved = "";
         try { saved = localStorage.getItem(DREAM_IMG_KEY) || ""; } catch (e) {}
         if (saved) av.innerHTML = '<img src="' + saved + '" alt="" />';
-        else av.textContent = "梦";
+        else av.textContent = (chatSettings.partnerName || "梦角").charAt(0);
         return av;
       }
 
@@ -1485,6 +1559,7 @@
         var read = opts.read !== false;
         var replyTo = opts.replyTo || null;
         var isEmoji = opts.isEmoji || false;
+        var type = opts.type || "text";
         var scroll = opts.scroll !== false;
         var msgId = opts.id || null;
         var recalled = opts.recalled || false;
@@ -1505,23 +1580,49 @@
           col.appendChild(quote);
         }
 
-        var bubble = document.createElement("div");
+        var bubble;
         if (recalled) {
-          bubble.className = side === "right" ? "message-sent message-recalled" : "message-received message-recalled";
+          bubble = document.createElement("div");
+          bubble.className = "message-sent message-recalled";
           bubble.textContent = text;
+        } else if (type === "image") {
+          bubble = document.createElement("div");
+          bubble.className = "message-image";
+          var img = document.createElement("img");
+          img.src = text;
+          img.alt = "图片";
+          img.loading = "lazy";
+          bubble.appendChild(img);
+          bubble.addEventListener("click", function () {
+            imagePreviewImg.src = text;
+            imagePreviewModal.classList.add("show");
+            imagePreviewModal.setAttribute("aria-hidden", "false");
+          });
+        } else if (type === "voice") {
+          bubble = createVoiceBubble({
+            audio: text,
+            duration: opts.duration || 0,
+            side: side,
+            transcript: opts.transcript || "",
+            showTranscript: opts.showTranscript
+          });
         } else if (isEmoji) {
+          bubble = document.createElement("div");
           bubble.className = "message-emoji";
           bubble.textContent = text;
         } else {
+          bubble = document.createElement("div");
           bubble.className = side === "right" ? "message-sent" : "message-received";
           bubble.textContent = text;
         }
-        // 应用字体大小与气泡缩放
-        var fontSize = chatSettings.fontSize || 14;
-        var bubbleScale = (chatSettings.bubbleScale || 100) / 100;
-        bubble.style.fontSize = (fontSize * (isEmoji ? 1.5 : 1)) + "px";
-        bubble.style.transform = "scale(" + bubbleScale + ")";
-        bubble.style.transformOrigin = side === "right" ? "bottom right" : "bottom left";
+        // 应用字体大小与气泡缩放（仅文本/表情）
+        if (type !== "image" && type !== "voice") {
+          var fontSize = chatSettings.fontSize || 14;
+          var bubbleScale = (chatSettings.bubbleScale || 100) / 100;
+          bubble.style.fontSize = (fontSize * (isEmoji ? 1.5 : 1)) + "px";
+          bubble.style.transform = "scale(" + bubbleScale + ")";
+          bubble.style.transformOrigin = side === "right" ? "bottom right" : "bottom left";
+        }
         col.appendChild(bubble);
 
         var metaEl = document.createElement("div");
@@ -1559,6 +1660,114 @@
         return el;
       }
 
+      /* ===== 语音消息气泡 ===== */
+      function createVoiceBubble(opts) {
+        var audioSrc = opts.audio || "";
+        var duration = opts.duration || 0;
+        var side = opts.side || "left";
+        var transcript = opts.transcript || "";
+        var showTranscript = opts.showTranscript;
+
+        var wrapper = document.createElement("div");
+        wrapper.className = "voice-bubble-wrapper";
+        wrapper.style.display = "flex";
+        wrapper.style.flexDirection = "column";
+        wrapper.style.alignItems = side === "right" ? "flex-end" : "flex-start";
+        wrapper.style.maxWidth = "78%";
+
+        var bubble = document.createElement("div");
+        bubble.className = "message-voice" + (side === "right" ? " message-sent" : "");
+        bubble.dataset.audio = audioSrc;
+
+        var icon = document.createElement("div");
+        icon.className = "voice-play-icon";
+        icon.innerHTML = '<i data-lucide="play" class="h-3.5 w-3.5"></i>';
+
+        var wave = document.createElement("div");
+        wave.className = "voice-wave-mini";
+        wave.innerHTML = "<span></span><span></span><span></span><span></span><span></span>";
+        wave.querySelectorAll("span").forEach(function (bar) { bar.style.height = Math.floor(6 + Math.random() * 10) + "px"; });
+
+        var dur = document.createElement("span");
+        dur.className = "voice-duration";
+        dur.textContent = (window.MengjiaoVoiceUtils ? window.MengjiaoVoiceUtils.formatDuration(duration) : duration + "''");
+
+        bubble.appendChild(icon);
+        bubble.appendChild(wave);
+        bubble.appendChild(dur);
+
+        bubble.addEventListener("click", function () {
+          playVoiceMessage(bubble, icon, wave, audioSrc);
+        });
+
+        wrapper.appendChild(bubble);
+
+        // 梦角语音支持转文字
+        if (side === "left" && transcript) {
+          var transcriptBox = document.createElement("div");
+          transcriptBox.className = "voice-transcript";
+          transcriptBox.style.display = showTranscript ? "block" : "none";
+          transcriptBox.textContent = transcript;
+          wrapper.appendChild(transcriptBox);
+
+          if (!showTranscript) {
+            var transcriptBtn = document.createElement("button");
+            transcriptBtn.type = "button";
+            transcriptBtn.className = "voice-transcript-btn";
+            transcriptBtn.textContent = "转文字";
+            transcriptBtn.addEventListener("click", function (e) {
+              e.stopPropagation();
+              transcriptBox.style.display = "block";
+              transcriptBtn.style.display = "none";
+            });
+            wrapper.appendChild(transcriptBtn);
+          }
+        }
+
+        return wrapper;
+      }
+
+      function playVoiceMessage(bubble, icon, wave, audioSrc) {
+        if (currentPlayingAudio) {
+          currentPlayingAudio.pause();
+          currentPlayingAudio.currentTime = 0;
+          if (currentPlayingWave) currentPlayingWave.classList.remove("playing");
+          var prevIcon = currentPlayingAudio._playIcon;
+          if (prevIcon) prevIcon.innerHTML = '<i data-lucide="play" class="h-3.5 w-3.5"></i>';
+          lucide.createIcons();
+          if (currentPlayingAudio.src === audioSrc) {
+            currentPlayingAudio = null;
+            currentPlayingWave = null;
+            return;
+          }
+        }
+
+        var audio = new Audio(audioSrc);
+        currentPlayingAudio = audio;
+        currentPlayingWave = wave;
+        audio._playIcon = icon;
+
+        icon.innerHTML = '<i data-lucide="pause" class="h-3.5 w-3.5"></i>';
+        wave.classList.add("playing");
+        lucide.createIcons();
+
+        audio.play().catch(function () {
+          icon.innerHTML = '<i data-lucide="play" class="h-3.5 w-3.5"></i>';
+          wave.classList.remove("playing");
+          lucide.createIcons();
+          currentPlayingAudio = null;
+          currentPlayingWave = null;
+        });
+
+        audio.addEventListener("ended", function () {
+          icon.innerHTML = '<i data-lucide="play" class="h-3.5 w-3.5"></i>';
+          wave.classList.remove("playing");
+          lucide.createIcons();
+          currentPlayingAudio = null;
+          currentPlayingWave = null;
+        });
+      }
+
       function renderAll() {
         // 保留 emptyState，清除其他子元素
         var children = stream.querySelectorAll(".msg-row, .system-msg, .typing-row");
@@ -1579,7 +1788,12 @@
             addMessage({
               text: msg.text, side: msg.side, time: msg.time,
               read: msg.read !== false, replyTo: msg.replyTo, scroll: false,
-              id: msg.id, recalled: msg.recalled
+              id: msg.id, recalled: msg.recalled,
+              type: msg.type || "text", isEmoji: msg.isEmoji,
+              duration: msg.duration,
+              transcript: msg.transcript,
+              showTranscript: msg.showTranscript,
+              voiceCardId: msg.voiceCardId
             });
           }
         });
@@ -1635,6 +1849,8 @@
           e.preventDefault();
           e.stopPropagation();
           var text = bubble.textContent || "";
+          if (bubble.querySelector && bubble.querySelector("img")) text = "[图片]";
+          if (bubble.classList.contains("message-voice") || (bubble.querySelector && bubble.querySelector(".message-voice"))) text = "[语音]";
           contextTarget = { row: row, side: side, text: text, id: row.dataset.id };
           var x = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
           var y = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
@@ -1843,8 +2059,8 @@
         if (chatSettings.typingIndicator) statusText.textContent = "正在输入…";
 
         // 3% 概率：对方主动拍一拍
-        if (chance(0.03)) {
-          var pokeText = pick(PARTNER_POKE_MESSAGES);
+        if (chatSettings.autoPoke !== false && chance(0.03)) {
+          var pokeText = pick(getPartnerPokeMessages());
           var typing0 = showTyping();
           setTimeout(function () {
             removeTyping(typing0);
@@ -1860,6 +2076,15 @@
 
         // 随机条数：75% → 1, 20% → 2, 5% → 3
         var replyCount = chance(0.75) ? 1 : (chance(0.80) ? 2 : 3);
+
+        // 语音字卡：单条回复时 25% 概率发语音（需先上传语音字卡）
+        var voiceCard = null;
+        if (replyCount === 1 && window.MengjiaoVoiceUtils) {
+          var cards = window.MengjiaoVoiceUtils.getCards();
+          if (cards.length > 0 && chance(0.25)) {
+            voiceCard = window.MengjiaoVoiceUtils.pickCard();
+          }
+        }
 
         // 引用目标（首条 30% 概率引用最近用户消息）
         var recentUserMsgs = getRecentUserMsgs();
@@ -1877,6 +2102,39 @@
 
           (function (idx, isLast, quote) {
             setTimeout(function () {
+              // 发送语音字卡（仅首条）
+              if (idx === 0 && voiceCard) {
+                var vtime = nowTime();
+                var vreplyId = "msg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+                addMessage({
+                  text: voiceCard.audio,
+                  side: "left",
+                  time: vtime,
+                  read: true,
+                  type: "voice",
+                  duration: voiceCard.duration,
+                  transcript: voiceCard.text,
+                  id: vreplyId
+                });
+                playMessageSound();
+                var vmessages = getMessages();
+                vmessages.push({
+                  side: "left",
+                  text: voiceCard.audio,
+                  time: vtime,
+                  read: true,
+                  type: "voice",
+                  duration: voiceCard.duration,
+                  transcript: voiceCard.text,
+                  voiceCardId: voiceCard.id,
+                  id: vreplyId,
+                  ts: new Date().toISOString()
+                });
+                saveMessages(vmessages);
+                if (isLast) finishReply();
+                return;
+              }
+
               // 偶尔单独发一条纯表情/颜文字（非首条，10% 概率）
               if (idx > 0 && chance(0.10)) {
                 var emojiText = pick(EMOJI_POOL);
@@ -1937,6 +2195,7 @@
         continueBar.style.display = "flex";
         input.focus();
         if (chatSettings.autoSend) resetIdleTimer();
+        if (chatSettings.autoPoke) resetPokeTimer();
       }
 
       /* ===== 发送消息 ===== */
@@ -1961,16 +2220,214 @@
         })(); } catch (e) {}
 
         input.value = "";
-        input.style.height = "auto";
+        input.classList.remove("expanded");
+        input.style.height = "36px";
+        input.style.overflow = "hidden";
         lastUserText = text;
         resetIdleTimer();
-
         if (chatSettings.readNoReply) {
           markUserRead();
           continueBar.style.display = "flex";
         } else {
           simulateReply();
         }
+      }
+
+      /* ===== 发送图片消息 ===== */
+      function sendImageMessage(dataUrl) {
+        if (!dataUrl || isReplying) return;
+        var time = nowTime();
+        var msgId = "msg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+        var msgTs = new Date().toISOString();
+
+        addMessage({ text: dataUrl, side: "right", time: time, read: false, id: msgId, type: "image" });
+
+        var messages = getMessages();
+        messages.push({ side: "right", text: dataUrl, time: time, read: false, id: msgId, type: "image", ts: msgTs });
+        saveMessages(messages);
+
+        lastActivity = Date.now();
+        resetIdleTimer();
+        if (chatSettings.autoPoke) resetPokeTimer();
+        if (chatSettings.readNoReply) {
+          markUserRead();
+          continueBar.style.display = "flex";
+        } else {
+          simulateReply();
+        }
+      }
+
+      /* ===== 发送语音消息 ===== */
+      function sendVoiceMessage(audioBase64, durationSec) {
+        if (!audioBase64 || isReplying) return;
+        var time = nowTime();
+        var msgId = "msg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+        var msgTs = new Date().toISOString();
+
+        addMessage({
+          text: audioBase64,
+          side: "right",
+          time: time,
+          read: false,
+          id: msgId,
+          type: "voice",
+          duration: durationSec
+        });
+
+        var messages = getMessages();
+        messages.push({
+          side: "right",
+          text: audioBase64,
+          time: time,
+          read: false,
+          id: msgId,
+          type: "voice",
+          duration: durationSec,
+          ts: msgTs
+        });
+        saveMessages(messages);
+
+        lastActivity = Date.now();
+        resetIdleTimer();
+        if (chatSettings.autoPoke) resetPokeTimer();
+        if (chatSettings.readNoReply) {
+          markUserRead();
+          continueBar.style.display = "flex";
+        } else {
+          simulateReply();
+        }
+      }
+
+      /* ===== 语音录制 ===== */
+      function openVoicePanel() {
+        if (!window.MengjiaoVoiceUtils || !window.MengjiaoVoiceUtils.isRecordingSupported()) {
+          addSystemMessage("当前浏览器不支持录音，请使用 Chrome / Edge / Safari 并允许麦克风权限");
+          return;
+        }
+        voiceCancelled = false;
+        voicePanel.classList.add("show");
+        voicePanel.setAttribute("aria-hidden", "false");
+        voiceHint.textContent = "按住下方按钮开始录音";
+        voiceTimer.textContent = "00:00";
+        voicePanel.classList.remove("recording");
+        voiceRecordBtn.classList.remove("recording");
+        if (window.lucide) lucide.createIcons();
+      }
+      function closeVoicePanel() {
+        voiceCancelled = false;
+        stopRecording();
+        voicePanel.classList.remove("show");
+        voicePanel.classList.remove("recording");
+        voicePanel.setAttribute("aria-hidden", "true");
+        voiceRecordBtn.classList.remove("recording");
+      }
+      function cancelVoicePanel() {
+        voiceCancelled = true;
+        stopRecording();
+        voicePanel.classList.remove("show");
+        voicePanel.classList.remove("recording");
+        voicePanel.setAttribute("aria-hidden", "true");
+        voiceRecordBtn.classList.remove("recording");
+      }
+      function startRecording() {
+        if (voiceRecorder) return;
+        voiceChunks = [];
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(function (stream) {
+            voiceStream = stream;
+            var mimeType = "";
+            if (MediaRecorder.isTypeSupported("audio/webm")) mimeType = "audio/webm";
+            else if (MediaRecorder.isTypeSupported("audio/mp4")) mimeType = "audio/mp4";
+            else if (MediaRecorder.isTypeSupported("audio/ogg")) mimeType = "audio/ogg";
+            voiceRecorder = new MediaRecorder(stream, mimeType ? { mimeType: mimeType } : undefined);
+
+            voiceRecorder.ondataavailable = function (e) {
+              if (e.data && e.data.size > 0) voiceChunks.push(e.data);
+            };
+
+            voiceRecorder.onstop = function () {
+              var blob = new Blob(voiceChunks, { type: voiceRecorder.mimeType || "audio/webm" });
+              var durationSec = Math.min(voiceMaxDuration, Math.round((Date.now() - voiceStartTime) / 1000));
+              if (voiceCancelled) {
+                cleanupRecording();
+                return;
+              }
+              if (durationSec < 1) {
+                addSystemMessage("录音时间太短，已取消发送");
+                cleanupRecording();
+                return;
+              }
+              if (window.MengjiaoImageUtils) {
+                var check = window.MengjiaoImageUtils.checkStorageLimit();
+                var estimate = Math.floor(blob.size / 0.75);
+                if (!check.ok || check.used + estimate > check.limit) {
+                  addSystemMessage("存储空间不足，无法保存语音");
+                  cleanupRecording();
+                  return;
+                }
+              }
+              window.MengjiaoVoiceUtils.blobToBase64(blob).then(function (dataUrl) {
+                sendVoiceMessage(dataUrl, durationSec);
+                cleanupRecording();
+              }).catch(function () {
+                addSystemMessage("语音处理失败");
+                cleanupRecording();
+              });
+            };
+
+            voiceRecorder.onerror = function () {
+              addSystemMessage("录音出错，请重试");
+              cleanupRecording();
+            };
+
+            voiceRecorder.start();
+            voiceStartTime = Date.now();
+            voicePanel.classList.add("recording");
+            voiceRecordBtn.classList.add("recording");
+            voiceHint.textContent = "松开结束录音";
+            voiceTimerInterval = setInterval(updateVoiceTimer, 500);
+            updateVoiceTimer();
+          })
+          .catch(function () {
+            addSystemMessage("无法访问麦克风，请检查权限设置");
+            cleanupRecording();
+          });
+      }
+      function stopRecording() {
+        if (voiceRecorder && voiceRecorder.state !== "inactive") {
+          voiceRecorder.stop();
+        }
+        if (voiceStream) {
+          voiceStream.getTracks().forEach(function (t) { t.stop(); });
+        }
+        if (voiceTimerInterval) clearInterval(voiceTimerInterval);
+        voicePanel.classList.remove("recording");
+        voiceRecordBtn.classList.remove("recording");
+      }
+      function cleanupRecording() {
+        if (voiceRecorder && voiceRecorder.state !== "inactive") {
+          try { voiceRecorder.stop(); } catch (e) {}
+        }
+        if (voiceStream) {
+          voiceStream.getTracks().forEach(function (t) { t.stop(); });
+        }
+        voiceRecorder = null;
+        voiceStream = null;
+        voiceChunks = [];
+        voiceCancelled = false;
+        if (voiceTimerInterval) clearInterval(voiceTimerInterval);
+        voicePanel.classList.remove("recording");
+        voiceRecordBtn.classList.remove("recording");
+        voiceHint.textContent = "按住下方按钮开始录音";
+      }
+      function updateVoiceTimer() {
+        var elapsed = Math.floor((Date.now() - voiceStartTime) / 1000);
+        if (elapsed >= voiceMaxDuration) {
+          stopRecording();
+          closeVoicePanel();
+          return;
+        }
+        voiceTimer.textContent = window.MengjiaoVoiceUtils.formatDuration(elapsed);
       }
 
       /* ===== 设置应用 ===== */
@@ -1985,6 +2442,7 @@
         var bubbleScale = (s.bubbleScale || 100) / 100;
         var bubbles = document.querySelectorAll(".message-sent, .message-received, .message-emoji");
         bubbles.forEach(function (b) {
+          if (b.classList.contains("message-image") || b.classList.contains("message-voice")) return;
           b.style.fontSize = (fontSize * (b.classList.contains("message-emoji") ? 1.5 : 1)) + "px";
           b.style.transform = "scale(" + bubbleScale + ")";
           b.style.transformOrigin = b.classList.contains("message-sent") ? "bottom right" : "bottom left";
@@ -2037,11 +2495,47 @@
         autoSendTimer = null;
       }
 
+      /* ===== 自动拍一拍（用户空闲时） ===== */
+      function sendPartnerPoke() {
+        if (isReplying) return;
+        isReplying = true;
+        sendBtn.disabled = true;
+        input.disabled = true;
+        continueBar.style.display = "none";
+        if (chatSettings.typingIndicator) statusText.textContent = "正在输入…";
+        var pokeText = pick(getPartnerPokeMessages());
+        var typing0 = showTyping();
+        setTimeout(function () {
+          removeTyping(typing0);
+          addSystemMessage(pokeText);
+          playMessageSound();
+          var messages = getMessages();
+          messages.push({ side: "system", text: pokeText, time: nowTime(), read: true, id: "sys_" + Date.now(), ts: new Date().toISOString() });
+          saveMessages(messages);
+          lastPartnerMessageAt = Date.now();
+          finishReply();
+        }, replyDelay());
+      }
+      function resetPokeTimer() {
+        if (pokeTimer) clearTimeout(pokeTimer);
+        if (!chatSettings.autoPoke || isReplying) return;
+        var intervalMs = (chatSettings.autoPokeInterval || 5) * 60 * 1000;
+        pokeTimer = setTimeout(function () {
+          if (!isReplying && chatSettings.autoPoke) sendPartnerPoke();
+        }, intervalMs);
+      }
+      function stopPokeTimer() {
+        if (pokeTimer) clearTimeout(pokeTimer);
+        pokeTimer = null;
+      }
+
       /* ===== 设置面板 ===== */
       function openSettings() {
         settingsModal.classList.add("show");
         settingsModal.setAttribute("aria-hidden", "false");
         refreshSettingsUI();
+        updateStorageInfo();
+        if (window.lucide) lucide.createIcons();
         initAudio();
       }
       function closeSettings() {
@@ -2083,6 +2577,9 @@
         // nicknames
         document.getElementById("partnerNameInput").value = s.partnerName || "";
         document.getElementById("myNameInput").value = s.myName || "";
+        if (pokeMessagesInput) {
+          pokeMessagesInput.value = Array.isArray(s.customPokeMessages) ? s.customPokeMessages.join("\n") : "";
+        }
         updateSettingsAvatars();
       }
       function updateSliderLabel(input) {
@@ -2092,7 +2589,7 @@
         var suffix = "";
         if (key === "replyDelayMin" || key === "replyDelayMax") {
           suffix = "s";
-        } else if (key === "autoSendInterval") {
+        } else if (key === "autoSendInterval" || key === "autoPokeInterval") {
           suffix = "分钟";
         } else if (key === "soundVolume") {
           suffix = "%";
@@ -2117,12 +2614,25 @@
       /* ===== 事件绑定 ===== */
       form.addEventListener("submit", function (e) { e.preventDefault(); sendMessage(); });
 
-      input.addEventListener("input", function () {
+      function resizeInput() {
         input.style.height = "auto";
         var newHeight = Math.min(input.scrollHeight, 120);
         input.style.height = newHeight + "px";
         if (input.scrollHeight > 120) input.style.overflowY = "auto";
         else input.style.overflow = "hidden";
+        input.classList.toggle("expanded", input.value.trim().length > 0);
+      }
+      input.addEventListener("input", resizeInput);
+      input.addEventListener("focus", function () {
+        input.classList.add("expanded");
+        resizeInput();
+      });
+      input.addEventListener("blur", function () {
+        if (!input.value.trim()) {
+          input.classList.remove("expanded");
+          input.style.height = "36px";
+          input.style.overflow = "hidden";
+        }
       });
 
       continueBtn.addEventListener("click", function () {
@@ -2133,9 +2643,8 @@
       pokeBtn.addEventListener("click", function () {
         pokePanel.classList.toggle("show");
         quickPanel.classList.remove("show");
-        emojiPanel.classList.remove("show");
         if (pokePanel.classList.contains("show") && !pokePanel.dataset.loaded) {
-          pokePanel.innerHTML = POKE_OPTIONS.map(function (p) {
+          pokePanel.innerHTML = getPokeOptions().map(function (p) {
             return '<div class="poke-item">' + escapeHtml(p) + '</div>';
           }).join("");
           pokePanel.dataset.loaded = "1";
@@ -2152,90 +2661,10 @@
           });
         }
       });
-      emojiBtn.addEventListener("click", function () {
-        emojiPanel.classList.toggle("show");
-        pokePanel.classList.remove("show");
-        quickPanel.classList.remove("show");
-        if (emojiPanel.classList.contains("show")) {
-          renderEmojiPanel();
-        }
-      });
-      function getEmojis() {
-        try {
-          var raw = localStorage.getItem("mengjiao_emojis");
-          if (raw) {
-            var arr = JSON.parse(raw);
-            if (Array.isArray(arr)) return arr;
-          }
-        } catch (e) {}
-        return [];
-      }
-      function renderEmojiPanel() {
-        var emojis = getEmojis();
-        if (emojis.length === 0) {
-          emojiPanel.innerHTML = '<div class="emoji-empty">还没有表情包哦～<br/>去「自定义」页面上传吧</div>';
-          return;
-        }
-        emojiPanel.innerHTML = emojis.map(function (src, i) {
-          return '<div class="emoji-item" data-emoji-idx="' + i + '"><img src="' + src + '" alt="表情" /></div>';
-        }).join("");
-        emojiPanel.querySelectorAll(".emoji-item").forEach(function (el) {
-          el.addEventListener("click", function () {
-            var idx = parseInt(el.getAttribute("data-emoji-idx"), 10);
-            var emojiSrc = emojis[idx];
-            if (!emojiSrc) return;
-            sendEmoji(emojiSrc);
-            emojiPanel.classList.remove("show");
-          });
-        });
-      }
-      function sendEmoji(src) {
-        if (isReplying) return;
-        var time = nowTime();
-        var msgId = "msg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
-        var msgTs = new Date().toISOString();
-        var row = document.createElement("div");
-        row.className = "msg-row right";
-        row.dataset.id = msgId;
-        var col = document.createElement("div");
-        col.className = "msg-col";
-        var bubble = document.createElement("div");
-        bubble.className = "message-emoji-img";
-        bubble.innerHTML = '<img src="' + src + '" alt="表情" />';
-        col.appendChild(bubble);
-        var metaEl = document.createElement("div");
-        metaEl.className = "msg-meta";
-        var timeEl = document.createElement("span");
-        timeEl.className = "msg-time";
-        timeEl.textContent = time;
-        if (chatSettings.timeFormat === "off") timeEl.style.display = "none";
-        metaEl.appendChild(timeEl);
-        if (chatSettings.timeFormat !== "off") {
-          var statusEl = document.createElement("span");
-          statusEl.className = "msg-status";
-          statusEl.textContent = chatSettings.readReceipts ? "已送达" : "";
-          metaEl.appendChild(statusEl);
-        }
-        col.appendChild(metaEl);
-        row.appendChild(col);
-        stream.appendChild(row);
-        if (emptyState) emptyState.style.display = "none";
-        scrollBottom();
-        var messages = getMessages();
-        messages.push({ side: "right", text: "[表情]", time: time, read: false, id: msgId, ts: msgTs, isEmojiImg: true, emojiSrc: src });
-        saveMessages(messages);
-        input.value = "";
-        input.style.height = "auto";
-        resetIdleTimer();
-        if (!chatSettings.readNoReply) {
-          simulateReply();
-        }
-      }
-      quickBtn.addEventListener("click", function () {
 
+      quickBtn.addEventListener("click", function () {
         quickPanel.classList.toggle("show");
         pokePanel.classList.remove("show");
-        emojiPanel.classList.remove("show");
         if (quickPanel.classList.contains("show") && !quickPanel.dataset.loaded) {
           quickPanel.innerHTML = QUICK_REPLIES.map(function (q) {
             return '<div class="quick-chip">' + escapeHtml(q) + '</div>';
@@ -2276,7 +2705,6 @@
       document.addEventListener("click", function (e) {
         if (!e.target.closest("#pokeBtn") && !e.target.closest("#pokePanel")) pokePanel.classList.remove("show");
         if (!e.target.closest("#quickBtn") && !e.target.closest("#quickPanel")) quickPanel.classList.remove("show");
-        if (!e.target.closest("#emojiBtn") && !e.target.closest("#emojiPanel")) emojiPanel.classList.remove("show");
         if (!e.target.closest("#msgContextMenu")) hideContextMenu();
       });
 
@@ -2297,6 +2725,10 @@
         input.addEventListener("change", function () {
           updateSetting(input.dataset.key, input.checked);
           if (input.dataset.key === "autoSend") resetIdleTimer();
+          if (input.dataset.key === "autoPoke") {
+            if (input.checked) resetPokeTimer();
+            else stopPokeTimer();
+          }
         });
       });
 
@@ -2311,6 +2743,7 @@
           if (key === "replyDelayMin" || key === "replyDelayMax") val = val * 1000;
           updateSetting(key, val);
           if (key === "autoSendInterval") resetIdleTimer();
+          if (key === "autoPokeInterval") resetPokeTimer();
         });
       });
 
@@ -2339,6 +2772,15 @@
         });
       });
 
+      // 拍一拍文案保存
+      if (pokeMessagesInput) {
+        pokeMessagesInput.addEventListener("change", function () {
+          var lines = pokeMessagesInput.value.split(/\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
+          updateSetting("customPokeMessages", lines);
+          delete pokePanel.dataset.loaded;
+        });
+      }
+
       // 引用预览关闭
       quotePreviewClose.addEventListener("click", clearQuote);
 
@@ -2353,7 +2795,247 @@
         document.addEventListener(evt, function () {
           lastActivity = Date.now();
           if (chatSettings.autoSend && !isReplying) resetIdleTimer();
+          if (chatSettings.autoPoke && !isReplying) resetPokeTimer();
         }, { passive: true });
+      });
+
+      /* ===== 消息搜索 ===== */
+      function openSearch() {
+        searchModal.classList.add("show");
+        searchModal.setAttribute("aria-hidden", "false");
+        searchInput.value = "";
+        searchResults.innerHTML = "";
+        searchStats.textContent = "";
+        searchClear.classList.add("hidden");
+        if (window.lucide) lucide.createIcons();
+        setTimeout(function () { searchInput.focus(); }, 100);
+      }
+      function closeSearch() {
+        searchModal.classList.remove("show");
+        searchModal.setAttribute("aria-hidden", "true");
+      }
+      function highlightText(text, query) {
+        if (!query) return escapeHtml(text);
+        var re = new RegExp("(" + query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
+        return escapeHtml(text).replace(re, '<span class="search-highlight">$1</span>');
+      }
+      function doSearch(query) {
+        query = (query || "").trim();
+        searchResults.innerHTML = "";
+        if (!query) {
+          searchStats.textContent = "";
+          searchClear.classList.add("hidden");
+          return;
+        }
+        searchClear.classList.remove("hidden");
+        var msgs = getMessages();
+        var matches = [];
+        msgs.forEach(function (m, idx) {
+          if (m.side === "system") return;
+          var searchText = m.type === "image" ? "[图片]" : (m.type === "voice" ? "[语音]" : (m.text || ""));
+          if (searchText.toLowerCase().indexOf(query.toLowerCase()) !== -1) {
+            matches.push({ msg: m, idx: idx, text: searchText });
+          }
+        });
+        searchStats.textContent = "找到 " + matches.length + " 条结果";
+        if (matches.length === 0) {
+          searchResults.innerHTML = '<div class="px-2 py-6 text-center text-xs text-[var(--text-secondary)]">没有匹配的消息</div>';
+          return;
+        }
+        matches.forEach(function (item) {
+          var div = document.createElement("div");
+          div.className = "search-result-item";
+          var sideLabel = item.msg.side === "right" ? (chatSettings.myName || "我") : (chatSettings.partnerName || "梦角");
+          var meta = document.createElement("div");
+          meta.className = "search-result-meta";
+          meta.textContent = sideLabel + " · " + (item.msg.time || "");
+          var body = document.createElement("div");
+          body.className = "search-result-text";
+          body.innerHTML = highlightText(item.text, query);
+          div.appendChild(meta);
+          div.appendChild(body);
+          div.addEventListener("click", function () {
+            closeSearch();
+            scrollToMessage(item.msg.id);
+          });
+          searchResults.appendChild(div);
+        });
+      }
+      function scrollToMessage(msgId) {
+        if (!msgId) return;
+        var row = stream.querySelector('.msg-row[data-id="' + msgId + '"]');
+        if (row) {
+          row.scrollIntoView({ behavior: "smooth", block: "center" });
+          row.style.transition = "background 0.5s";
+          row.style.background = "rgba(232,164,184,0.15)";
+          setTimeout(function () { row.style.background = ""; }, 1200);
+        }
+      }
+
+      /* ===== 聊天记录导入/导出 ===== */
+      function exportChat() {
+        var data = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          messages: getMessages()
+        };
+        var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "mengjiao-chat-" + todayStr() + ".json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      function importChat(file) {
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            var data = JSON.parse(e.target.result);
+            if (!data || !Array.isArray(data.messages)) throw new Error("格式错误");
+            var valid = data.messages.filter(function (m) {
+              return m && (m.side === "left" || m.side === "right" || m.side === "system") && (m.text || m.type === "image");
+            });
+            if (valid.length === 0) throw new Error("没有可导入的消息");
+            saveMessages(valid);
+            renderAll();
+            addSystemMessage("已导入 " + valid.length + " 条记录");
+            continueBar.style.display = "flex";
+          } catch (err) {
+            addSystemMessage("导入失败：" + err.message);
+          }
+        };
+        reader.readAsText(file);
+      }
+      function updateStorageInfo() {
+        if (!storageInfo || !window.MengjiaoImageUtils) return;
+        var info = window.MengjiaoImageUtils.checkStorageLimit();
+        storageInfo.textContent = window.MengjiaoImageUtils.formatSize(info.used) + " / " + window.MengjiaoImageUtils.DEFAULT_MAX_SIZE_MB + "MB";
+      }
+
+      /* ===== 表情包面板 ===== */
+      function renderStickers() {
+        var list = window.MengjiaoStickers ? window.MengjiaoStickers.getStickers() : [];
+        stickerList.innerHTML = list.map(function (s) {
+          return '<button type="button" class="sticker-item" data-sticker="' + escapeHtml(s) + '">' + escapeHtml(s) + '</button>';
+        }).join("");
+        stickerList.querySelectorAll(".sticker-item").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var sticker = btn.dataset.sticker;
+            sendSticker(sticker);
+            stickerPanel.classList.remove("show");
+          });
+        });
+      }
+      function sendSticker(sticker) {
+        if (!sticker || isReplying) return;
+        var time = nowTime();
+        var msgId = "msg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+        var msgTs = new Date().toISOString();
+        addMessage({ text: sticker, side: "right", time: time, read: false, id: msgId, isEmoji: true });
+        var messages = getMessages();
+        messages.push({ side: "right", text: sticker, time: time, read: false, id: msgId, isEmoji: true, ts: msgTs });
+        saveMessages(messages);
+        lastActivity = Date.now();
+        resetIdleTimer();
+        if (chatSettings.autoPoke) resetPokeTimer();
+        simulateReply();
+      }
+      function manageStickers() {
+        var input = prompt("添加新表情（emoji / 颜文字），或输入 reset 恢复默认：");
+        if (input === null) return;
+        input = input.trim();
+        if (!input) return;
+        if (input === "reset") {
+          if (window.MengjiaoStickers) window.MengjiaoStickers.resetStickers();
+        } else {
+          if (window.MengjiaoStickers) window.MengjiaoStickers.addSticker(input);
+        }
+        renderStickers();
+      }
+
+      /* ===== 图片上传 ===== */
+      function handleImageSelect(file) {
+        if (!file) return;
+        if (!window.MengjiaoImageUtils) {
+          addSystemMessage("图片工具未加载");
+          return;
+        }
+        var check = window.MengjiaoImageUtils.checkStorageLimit();
+        if (!check.ok) {
+          addSystemMessage(check.message);
+          return;
+        }
+        window.MengjiaoImageUtils.compressImage(file, { maxWidth: 1200, maxHeight: 1600, quality: 0.8 }).then(function (dataUrl) {
+          sendImageMessage(dataUrl);
+        }).catch(function (err) {
+          addSystemMessage("图片处理失败：" + (err && err.message ? err.message : "未知错误"));
+        });
+      }
+
+      /* ===== 事件绑定：搜索 / 图片 / 表情 / 导入导出 ===== */
+      searchBtn.addEventListener("click", openSearch);
+      searchClose.addEventListener("click", closeSearch);
+      searchModal.querySelector(".settings-backdrop").addEventListener("click", closeSearch);
+      searchInput.addEventListener("input", function () { doSearch(searchInput.value); });
+      searchClear.addEventListener("click", function () {
+        searchInput.value = "";
+        doSearch("");
+        searchInput.focus();
+      });
+
+      imageBtn.addEventListener("click", function () { imageInput.click(); });
+      imageInput.addEventListener("change", function () {
+        handleImageSelect(imageInput.files[0]);
+        imageInput.value = "";
+      });
+
+      voiceBtn.addEventListener("click", function () { openVoicePanel(); });
+      voiceCancelBtn.addEventListener("click", cancelVoicePanel);
+      voiceRecordBtn.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        startRecording();
+      });
+      voiceRecordBtn.addEventListener("mouseup", function () { stopRecording(); closeVoicePanel(); });
+      voiceRecordBtn.addEventListener("mouseleave", function () { if (voiceRecorder) { stopRecording(); closeVoicePanel(); } });
+      voiceRecordBtn.addEventListener("touchstart", function (e) {
+        e.preventDefault();
+        startRecording();
+      }, { passive: false });
+      voiceRecordBtn.addEventListener("touchend", function () { stopRecording(); closeVoicePanel(); });
+      voiceRecordBtn.addEventListener("touchcancel", function () { if (voiceRecorder) { stopRecording(); closeVoicePanel(); } });
+      document.addEventListener("click", function (e) {
+        if (!e.target.closest("#voiceBtn") && !e.target.closest("#voicePanel") && voicePanel.classList.contains("show")) {
+          closeVoicePanel();
+        }
+      });
+
+      stickerBtn.addEventListener("click", function () {
+        stickerPanel.classList.toggle("show");
+        if (stickerPanel.classList.contains("show")) renderStickers();
+      });
+      stickerManageBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        manageStickers();
+      });
+
+      exportChatBtn.addEventListener("click", exportChat);
+      importChatInput.addEventListener("change", function () {
+        importChat(importChatInput.files[0]);
+        importChatInput.value = "";
+      });
+
+      document.addEventListener("click", function (e) {
+        if (!e.target.closest("#stickerBtn") && !e.target.closest("#stickerPanel")) stickerPanel.classList.remove("show");
+      });
+
+      imagePreviewModal.addEventListener("click", function () {
+        imagePreviewModal.classList.remove("show");
+        imagePreviewModal.setAttribute("aria-hidden", "true");
+        imagePreviewImg.src = "";
       });
 
       /* ===== 初始化 ===== */
@@ -2372,6 +3054,7 @@
       renderAll();
       applySettings();
       if (chatSettings.autoSend) resetIdleTimer();
+      if (chatSettings.autoPoke) resetPokeTimer();
 
       // 跨天首次访问：梦角主动问好
       try {
@@ -2401,84 +3084,8 @@
         var SPARK_KEY = "mengjiao_spark";
         var POS_KEY = "mengjiao_companion_pos";
 
-        function lighten(hex, amt) {
-          var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-          r = Math.min(255, r+amt); g = Math.min(255, g+amt); b = Math.min(255, b+amt);
-          return '#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');
-        }
-        function darken(hex, amt) {
-          var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-          r = Math.max(0, r-amt); g = Math.max(0, g-amt); b = Math.max(0, b-amt);
-          return '#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');
-        }
-
-        var HAIR_MAP = { purple:"#6b5b94", pink:"#e8749a", coral:"#ff8a65", mint:"#7fd5b3", sky:"#7ec8e3", lavender:"#c5a3e3", rose:"#e8749a", honey:"#e8a83a" };
-        var OUTFIT_MAP = { maroon:"#7a3a4a", navy:"#3a4a6a", white:"#e8e8f0", pink:"#e8749a", mint:"#7fd5b3", lavender:"#c5a3e3" };
-        var EAR_MAP = { brown:{c:"#8b6940",i:"#f4a0b0"}, dark:{c:"#4a4a4a",i:"#f4a0b0"}, cream:{c:"#e8d5b8",i:"#f4a0b0"} };
-
-        function renderCompanionSVG(av) {
-          var hair = HAIR_MAP[av.hairColor] || "#9b8bc4";
-          var outfit = OUTFIT_MAP[av.outfitColor] || "#7a3a4a";
-          var earDef = av.earColor === "match" ? {c:hair, i:lighten(hair,30)} : (EAR_MAP[av.earColor] || EAR_MAP.brown);
-          var skin = "#ffe4d6";
-          return '<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">' +
-            '<ellipse cx="100" cy="205" rx="30" ry="4" fill="#000" opacity="0.08"/>' +
-            '<path d="M 138 160 Q 165 150 160 130" stroke="' + earDef.c + '" stroke-width="10" fill="none" stroke-linecap="round"/>' +
-            '<circle cx="160" cy="130" r="5" fill="' + earDef.c + '"/>' +
-            '<path d="M 76 128 Q 76 120 100 120 Q 124 120 124 128 L 128 165 Q 128 172 100 172 Q 72 172 72 165 Z" fill="' + outfit + '"/>' +
-            '<path d="M 88 120 L 100 132 L 112 120" fill="none" stroke="' + darken(outfit,12) + '" stroke-width="2"/>' +
-            '<rect x="78" y="158" width="44" height="12" rx="6" fill="' + skin + '"/>' +
-            '<ellipse cx="88" cy="188" rx="8" ry="5" fill="' + skin + '"/>' +
-            '<ellipse cx="112" cy="188" rx="8" ry="5" fill="' + skin + '"/>' +
-            '<ellipse cx="50" cy="145" rx="6" ry="12" fill="' + outfit + '" transform="rotate(12 50 145)"/>' +
-            '<ellipse cx="150" cy="145" rx="6" ry="12" fill="' + outfit + '" transform="rotate(-12 150 145)"/>' +
-            '<path d="M 44 92 Q 36 64 44 44 Q 56 20 80 24 Q 94 14 112 18 Q 140 20 154 44 Q 162 64 156 92 Q 152 106 146 100 Q 138 110 128 102 Q 120 112 108 104 Q 100 108 92 104 Q 80 112 72 102 Q 62 110 54 100 Q 48 106 44 92 Z" fill="' + hair + '"/>' +
-            '<ellipse cx="100" cy="54" rx="48" ry="34" fill="' + darken(hair,22) + '" opacity="0.18"/>' +
-            '<circle cx="100" cy="82" r="38" fill="' + skin + '"/>' +
-            '<path d="M 58 44 Q 46 16 68 22 Q 80 34 78 50 Z" fill="' + earDef.c + '"/>' +
-            '<path d="M 142 44 Q 154 16 132 22 Q 120 34 122 50 Z" fill="' + earDef.c + '"/>' +
-            '<path d="M 61 41 Q 52 22 66 24 Q 75 36 74 46 Z" fill="' + earDef.i + '" opacity="0.8"/>' +
-            '<path d="M 139 41 Q 148 22 134 24 Q 125 36 126 46 Z" fill="' + earDef.i + '" opacity="0.8"/>' +
-            '<path d="M 96 22 Q 88 6 102 4 Q 114 8 104 22 Z" fill="' + hair + '"/>' +
-            '<path d="M 98 20 Q 96 10 102 8" stroke="' + darken(hair,18) + '" stroke-width="1" fill="none" opacity="0.3"/>' +
-            '<path d="M 100 30 Q 78 28 60 38 Q 44 50 46 74 Q 50 86 58 92 Q 54 74 62 64 Q 74 50 92 48 Q 96 40 100 30 Z" fill="' + hair + '"/>' +
-            '<path d="M 58 92 Q 50 70 60 52 Q 74 40 88 42 Q 82 56 76 72 Q 66 86 58 92 Z" fill="' + hair + '"/>' +
-            '<path d="M 50 86 Q 46 64 54 48 Q 64 38 72 42 Q 66 58 58 74 Q 52 84 50 86 Z" fill="' + hair + '"/>' +
-            '<path d="M 100 30 Q 122 28 140 38 Q 156 50 154 74 Q 150 86 142 92 Q 146 74 138 64 Q 126 50 108 48 Q 104 40 100 30 Z" fill="' + hair + '"/>' +
-            '<path d="M 142 92 Q 150 70 140 52 Q 126 40 112 42 Q 118 56 124 72 Q 134 86 142 92 Z" fill="' + hair + '"/>' +
-            '<path d="M 150 86 Q 154 64 146 48 Q 136 38 128 42 Q 134 58 142 74 Q 148 84 150 86 Z" fill="' + hair + '"/>' +
-            '<path d="M 100 28 L 100 52" stroke="' + darken(hair,28) + '" stroke-width="1.3" fill="none" opacity="0.22" stroke-linecap="round"/>' +
-            '<path d="M 84 36 Q 74 50 66 70" stroke="' + darken(hair,26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
-            '<path d="M 116 36 Q 126 50 134 70" stroke="' + darken(hair,26) + '" stroke-width="1.1" fill="none" opacity="0.16" stroke-linecap="round"/>' +
-            '<ellipse cx="72" cy="42" rx="4.5" ry="2.5" fill="' + lighten(hair,42) + '" opacity="0.32" transform="rotate(-28 72 42)"/>' +
-            '<ellipse cx="128" cy="42" rx="4.5" ry="2.5" fill="' + lighten(hair,42) + '" opacity="0.32" transform="rotate(28 128 42)"/>' +
-            '<ellipse cx="88" cy="44" rx="3" ry="1.8" fill="' + lighten(hair,36) + '" opacity="0.22"/>' +
-            '<ellipse cx="112" cy="44" rx="3" ry="1.8" fill="' + lighten(hair,36) + '" opacity="0.22"/>' +
-            '<path d="M 46 86 Q 36 98 40 112 Q 50 106 54 92 Z" fill="' + hair + '"/>' +
-            '<path d="M 154 86 Q 164 98 160 112 Q 150 106 146 92 Z" fill="' + hair + '"/>' +
-            '<ellipse cx="72" cy="92" rx="6" ry="4" fill="#ff8aa0" opacity="0.35"/>' +
-            '<ellipse cx="128" cy="92" rx="6" ry="4" fill="#ff8aa0" opacity="0.35"/>' +
-            '<ellipse cx="82" cy="84" rx="5" ry="6" fill="#5a3040"/>' +
-            '<ellipse cx="118" cy="84" rx="5" ry="6" fill="#5a3040"/>' +
-            '<circle cx="84" cy="82" r="1.8" fill="#fff"/>' +
-            '<circle cx="120" cy="82" r="1.8" fill="#fff"/>' +
-            '<path d="M 90 100 Q 100 106 110 100" stroke="#5a3040" stroke-width="2" fill="none" stroke-linecap="round"/>' +
-            '</svg>';
-        }
-
-        function loadAvatar() {
-          try {
-            var raw = localStorage.getItem(SPARK_KEY);
-            if (raw) {
-              var d = JSON.parse(raw);
-              if (d.avatar) return d.avatar;
-            }
-          } catch (e) {}
-          return { hairColor:"purple", outfitColor:"maroon", earColor:"brown", eyes:"round", mouth:"smile", accessory:"none", pose:"idle" };
-        }
-
         function updateCompanion() {
-          companion.innerHTML = '<img src="character.png?v=2" alt="小火人" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px;pointer-events:none;filter:brightness(1.12) saturate(1.15) contrast(1.05);">' + '<div class="companion-hint">拖拽我</div>';
+          companion.innerHTML = '<img src="../assets/character.png" alt="小火人" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px;pointer-events:none;filter:brightness(1.12) saturate(1.15) contrast(1.05);">' + '<div class="companion-hint">拖拽我</div>';
         }
 
         /* Position restore */
@@ -2561,7 +3168,6 @@
           if (Date.now() - tapStartT < 200 &&
               Math.abs(e.clientX - tapStartX) < 8 &&
               Math.abs(e.clientY - tapStartY) < 8) {
-            /* It's a tap - cycle pose */
             try {
               var raw = localStorage.getItem(SPARK_KEY);
               var d = raw ? JSON.parse(raw) : {};

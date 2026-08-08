@@ -2,14 +2,116 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0; url=pages/index-new.html" />
+  <meta http-equiv="refresh" content="0; url=pages/index-new-v2.html?v=2" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#e8a4b8" />
   <title>梦角传讯</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <script>
+    (function () {
+      if (window.location.href.indexOf('pages/index-new-v2.html') === -1) {
+        window.location.replace('pages/index-new-v2.html?v=2');
+      }
+    })();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(function () {});
+    }
+  </script>
+  <style>
+    @font-face {
+      font-family: 'DreamFont';
+      src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+      background: #f9f7f4;
+      color: #4a3f45;
+      display: grid;
+      place-items: center;
+      letter-spacing: 0.02em;
+    }
+    .landing-card {
+      text-align: center;
+      background: #fff;
+      border: 2px solid rgba(232, 164, 184, 0.35);
+      border-radius: 1.5rem;
+      padding: 2.25rem 2rem;
+      box-shadow: 0 8px 24px rgba(232, 164, 184, 0.12);
+      max-width: 320px;
+      margin: 1.5rem;
+      position: relative;
+    }
+    .landing-card::before,
+    .landing-card::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(232, 164, 184, 0.25);
+    }
+    .landing-card::before { top: 12px; left: 14px; }
+    .landing-card::after { top: 10px; right: 16px; width: 10px; height: 10px; background: rgba(232, 164, 184, 0.2); }
+    .landing-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1rem;
+      background: linear-gradient(145deg, #f4a0bc, #e8749a);
+      border-radius: 1.25rem;
+      display: grid;
+      place-items: center;
+      font-size: 1.75rem;
+      box-shadow: 0 6px 14px rgba(232, 116, 154, 0.22);
+    }
+    .landing-title {
+      margin: 0 0 0.5rem;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: #4a3f45;
+    }
+    .landing-text {
+      margin: 0 0 1.25rem;
+      font-size: 0.95rem;
+      color: #9a8a92;
+    }
+    .landing-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #e8a4b8;
+      color: #fff;
+      text-decoration: none;
+      padding: 0.65rem 1.35rem;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(232, 164, 184, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .landing-link:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(232, 164, 184, 0.42);
+    }
+  </style>
 </head>
-<body style="margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#fff0f4;color:#3d2030;">
-  <div style="text-align:center;">
-    <p style="margin:0 0 8px;font-size:1.1rem;">正在进入梦角传讯…</p>
-    <a href="pages/index-new.html" style="color:#e8749a;text-decoration:none;font-size:0.95rem;">点击这里进入</a>
+<body>
+  <div class="landing-card">
+    <div class="landing-icon">🌙</div>
+    <h1 class="landing-title">梦角传讯</h1>
+    <p class="landing-text">正在进入梦角世界…</p>
+    <a class="landing-link" href="pages/index-new-v2.html?v=2">点击进入 ✨</a>
   </div>
 </body>
 </html>

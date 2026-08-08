@@ -1,541 +1,1124 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html class="light" lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>梦角传讯</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../colors_and_type.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            card: 'hsl(var(--card))',
-            'card-foreground': 'hsl(var(--card-foreground))',
-            primary: 'hsl(var(--primary))',
-            'primary-foreground': 'hsl(var(--primary-foreground))',
-            secondary: 'hsl(var(--secondary))',
-            'secondary-foreground': 'hsl(var(--secondary-foreground))',
-            muted: 'hsl(var(--muted))',
-            'muted-foreground': 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--accent))',
-            'accent-foreground': 'hsl(var(--accent-foreground))',
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-          },
-          fontFamily: {
-            sans: ['"DreamFont"', '"Noto Sans SC"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-            serif: ['"DreamFont"', '"Noto Serif SC"', 'ui-serif', 'Georgia', 'serif']
-          },
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#e8a4b8">
+    <title>梦角传讯</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../icon.svg" type="image/svg+xml">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('../sw.js').catch(function () {});
       }
-    };
-  </script>
+    </script>
+    <style id="theme-vars">
+/* 梦角传讯 — 动漫手绘风主题 */
+/* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
+
+@font-face {
+  font-family: 'DreamFont';
+  src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* bg — 暖灰白，像素描纸 */
+  --background: 30 20% 97%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+
+  /* text — 柔和深灰，不刺眼 */
+  --foreground: 340 12% 28%;
+  --card-foreground: 340 12% 28%;
+  --popover-foreground: 340 12% 28%;
+  --muted-foreground: 340 10% 55%;
+
+  /* accent — 柔粉蜡笔色 */
+  --primary: 343 55% 78%;
+  --primary-foreground: 340 15% 22%;
+  --secondary: 340 35% 95%;
+  --secondary-foreground: 340 12% 28%;
+  --muted: 30 18% 94%;
+  --accent: 343 40% 92%;
+  --accent-foreground: 340 12% 28%;
+
+  /* status */
+  --destructive: 0 70% 65%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* border — 手绘感浅粉 */
+  --border: 343 45% 78% / 0.25;
+  --input: 30 18% 94%;
+  --ring: 343 55% 78%;
+
+  /* chart */
+  --chart-1: 343 55% 78%;
+  --chart-2: 343 45% 85%;
+  --chart-3: 340 15% 70%;
+  --chart-4: 343 35% 90%;
+  --chart-5: 340 12% 60%;
+
+  /* sidebar */
+  --sidebar: 30 20% 97%;
+  --sidebar-foreground: 340 12% 28%;
+  --sidebar-primary: 343 55% 78%;
+  --sidebar-primary-foreground: 340 15% 22%;
+  --sidebar-accent: 343 40% 92%;
+  --sidebar-accent-foreground: 340 12% 28%;
+  --sidebar-border: 343 45% 78% / 0.25;
+  --sidebar-ring: 343 55% 78%;
+
+  /* typography */
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+
+  --radius: 1.25rem;
+
+  /* shadow — 柔和漂浮感 */
+  --shadow-color: 343 40% 55%;
+  --shadow-2xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
+  --shadow-sm: 0 3px 6px -1px hsl(343 30% 40% / 0.06), 0 2px 4px -2px hsl(343 30% 40% / 0.04);
+  --shadow: 0 4px 10px -1px hsl(343 30% 40% / 0.08), 0 2px 4px -2px hsl(343 30% 40% / 0.05);
+  --shadow-md: 0 8px 16px -4px hsl(343 30% 40% / 0.10), 0 4px 8px -4px hsl(343 30% 40% / 0.06);
+  --shadow-lg: 0 15px 25px -6px hsl(343 30% 40% / 0.12), 0 8px 12px -6px hsl(343 30% 40% / 0.08);
+  --shadow-xl: 0 25px 40px -8px hsl(343 30% 40% / 0.14), 0 12px 20px -8px hsl(343 30% 40% / 0.10);
+  --shadow-2xl: 0 35px 60px -12px hsl(343 30% 40% / 0.18);
+
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  /* 直景色值 — 供自定义样式直接引用 */
+  --primary-bg: #f9f7f4;
+  --secondary-bg: #f3f0ec;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #4a3f45;
+  --text-secondary: #9a8a92;
+  --border-color: rgba(232, 164, 184, 0.35);
+  --chat-bg: #fdfbfa;
+}
+
+.dark {
+  --background: 340 12% 12%;
+  --card: 340 10% 16%;
+  --popover: 340 10% 16%;
+  --foreground: 340 15% 92%;
+  --card-foreground: 340 15% 92%;
+  --popover-foreground: 340 15% 92%;
+  --muted-foreground: 340 10% 65%;
+  --primary: 343 45% 72%;
+  --primary-foreground: 340 12% 18%;
+  --secondary: 340 15% 24%;
+  --secondary-foreground: 340 15% 92%;
+  --muted: 340 12% 20%;
+  --accent: 343 25% 28%;
+  --accent-foreground: 340 15% 92%;
+  --destructive: 0 60% 58%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 340 12% 26%;
+  --input: 340 12% 22%;
+  --ring: 343 45% 72%;
+  --chart-1: 343 45% 72%;
+  --chart-2: 343 40% 60%;
+  --chart-3: 340 12% 60%;
+  --chart-4: 343 35% 80%;
+  --chart-5: 340 12% 70%;
+  --sidebar: 340 12% 12%;
+  --sidebar-foreground: 340 15% 92%;
+  --sidebar-primary: 343 45% 72%;
+  --sidebar-primary-foreground: 340 12% 18%;
+  --sidebar-accent: 343 25% 28%;
+  --sidebar-accent-foreground: 340 15% 92%;
+  --sidebar-border: 340 12% 26%;
+  --sidebar-ring: 343 45% 72%;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", monospace;
+  --radius: 1.25rem;
+  --shadow-color: 343 30% 40%;
+  --shadow-2xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
+  --shadow-sm: 0 3px 6px -1px hsl(340 12% 5% / 0.30), 0 2px 4px -2px hsl(340 12% 5% / 0.25);
+  --shadow: 0 4px 10px -1px hsl(340 12% 5% / 0.35), 0 2px 4px -2px hsl(340 12% 5% / 0.28);
+  --shadow-md: 0 8px 16px -4px hsl(340 12% 5% / 0.40), 0 4px 8px -4px hsl(340 12% 5% / 0.32);
+  --shadow-lg: 0 15px 25px -6px hsl(340 12% 5% / 0.45), 0 8px 12px -6px hsl(340 12% 5% / 0.36);
+  --shadow-xl: 0 25px 40px -8px hsl(340 12% 5% / 0.50), 0 12px 20px -8px hsl(340 12% 5% / 0.40);
+  --shadow-2xl: 0 35px 60px -12px hsl(340 12% 5% / 0.55);
+  --tracking-normal: 0.02em;
+  --spacing: 0.3rem;
+
+  --primary-bg: #1a1619;
+  --secondary-bg: #242024;
+  --accent-color: #e8a4b8;
+  --accent-color-rgb: 232, 164, 184;
+  --text-primary: #f0e8ec;
+  --text-secondary: #a09098;
+  --border-color: rgba(232, 164, 184, 0.25);
+  --chat-bg: #1a1619;
+}
+
+body {
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-normal);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232, 164, 184, 0.35); border-radius: 4px; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-foreground: var(--card-foreground);
+  }
+  @layer base {
+    body { background: var(--card-background); color: var(--card-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <main>
+    <div class="phone-frame" id="phoneFrame">
+      <div class="dynamic-notch"></div>
+
+      <div class="status-bar">
+        <span class="status-time" id="statusTime">09:41</span>
+        <div class="status-icons">
+          <i data-lucide="signal" class="status-icon"></i>
+          <i data-lucide="wifi" class="status-icon"></i>
+          <i data-lucide="battery-medium" class="status-icon"></i>
+        </div>
+      </div>
+
+      <div class="screen" id="screen">
+        <button class="settings-btn" id="settingsBtn" aria-label="设置">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
+
+        <section class="hero-widgets">
+          <div class="widget time-widget">
+            <div class="widget-deco">
+              <svg class="deco-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
+            </div>
+            <div class="time-label">现在</div>
+            <div class="time-num" id="clockTime">09:41</div>
+            <div class="time-date" id="clockDate">1月1日 星期三</div>
+          </div>
+
+          <div class="widget calendar-widget">
+            <div class="calendar-header">
+              <span class="calendar-month" id="calendarMonth">2026年 1月</span>
+              <span class="calendar-weekday" id="calendarWeekday">周三</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+              <!-- JS filled -->
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-widget widget" id="profileWidget">
+          <div class="profile-widget-overlay"></div>
+          <div class="profile-deco">
+            <svg class="deco-cloud" viewBox="0 0 48 28" fill="currentColor"><path d="M40 22H10c-4.4 0-8-3.6-8-8s3.6-8 8-8c.4 0 .8 0 1.1.1C12.3 2.5 17.3 0 23 0c6.8 0 12.6 4.2 14.7 10.1C41.3 9.3 44 11.9 44 15c0 3.9-3.1 7-7 7z"/></svg>
+            <svg class="deco-heart" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </div>
+          <div class="profile-inner">
+            <div class="avatar-pair">
+              <div class="avatar-dual" id="avatarMe">
+                <i data-lucide="moon"></i>
+              </div>
+              <svg class="headphone-cable" viewBox="0 0 156 108" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
+                <path d="M32 32 C32 74, 46 88, 62 76 C78 64, 70 44, 56 46 C42 48, 38 68, 50 84 C62 100, 94 98, 108 82 C122 66, 114 48, 100 44 C86 40, 74 54, 78 72 C82 90, 110 92, 126 74 C142 56, 132 38, 124 32" />
+                <circle cx="32" cy="32" r="4.5" fill="currentColor" stroke="none"/>
+                <circle cx="124" cy="32" r="4.5" fill="currentColor" stroke="none"/>
+              </svg>
+              <div class="message-bubble message-sent bubble-left" id="bubbleLeft">今天也要开心呀</div>
+              <div class="message-bubble message-received bubble-right" id="bubbleRight">收到你的想念啦</div>
+              <div class="avatar-dual" id="avatarDream">
+                <i data-lucide="star"></i>
+              </div>
+            </div>
+            <div class="profile-info">
+              <div class="profile-name truncate" id="username">@my_profile & 梦角</div>
+              <div class="profile-sig truncate" id="signature">今天也要加油呀 ✨</div>
+            </div>
+            <div class="days-row">
+              <span class="days-num" id="daysNum">769</span>
+              <span class="days-label">天 · 在一起</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="text-widget widget">
+          <div class="text-widget-header">
+            <span class="text-widget-title" id="widgetTitle">给梦角的话</span>
+            <svg class="deco-sparkle" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5z"/></svg>
+          </div>
+          <p class="text-widget-body" id="widgetText">每一个梦醒时分，都想把第一缕想念传给你。</p>
+        </section>
+
+        <section class="app-grid-section">
+          <div class="section-title">功能入口</div>
+          <div class="app-grid">
+            <a href="cards-new.html" class="app-item" data-delay="0.05" data-dom-id="go-cards">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f4a0bc, #e8749a);">
+                <i data-lucide="scroll-text"></i>
+              </div>
+              <span class="app-label truncate">字卡传讯</span>
+            </a>
+            <a href="chat-new.html" class="app-item" data-delay="0.1" data-dom-id="go-chat">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f5acc6, #ec80a3);">
+                <i data-lucide="message-circle"></i>
+              </div>
+              <span class="app-label truncate">梦角对话</span>
+            </a>
+            <a href="call-new.html" class="app-item" data-delay="0.11" data-dom-id="go-call">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f7b8ce, #ed90ae);">
+                <i data-lucide="phone"></i>
+              </div>
+              <span class="app-label truncate">梦角来电</span>
+            </a>
+            <a href="moments-new-v2.html" class="app-item" data-delay="0.12" data-dom-id="go-moments">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f7b6ce, #f091b2);">
+                <i data-lucide="flower-2"></i>
+              </div>
+              <span class="app-label truncate">朋友圈</span>
+            </a>
+            <a href="spark-new.html" class="app-item" data-delay="0.15" data-dom-id="go-spark">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f8b9ce, #f08eb0);">
+                <i data-lucide="bone"></i>
+              </div>
+              <span class="app-label truncate">喂食</span>
+            </a>
+            <a href="history-new.html" class="app-item" data-delay="0.18" data-dom-id="go-history">
+              <div class="app-icon" style="background: linear-gradient(145deg, #fbc8d8, #f4a0bc);">
+                <i data-lucide="book-open"></i>
+              </div>
+              <span class="app-label truncate">传讯记录</span>
+            </a>
+            <a href="diary-new.html" class="app-item" data-delay="0.22" data-dom-id="go-diary">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f6b3ca, #e88ca8);">
+                <i data-lucide="book-heart"></i>
+              </div>
+              <span class="app-label truncate">梦境日记</span>
+            </a>
+            <a href="letter-new.html" class="app-item" data-delay="0.25" data-dom-id="go-letter">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f8c2d4, #ed98b5);">
+                <i data-lucide="mail"></i>
+              </div>
+              <span class="app-label truncate">给梦角的信</span>
+            </a>
+            <a href="anniversary-new.html" class="app-item" data-delay="0.28" data-dom-id="go-anniversary">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f8c2d4, #ed98b5);">
+                <i data-lucide="star"></i>
+              </div>
+              <span class="app-label truncate">纪念日</span>
+            </a>
+            <a href="music-new.html" class="app-item" data-delay="0.32" data-dom-id="go-music">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f9cfdd, #f2aac3);">
+                <i data-lucide="music"></i>
+              </div>
+              <span class="app-label truncate">背景音乐</span>
+            </a>
+            <a href="wish-new.html" class="app-item" data-delay="0.35" data-dom-id="go-wish">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f7bcd0, #eb95b3);">
+                <i data-lucide="sparkles"></i>
+              </div>
+              <span class="app-label truncate">心愿</span>
+            </a>
+            <a href="spark-new.html" class="app-item" data-delay="0.38" data-dom-id="go-spark-fire">
+              <div class="app-icon" style="background: linear-gradient(145deg, #ffb86b, #ff8a56);">
+                <i data-lucide="flame"></i>
+              </div>
+              <span class="app-label truncate">小火人</span>
+            </a>
+            <a href="customize-replies.html" class="app-item" data-delay="0.40" data-dom-id="go-replies">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f9cfdd, #f2aac3);">
+                <i data-lucide="message-square"></i>
+              </div>
+              <span class="app-label truncate">回复库</span>
+            </a>
+            <button type="button" class="app-item" data-delay="0.44" id="moreBtn" data-dom-id="btn-more">
+              <div class="app-icon" style="background: linear-gradient(145deg, #f3f0ec, #e8e2dd);">
+                <i data-lucide="plus" style="color: var(--text-secondary);"></i>
+              </div>
+              <span class="app-label truncate">更多</span>
+            </button>
+          </div>
+        </section>
+
+        <div class="dock">
+          <a href="cards-new.html" class="dock-item" data-delay="0.45" data-dom-id="dock-cards">
+            <div class="dock-icon" style="background: linear-gradient(145deg, #f4a0bc, #e8749a);">
+              <i data-lucide="scroll-text"></i>
+            </div>
+            <span class="dock-label truncate">字卡</span>
+          </a>
+          <a href="chat-new.html" class="dock-item" data-delay="0.48" data-dom-id="dock-chat">
+            <div class="dock-icon" style="background: linear-gradient(145deg, #f5acc6, #ec80a3);">
+              <i data-lucide="message-circle"></i>
+            </div>
+            <span class="dock-label truncate">对话</span>
+          </a>
+          <a href="moments-new-v2.html" class="dock-item" data-delay="0.51" data-dom-id="dock-moments">
+            <div class="dock-icon" style="background: linear-gradient(145deg, #f7b6ce, #f091b2);">
+              <i data-lucide="flower-2"></i>
+            </div>
+            <span class="dock-label truncate">朋友圈</span>
+          </a>
+          <a href="spark-new.html" class="dock-item" data-delay="0.54" data-dom-id="dock-spark">
+            <div class="dock-icon" style="background: linear-gradient(145deg, #f8b9ce, #f08eb0);">
+              <i data-lucide="bone"></i>
+            </div>
+            <span class="dock-label truncate">喂食</span>
+          </a>
+        </div>
+
+        <div class="home-indicator"><span></span></div>
+      </div>
+
+      <div class="settings-modal" id="settingsModal" aria-hidden="true">
+        <div class="modal-backdrop" id="modalBackdrop"></div>
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <h2 class="modal-title" id="modalTitle">桌面设置</h2>
+            <button type="button" class="modal-close" id="modalClose" aria-label="关闭">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label" for="inputUsername">我的昵称</label>
+              <input class="form-input" id="inputUsername" type="text" maxlength="16" placeholder="输入昵称" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inputDreamname">梦角昵称</label>
+              <input class="form-input" id="inputDreamname" type="text" maxlength="16" placeholder="例如 梦角" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inputSignature">签名</label>
+              <input class="form-input" id="inputSignature" type="text" maxlength="24" placeholder="输入签名" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">我的头像</label>
+              <div class="upload-row">
+                <div class="upload-preview" id="previewAvatarImg"><i data-lucide="moon" class="w-5 h-5"></i></div>
+                <button type="button" class="upload-btn" id="btnAvatarImg">上传头像</button>
+                <input type="file" id="inputAvatarImg" accept="image/*" class="hidden" />
+                <button type="button" class="upload-btn ghost" id="clearAvatarImg">清除</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">梦角头像</label>
+              <div class="upload-row">
+                <div class="upload-preview" id="previewDreamImg"><i data-lucide="star" class="w-5 h-5"></i></div>
+                <button type="button" class="upload-btn" id="btnDreamImg">上传头像</button>
+                <input type="file" id="inputDreamImg" accept="image/*" class="hidden" />
+                <button type="button" class="upload-btn ghost" id="clearDreamImg">清除</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inputAvatarEmoji">头像 Emoji</label>
+              <input class="form-input" id="inputAvatarEmoji" type="text" maxlength="2" placeholder="例如 🌙" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inputTogetherDate">在一起日期</label>
+              <input class="form-input" id="inputTogetherDate" type="date" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inputWidgetTitle">文字卡片标题</label>
+              <input class="form-input" id="inputWidgetTitle" type="text" maxlength="12" placeholder="例如 给梦角的话" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inputWidgetText">文字卡片内容</label>
+              <textarea class="form-input form-textarea" id="inputWidgetText" maxlength="80" placeholder="输入想说的话"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">个人卡片背景</label>
+              <div class="upload-row">
+                <button type="button" class="upload-btn" id="btnBgImg">上传背景</button>
+                <input type="file" id="inputBgImg" accept="image/*" class="hidden" />
+                <button type="button" class="upload-btn ghost" id="clearBgImg">清除</button>
+              </div>
+              <div id="previewBgImgWrap" class="bg-preview-wrap hidden">
+                <img id="previewBgImg" src="" alt="" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inputBubbleLeft">左侧气泡文字</label>
+              <input class="form-input" id="inputBubbleLeft" type="text" maxlength="24" placeholder="例如 今天也要开心呀" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inputBubbleRight">右侧气泡文字</label>
+              <input class="form-input" id="inputBubbleRight" type="text" maxlength="24" placeholder="例如 收到你的想念啦" />
+            </div>
+            <button type="button" class="save-btn" id="saveSettings">保存设置</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
   <style>
-    * { -webkit-tap-highlight-color: transparent; }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
     html { -webkit-font-smoothing: antialiased; }
+
     body {
       font-family: var(--font-sans);
+      letter-spacing: var(--tracking-normal);
       margin: 0;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f5f0f5;
+      background: hsl(var(--background));
     }
-    .phone {
+
+    .phone-frame {
       position: relative;
       width: 100%;
       max-width: 420px;
       height: 100vh;
       max-height: 880px;
       overflow: hidden;
+      background: var(--primary-bg);
       display: flex;
       flex-direction: column;
     }
+
     @media (min-width: 480px) {
-      .phone {
+      .phone-frame {
         height: 860px;
-        border-radius: 40px;
-        border: 10px solid #2d2a32;
-        box-shadow: 0 25px 60px -15px rgba(100, 80, 120, 0.35), 0 0 0 2px #1a1820;
+        border-radius: 44px;
+        border: 10px solid #4a3f45;
+        box-shadow: 0 25px 60px -15px hsl(340 12% 28% / 0.25), 0 0 0 2px hsl(340 12% 22%);
       }
-      .phone::before {
+      .dynamic-notch {
         content: '';
         position: absolute;
-        top: 0; left: 50%;
+        top: 0;
+        left: 50%;
         transform: translateX(-50%);
-        width: 150px; height: 28px;
-        background: #1a1820;
-        border-radius: 0 0 18px 18px;
+        width: 126px;
+        height: 30px;
+        background: #4a3f45;
+        border-radius: 0 0 20px 20px;
         z-index: 100;
       }
     }
-    .app-bg {
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 22px 6px;
+      color: var(--text-primary);
+      z-index: 50;
+    }
+    .status-time {
+      font-size: 14px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .status-icon {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.2;
+    }
+
+    .screen {
       flex: 1;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       position: relative;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+      padding: 8px 16px 0;
       scrollbar-width: none;
-    }
-    .app-bg::-webkit-scrollbar { display: none; }
-    .app-bg-fallback {
       background:
-        radial-gradient(ellipse 500px 300px at 50% 0%, rgba(255, 230, 240, 0.8), transparent 60%),
-        radial-gradient(ellipse 400px 250px at 10% 20%, rgba(255, 240, 245, 0.6), transparent 55%),
-        radial-gradient(ellipse 350px 200px at 90% 40%, rgba(245, 235, 250, 0.5), transparent 50%),
-        linear-gradient(180deg, #faf6fa, #f0eaf0);
+        radial-gradient(ellipse 520px 320px at 10% 0%, hsl(343 70% 92% / 0.7), transparent 55%),
+        radial-gradient(ellipse 420px 260px at 95% 8%, hsl(343 60% 90% / 0.5), transparent 50%),
+        linear-gradient(180deg, var(--primary-bg) 0%, #fdf8fa 100%);
     }
+    .screen::-webkit-scrollbar { display: none; }
 
-    /* 状态栏 */
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 24px 6px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #3d2030;
+    .settings-btn {
+      position: absolute;
+      top: 8px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 9999px;
+      border: none;
+      display: grid;
+      place-items: center;
+      background: hsl(var(--card));
+      color: var(--text-secondary);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      z-index: 40;
     }
-    .status-bar .time {
-      font-family: var(--font-serif);
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .status-bar .right-icons {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-    }
-    .status-bar .battery {
-      width: 22px;
-      height: 11px;
-      border: 1.5px solid #3d2030;
-      border-radius: 3px;
+    .settings-btn:hover { box-shadow: var(--shadow-md); }
+    .settings-btn:active { transform: scale(0.92); }
+
+    .widget {
+      background: hsl(var(--card));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
       position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
     }
-    .status-bar .battery::after {
-      content: '';
-      position: absolute;
-      right: -4px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 2px;
-      height: 5px;
-      background: #3d2030;
-      border-radius: 0 2px 2px 0;
-    }
-    .status-bar .battery-fill {
-      position: absolute;
-      left: 1px; top: 1px; bottom: 1px;
-      width: 75%;
-      background: #3d2030;
-      border-radius: 1px;
+    .widget:hover { box-shadow: var(--shadow-md); }
+
+    .hero-widgets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
     }
 
-    /* 日历小组件 */
+    .time-widget {
+      padding: 14px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(145deg, #fff8fa, #ffffff);
+    }
+    .time-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .time-num {
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .time-date {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+    .widget-deco {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: hsl(343 70% 80%);
+    }
+    .deco-star { width: 18px; height: 18px; }
+
     .calendar-widget {
-      margin: 8px 16px 12px;
-      padding: 16px 18px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 4px 20px -6px rgba(180, 150, 180, 0.15);
+      padding: 12px 12px 14px;
+      background: linear-gradient(145deg, #ffffff, #fff5f8);
     }
     .calendar-header {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 10px;
+      align-items: center;
+      margin-bottom: 8px;
     }
     .calendar-month {
-      font-family: var(--font-serif);
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 600;
-      color: #5a4050;
+      color: var(--text-primary);
     }
-    .calendar-weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      text-align: center;
-      font-size: 10px;
-      color: #b090a0;
-      margin-bottom: 6px;
+    .calendar-weekday {
+      font-size: 11px;
+      color: var(--text-secondary);
     }
-    .calendar-days {
+    .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 2px;
       text-align: center;
     }
+    .calendar-day-head {
+      font-size: 9px;
+      color: var(--text-secondary);
+      padding: 2px 0;
+    }
     .calendar-day {
-      font-size: 11px;
-      padding: 4px 0;
-      color: #7a6070;
-      border-radius: 8px;
-    }
-    .calendar-day.today {
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      color: white;
-      font-weight: 600;
-    }
-    .calendar-day.other-month {
-      color: #d0c0d0;
-    }
-    .calendar-day.heart::after {
-      content: '♥';
-      position: absolute;
-      font-size: 6px;
-      color: #e8749a;
-    }
-
-    /* 个人卡片 */
-    .profile-card {
-      margin: 0 16px 12px;
-      padding: 18px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 4px 20px -6px rgba(180, 150, 180, 0.15);
-      position: relative;
-      overflow: hidden;
-    }
-    .profile-card::before {
-      content: '';
-      position: absolute;
-      top: -30px; right: -30px;
-      width: 100px; height: 100px;
-      background: radial-gradient(circle, rgba(244, 160, 188, 0.2), transparent 70%);
-      border-radius: 50%;
-    }
-    .profile-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      position: relative;
-      z-index: 1;
-    }
-    .avatar-circle {
-      width: 56px; height: 56px; border-radius: 9999px; flex-shrink: 0;
-      display: grid; place-items: center; font-size: 1.5rem;
-      background: linear-gradient(135deg, #ffe4ec, #f4a0bc);
-      border: 3px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 4px 12px rgba(232, 116, 154, 0.2);
-      overflow: hidden;
-    }
-    .avatar-circle img {
-      width: 100%; height: 100%; object-fit: cover;
-    }
-    .profile-info { flex: 1; min-width: 0; }
-    .profile-name {
-      font-family: var(--font-serif);
-      font-size: 16px;
-      font-weight: 600;
-      color: #4a3040;
-    }
-    .profile-sig {
-      font-size: 12px;
-      color: #9a8090;
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-style: italic;
-    }
-    .days-counter {
-      text-align: right;
-      flex-shrink: 0;
-    }
-    .days-num {
-      font-family: var(--font-serif);
-      font-size: 28px;
-      font-weight: 700;
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
+      font-size: 10px;
+      color: var(--text-primary);
+      padding: 3px 0;
+      border-radius: 9999px;
       font-variant-numeric: tabular-nums;
     }
-    .days-label {
-      font-size: 10px;
-      color: #b090a0;
-      margin-top: 2px;
+    .calendar-day.today {
+      background: var(--accent-color);
+      color: #fff;
+      font-weight: 600;
+    }
+    .calendar-day.other {
+      color: var(--text-secondary);
+      opacity: 0.5;
     }
 
-    /* Fun Widgets 圆形图标区 */
-    .widget-label {
-      padding: 6px 24px 8px;
-      font-family: var(--font-serif);
-      font-size: 13px;
-      font-weight: 600;
-      color: #7a6070;
+    .profile-widget {
+      margin-top: 10px;
+      padding: 22px 16px 18px;
+      background: linear-gradient(135deg, #b78bc9 0%, #d984a8 50%, #e8749a 100%);
+      color: #fff;
+      border: none;
+      position: relative;
+      overflow: hidden;
     }
-    .widget-row {
-      display: flex;
-      justify-content: space-around;
-      padding: 0 20px 14px;
+    .profile-widget.has-bg-img {
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: #b78bc9;
     }
-    .widget-circle {
+    .profile-widget-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, hsl(340 30% 18% / 0.22) 0%, hsl(340 30% 18% / 0.42) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .profile-deco {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      color: hsl(0 0% 100% / 0.18);
+      z-index: 1;
+    }
+    .deco-cloud {
+      position: absolute;
+      top: 10px;
+      right: 18px;
+      width: 56px;
+      height: 32px;
+    }
+    .deco-heart {
+      position: absolute;
+      bottom: 14px;
+      right: 52px;
+      width: 18px;
+      height: 18px;
+    }
+    .profile-inner {
+      position: relative;
+      z-index: 2;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
-      text-decoration: none;
-      cursor: pointer;
-      transition: transform 0.15s;
+      text-align: center;
     }
-    .widget-circle:active { transform: scale(0.9); }
-    .widget-circle-icon {
-      width: 52px; height: 52px;
+    .avatar-pair {
+      position: relative;
+      width: 156px;
+      height: 108px;
+      margin: 0 auto;
+    }
+    .avatar-dual:first-child { position: absolute; left: 0; top: 0; }
+    .avatar-dual:last-child { position: absolute; right: 0; top: 0; }
+    .avatar-dual {
+      width: 64px;
+      height: 64px;
       border-radius: 9999px;
-      display: grid; place-items: center;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(10px);
-      border: 2px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 4px 12px rgba(180, 150, 180, 0.15);
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      background: hsl(0 0% 100% / 0.22);
+      outline: 3px solid hsl(0 0% 100% / 0.45);
+      outline-offset: 2px;
       overflow: hidden;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
-    .widget-circle-icon img {
-      width: 36px; height: 36px;
-      border-radius: 9999px;
+    .avatar-dual img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
     }
-    .widget-circle-label {
-      font-size: 10px;
-      color: #7a6070;
+    .avatar-dual .lucide {
+      width: 28px;
+      height: 28px;
+      color: #fff;
+      stroke-width: 2;
     }
-
-    /* 语录按钮 */
-    .quote-row {
-      display: flex;
-      gap: 10px;
-      padding: 0 16px 14px;
+    .headphone-cable {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      color: hsl(0 0% 100% / 0.95);
+      filter: drop-shadow(0 2px 2px hsl(340 30% 25% / 0.25));
+      overflow: visible;
     }
-    .quote-btn {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.7);
+    .message-bubble {
+      position: absolute;
+      top: -20px;
+      max-width: 64px;
+      padding: 6px 8px;
+      font-size: 10.5px;
+      line-height: 1.35;
+      text-align: left;
+      word-break: break-word;
+      color: #333333 !important;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)) !important;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      font-family: var(--font-serif);
-      font-size: 12px;
-      font-weight: 500;
-      color: #6a5060;
-      text-align: center;
-      text-decoration: none;
-      cursor: pointer;
-      transition: transform 0.15s, background 0.15s;
-      box-shadow: 0 2px 10px -3px rgba(180, 150, 180, 0.1);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.4) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.6) !important;
+      border-left: 1px solid rgba(255, 255, 255, 0.6) !important;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+      z-index: 3;
     }
-    .quote-btn:active {
-      transform: scale(0.97);
-      background: rgba(255, 255, 255, 0.9);
-    }
-
-    /* 音乐小组件 */
-    .music-widget {
-      margin: 0 16px 14px;
-      padding: 14px 16px;
-      border-radius: 20px;
-      background: rgba(45, 35, 50, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 20px -6px rgba(60, 40, 70, 0.3);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      text-decoration: none;
-      cursor: pointer;
-      transition: transform 0.15s;
-    }
-    .music-widget:active { transform: scale(0.98); }
-    .music-cover {
-      width: 48px; height: 48px;
-      border-radius: 9999px;
-      background: linear-gradient(135deg, #f4a0bc, #e8749a);
-      display: grid; place-items: center;
-      flex-shrink: 0;
-      position: relative;
-      animation: spin 8s linear infinite;
-      animation-play-state: paused;
-    }
-    .music-widget:hover .music-cover { animation-play-state: running; }
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .music-cover::before {
+    .message-sent { border-radius: 20px 20px 5px 20px; }
+    .message-received { border-radius: 20px 20px 20px 5px; }
+    .bubble-left { left: 6px; }
+    .bubble-right { right: 6px; }
+    .message-bubble::after {
       content: '';
       position: absolute;
-      width: 16px; height: 16px;
-      border-radius: 9999px;
-      background: rgba(45, 35, 50, 0.9);
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      bottom: -5px;
+      width: 0;
+      height: 0;
+      border: 5px solid transparent;
+      border-top-color: rgba(255, 255, 255, 0.55);
     }
-    .music-cover img {
-      width: 100%; height: 100%;
-      border-radius: 9999px;
-      object-fit: cover;
+    .bubble-left::after { left: 14px; }
+    .bubble-right::after { right: 14px; }
+    .profile-info {
+      min-width: 0;
+      width: 100%;
+      margin-top: 14px;
     }
-    .music-info { flex: 1; min-width: 0; }
-    .music-title {
-      font-size: 13px;
+    .profile-name {
+      font-size: 17px;
       font-weight: 600;
       color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      text-shadow: 0 1px 2px hsl(340 30% 20% / 0.35);
     }
-    .music-artist {
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.6);
-      margin-top: 2px;
-    }
-    .music-play-btn {
-      width: 32px; height: 32px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.2);
-      display: grid; place-items: center;
-      color: #fff;
+    .profile-sig {
       font-size: 12px;
-      flex-shrink: 0;
+      color: hsl(0 0% 100% / 0.9);
+      margin-top: 4px;
+      text-shadow: 0 1px 2px hsl(340 30% 20% / 0.35);
+    }
+    .days-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .days-num {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 1px 2px hsl(340 30% 20% / 0.35);
+    }
+    .days-label {
+      font-size: 13px;
+      opacity: 0.92;
+      text-shadow: 0 1px 2px hsl(340 30% 20% / 0.35);
     }
 
-    /* App 图标网格 */
-    .section-label {
-      padding: 10px 24px 8px;
-      font-family: var(--font-serif);
+    .text-widget {
+      margin-top: 10px;
+      padding: 16px;
+      background: linear-gradient(145deg, #ffffff, #fff8fa);
+    }
+    .text-widget-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .text-widget-title {
       font-size: 13px;
       font-weight: 600;
-      color: #7a6070;
+      color: var(--text-primary);
+    }
+    .deco-sparkle {
+      width: 16px;
+      height: 16px;
+      color: hsl(343 70% 78%);
+    }
+    .text-widget-body {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .app-grid-section {
+      margin-top: 18px;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding-left: 4px;
+      margin-bottom: 8px;
     }
     .app-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px 4px;
-      padding: 4px 12px 10px;
+      gap: 10px 6px;
     }
     .app-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       padding: 6px 2px;
       border-radius: 16px;
-      cursor: pointer;
       text-decoration: none;
-      transition: transform 0.1s;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      background: transparent;
+      border: none;
+      font-family: inherit;
     }
-    .app-item:active { transform: scale(0.9); }
+    .app-item:hover { background: hsl(var(--accent)); }
+    .app-item:active { transform: scale(0.92); }
     .app-icon {
-      width: 56px; height: 56px;
+      width: 54px;
+      height: 54px;
       border-radius: 16px;
-      display: grid; place-items: center;
-      overflow: hidden;
-      box-shadow: 0 4px 12px -3px rgba(180, 150, 180, 0.2);
-      background: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 10px -3px hsl(343 40% 45% / 0.18);
+      transition: box-shadow 0.2s;
     }
-    .app-icon img {
-      width: 100%; height: 100%;
-      object-fit: cover;
+    .app-icon .lucide {
+      width: 26px;
+      height: 26px;
+      color: #fff;
+      stroke-width: 2;
     }
+    #moreBtn .app-icon .lucide { color: var(--text-secondary); }
     .app-label {
-      font-size: 10.5px;
-      color: #5a4050;
+      font-size: 11px;
+      color: var(--text-primary);
       text-align: center;
-      line-height: 1.3;
-      font-weight: 500;
+      line-height: 1.25;
+      max-width: 100%;
     }
 
-    /* Dock 栏 */
     .dock {
       display: flex;
       justify-content: center;
-      gap: 18px;
-      margin: auto 16px 12px;
-      padding: 10px 14px;
+      gap: 16px;
+      margin: 18px 0 10px;
+      padding: 11px 14px;
       border-radius: 28px;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 4px 20px -6px rgba(180, 150, 180, 0.15);
+      background: hsl(var(--card) / 0.78);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
     }
     .dock-item {
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      text-decoration: none; cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      text-decoration: none;
+      cursor: pointer;
       transition: transform 0.1s;
+      background: transparent;
+      border: none;
+      font-family: inherit;
     }
     .dock-item:active { transform: scale(0.9); }
     .dock-icon {
-      width: 46px; height: 46px;
-      border-radius: 14px;
-      display: grid; place-items: center;
-      overflow: hidden;
-      box-shadow: 0 3px 10px -3px rgba(180, 150, 180, 0.18);
-      background: #fff;
+      width: 50px;
+      height: 50px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 10px -3px hsl(343 40% 45% / 0.16);
     }
-    .dock-icon img {
-      width: 100%; height: 100%;
-      object-fit: cover;
+    .dock-icon .lucide {
+      width: 22px;
+      height: 22px;
+      color: #fff;
+      stroke-width: 2;
     }
-    .dock-label { font-size: 9.5px; color: #7a6070; font-weight: 500; }
-
-    /* 设置按钮 - 右上角 */
-    .settings-btn {
-      position: absolute;
-      top: 44px;
-      right: 20px;
-      width: 36px; height: 36px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      display: grid; place-items: center;
-      cursor: pointer;
-      z-index: 50;
-      text-decoration: none;
-      transition: transform 0.15s;
-      box-shadow: 0 2px 10px rgba(180, 150, 180, 0.15);
-    }
-    .settings-btn:active { transform: scale(0.9); }
-    .settings-btn img {
-      width: 22px; height: 22px;
+    .dock-label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      max-width: 100%;
     }
 
     .home-indicator {
-      display: flex; justify-content: center; padding: 6px 0 10px;
+      display: flex;
+      justify-content: center;
+      padding: 4px 0 10px;
     }
     .home-indicator span {
-      width: 130px; height: 4px; border-radius: 9999px;
-      background: rgba(90, 64, 80, 0.3);
+      width: 130px;
+      height: 4px;
+      border-radius: 9999px;
+      background: hsl(var(--foreground) / 0.2);
     }
 
-    @keyframes appFadeIn {
+    .settings-modal {
+      position: absolute;
+      inset: 0;
+      z-index: 80;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .settings-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: hsl(340 12% 18% / 0.35);
+      backdrop-filter: blur(2px);
+    }
+    .modal-panel {
+      position: relative;
+      width: 100%;
+      max-height: 80%;
+      background: hsl(var(--card));
+      border-radius: 28px 28px 0 0;
+      padding: 12px 20px 24px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.3, 0, 0, 1);
+      overflow-y: auto;
+    }
+    .settings-modal.open .modal-panel {
+      transform: translateY(0);
+    }
+    .modal-handle {
+      width: 40px;
+      height: 4px;
+      border-radius: 9999px;
+      background: hsl(var(--foreground) / 0.15);
+      margin: 0 auto 14px;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .modal-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      border: none;
+      display: grid;
+      place-items: center;
+      background: hsl(var(--muted));
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .modal-close:active { transform: scale(0.92); }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+    .form-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: hsl(var(--muted));
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-input:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px hsl(343 55% 78% / 0.2);
+    }
+    .form-textarea {
+      height: 72px;
+      padding: 10px 12px;
+      resize: none;
+      line-height: 1.5;
+    }
+    .save-btn {
+      width: 100%;
+      height: 44px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, #f4a0bc, #e8749a);
+      color: #fff;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: transform 0.1s, box-shadow 0.15s;
+    }
+    .save-btn:hover { box-shadow: 0 6px 16px -4px hsl(343 55% 60% / 0.35); }
+    .save-btn:active { transform: scale(0.98); }
+
+    @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: none; }
     }
-    .app-item, .dock-item, .widget-circle, .quote-btn, .music-widget {
-      animation: appFadeIn 0.4s cubic-bezier(0.3, 0, 0, 1) both;
+    .widget, .app-item, .dock-item, .section-title {
+      animation: fadeInUp 0.45s cubic-bezier(0.3, 0, 0, 1) both;
     }
+    .app-item, .dock-item {
+      animation-delay: var(--delay, 0s);
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -543,234 +1126,63 @@
       }
     }
 
-    /* 星星装饰 */
-    .star-deco {
-      position: absolute;
-      pointer-events: none;
-      opacity: 0.4;
+    .upload-row { display: flex; align-items: center; gap: 10px; }
+    .upload-preview {
+      width: 44px; height: 44px; border-radius: 50%; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--secondary-bg); color: var(--text-secondary);
+      border: 1px solid var(--border-color); flex-shrink: 0;
     }
+    .upload-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .upload-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border-radius: 9999px; border: 1px solid rgba(232,164,184,0.35);
+      background: #fff; color: var(--text-primary); font-size: 13px; cursor: pointer;
+      transition: transform 0.1s, background-color 0.15s;
+    }
+    .upload-btn:active { transform: scale(0.96); }
+    .upload-btn.ghost {
+      background: transparent; border-color: rgba(232,164,184,0.25);
+      color: var(--text-secondary);
+    }
+    .bg-preview-wrap {
+      margin-top: 10px; width: 100%; height: 90px; border-radius: 14px;
+      overflow: hidden; border: 1px solid rgba(232,164,184,0.15);
+    }
+    .bg-preview-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .bg-preview-wrap.hidden { display: none; }
   </style>
-</head>
-<body>
-  <div class="phone">
-    <div class="app-bg app-bg-fallback" id="appBg">
-      <!-- 设置按钮 -->
-      <a href="customize.html" class="settings-btn" aria-label="自定义设置">
-        <img src="icon-settings.png" alt="设置" />
-      </a>
 
-      <!-- 状态栏 -->
-      <div class="status-bar">
-        <span class="time" id="statusTime">09:41</span>
-        <div class="right-icons">
-          <span>📶</span>
-          <span>📡</span>
-          <div class="battery">
-            <div class="battery-fill"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 日历小组件 -->
-      <div class="calendar-widget">
-        <div class="calendar-header">
-          <span class="calendar-month" id="calendarMonth">2026年08月</span>
-        </div>
-        <div class="calendar-weekdays">
-          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-        </div>
-        <div class="calendar-days" id="calendarDays">
-          <!-- JS 生成 -->
-        </div>
-      </div>
-
-      <!-- 个人信息卡片 -->
-      <div class="profile-card">
-        <div class="profile-row">
-          <div class="avatar-circle" id="avatarEmoji">🌙</div>
-          <div class="profile-info">
-            <div class="profile-name" id="username">@my_profile</div>
-            <div class="profile-sig" id="signature">今天也要加油呀 ✨</div>
-          </div>
-          <div class="days-counter">
-            <div class="days-num" id="daysNum">769</div>
-            <div class="days-label">天 · 在一起</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Fun Widgets 圆形图标 -->
-      <div class="widget-label">Fun Widgets</div>
-      <div class="widget-row">
-        <a href="cards-new.html" class="widget-circle" style="animation-delay:0.05s">
-          <div class="widget-circle-icon">
-            <img src="icon-cards.png" alt="字卡" />
-          </div>
-          <span class="widget-circle-label">字卡</span>
-        </a>
-        <a href="chat-new.html" class="widget-circle" style="animation-delay:0.1s">
-          <div class="widget-circle-icon">
-            <img src="icon-chat.png" alt="对话" />
-          </div>
-          <span class="widget-circle-label">对话</span>
-        </a>
-        <a href="moments-new.html" class="widget-circle" style="animation-delay:0.15s">
-          <div class="widget-circle-icon">
-            <img src="icon-moments.png" alt="朋友圈" />
-          </div>
-          <span class="widget-circle-label">朋友圈</span>
-        </a>
-        <a href="spark-new.html" class="widget-circle" style="animation-delay:0.2s">
-          <div class="widget-circle-icon">
-            <img src="icon-spark.png" alt="小火人" />
-          </div>
-          <span class="widget-circle-label">小火人</span>
-        </a>
-      </div>
-
-      <!-- 语录按钮 -->
-      <div class="quote-row">
-        <a href="diary-new.html" class="quote-btn" style="animation-delay:0.25s">命运是我的肋骨</a>
-        <a href="letter-new.html" class="quote-btn" style="animation-delay:0.3s">你长在我的痛处</a>
-      </div>
-
-      <!-- 音乐小组件 -->
-      <a href="music-new.html" class="music-widget" style="animation-delay:0.35s">
-        <div class="music-cover">
-          <img src="icon-music.png" alt="音乐" />
-        </div>
-        <div class="music-info">
-          <div class="music-title">梦角传讯 BGM</div>
-          <div class="music-artist">背景音乐</div>
-        </div>
-        <div class="music-play-btn">▶</div>
-      </a>
-
-      <!-- 传讯 App 组 -->
-      <div class="section-label">传讯</div>
-      <div class="app-grid">
-        <a href="cards-new.html" class="app-item" style="animation-delay:0.4s">
-          <div class="app-icon">
-            <img src="icon-cards.png" alt="字卡传讯" />
-          </div>
-          <span class="app-label">字卡传讯</span>
-        </a>
-        <a href="chat-new.html" class="app-item" style="animation-delay:0.42s">
-          <div class="app-icon">
-            <img src="icon-chat.png" alt="梦角对话" />
-          </div>
-          <span class="app-label">梦角对话</span>
-        </a>
-        <a href="moments-new.html" class="app-item" style="animation-delay:0.44s">
-          <div class="app-icon">
-            <img src="icon-moments.png" alt="朋友圈" />
-          </div>
-          <span class="app-label">朋友圈</span>
-        </a>
-        <a href="history-new.html" class="app-item" style="animation-delay:0.46s">
-          <div class="app-icon">
-            <img src="icon-diary.png" alt="传讯记录" />
-          </div>
-          <span class="app-label">传讯记录</span>
-        </a>
-      </div>
-
-      <!-- 日记 App 组 -->
-      <div class="section-label">日记</div>
-      <div class="app-grid">
-        <a href="diary-new.html" class="app-item" style="animation-delay:0.5s">
-          <div class="app-icon">
-            <img src="icon-diary.png" alt="梦境日记" />
-          </div>
-          <span class="app-label">梦境日记</span>
-        </a>
-        <a href="letter-new.html" class="app-item" style="animation-delay:0.52s">
-          <div class="app-icon">
-            <img src="icon-letter.png" alt="给梦角的信" />
-          </div>
-          <span class="app-label">给梦角的信</span>
-        </a>
-        <a href="anniversary-new.html" class="app-item" style="animation-delay:0.54s">
-          <div class="app-icon">
-            <img src="icon-anniversary.png" alt="纪念日" />
-          </div>
-          <span class="app-label">纪念日</span>
-        </a>
-        <a href="wish-new.html" class="app-item" style="animation-delay:0.56s">
-          <div class="app-icon">
-            <img src="icon-wish.png" alt="心愿" />
-          </div>
-          <span class="app-label">心愿</span>
-        </a>
-        <a href="music-new.html" class="app-item" style="animation-delay:0.58s">
-          <div class="app-icon">
-            <img src="icon-music.png" alt="背景音乐" />
-          </div>
-          <span class="app-label">背景音乐</span>
-        </a>
-        <a href="spark-new.html" class="app-item" style="animation-delay:0.6s">
-          <div class="app-icon">
-            <img src="icon-spark.png" alt="小火人" />
-          </div>
-          <span class="app-label">小火人</span>
-        </a>
-        <a href="customize.html" class="app-item" style="animation-delay:0.62s">
-          <div class="app-icon">
-            <img src="icon-settings.png" alt="自定义" />
-          </div>
-          <span class="app-label">自定义</span>
-        </a>
-      </div>
-
-      <!-- Dock 栏 -->
-      <div class="dock">
-        <a href="cards-new.html" class="dock-item" style="animation-delay:0.65s">
-          <div class="dock-icon">
-            <img src="icon-cards.png" alt="字卡" />
-          </div>
-          <span class="dock-label">字卡</span>
-        </a>
-        <a href="chat-new.html" class="dock-item" style="animation-delay:0.68s">
-          <div class="dock-icon">
-            <img src="icon-chat.png" alt="对话" />
-          </div>
-          <span class="dock-label">对话</span>
-        </a>
-        <a href="moments-new.html" class="dock-item" style="animation-delay:0.7s">
-          <div class="dock-icon">
-            <img src="icon-moments.png" alt="朋友圈" />
-          </div>
-          <span class="dock-label">朋友圈</span>
-        </a>
-        <a href="spark-new.html" class="dock-item" style="animation-delay:0.72s">
-          <div class="dock-icon">
-            <img src="icon-spark.png" alt="小火人" />
-          </div>
-          <span class="dock-label">小火人</span>
-        </a>
-      </div>
-
-      <div class="home-indicator">
-        <span></span>
-      </div>
-    </div>
-  </div>
   <script>
     (function () {
       "use strict";
+
       var KEYS = {
         togetherDate: "mengjiao_together_date",
         signature: "mengjiao_signature",
         username: "mengjiao_username",
+        dreamname: "mengjiao_dreamname",
         avatarEmoji: "mengjiao_avatar_emoji",
         avatarImg: "mengjiao_avatar_img",
-        bgImg: "mengjiao_bg_img"
+        dreamImg: "mengjiao_dream_img",
+        bgImg: "mengjiao_bg_img",
+        widgetTitle: "mengjiao_widget_title",
+        widgetText: "mengjiao_widget_text",
+        bubbleLeft: "mengjiao_bubble_left",
+        bubbleRight: "mengjiao_bubble_right"
       };
+
       var DEFAULTS = {
         signature: "今天也要加油呀 ✨",
         username: "@my_profile",
-        avatarEmoji: "🌙"
+        dreamname: "梦角",
+        avatarEmoji: "🌙",
+        widgetTitle: "给梦角的话",
+        widgetText: "每一个梦醒时分，都想把第一缕想念传给你。",
+        bubbleLeft: "今天也要开心呀",
+        bubbleRight: "收到你的想念啦"
       };
+
       function getItem(key, fallback) {
         try {
           var v = localStorage.getItem(key);
@@ -778,6 +1190,69 @@
         } catch (e) {}
         return fallback;
       }
+      function setItem(key, value) {
+        try { localStorage.setItem(key, value); } catch (e) {}
+      }
+
+      function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+      function updateClock() {
+        var now = new Date();
+        var h = pad(now.getHours());
+        var m = pad(now.getMinutes());
+        var timeStr = h + ":" + m;
+        document.getElementById("clockTime").textContent = timeStr;
+        document.getElementById("statusTime").textContent = timeStr;
+
+        var weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+        var dateStr = (now.getMonth() + 1) + "月" + now.getDate() + "日 " + weekdays[now.getDay()];
+        document.getElementById("clockDate").textContent = dateStr;
+      }
+
+      function renderCalendar() {
+        var now = new Date();
+        var year = now.getFullYear();
+        var month = now.getMonth();
+        var today = now.getDate();
+        var firstDay = new Date(year, month, 1).getDay();
+        var daysInMonth = new Date(year, month + 1, 0).getDate();
+        var prevDays = new Date(year, month, 0).getDate();
+
+        document.getElementById("calendarMonth").textContent = year + "年 " + (month + 1) + "月";
+        document.getElementById("calendarWeekday").textContent = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][now.getDay()];
+
+        var grid = document.getElementById("calendarGrid");
+        grid.innerHTML = "";
+
+        ["日", "一", "二", "三", "四", "五", "六"].forEach(function (d) {
+          var el = document.createElement("div");
+          el.className = "calendar-day-head";
+          el.textContent = d;
+          grid.appendChild(el);
+        });
+
+        for (var i = firstDay - 1; i >= 0; i--) {
+          var el = document.createElement("div");
+          el.className = "calendar-day other";
+          el.textContent = prevDays - i;
+          grid.appendChild(el);
+        }
+        for (var d = 1; d <= daysInMonth; d++) {
+          var el = document.createElement("div");
+          el.className = "calendar-day" + (d === today ? " today" : "");
+          el.textContent = d;
+          grid.appendChild(el);
+        }
+        var total = firstDay + daysInMonth;
+        var nextDays = (7 - (total % 7)) % 7;
+        for (var n = 1; n <= nextDays; n++) {
+          var el = document.createElement("div");
+          el.className = "calendar-day other";
+          el.textContent = n;
+          grid.appendChild(el);
+        }
+      }
+
       function calcDays(dateStr) {
         if (!dateStr) return 769;
         var start = new Date(dateStr + "T00:00:00");
@@ -788,76 +1263,174 @@
         return days < 0 ? 0 : days;
       }
 
-      // 更新状态栏时间
-      function updateStatusTime() {
-        var now = new Date();
-        var h = String(now.getHours()).padStart(2, '0');
-        var m = String(now.getMinutes()).padStart(2, '0');
-        document.getElementById("statusTime").textContent = h + ':' + m;
+      function setAvatar(el, imgUrl, fallbackIcon) {
+        if (imgUrl) {
+          el.innerHTML = '<img src="' + imgUrl + '" alt="" />';
+        } else {
+          el.innerHTML = '<i data-lucide="' + fallbackIcon + '"></i>';
+        }
       }
-      updateStatusTime();
-      setInterval(updateStatusTime, 60000);
 
-      // 生成日历
-      function renderCalendar() {
-        var now = new Date();
-        var year = now.getFullYear();
-        var month = now.getMonth();
-        var today = now.getDate();
+      var tempAvatarImg = "";
+      var tempDreamImg = "";
+      var tempBgImg = "";
 
-        document.getElementById("calendarMonth").textContent = year + '年' + String(month + 1).padStart(2, '0') + '月';
-
-        var firstDay = new Date(year, month, 1).getDay();
-        var daysInMonth = new Date(year, month + 1, 0).getDate();
-        var daysInPrevMonth = new Date(year, month, 0).getDate();
-
-        var html = '';
-        // 上月末尾
-        for (var i = firstDay - 1; i >= 0; i--) {
-          html += '<div class="calendar-day other-month">' + (daysInPrevMonth - i) + '</div>';
-        }
-        // 本月
-        for (var d = 1; d <= daysInMonth; d++) {
-          if (d === today) {
-            html += '<div class="calendar-day today">' + d + '</div>';
-          } else {
-            html += '<div class="calendar-day">' + d + '</div>';
-          }
-        }
-        // 下月开头（补满6行）
-        var totalCells = firstDay + daysInMonth;
-        var remaining = (7 - (totalCells % 7)) % 7;
-        for (var j = 1; j <= remaining; j++) {
-          html += '<div class="calendar-day other-month">' + j + '</div>';
-        }
-
-        document.getElementById("calendarDays").innerHTML = html;
+      function readFile(file, cb) {
+        if (!file || !file.type.startsWith("image/")) return cb(null);
+        var reader = new FileReader();
+        reader.onload = function (e) { cb(e.target.result); };
+        reader.readAsDataURL(file);
       }
+      function setPreviewImg(el, src, fallbackHtml) {
+        if (src) {
+          el.innerHTML = '<img src="' + src + '" alt="" />';
+        } else {
+          el.innerHTML = fallbackHtml || '<i data-lucide="image" class="w-5 h-5"></i>';
+        }
+      }
+      function setBgPreview(src) {
+        var wrap = document.getElementById("previewBgImgWrap");
+        var img = document.getElementById("previewBgImg");
+        if (src) {
+          img.src = src;
+          wrap.classList.remove("hidden");
+        } else {
+          img.src = "";
+          wrap.classList.add("hidden");
+        }
+      }
+
+      function applySettings() {
+        var savedDate = getItem(KEYS.togetherDate, "");
+        document.getElementById("daysNum").textContent = savedDate ? String(calcDays(savedDate)) : "769";
+        document.getElementById("signature").textContent = getItem(KEYS.signature, DEFAULTS.signature);
+        var userName = getItem(KEYS.username, DEFAULTS.username);
+        var dreamName = getItem(KEYS.dreamname, DEFAULTS.dreamname);
+        document.getElementById("username").textContent = dreamName ? (userName + " & " + dreamName) : userName;
+        document.getElementById("widgetTitle").textContent = getItem(KEYS.widgetTitle, DEFAULTS.widgetTitle);
+        document.getElementById("widgetText").textContent = getItem(KEYS.widgetText, DEFAULTS.widgetText);
+        document.getElementById("bubbleLeft").textContent = getItem(KEYS.bubbleLeft, DEFAULTS.bubbleLeft);
+        document.getElementById("bubbleRight").textContent = getItem(KEYS.bubbleRight, DEFAULTS.bubbleRight);
+
+        setAvatar(document.getElementById("avatarMe"), getItem(KEYS.avatarImg, ""), "moon");
+        setAvatar(document.getElementById("avatarDream"), getItem(KEYS.dreamImg, ""), "star");
+
+        var bgImg = getItem(KEYS.bgImg, "");
+        var profileWidget = document.getElementById("profileWidget");
+        if (bgImg) {
+          profileWidget.style.backgroundImage = 'url(' + bgImg + ')';
+          profileWidget.classList.add("has-bg-img");
+        } else {
+          profileWidget.style.backgroundImage = '';
+          profileWidget.classList.remove("has-bg-img");
+        }
+
+        lucide.createIcons();
+      }
+
+      function fillForm() {
+        document.getElementById("inputUsername").value = getItem(KEYS.username, DEFAULTS.username);
+        document.getElementById("inputDreamname").value = getItem(KEYS.dreamname, DEFAULTS.dreamname);
+        document.getElementById("inputSignature").value = getItem(KEYS.signature, DEFAULTS.signature);
+        tempAvatarImg = getItem(KEYS.avatarImg, "");
+        tempDreamImg = getItem(KEYS.dreamImg, "");
+        tempBgImg = getItem(KEYS.bgImg, "");
+        setPreviewImg(document.getElementById("previewAvatarImg"), tempAvatarImg, '<i data-lucide="moon" class="w-5 h-5"></i>');
+        setPreviewImg(document.getElementById("previewDreamImg"), tempDreamImg, '<i data-lucide="star" class="w-5 h-5"></i>');
+        setBgPreview(tempBgImg);
+        document.getElementById("inputAvatarEmoji").value = getItem(KEYS.avatarEmoji, DEFAULTS.avatarEmoji);
+        document.getElementById("inputTogetherDate").value = getItem(KEYS.togetherDate, "");
+        document.getElementById("inputWidgetTitle").value = getItem(KEYS.widgetTitle, DEFAULTS.widgetTitle);
+        document.getElementById("inputWidgetText").value = getItem(KEYS.widgetText, DEFAULTS.widgetText);
+        document.getElementById("inputBubbleLeft").value = getItem(KEYS.bubbleLeft, DEFAULTS.bubbleLeft);
+        document.getElementById("inputBubbleRight").value = getItem(KEYS.bubbleRight, DEFAULTS.bubbleRight);
+        lucide.createIcons();
+      }
+
+      function saveForm() {
+        setItem(KEYS.username, document.getElementById("inputUsername").value.trim() || DEFAULTS.username);
+        setItem(KEYS.dreamname, document.getElementById("inputDreamname").value.trim() || DEFAULTS.dreamname);
+        setItem(KEYS.signature, document.getElementById("inputSignature").value.trim() || DEFAULTS.signature);
+        setItem(KEYS.avatarImg, tempAvatarImg);
+        setItem(KEYS.dreamImg, tempDreamImg);
+        setItem(KEYS.avatarEmoji, document.getElementById("inputAvatarEmoji").value.trim() || DEFAULTS.avatarEmoji);
+        setItem(KEYS.togetherDate, document.getElementById("inputTogetherDate").value);
+        setItem(KEYS.widgetTitle, document.getElementById("inputWidgetTitle").value.trim() || DEFAULTS.widgetTitle);
+        setItem(KEYS.widgetText, document.getElementById("inputWidgetText").value.trim() || DEFAULTS.widgetText);
+        setItem(KEYS.bgImg, tempBgImg);
+        setItem(KEYS.bubbleLeft, document.getElementById("inputBubbleLeft").value.trim() || DEFAULTS.bubbleLeft);
+        setItem(KEYS.bubbleRight, document.getElementById("inputBubbleRight").value.trim() || DEFAULTS.bubbleRight);
+        applySettings();
+        closeModal();
+      }
+
+      var modal = document.getElementById("settingsModal");
+      function openModal() {
+        fillForm();
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+      }
+      function closeModal() {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+      }
+
+      document.getElementById("settingsBtn").addEventListener("click", openModal);
+      document.getElementById("modalClose").addEventListener("click", closeModal);
+      document.getElementById("modalBackdrop").addEventListener("click", closeModal);
+      document.getElementById("saveSettings").addEventListener("click", saveForm);
+      document.getElementById("moreBtn").addEventListener("click", openModal);
+
+      // 头像/背景本地上传
+      function bindImageUpload(btnId, inputId, onLoad) {
+        document.getElementById(btnId).addEventListener("click", function () { document.getElementById(inputId).click(); });
+        document.getElementById(inputId).addEventListener("change", function (e) {
+          readFile(e.target.files[0], function (data) {
+            if (data) onLoad(data);
+          });
+          e.target.value = "";
+        });
+      }
+      bindImageUpload("btnAvatarImg", "inputAvatarImg", function (data) {
+        tempAvatarImg = data;
+        setPreviewImg(document.getElementById("previewAvatarImg"), data, '<i data-lucide="moon" class="w-5 h-5"></i>');
+      });
+      bindImageUpload("btnDreamImg", "inputDreamImg", function (data) {
+        tempDreamImg = data;
+        setPreviewImg(document.getElementById("previewDreamImg"), data, '<i data-lucide="star" class="w-5 h-5"></i>');
+      });
+      bindImageUpload("btnBgImg", "inputBgImg", function (data) {
+        tempBgImg = data;
+        setBgPreview(data);
+      });
+      document.getElementById("clearAvatarImg").addEventListener("click", function () {
+        tempAvatarImg = "";
+        setPreviewImg(document.getElementById("previewAvatarImg"), "", '<i data-lucide="moon" class="w-5 h-5"></i>');
+        lucide.createIcons();
+      });
+      document.getElementById("clearDreamImg").addEventListener("click", function () {
+        tempDreamImg = "";
+        setPreviewImg(document.getElementById("previewDreamImg"), "", '<i data-lucide="star" class="w-5 h-5"></i>');
+        lucide.createIcons();
+      });
+      document.getElementById("clearBgImg").addEventListener("click", function () {
+        tempBgImg = "";
+        setBgPreview("");
+      });
+
+      document.querySelectorAll(".app-item[data-delay], .dock-item[data-delay]").forEach(function (el) {
+        el.style.setProperty("--delay", el.getAttribute("data-delay") + "s");
+      });
+
+      updateClock();
       renderCalendar();
+      applySettings();
+      setInterval(updateClock, 1000);
 
-      // 个人信息
-      var savedDate = getItem(KEYS.togetherDate, "");
-      document.getElementById("daysNum").textContent = savedDate ? String(calcDays(savedDate)) : "769";
-      document.getElementById("signature").textContent = getItem(KEYS.signature, DEFAULTS.signature);
-      document.getElementById("username").textContent = getItem(KEYS.username, DEFAULTS.username);
+      lucide.createIcons();
 
-      var avatarEl = document.getElementById("avatarEmoji");
-      var avatarImg = getItem(KEYS.avatarImg, "");
-      if (avatarImg) {
-        avatarEl.innerHTML = '<img src="' + avatarImg + '" alt="" />';
-      } else {
-        avatarEl.textContent = getItem(KEYS.avatarEmoji, DEFAULTS.avatarEmoji);
-      }
-
-      var bgImg = getItem(KEYS.bgImg, "");
-      var appBg = document.getElementById("appBg");
-      if (bgImg) {
-        appBg.style.backgroundImage = 'url(' + bgImg + ')';
-        appBg.classList.remove("app-bg-fallback");
-      }
-
-      document.body.addEventListener('touchmove', function(e) {
-        if (e.target.closest('.app-bg')) return;
+      document.body.addEventListener("touchmove", function (e) {
+        if (e.target.closest(".screen") || e.target.closest(".modal-panel")) return;
         e.preventDefault();
       }, { passive: false });
     })();

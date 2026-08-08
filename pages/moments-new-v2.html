@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="light">
 <head>
     <meta charset="UTF-8">
@@ -192,6 +192,28 @@ body {
         background-color: currentColor;
       }
     </style>
+    <style>
+      .cover-doodle svg,
+      .cover-doodle-icon { width: 14px; height: 14px; }
+
+      .cover-avatar-fallback,
+      .cover-avatar-fallback svg { width: 1.6rem; height: 1.6rem; color: var(--accent-color); }
+
+      .moment-avatar-fallback,
+      .moment-avatar-fallback svg { width: 1.1rem; height: 1.1rem; color: var(--accent-color); }
+
+      .like-icon,
+      .like-icon svg { width: 14px; height: 14px; stroke-width: 2; fill: none; }
+      .like-icon--filled,
+      .action-btn.liked .like-icon,
+      .action-btn.liked .like-icon svg { fill: currentColor; }
+
+      .comment-send-icon,
+      .comment-send-icon svg { width: 16px; height: 16px; }
+
+      .empty-icon { display: inline-flex; align-items: center; justify-content: center; }
+      .empty-icon svg { width: 48px; height: 48px; }
+    </style>
 </head>
 <body>
   <div id="moments-app">
@@ -208,10 +230,10 @@ body {
       <section class="cover-section">
         <div class="cover-frame" id="coverWrap">
           <div class="cover-frame-inner" id="coverInner">
-            <div class="cover-doodle cover-doodle--tl" aria-hidden="true">✦</div>
-            <div class="cover-doodle cover-doodle--tr" aria-hidden="true">☁</div>
-            <div class="cover-doodle cover-doodle--bl" aria-hidden="true">♡</div>
-            <div class="cover-doodle cover-doodle--br" aria-hidden="true">✿</div>
+            <div class="cover-doodle cover-doodle--tl" aria-hidden="true"><i data-lucide="sparkle" class="cover-doodle-icon"></i></div>
+            <div class="cover-doodle cover-doodle--tr" aria-hidden="true"><i data-lucide="cloud" class="cover-doodle-icon"></i></div>
+            <div class="cover-doodle cover-doodle--bl" aria-hidden="true"><i data-lucide="heart" class="cover-doodle-icon"></i></div>
+            <div class="cover-doodle cover-doodle--br" aria-hidden="true"><i data-lucide="flower-2" class="cover-doodle-icon"></i></div>
           </div>
           <button class="cover-upload" id="coverUploadBtn" data-dom-id="btn-cover-upload" aria-label="更换封面">
             <i data-lucide="camera" class="cover-upload-icon"></i>
@@ -220,7 +242,7 @@ body {
           <div class="cover-user">
             <span class="cover-name" id="coverName">我</span>
             <div class="cover-avatar-wrap">
-              <div class="cover-avatar" id="coverAvatar">🌙</div>
+              <div class="cover-avatar" id="coverAvatar"><i data-lucide="moon" class="cover-avatar-fallback"></i></div>
             </div>
           </div>
         </div>
@@ -915,7 +937,8 @@ body {
       document.getElementById("coverName").textContent = username;
       var coverAvatar = document.getElementById("coverAvatar");
       if (myAvatar) coverAvatar.innerHTML = '<img src="' + myAvatar + '" alt="" />';
-      else coverAvatar.textContent = "🌙";
+      else coverAvatar.innerHTML = '<i data-lucide="moon" class="cover-avatar-fallback"></i>';
+      lucide.createIcons();
 
       document.getElementById("coverUploadBtn").addEventListener("click", function () {
         document.getElementById("coverInput").click();
@@ -945,9 +968,9 @@ body {
         var el = document.createElement("div");
         el.className = "moment-avatar";
         var src = isPartner ? dreamAvatar : myAvatar;
-        var fallback = isPartner ? "梦" : "🌙";
+        var fallbackIcon = isPartner ? "user" : "moon";
         if (src) el.innerHTML = '<img src="' + src + '" alt="" />';
-        else el.textContent = fallback;
+        else el.innerHTML = '<i data-lucide="' + fallbackIcon + '" class="moment-avatar-fallback"></i>';
         wrap.appendChild(el);
         return wrap;
       }
@@ -991,7 +1014,8 @@ body {
         var liked = (post.likes || []).indexOf("me") !== -1;
         var likeBtn = document.createElement("button");
         likeBtn.className = "action-btn" + (liked ? " liked" : "");
-        likeBtn.innerHTML = (liked ? "♥" : "♡") + " <span>" + (post.likes || []).length + "</span>";
+        var likeIconClass = liked ? "like-icon like-icon--filled" : "like-icon";
+        likeBtn.innerHTML = '<i data-lucide="heart" class="' + likeIconClass + '"></i> <span>' + (post.likes || []).length + '</span>';
         likeBtn.addEventListener("click", function () {
           toggleLike(post.id);
         });
@@ -1020,7 +1044,7 @@ body {
         input.maxLength = 120;
         var send = document.createElement("button");
         send.className = "comment-send";
-        send.innerHTML = "↵";
+        send.innerHTML = '<i data-lucide="send" class="comment-send-icon"></i>';
         send.addEventListener("click", function () {
           addComment(post.id, input.value);
           input.value = "";
@@ -1045,11 +1069,13 @@ body {
         var list = document.getElementById("momentsList");
         list.innerHTML = "";
         if (posts.length === 0) {
-          list.innerHTML = '<div class="empty-state"><div class="empty-icon">🌸</div><div class="empty-title">这里还空空如也</div><div class="empty-hint">发布第一条朋友圈，或等梦角来更新吧</div></div>';
+          list.innerHTML = '<div class="empty-state"><i data-lucide="sparkles" class="empty-icon"></i><div class="empty-title">这里还空空如也</div><div class="empty-hint">发布第一条朋友圈，或等梦角来更新吧</div></div>';
+          lucide.createIcons();
           return;
         }
         var sorted = posts.slice().sort(function (a, b) { return new Date(b.time) - new Date(a.time); });
         sorted.forEach(function (p) { renderMoment(p, list, false); });
+        lucide.createIcons();
       }
 
       function toggleLike(id) {
