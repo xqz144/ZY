@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c6a1dd">
+    <title>氛围感 · 梦角传讯</title>
+    <style id="theme-vars">
+@font-face {
+  font-family: 'DreamFont';
+  src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  --background: 30 20% 97%;
+  --card: 0 0% 100%;
+  --foreground: 340 12% 28%;
+  --card-foreground: 340 12% 28%;
+  --muted-foreground: 340 10% 55%;
+  --primary: 343 55% 78%;
+  --primary-foreground: 340 15% 22%;
+  --muted: 30 18% 94%;
+  --accent: 343 40% 92%;
+  --destructive: 0 70% 65%;
+  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
+  --radius: 1.25rem;
+  --tracking-normal: 0.02em;
+  --primary-bg: #f9f7f4;
+  --secondary-bg: #f3f0ec;
+  --accent-color: #c6a1dd;
+  --accent-color-rgb: 198, 161, 221;
+  --text-primary: #4a3f45;
+  --text-secondary: #9a8a92;
+  --border-color: rgba(198, 161, 221, 0.35);
+}
+body { font-family: var(--font-sans); letter-spacing: var(--tracking-normal); }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(198, 161, 221, 0.35); border-radius: 4px; }
+    </style>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style>
+      [data-icon] {
+        display: inline-flex; align-items: center; justify-content: center;
+        -webkit-mask-size: contain; mask-size: contain;
+        -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+        -webkit-mask-position: center; mask-position: center;
+        background-color: currentColor;
+      }
+      * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+      html { -webkit-font-smoothing: antialiased; }
+      body {
+        margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        background: var(--secondary-bg); color: var(--text-primary);
+        font-family: var(--font-sans); letter-spacing: var(--tracking-normal);
+      }
+      .phone {
+        position: relative; width: 100%; max-width: 420px; height: 100vh; max-height: 880px;
+        overflow: hidden; display: flex; flex-direction: column; background: var(--primary-bg);
+      }
+      @media (min-width: 480px) {
+        .phone {
+          height: 860px; border-radius: 40px; border: 10px solid hsl(343 24% 24%);
+          box-shadow: 0 25px 60px -15px hsl(270 25% 35% / 0.28), 0 0 0 2px hsl(270 18% 18%);
+        }
+        .phone::before {
+          content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+          width: 150px; height: 28px; background: hsl(270 22% 18%); border-radius: 0 0 18px 18px; z-index: 100;
+        }
+      }
+      .app-bg {
+        flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative;
+        display: flex; flex-direction: column;
+        background:
+          radial-gradient(ellipse 520px 320px at 18% 2%, hsl(270 55% 92% / 0.7), transparent 60%),
+          radial-gradient(ellipse 420px 260px at 92% 8%, hsl(343 55% 92% / 0.55), transparent 55%),
+          linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
+        scrollbar-width: none;
+      }
+      .app-bg::-webkit-scrollbar { display: none; }
+      .top-bar {
+        position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between;
+        padding: 44px 16px 10px; flex-shrink: 0;
+      }
+      @media (max-width: 479px) { .top-bar { padding-top: 16px; } }
+      .back-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 2px;
+        width: 36px; height: 36px; border-radius: 50%;
+        background: rgba(var(--accent-color-rgb), 0.1); color: var(--accent-color);
+        text-decoration: none; flex-shrink: 0; transition: transform 0.12s ease, background 0.15s ease;
+      }
+      .back-btn:active { transform: scale(0.94); background: rgba(var(--accent-color-rgb), 0.2); }
+      .top-title {
+        font-family: var(--font-serif); font-size: 18px; font-weight: 600;
+        color: var(--text-primary); text-align: center; flex: 1; line-height: 1.2;
+      }
+      .top-spacer { width: 36px; flex-shrink: 0; }
+
+      .sub-tabs {
+        position: relative; z-index: 1; display: flex; gap: 6px; padding: 0 16px 12px;
+        overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
+      }
+      .sub-tabs::-webkit-scrollbar { display: none; }
+      .sub-tab {
+        display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px;
+        border-radius: 9999px; font-size: 13px; font-weight: 500; white-space: nowrap;
+        background: #fff; color: var(--text-secondary); border: 1px solid var(--border-color);
+        cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+      }
+      .sub-tab.active {
+        background: linear-gradient(145deg, #e8d3f0, #c6a1dd);
+        color: #fff; border-color: transparent;
+        box-shadow: 0 4px 12px -3px rgba(198, 161, 221, 0.4);
+      }
+
+      .toolbar {
+        position: relative; z-index: 1; padding: 0 16px 12px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;
+      }
+      .search-box {
+        display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+        background: #fff; border: 1px solid var(--border-color); border-radius: 14px;
+      }
+      .search-box input {
+        flex: 1; border: none; outline: none; background: transparent;
+        font-family: inherit; font-size: 14px; color: var(--text-primary);
+      }
+      .search-box input::placeholder { color: var(--text-secondary); }
+      .search-box i { color: var(--text-secondary); flex-shrink: 0; }
+      .tool-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+      .tool-btn {
+        display: inline-flex; align-items: center; gap: 5px; padding: 8px 12px;
+        border-radius: 12px; border: 1px solid var(--border-color); background: #fff;
+        color: var(--text-primary); font-size: 12px; font-weight: 500;
+        cursor: pointer; font-family: inherit; transition: all 0.12s;
+      }
+      .tool-btn:active { transform: scale(0.96); }
+      .tool-btn.primary {
+        background: linear-gradient(145deg, #e8d3f0, #c6a1dd);
+        color: #fff; border-color: transparent;
+      }
+      .tool-btn.danger { color: hsl(var(--destructive)); }
+
+      .content-area { position: relative; z-index: 1; padding: 0 16px 110px; flex: 1; min-height: 0; }
+
+      .group-bar {
+        display: flex; gap: 6px; padding: 8px 0; overflow-x: auto; scrollbar-width: none;
+        margin-bottom: 10px;
+      }
+      .group-bar::-webkit-scrollbar { display: none; }
+      .group-chip {
+        display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
+        border-radius: 9999px; font-size: 12px; font-weight: 500; white-space: nowrap;
+        background: #fff; border: 1px solid var(--border-color); color: var(--text-secondary);
+        cursor: pointer; flex-shrink: 0; transition: all 0.12s;
+      }
+      .group-chip.active {
+        background: rgba(var(--accent-color-rgb), 0.12);
+        border-color: var(--accent-color);
+        color: var(--text-primary);
+      }
+      .group-chip .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+      .card-grid {
+        display: grid; grid-template-columns: 1fr; gap: 10px;
+      }
+      .item-card {
+        position: relative; padding: 14px; border-radius: 16px;
+        background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+        border: 1px solid rgba(var(--accent-color-rgb), 0.18);
+        box-shadow: 0 4px 14px -6px rgba(var(--accent-color-rgb), 0.18);
+        transition: transform 0.12s;
+      }
+      .item-card.selected {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb), 0.15), 0 4px 14px -6px rgba(var(--accent-color-rgb), 0.25);
+      }
+      .card-check {
+        position: absolute; top: 10px; left: 10px; width: 20px; height: 20px;
+        border-radius: 6px; border: 2px solid var(--border-color); background: #fff;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        transition: all 0.12s;
+      }
+      .card-check.checked {
+        background: var(--accent-color); border-color: var(--accent-color); color: #fff;
+      }
+      .card-text {
+        font-size: 14px; line-height: 1.6; color: var(--text-primary);
+        padding-left: 28px; padding-right: 60px; word-break: break-word;
+      }
+      .card-tag {
+        display: inline-block; margin-left: 28px; margin-top: 8px;
+        padding: 3px 8px; border-radius: 8px; font-size: 11px;
+        background: rgba(var(--accent-color-rgb), 0.1); color: var(--text-secondary);
+      }
+      .card-tag.poke { background: rgba(255,179,71,0.15); color: #d98820; }
+      .card-tag.status { background: rgba(168,201,138,0.18); color: #6ea84f; }
+      .card-tag.motto { background: rgba(143,184,229,0.18); color: #4e86b5; }
+      .card-tag.intro { background: rgba(232,164,184,0.2); color: #c47290; }
+      .card-actions {
+        position: absolute; top: 10px; right: 10px; display: flex; gap: 4px;
+      }
+      .card-action {
+        width: 28px; height: 28px; border-radius: 8px; border: none;
+        background: rgba(var(--accent-color-rgb), 0.08); color: var(--text-secondary);
+        display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+        transition: all 0.12s;
+      }
+      .card-action:active { transform: scale(0.92); }
+      .card-group-tag {
+        display: inline-flex; align-items: center; gap: 4px; margin-top: 10px;
+        padding: 3px 10px; border-radius: 9999px; font-size: 11px;
+        background: rgba(var(--accent-color-rgb), 0.08); color: var(--text-secondary);
+        margin-left: 28px;
+      }
+      .card-group-tag .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+      .pagination {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 16px 0 0;
+      }
+      .page-btn {
+        min-width: 34px; height: 34px; padding: 0 10px; border-radius: 10px;
+        border: 1px solid var(--border-color); background: #fff; color: var(--text-primary);
+        font-size: 13px; cursor: pointer; font-family: inherit;
+        display: inline-flex; align-items: center; justify-content: center;
+        transition: all 0.12s;
+      }
+      .page-btn:active { transform: scale(0.95); }
+      .page-btn.active {
+        background: linear-gradient(145deg, #e8d3f0, #c6a1dd);
+        color: #fff; border-color: transparent;
+      }
+      .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .page-info { font-size: 12px; color: var(--text-secondary); }
+
+      .fab {
+        position: absolute; bottom: 26px; right: 20px;
+        width: 58px; height: 58px; border-radius: 9999px;
+        border: 2px solid rgba(255,255,255,0.5);
+        background: linear-gradient(145deg, #e8d3f0, #c6a1dd);
+        color: #fff; display: inline-flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 22px -5px rgba(198, 161, 221, 0.55);
+        cursor: pointer; z-index: 50; transition: transform 0.12s;
+      }
+      .fab:active { transform: scale(0.94); }
+
+      .batch-bar {
+        position: fixed; bottom: 0; left: 0; right: 0; max-width: 420px; margin: 0 auto;
+        padding: 12px 16px; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+        border-top: 1px solid var(--border-color); display: flex; gap: 8px;
+        z-index: 40; transform: translateY(100%); transition: transform 0.3s;
+      }
+      @media (min-width: 480px) {
+        .batch-bar { position: absolute; border-radius: 0 0 30px 30px; }
+      }
+      .batch-bar.show { transform: translateY(0); padding-bottom: 22px; }
+      .batch-info { flex: 1; font-size: 13px; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+      .batch-btn {
+        padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-color);
+        background: #fff; color: var(--text-primary); font-size: 12px; font-weight: 500;
+        cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;
+      }
+      .batch-btn:active { transform: scale(0.96); }
+      .batch-btn.danger { color: hsl(var(--destructive)); }
+      .batch-btn.primary {
+        background: linear-gradient(145deg, #e8d3f0, #c6a1dd);
+        color: #fff; border-color: transparent;
+      }
+
+      .home-indicator {
+        position: absolute; bottom: 7px; left: 0; right: 0;
+        display: flex; justify-content: center; pointer-events: none; z-index: 5;
+      }
+      .home-indicator span {
+        width: 130px; height: 4px; border-radius: 9999px; background: rgba(74,63,69,0.14);
+      }
+
+      .sheet-overlay {
+        position: absolute; inset: 0; z-index: 200;
+        background: rgba(74,63,69,0.42); backdrop-filter: blur(4px);
+        display: flex; flex-direction: column; justify-content: flex-end;
+        opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+      }
+      .sheet-overlay.open { opacity: 1; pointer-events: auto; }
+      .sheet-panel {
+        background: rgba(255,255,255,0.98); border-radius: 28px 28px 0 0;
+        max-height: 88%; display: flex; flex-direction: column;
+        transform: translateY(100%); transition: transform 0.3s cubic-bezier(.3,0,0,1);
+        overflow: hidden;
+      }
+      .sheet-overlay.open .sheet-panel { transform: translateY(0); }
+      .sheet-handle {
+        width: 40px; height: 4px; border-radius: 9999px;
+        background: rgba(var(--accent-color-rgb), 0.25);
+        margin: 10px auto 4px; flex-shrink: 0;
+      }
+      .sheet-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 6px 20px 12px; flex-shrink: 0;
+      }
+      .sheet-title {
+        font-family: var(--font-serif); font-size: 17px; font-weight: 600; color: var(--text-primary);
+      }
+      .sheet-close {
+        width: 32px; height: 32px; border-radius: 9999px; border: none;
+        background: rgba(var(--accent-color-rgb), 0.1); color: var(--text-secondary);
+        display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+      }
+      .sheet-body {
+        padding: 4px 20px 26px; overflow-y: auto; scrollbar-width: none; flex: 1;
+      }
+      .sheet-body::-webkit-scrollbar { display: none; }
+      .field-group { margin-bottom: 16px; }
+      .field-label {
+        font-size: 13px; font-weight: 500; color: var(--text-primary);
+        margin-bottom: 8px; display: block;
+      }
+      .input-field {
+        width: 100%; border: 1px solid rgba(var(--accent-color-rgb), 0.22);
+        border-radius: 14px; padding: 11px 14px; font-size: 14px;
+        font-family: var(--font-sans); color: var(--text-primary);
+        background: rgba(var(--accent-color-rgb), 0.04); outline: none; box-sizing: border-box;
+      }
+      .input-field:focus {
+        border-color: var(--accent-color); background: #fff;
+        box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb), 0.1);
+      }
+      textarea.input-field { min-height: 120px; resize: vertical; line-height: 1.6; }
+      .save-btn {
+        width: 100%; padding: 14px; border: none; border-radius: 16px;
+        background: linear-gradient(145deg, #e8d3f0, #c6a1dd);
+        color: #fff; font-size: 15px; font-weight: 600; font-family: var(--font-sans);
+        cursor: pointer; margin-top: 6px;
+        box-shadow: 0 6px 16px -4px rgba(198, 161, 221, 0.45);
+        transition: transform 0.1s;
+      }
+      .save-btn:active { transform: scale(0.98); }
+
+      .toast {
+        position: absolute; bottom: 100px; left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: rgba(74,63,69,0.9); backdrop-filter: blur(8px);
+        color: #fff; padding: 10px 22px; border-radius: 9999px;
+        font-size: 13px; z-index: 300; opacity: 0; pointer-events: none;
+        transition: all 0.25s ease; white-space: nowrap;
+      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+      .confirm-overlay {
+        position: absolute; inset: 0; z-index: 250;
+        background: rgba(74,63,69,0.42); backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none; transition: opacity 0.2s ease; padding: 32px;
+      }
+      .confirm-overlay.open { opacity: 1; pointer-events: auto; }
+      .confirm-box {
+        background: rgba(255,255,255,0.98); border-radius: 22px;
+        padding: 24px 24px 18px; width: 100%; max-width: 320px;
+        text-align: center; transform: scale(0.9); transition: transform 0.2s ease;
+      }
+      .confirm-overlay.open .confirm-box { transform: scale(1); }
+      .confirm-text {
+        font-size: 15px; color: var(--text-primary); line-height: 1.6; margin-bottom: 20px;
+      }
+      .confirm-actions { display: flex; gap: 12px; }
+      .confirm-btn {
+        flex: 1; padding: 11px 10px; border: none; border-radius: 14px;
+        font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+        cursor: pointer; transition: transform 0.1s;
+      }
+      .confirm-btn:active { transform: scale(0.97); }
+      .confirm-cancel { background: rgba(var(--accent-color-rgb), 0.1); color: var(--text-secondary); }
+      .confirm-ok { background: linear-gradient(145deg, hsl(0 70% 72%), hsl(0 60% 62%)); color: #fff; }
+
+      .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+      .color-dot {
+        width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+        border: 2px solid transparent; transition: all 0.12s;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .color-dot.selected {
+        border-color: var(--text-primary); box-shadow: 0 0 0 2px #fff inset;
+      }
+      .group-list-item {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+        border-radius: 12px; background: rgba(var(--accent-color-rgb), 0.04);
+        margin-bottom: 8px;
+      }
+      .group-list-item .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+      .group-list-item .name { flex: 1; font-size: 14px; color: var(--text-primary); }
+      .group-list-item .count { font-size: 12px; color: var(--text-secondary); padding: 2px 8px; border-radius: 9999px; background: #fff; }
+      .group-list-item .actions { display: flex; gap: 4px; }
+      .icon-btn-sm {
+        width: 28px; height: 28px; border-radius: 8px; border: none;
+        background: #fff; color: var(--text-secondary); cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .icon-btn-sm:active { transform: scale(0.92); }
+      .icon-btn-sm.danger { color: hsl(var(--destructive)); }
+
+      .seg-control {
+        display: inline-flex; padding: 3px; background: rgba(var(--accent-color-rgb), 0.08);
+        border-radius: 12px; margin-bottom: 14px;
+      }
+      .seg-btn {
+        padding: 7px 14px; border-radius: 10px; border: none; background: transparent;
+        font-size: 13px; font-weight: 500; color: var(--text-secondary);
+        font-family: inherit; cursor: pointer; transition: all 0.15s;
+      }
+      .seg-btn.active {
+        background: #fff; color: var(--text-primary);
+        box-shadow: 0 2px 6px -2px rgba(var(--accent-color-rgb), 0.2);
+      }
+      .empty-state {
+        padding: 40px 24px; text-align: center;
+        display: flex; flex-direction: column; align-items: center; gap: 14px;
+      }
+      .empty-illu {
+        width: 96px; height: 96px; border-radius: 50%;
+        background: rgba(var(--accent-color-rgb), 0.1); color: var(--accent-color);
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .empty-title { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: var(--text-primary); }
+      .empty-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+      .section-title {
+        font-size: 13px; font-weight: 600; color: var(--text-secondary);
+        padding: 4px 4px 10px;
+      }
+    </style>
+</head>
+<body>
+  <div class="phone">
+    <main class="app-bg" id="appBg">
+      <div class="top-bar">
+        <a href="index-new-v2.html" class="back-btn" aria-label="返回">
+          <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </a>
+        <div class="top-title">氛围感</div>
+        <div class="top-spacer"></div>
+      </div>
+
+      <div class="sub-tabs" id="subTabs">
+        <button class="sub-tab active" data-tab="pokes"><i data-lucide="hand" class="w-4 h-4"></i><span>拍一拍</span></button>
+        <button class="sub-tab" data-tab="statuses"><i data-lucide="activity" class="w-4 h-4"></i><span>对方状态</span></button>
+        <button class="sub-tab" data-tab="mottos"><i data-lucide="quote" class="w-4 h-4"></i><span>顶部格言</span></button>
+        <button class="sub-tab" data-tab="intros"><i data-lucide="clapperboard" class="w-4 h-4"></i><span>开场动画</span></button>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <i data-lucide="search" class="w-4 h-4"></i>
+          <input type="text" id="searchInput" placeholder="搜索内容…" />
+        </div>
+        <div class="tool-btns">
+          <button class="tool-btn" id="btnGroups"><i data-lucide="folder-kanban" class="w-4 h-4"></i><span>分组</span></button>
+          <button class="tool-btn" id="btnDedup"><i data-lucide="layers" class="w-4 h-4"></i><span>去重</span></button>
+          <button class="tool-btn" id="btnBatch"><i data-lucide="list-checks" class="w-4 h-4"></i><span>批量</span></button>
+          <button class="tool-btn" id="btnImport"><i data-lucide="upload" class="w-4 h-4"></i><span>导入</span></button>
+          <button class="tool-btn" id="btnExport"><i data-lucide="download" class="w-4 h-4"></i><span>导出</span></button>
+        </div>
+      </div>
+
+      <div class="content-area" id="contentArea">
+        <div class="group-bar" id="groupBar"></div>
+        <div id="listWrap"></div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </main>
+
+    <button class="fab" id="fab" aria-label="添加"><i data-lucide="plus" class="w-6 h-6"></i></button>
+    <div class="home-indicator"><span></span></div>
+
+    <div class="batch-bar" id="batchBar">
+      <div class="batch-info"><i data-lucide="check-square" class="w-4 h-4"></i><span id="batchCount">已选 0 条</span></div>
+      <button class="batch-btn" id="batchGroup"><i data-lucide="folder-plus" class="w-3.5 h-3.5"></i><span>分组</span></button>
+      <button class="batch-btn danger" id="batchDelete"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i><span>删除</span></button>
+    </div>
+
+    <div class="sheet-overlay" id="sheetOverlay">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title" id="sheetTitle">添加</div>
+          <button class="sheet-close" id="sheetClose"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="sheet-body" id="sheetBody"></div>
+      </div>
+    </div>
+
+    <div class="confirm-overlay" id="confirmOverlay">
+      <div class="confirm-box">
+        <div class="confirm-text" id="confirmText">确定？</div>
+        <div class="confirm-actions">
+          <button class="confirm-btn confirm-cancel" id="confirmCancel">取消</button>
+          <button class="confirm-btn confirm-ok" id="confirmOk">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <input type="file" id="fileInput" accept="application/json" style="display:none" />
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var GROUP_COLORS = ["#c6a1dd","#e8a4b8","#a0c4e8","#a8d8b9","#f6c88a","#f49090","#9ec5d6","#d4b896","#b8a4c9","#f4a0bc"];
+
+  var TAB_CONFIG = {
+    pokes:    { name:"拍一拍",   icon:"hand",         tagClass:"poke",    tagText:"拍一拍", dataKey:"mengjiao_custom_pokes",    groupKey:"mengjiao_poke_groups",
+      defaults: ["轻轻戳了戳你~","拍了拍你的小脑袋","捏了捏你的脸","给你一个暖暖的拥抱","偷偷亲了你一下","摸了摸你的头","摇了摇你的胳膊","比了个大大的爱心","在你脸上画了个小花","给你发了颗糖","拍了拍你的肩膀","给你捏捏肩","在耳边悄悄说想你","把脸埋进你怀里","在手上画了个小爱心"] },
+    statuses: { name:"对方状态", icon:"activity",     tagClass:"status",  tagText:"状态",   dataKey:"mengjiao_custom_statuses", groupKey:null,
+      defaults: ["在线 · 想你中","忙碌中 · 但心系你","刚睡醒 · 迷迷糊糊","吃饭中 · 正在想你","工作中 · 摸鱼想你","散步中 · 吹着晚风","看书中 · 思念作伴","听歌中 · 循环我们的歌","追剧中 · 想和你一起","洗澡中 · 快点回来","睡觉中 · 梦里见","逛街中 · 想给你买礼物","做饭中 · 都是你爱吃的","运动中 · 为了更好的相见","学习中 · 一起加油","通勤路上 · 归心似箭","咖啡馆 · 偷得浮生半日闲","想你中 · 每时每刻"] },
+    mottos:   { name:"顶部格言", icon:"quote",        tagClass:"motto",   tagText:"格言",   dataKey:"mengjiao_custom_mottos",   groupKey:null,
+      defaults: ["愿你被世界温柔以待","每一天都是新的开始","想你的风还是吹到了这里","你是我藏在星星里的浪漫","愿所有美好都如约而至","和你在一起，每天都是情人节","你的存在，就是我最好的礼物","愿我们的故事永不结局","把温柔留给值得的人","你是我枯燥生活里的糖","山野千里，你是我藏在微风里的欢喜","月是云中散客，你是人间第三种绝色","愿你眼里有星辰，心中有山海","我遇见你，是最美丽的意外","晚风轻踩云朵，月亮售卖快乐"] },
+    intros:   { name:"开场动画", icon:"clapperboard", tagClass:"intro",   tagText:"开场",   dataKey:"mengjiao_custom_intros",   groupKey:null,
+      defaults: ["主|你终于来啦~我等你好久了","副|梦见你了，所以我醒了","主|今天也要开开心心哦","副|无论发生什么，我都在你身边","主|想和你说好多好多话","副|在这个世界上，我最最喜欢你啦","主|准备好和我聊天了吗~","副|把你的小手递过来，我牵着你","主|叮~你的小可爱已上线","副|欢迎回来，亲爱的"] }
+  };
+
+  var state = {
+    tab: "pokes",
+    search: "",
+    currentGroup: "all",
+    page: 1,
+    pageSize: 80,
+    batchMode: false,
+    selectedIds: {},
+    editingItem: null,
+    confirmCb: null
+  };
+
+  var cache = {};
+  function getData(tab) {
+    if (cache[tab]) return cache[tab];
+    var cfg = TAB_CONFIG[tab];
+    try {
+      var raw = localStorage.getItem(cfg.dataKey);
+      var arr = raw ? JSON.parse(raw) : null;
+      if (!Array.isArray(arr) || arr.length === 0) arr = cfg.defaults.slice();
+      cache[tab] = arr.map(function(v, i) {
+        if (typeof v === "string") return { id: genId(), text: v, groupId: null };
+        return { id: v.id || genId(), text: v.text || "", groupId: v.groupId || null };
+      });
+    } catch(e) {
+      cache[tab] = cfg.defaults.slice().map(function(t){return {id:genId(),text:t,groupId:null};});
+    }
+    return cache[tab];
+  }
+  function saveData(tab) {
+    try { localStorage.setItem(TAB_CONFIG[tab].dataKey, JSON.stringify(cache[tab] || [])); }
+    catch(e) { showToast("保存失败"); }
+  }
+  function getGroups(tab) {
+    var cfg = TAB_CONFIG[tab];
+    if (!cfg.groupKey) return [];
+    try {
+      var raw = localStorage.getItem(cfg.groupKey);
+      var arr = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(arr)) return arr;
+    } catch(e) {}
+    return tab === "pokes" ? [{id:"g1",name:"温柔",color:GROUP_COLORS[0]},{id:"g2",name:"调皮",color:GROUP_COLORS[1]},{id:"g3",name:"亲昵",color:GROUP_COLORS[2]}] : [];
+  }
+  function saveGroups(tab, groups) {
+    var cfg = TAB_CONFIG[tab];
+    if (!cfg.groupKey) return;
+    try { localStorage.setItem(cfg.groupKey, JSON.stringify(groups)); } catch(e) {}
+  }
+
+  function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+
+  var toastTimer = null;
+  function showToast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 1800);
+  }
+
+  function openConfirm(text, cb) {
+    document.getElementById("confirmText").textContent = text;
+    state.confirmCb = cb;
+    document.getElementById("confirmOverlay").classList.add("open");
+  }
+  function closeConfirm() {
+    document.getElementById("confirmOverlay").classList.remove("open");
+    state.confirmCb = null;
+  }
+
+  var sheetOpen = false;
+  function openSheet(title, bodyHtml, onSave) {
+    document.getElementById("sheetTitle").textContent = title;
+    document.getElementById("sheetBody").innerHTML = bodyHtml;
+    document.getElementById("sheetOverlay").classList.add("open");
+    sheetOpen = true;
+    if (window.lucide) lucide.createIcons();
+    var sb = document.getElementById("saveBtnInner");
+    if (sb) sb.onclick = onSave;
+  }
+  function closeSheet() {
+    document.getElementById("sheetOverlay").classList.remove("open");
+    sheetOpen = false;
+  }
+
+  function switchTab(tab) {
+    state.tab = tab;
+    state.search = "";
+    state.currentGroup = "all";
+    state.page = 1;
+    state.selectedIds = {};
+    state.batchMode = false;
+    document.getElementById("searchInput").value = "";
+    document.getElementById("batchBar").classList.remove("show");
+    document.querySelectorAll(".sub-tab").forEach(function(b) {
+      b.classList.toggle("active", b.dataset.tab === tab);
+    });
+    renderAll();
+  }
+
+  function renderAll() {
+    renderGroupBar();
+    renderList();
+    renderPagination();
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function renderGroupBar() {
+    var cfg = TAB_CONFIG[state.tab];
+    var bar = document.getElementById("groupBar");
+    if (!cfg.groupKey) { bar.innerHTML = ""; return; }
+    var groups = getGroups(state.tab);
+    var items = getData(state.tab);
+    var allCount = items.length;
+    var html = '<div class="group-chip '+(state.currentGroup==="all"?"active":"")+'" data-group="all"><i data-lucide="inbox" class="w-3 h-3"></i><span>全部</span><span style="margin-left:4px;padding:1px 7px;border-radius:9999px;background:rgba(var(--accent-color-rgb),0.12);font-size:11px;">'+allCount+'</span></div>';
+    html += '<div class="group-chip '+(state.currentGroup==="ungrouped"?"active":"")+'" data-group="ungrouped"><i data-lucide="archive" class="w-3 h-3"></i><span>未分组</span></div>';
+    groups.forEach(function(g) {
+      var cnt = items.filter(function(it){return it.groupId===g.id;}).length;
+      html += '<div class="group-chip '+(state.currentGroup===g.id?"active":"")+'" data-group="'+esc(g.id)+'"><span class="dot" style="background:'+esc(g.color)+'"></span><span>'+esc(g.name)+'</span><span style="margin-left:4px;padding:1px 7px;border-radius:9999px;background:rgba(var(--accent-color-rgb),0.12);font-size:11px;">'+cnt+'</span></div>';
+    });
+    bar.innerHTML = html;
+  }
+
+  function getFiltered() {
+    var items = getData(state.tab).slice();
+    if (state.currentGroup === "ungrouped") items = items.filter(function(it){return !it.groupId;});
+    else if (state.currentGroup !== "all") items = items.filter(function(it){return it.groupId === state.currentGroup;});
+    if (state.search) {
+      var q = state.search.toLowerCase();
+      items = items.filter(function(it){return (it.text||"").toLowerCase().indexOf(q) >= 0;});
+    }
+    return items;
+  }
+
+  function renderList() {
+    var wrap = document.getElementById("listWrap");
+    var items = getFiltered();
+    var cfg = TAB_CONFIG[state.tab];
+    var groups = cfg.groupKey ? getGroups(state.tab) : [];
+    var groupMap = {};
+    groups.forEach(function(g){ groupMap[g.id] = g; });
+
+    if (items.length === 0) {
+      wrap.innerHTML = '<div class="empty-state"><div class="empty-illu"><i data-lucide="'+cfg.icon+'" class="w-10 h-10"></i></div><div class="empty-title">暂无'+cfg.name+'</div><div class="empty-desc">点击右下角 + 号添加第一条吧</div></div>';
+      return;
+    }
+    var start = (state.page - 1) * state.pageSize;
+    var pageItems = items.slice(start, start + state.pageSize);
+    var html = '<div class="card-grid">';
+    pageItems.forEach(function(it) {
+      var selected = !!state.selectedIds[it.id];
+      var grp = it.groupId ? groupMap[it.groupId] : null;
+      var parts = (it.text||"").split("|");
+      var prefix = "";
+      var showText = it.text;
+      if (state.tab === "intros" && parts.length >= 2) {
+        prefix = '<span class="card-tag intro" style="margin-bottom:6px;">'+esc(parts[0]==="主"?"主角视角":"副角视角")+'</span><br/>';
+        showText = parts.slice(1).join("|");
+      } else {
+        prefix = '<span class="card-tag '+cfg.tagClass+'">'+cfg.tagText+'</span>';
+      }
+      html += '<div class="item-card '+(selected?"selected":"")+'" data-id="'+esc(it.id)+'">';
+      if (state.batchMode) {
+        html += '<div class="card-check '+(selected?"checked":"")+'" data-check="'+esc(it.id)+'">'+(selected?'<i data-lucide="check" class="w-3 h-3"></i>':"")+'</div>';
+      }
+      html += '<div class="card-text" style="padding-left:'+(state.batchMode?'28':'0')+'px;">'+prefix+'<div style="margin-top:'+(prefix?6:0)+'px;">'+esc(showText)+'</div></div>';
+      html += '<div class="card-actions">';
+      html += '<button class="card-action" data-act="edit" data-id="'+esc(it.id)+'"><i data-lucide="pencil" class="w-4 h-4"></i></button>';
+      html += '<button class="card-action" data-act="del" data-id="'+esc(it.id)+'" style="color:hsl(var(--destructive));"><i data-lucide="trash-2" class="w-4 h-4"></i></button>';
+      html += '</div>';
+      if (grp) {
+        html += '<div class="card-group-tag"><span class="dot" style="background:'+esc(grp.color)+'"></span><span>'+esc(grp.name)+'</span></div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+
+  function renderPagination() {
+    var items = getFiltered();
+    var total = items.length;
+    var totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+    if (state.page > totalPages) state.page = totalPages;
+    var pg = document.getElementById("pagination");
+    if (totalPages <= 1) { pg.innerHTML = ""; return; }
+    var html = "";
+    html += '<button class="page-btn" '+(state.page<=1?"disabled":"")+' data-page="prev"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>';
+    var startP = Math.max(1, state.page - 2);
+    var endP = Math.min(totalPages, startP + 4);
+    if (endP - startP < 4) startP = Math.max(1, endP - 4);
+    for (var p = startP; p <= endP; p++) {
+      html += '<button class="page-btn '+(p===state.page?"active":"")+'" data-page="'+p+'">'+p+'</button>';
+    }
+    html += '<span class="page-info">'+state.page+' / '+totalPages+'</span>';
+    html += '<button class="page-btn" '+(state.page>=totalPages?"disabled":"")+' data-page="next"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>';
+    pg.innerHTML = html;
+  }
+
+  function updateBatchBar() {
+    var bar = document.getElementById("batchBar");
+    var cnt = Object.keys(state.selectedIds).length;
+    document.getElementById("batchCount").textContent = "已选 " + cnt + " 条";
+    bar.classList.toggle("show", !!state.batchMode);
+  }
+
+  function addItem(text, groupId) {
+    if (!text || !text.trim()) return;
+    getData(state.tab).push({ id: genId(), text: text.trim(), groupId: groupId || null });
+    saveData(state.tab);
+    renderAll();
+  }
+  function editItem(id, newText) {
+    var items = getData(state.tab);
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id === id) { items[i].text = newText.trim(); break; }
+    }
+    saveData(state.tab);
+    renderAll();
+  }
+  function deleteItem(id) {
+    cache[state.tab] = getData(state.tab).filter(function(it){return it.id !== id;});
+    saveData(state.tab);
+    renderAll();
+  }
+  function setItemGroup(id, groupId) {
+    var items = getData(state.tab);
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id === id) { items[i].groupId = groupId || null; break; }
+    }
+    saveData(state.tab);
+    renderAll();
+  }
+  function dedup() {
+    var items = getData(state.tab);
+    var seen = {}; var kept = []; var dup = 0;
+    items.forEach(function(it) {
+      var k = (it.text||"").trim();
+      if (!k) return;
+      if (seen[k]) dup++;
+      else { seen[k] = true; kept.push(it); }
+    });
+    cache[state.tab] = kept;
+    saveData(state.tab);
+    showToast("已去重，移除 " + dup + " 条");
+    renderAll();
+  }
+  function doExport() {
+    var items = getData(state.tab);
+    var cfg = TAB_CONFIG[state.tab];
+    var groups = cfg.groupKey ? getGroups(state.tab) : null;
+    var data = { tab: state.tab, exportedAt: new Date().toISOString(), items: items, groups: groups };
+    var blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "氛围感_" + cfg.name + "_" + new Date().toISOString().slice(0,10) + ".json";
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);}, 1000);
+    showToast("已导出");
+  }
+
+  var pendingImportTexts = [];
+  function openImportSheet() {
+    var html = '<div class="field-group"><label class="field-label">导入模式</label><div class="seg-control" style="display:flex;"><button class="seg-btn active" data-seg="append">追加</button><button class="seg-btn" data-seg="overwrite">覆盖</button></div></div>';
+    html += '<div class="field-group"><button class="tool-btn primary" id="pickFileBtn" style="width:100%;justify-content:center;"><i data-lucide="upload" class="w-4 h-4"></i><span>选择 JSON 文件</span></button></div>';
+    html += '<div class="field-group"><label class="field-label">或直接粘贴（每行一条）</label><textarea class="input-field" id="pasteArea" placeholder="第一行&#10;第二行&#10;..."></textarea></div>';
+    html += '<div class="field-group"><label class="field-label"><input type="checkbox" id="dedupImport" checked style="margin-right:6px;"/> 导入后自动去重</label></div>';
+    html += '<button class="save-btn" id="saveBtnInner"><i data-lucide="upload" class="w-4 h-4" style="margin-right:6px;"></i><span>开始导入</span></button>';
+    openSheet("导入数据", html, function() {
+      var mode = document.querySelector('.seg-btn.active')?.dataset.seg || "append";
+      var shouldDedup = document.getElementById("dedupImport").checked;
+      var pasteText = document.getElementById("pasteArea").value.trim();
+      var doIt = function(newTexts) {
+        if (!Array.isArray(newTexts) || newTexts.length === 0) { showToast("没有可导入的内容"); return; }
+        var items = mode === "overwrite" ? [] : getData(state.tab).slice();
+        newTexts.forEach(function(t){ if (t && t.trim()) items.push({id:genId(), text:t.trim(), groupId:null}); });
+        if (shouldDedup) {
+          var seen = {};
+          items = items.filter(function(it){
+            var k = (it.text||"").trim();
+            if (seen[k]) return false;
+            seen[k] = true; return true;
+          });
+        }
+        cache[state.tab] = items;
+        saveData(state.tab);
+        showToast("导入完成");
+        closeSheet();
+        renderAll();
+      };
+      if (pasteText) doIt(pasteText.split(/\r?\n/));
+      else if (pendingImportTexts.length) doIt(pendingImportTexts);
+      else showToast("请选择文件或粘贴内容");
+    });
+    setTimeout(function(){
+      var segBtns = document.querySelectorAll('.seg-btn');
+      segBtns.forEach(function(b){
+        b.onclick = function() {
+          segBtns.forEach(function(x){x.classList.remove("active");});
+          b.classList.add("active");
+        };
+      });
+      document.getElementById("pickFileBtn").onclick = function(){ document.getElementById("fileInput").click(); };
+    }, 50);
+  }
+
+  function handleFileImport(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var obj = JSON.parse(e.target.result);
+        var texts = [];
+        if (Array.isArray(obj)) obj.forEach(function(x){ if (typeof x === "string") texts.push(x); else if (x && typeof x.text === "string") texts.push(x.text); });
+        else if (obj && Array.isArray(obj.items)) obj.items.forEach(function(x){ if (typeof x === "string") texts.push(x); else if (x && typeof x.text === "string") texts.push(x.text); });
+        pendingImportTexts = texts;
+        showToast("已读取 " + texts.length + " 条，点击开始导入");
+      } catch(err) { showToast("JSON 解析失败"); }
+    };
+    reader.readAsText(file);
+  }
+
+  function openGroupsSheet() {
+    var cfg = TAB_CONFIG[state.tab];
+    if (!cfg.groupKey) { showToast("当前 Tab 不支持分组"); return; }
+    var groups = getGroups(state.tab);
+    var items = getData(state.tab);
+    var html = '<div class="field-group"><button class="tool-btn primary" id="addGroupBtn" style="width:100%;justify-content:center;"><i data-lucide="plus" class="w-4 h-4"></i><span>新建分组</span></button></div>';
+    html += '<div id="groupListArea">';
+    if (groups.length === 0) html += '<div class="empty-state" style="padding:24px 0;"><div class="empty-title">暂无分组</div></div>';
+    else groups.forEach(function(g){
+      var cnt = items.filter(function(it){return it.groupId===g.id;}).length;
+      html += '<div class="group-list-item"><span class="dot" style="background:'+esc(g.color)+'"></span><span class="name">'+esc(g.name)+'</span><span class="count">'+cnt+'</span><div class="actions"><button class="icon-btn-sm" data-grp-edit="'+esc(g.id)+'"><i data-lucide="pencil" class="w-4 h-4"></i></button><button class="icon-btn-sm danger" data-grp-del="'+esc(g.id)+'"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>';
+    });
+    html += '</div>';
+    openSheet("分组管理", html, function(){ closeSheet(); });
+    setTimeout(function(){
+      document.getElementById("addGroupBtn").onclick = function(){ openGroupEdit(null); };
+      document.querySelectorAll('[data-grp-edit]').forEach(function(b){
+        b.onclick = function(){ openGroupEdit(b.dataset.grpEdit); };
+      });
+      document.querySelectorAll('[data-grp-del]').forEach(function(b){
+        b.onclick = function(){
+          var gid = b.dataset.grpDel;
+          openConfirm("删除分组？组内内容将变为未分组", function(){
+            var groups = getGroups(state.tab).filter(function(g){return g.id!==gid;});
+            saveGroups(state.tab, groups);
+            getData(state.tab).forEach(function(it){ if (it.groupId===gid) it.groupId=null; });
+            saveData(state.tab);
+            openGroupsSheet();
+            renderAll();
+          }, true);
+        };
+      });
+      if (window.lucide) lucide.createIcons();
+    }, 50);
+  }
+
+  function openGroupEdit(id) {
+    var groups = getGroups(state.tab);
+    var g = id ? groups.find(function(x){return x.id===id;}) : null;
+    var currentColor = g ? g.color : GROUP_COLORS[0];
+    var html = '<div class="field-group"><label class="field-label">分组名称</label><input type="text" class="input-field" id="grpName" value="'+esc(g?g.name:"")+'" placeholder="分组名" maxlength="16" /></div>';
+    html += '<div class="field-group"><label class="field-label">分组颜色</label><div class="color-picker" id="colorPicker">';
+    GROUP_COLORS.forEach(function(c) {
+      html += '<span class="color-dot '+(c===currentColor?"selected":"")+'" style="background:'+c+'" data-color="'+c+'"></span>';
+    });
+    html += '</div></div>';
+    html += '<button class="save-btn" id="saveBtnInner"><i data-lucide="check" class="w-4 h-4" style="margin-right:6px;"></i><span>保存</span></button>';
+    openSheet(id ? "编辑分组" : "新建分组", html, function() {
+      var name = document.getElementById("grpName").value.trim();
+      if (!name) { showToast("请输入名称"); return; }
+      var selColor = document.querySelector('.color-dot.selected')?.dataset.color || GROUP_COLORS[0];
+      var groups = getGroups(state.tab);
+      if (g) { for (var i = 0; i < groups.length; i++) if (groups[i].id === id) { groups[i].name = name; groups[i].color = selColor; break; } }
+      else groups.push({ id: genId(), name: name, color: selColor });
+      saveGroups(state.tab, groups);
+      closeSheet();
+      openGroupsSheet();
+      renderAll();
+    });
+    setTimeout(function(){
+      document.querySelectorAll('.color-dot').forEach(function(d){
+        d.onclick = function() {
+          document.querySelectorAll('.color-dot').forEach(function(x){x.classList.remove("selected");});
+          d.classList.add("selected");
+        };
+      });
+    }, 50);
+  }
+
+  function openAddSheet() {
+    var cfg = TAB_CONFIG[state.tab];
+    var groups = cfg.groupKey ? getGroups(state.tab) : [];
+    var html = '<div class="field-group"><label class="field-label">添加模式</label><div class="seg-control" style="display:flex;"><button class="seg-btn active" data-seg="multi">多行批量</button><button class="seg-btn" data-seg="single">单条添加</button></div></div>';
+    if (state.tab === "intros") html += '<div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;padding:8px 12px;background:rgba(var(--accent-color-rgb),0.06);border-radius:10px;">格式：<b>主|内容</b> 或 <b>副|内容</b>（主=我，副=对方）</div>';
+    html += '<div id="addFields"><div class="field-group"><label class="field-label">内容（每行一条）</label><textarea class="input-field" id="fText" placeholder="第一条&#10;第二条&#10;..."></textarea></div></div>';
+    if (groups.length > 0) {
+      html += '<div class="field-group"><label class="field-label">归组到</label><select class="input-field" id="fGroup"><option value="">不分组</option>';
+      groups.forEach(function(g){ html += '<option value="'+esc(g.id)+'">'+esc(g.name)+'</option>'; });
+      html += '</select></div>';
+    }
+    html += '<button class="save-btn" id="saveBtnInner"><i data-lucide="plus" class="w-4 h-4" style="margin-right:6px;"></i><span>添加</span></button>';
+    openSheet("添加" + cfg.name, html, function() {
+      var mode = document.querySelector('.seg-btn.active')?.dataset.seg || "multi";
+      var grp = document.getElementById("fGroup")?.value || null;
+      var textEl = document.getElementById("fText");
+      if (mode === "multi") {
+        var lines = textEl.value.split(/\r?\n/); var added = 0;
+        lines.forEach(function(l){ if (l.trim()) { addItem(l.trim(), grp); added++; } });
+        if (added === 0) { showToast("请输入内容"); return; }
+        showToast("已添加 " + added + " 条");
+      } else {
+        var t = textEl.value.trim();
+        if (!t) { showToast("请输入内容"); return; }
+        addItem(t, grp);
+        showToast("已添加");
+      }
+      closeSheet();
+      renderAll();
+    });
+    setTimeout(function(){
+      var segBtns = document.querySelectorAll('.seg-btn');
+      var fields = document.getElementById("addFields");
+      segBtns.forEach(function(b){
+        b.onclick = function() {
+          segBtns.forEach(function(x){x.classList.remove("active");});
+          b.classList.add("active");
+          if (b.dataset.seg === "multi") fields.innerHTML = '<div class="field-group"><label class="field-label">内容（每行一条）</label><textarea class="input-field" id="fText" placeholder="第一条&#10;第二条&#10;..."></textarea></div>';
+          else fields.innerHTML = '<div class="field-group"><label class="field-label">内容</label><input type="text" class="input-field" id="fText" placeholder="输入内容…" maxlength="200" /></div>';
+        };
+      });
+    }, 50);
+  }
+
+  function openEditSheet(id) {
+    var it = getData(state.tab).find(function(x){return x.id===id;});
+    if (!it) return;
+    var cfg = TAB_CONFIG[state.tab];
+    var groups = cfg.groupKey ? getGroups(state.tab) : [];
+    var html = '';
+    if (state.tab === "intros") {
+      var parts = (it.text||"").split("|");
+      var role = parts[0] === "副" ? "副" : "主";
+      var rest = parts.slice(1).join("|");
+      html += '<div class="field-group"><label class="field-label">视角</label><div class="seg-control" style="display:flex;"><button class="seg-btn '+(role==="主"?"active":"")+'" data-role="主">主视角</button><button class="seg-btn '+(role==="副"?"active":"")+'" data-role="副">副视角</button></div></div>';
+      html += '<div class="field-group"><label class="field-label">内容</label><textarea class="input-field" id="fText">'+esc(rest)+'</textarea></div>';
+    } else {
+      html += '<div class="field-group"><label class="field-label">内容</label><textarea class="input-field" id="fText">'+esc(it.text)+'</textarea></div>';
+    }
+    if (groups.length > 0) {
+      html += '<div class="field-group"><label class="field-label">分组</label><select class="input-field" id="fGroup"><option value="">不分组</option>';
+      groups.forEach(function(g){ html += '<option value="'+esc(g.id)+'" '+(it.groupId===g.id?'selected':'')+'>'+esc(g.name)+'</option>'; });
+      html += '</select></div>';
+    }
+    html += '<button class="save-btn" id="saveBtnInner"><i data-lucide="check" class="w-4 h-4" style="margin-right:6px;"></i><span>保存</span></button>';
+    openSheet("编辑", html, function() {
+      var t = document.getElementById("fText").value;
+      if (!t.trim()) { showToast("内容不能为空"); return; }
+      var finalText = t.trim();
+      if (state.tab === "intros") {
+        var roleBtn = document.querySelector('.seg-btn.active[data-role]');
+        var r = roleBtn ? roleBtn.dataset.role : "主";
+        finalText = r + "|" + t.trim();
+      }
+      editItem(id, finalText);
+      var grp = document.getElementById("fGroup")?.value || null;
+      setItemGroup(id, grp);
+      closeSheet();
+      showToast("已保存");
+    });
+    setTimeout(function(){
+      var roleBtns = document.querySelectorAll('.seg-btn[data-role]');
+      roleBtns.forEach(function(b){
+        b.onclick = function() {
+          roleBtns.forEach(function(x){x.classList.remove("active");});
+          b.classList.add("active");
+        };
+      });
+    }, 50);
+  }
+
+  function openBatchGroupSheet() {
+    var cfg = TAB_CONFIG[state.tab];
+    if (!cfg.groupKey) { showToast("当前 Tab 不支持分组"); return; }
+    var groups = getGroups(state.tab);
+    var ids = Object.keys(state.selectedIds);
+    if (ids.length === 0) { showToast("请先选择"); return; }
+    var html = '<div class="field-group"><label class="field-label">选择目标分组（已选 '+ids.length+' 条）</label></div>';
+    html += '<div class="field-group"><button class="tool-btn" id="grpUngroup" style="width:100%;justify-content:center;"><i data-lucide="archive" class="w-4 h-4"></i><span>移除所有分组</span></button></div>';
+    groups.forEach(function(g){
+      html += '<button class="tool-btn" data-grp-choose="'+esc(g.id)+'" style="width:100%;justify-content:flex-start;margin-bottom:8px;"><span style="width:10px;height:10px;border-radius:50%;background:'+esc(g.color)+';display:inline-block;margin-right:8px;"></span><span>'+esc(g.name)+'</span></button>';
+    });
+    openSheet("批量归组", html, function(){ closeSheet(); });
+    setTimeout(function(){
+      document.getElementById("grpUngroup").onclick = function() {
+        ids.forEach(function(id){ setItemGroup(id, null); });
+        state.selectedIds = {};
+        closeSheet();
+        updateBatchBar();
+        renderAll();
+        showToast("已移除分组");
+      };
+      document.querySelectorAll('[data-grp-choose]').forEach(function(b){
+        b.onclick = function() {
+          var gid = b.dataset.grpChoose;
+          ids.forEach(function(id){ setItemGroup(id, gid); });
+          state.selectedIds = {};
+          closeSheet();
+          updateBatchBar();
+          renderAll();
+          showToast("已归组");
+        };
+      });
+      if (window.lucide) lucide.createIcons();
+    }, 50);
+  }
+
+  function bindEvents() {
+    document.getElementById("subTabs").addEventListener("click", function(e) {
+      var tab = e.target.closest(".sub-tab");
+      if (tab) switchTab(tab.dataset.tab);
+    });
+    document.getElementById("searchInput").addEventListener("input", function(e) {
+      state.search = e.target.value; state.page = 1; renderAll();
+    });
+    document.getElementById("groupBar").addEventListener("click", function(e) {
+      var chip = e.target.closest(".group-chip");
+      if (chip) { state.currentGroup = chip.dataset.group; state.page = 1; renderAll(); }
+    });
+    document.getElementById("pagination").addEventListener("click", function(e) {
+      var btn = e.target.closest(".page-btn");
+      if (!btn || btn.disabled) return;
+      var p = btn.dataset.page;
+      var tp = Math.max(1, Math.ceil(getFiltered().length / state.pageSize));
+      if (p === "prev") state.page = Math.max(1, state.page - 1);
+      else if (p === "next") state.page = Math.min(tp, state.page + 1);
+      else state.page = parseInt(p, 10) || 1;
+      renderAll();
+    });
+    document.getElementById("listWrap").addEventListener("click", function(e) {
+      var card = e.target.closest(".item-card");
+      if (!card) return;
+      var id = card.dataset.id;
+      var act = e.target.closest("[data-act]")?.dataset.act;
+      var check = e.target.closest("[data-check]");
+      if (check) {
+        var cid = check.dataset.check;
+        if (state.selectedIds[cid]) delete state.selectedIds[cid];
+        else state.selectedIds[cid] = true;
+        renderAll(); updateBatchBar();
+        return;
+      }
+      if (act === "edit") openEditSheet(id);
+      else if (act === "del") openConfirm("确定删除？", function(){ deleteItem(id); showToast("已删除"); }, true);
+      else if (state.batchMode) {
+        if (state.selectedIds[id]) delete state.selectedIds[id];
+        else state.selectedIds[id] = true;
+        renderAll(); updateBatchBar();
+      }
+    });
+    document.getElementById("fab").addEventListener("click", openAddSheet);
+    document.getElementById("btnGroups").addEventListener("click", openGroupsSheet);
+    document.getElementById("btnDedup").addEventListener("click", function(){ openConfirm("确定去重？", dedup); });
+    document.getElementById("btnBatch").addEventListener("click", function() {
+      state.batchMode = !state.batchMode;
+      if (!state.batchMode) state.selectedIds = {};
+      updateBatchBar(); renderAll();
+    });
+    document.getElementById("btnImport").addEventListener("click", openImportSheet);
+    document.getElementById("btnExport").addEventListener("click", doExport);
+    document.getElementById("batchDelete").addEventListener("click", function() {
+      var cnt = Object.keys(state.selectedIds).length;
+      if (cnt === 0) return;
+      openConfirm("删除选中的 " + cnt + " 条？", function() {
+        var ids = state.selectedIds;
+        cache[state.tab] = getData(state.tab).filter(function(it){return !ids[it.id];});
+        saveData(state.tab);
+        state.selectedIds = {}; state.batchMode = false;
+        updateBatchBar(); renderAll();
+        showToast("已删除");
+      }, true);
+    });
+    document.getElementById("batchGroup").addEventListener("click", openBatchGroupSheet);
+    document.getElementById("sheetClose").addEventListener("click", closeSheet);
+    document.getElementById("sheetOverlay").addEventListener("click", function(e) {
+      if (e.target === document.getElementById("sheetOverlay")) closeSheet();
+    });
+    document.getElementById("confirmOk").addEventListener("click", function() {
+      var cb = state.confirmCb; closeConfirm();
+      if (typeof cb === "function") cb();
+    });
+    document.getElementById("confirmCancel").addEventListener("click", closeConfirm);
+    document.getElementById("confirmOverlay").addEventListener("click", function(e) {
+      if (e.target === document.getElementById("confirmOverlay")) closeConfirm();
+    });
+    document.getElementById("fileInput").addEventListener("change", function(e) {
+      if (e.target.files && e.target.files[0]) handleFileImport(e.target.files[0]);
+      e.target.value = "";
+    });
+  }
+
+  bindEvents();
+  renderAll();
+})();
+lucide.createIcons();
+</script>
+</body>
+</html>

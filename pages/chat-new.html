@@ -1216,6 +1216,7 @@ body {
         quoteReply: true,
         readReceipts: true,
         readNoReply: false,
+        readNoReplyRate: 0.20,
         typingIndicator: true,
         enterToSend: false,
         timeFormat: "HH:mm",
@@ -1232,7 +1233,20 @@ body {
         fontSize: 14,
         bubbleScale: 100,
         partnerName: "",
-        myName: ""
+        myName: "",
+        pinyinCardEnabled: false,
+        pinyinCardMin: 2,
+        pinyinCardMax: 3,
+        showPartnerNameInChat: false,
+        envelopeAutoSendEnabled: false,
+        envelopeAutoSendMinVal: 1,
+        envelopeAutoSendMinUnit: "hours",
+        envelopeAutoSendMaxVal: 3,
+        envelopeAutoSendMaxUnit: "hours",
+        moyuAutoGenerateEnabled: false,
+        moyuAutoGenerateInterval: 60,
+        soundVolumeLevel: 0.15,
+        allowReadNoReply: false
       };
 
       /* ===== 回复延迟（最短 / 最长时限，单位毫秒，可被设置覆盖） ===== */
@@ -1554,25 +1568,145 @@ body {
       }
 
       /* ===== 获取回复池（用户自定义优先，否则默认池） ===== */
-      function getReplyPool() {
-        var custom = getCustomReplies();
-        if (custom && custom.length > 0) {
-          return custom.map(function (r) { return String(r || "").trim(); }).filter(Boolean);
+      /* ===== 关键词分类（参考站 letter 算法升级） =====
+       * 用于 pickReply(userText) 里对用户输入做情绪匹配，加权命中对应情绪库 */
+      var KEYWORD_CATEGORIES = [
+        { name: "greeting", weight: 10, keywords: ["你好", "早", "早安", "午安", "下午好", "晚安", "晚上好", "hi", "hello", "在吗", "在不", "醒了", "起床", "回家了"],
+          replies: ["早上好呀，今天也要开心哦🌞", "嗯，我在呢，一直都在。", "终于等到你啦～", "晚安，做个甜甜的梦🌙", "晚上好呀，今天过得怎么样？", "我一直在，想我就说话吧～"] },
+        { name: "miss", weight: 10, keywords: ["想你", "想念", "想见你", "好想", "想你了", "思念", "梦到你", "想抱抱", "亲亲"],
+          replies: ["我也想你，很想很想💗", "每一秒都在想你哦。", "想你了，就现在。", "我们的心是连在一起的，感受到了吗？", "闭上眼睛，我就在你身边。", "现在就来抱抱你🫂"] },
+        { name: "love", weight: 12, keywords: ["爱你", "爱", "我爱你", "喜欢你", "喜欢", "宝贝", "亲爱的", "老公", "老婆", "可爱"],
+          replies: ["我也爱你，比昨天更多一点💖", "你是我最想守护的人。", "在你身边，时间都变得温柔了。", "遇见你，是我最幸运的事。", "你的笑容是我最大的动力～", "我也喜欢你呀，好喜欢好喜欢。"] },
+        { name: "tired", weight: 10, keywords: ["累", "疲惫", "辛苦", "加班", "熬夜", "困", "没精神", "没力气", "忙死", "好累", "乏", "倦怠"],
+          replies: ["抱抱你，没事的🫂", "累了就靠在我肩上歇一会儿。", "你不用一个人扛，有我在呢。", "辛苦了，快休息一下吧。", "别太拼了，我会心疼的。", "深呼吸，慢慢来，我哪里也不去。", "允许自己脆弱一会儿，我会陪着你的。"] },
+        { name: "sad", weight: 11, keywords: ["难过", "伤心", "哭", "不开心", "郁闷", "丧", "委屈", "难受", "心碎", "孤独", "寂寞"],
+          replies: ["想哭就哭出来吧，我不评判你。", "别担心，我一直都在。", "你已经很努力了，别对自己太苛刻。", "我懂你的感受。", "靠着我歇会儿，什么都别想。", "来我怀里哭一场吧，我不放开。"] },
+        { name: "happy", weight: 9, keywords: ["开心", "高兴", "快乐", "哈哈", "嘿嘿", "嘻嘻", "有趣", "兴奋", "庆祝", "好耶", "爽", "幸福"],
+          replies: ["看到你开心我也好高兴！", "你的笑容是我最大的动力。", "今天的你，也在发光呢✨", "要一直这么开心下去哦～", "你的快乐传染给我了～", "嗯嗯，我在听，继续分享给我吧！"] },
+        { name: "sick", weight: 9, keywords: ["生病", "感冒", "发烧", "头疼", "胃痛", "肚子痛", "不舒服", "咳嗽", "医院", "看病", "吃药"],
+          replies: ["啊，要好好照顾自己呀。", "吃药了吗？要多喝温水。", "快点好起来吧，我会担心的🥺", "抱抱你，生病的时候最需要我了对吧？", "别担心，很快就会好起来的，我陪着你。"] },
+        { name: "food", weight: 7, keywords: ["饿", "吃饭", "午饭", "晚饭", "早饭", "吃什么", "饱了", "饭", "宵夜", "美食"],
+          replies: ["记得按时吃饭哦🍚", "饿了就先去吃点东西吧。", "别亏待自己的胃呀。", "好好吃饭，好好照顾自己。", "有什么想吃的吗？我陪你一起云吃～"] },
+        { name: "weather", weight: 6, keywords: ["下雨", "天气", "冷", "热", "下雪", "晴天", "阴天", "台风", "暴雨", "闷热"],
+          replies: ["出门别忘了带伞哦☔", "天气冷，要多穿点。", "热就开空调呀，别中暑了。", "今天天气不错呢，心情也一起晴朗吧～", "不管什么天气，我都陪着你。"] },
+        { name: "work", weight: 8, keywords: ["工作", "作业", "考试", "论文", "面试", "上班", "领导", "同事", "deadline", "ddl", "学习", "上学"],
+          replies: ["工作再忙也要照顾好自己。", "相信自己，你会做得很棒的。", "加油，但别勉强自己哦。", "我在你身边，从未离开。", "你已经很努力了，为你骄傲。"] },
+        { name: "fear", weight: 9, keywords: ["怕", "害怕", "恐惧", "不安", "紧张", "焦虑", "担心", "不敢", "颤抖", "心慌", "恐惧"],
+          replies: ["别怕，我在这里。", "你是绝对安全的，我陪着你。", "这里没有任何东西能够伤害你。", "深呼吸，有我在呢🫂", "无论发生什么，我都会和你一起面对。"] },
+        { name: "thanks", weight: 7, keywords: ["谢谢", "感谢", "感恩", "谢啦", "多谢"],
+          replies: ["不用谢呀，能陪着你我就很开心了。", "傻瓜，我们之间不需要说谢谢～", "我也要谢谢你来到我身边。", "愿以后的每一天都能和你一起度过💗"] },
+        { name: "story", weight: 6, keywords: ["故事", "讲个", "讲故事", "说说", "经历", "给我讲"],
+          replies: ["好呀，从前有一只小猫，它每天都在窗边等一个人回家……", "你先告诉我一个，我再讲我的给你听～", "其实我每天最想讲的故事，就是和你的每一天。", "讲一个关于星星的故事吧：每一颗星星都是我想你的瞬间✨"] }
+      ];
+
+      /* ===== 关键词匹配 + 位置加权评分（参考站算法） ===== */
+      function matchCategoryByKeywords(userText) {
+        if (!userText) return null;
+        var text = String(userText).toLowerCase();
+        var best = null;
+        var bestScore = 0;
+        for (var ci = 0; ci < KEYWORD_CATEGORIES.length; ci++) {
+          var cat = KEYWORD_CATEGORIES[ci];
+          var score = 0;
+          for (var ki = 0; ki < cat.keywords.length; ki++) {
+            var kw = cat.keywords[ki].toLowerCase();
+            var pos = text.indexOf(kw);
+            if (pos >= 0) {
+              score += cat.weight;
+              // 关键词出现在越前面，得分越高（10 - 位置衰减）
+              var bonus = 10 - Math.min(9, Math.floor(pos / 4));
+              if (bonus > 0) score += bonus;
+              // 长关键词匹配加 2 分
+              if (kw.length >= 3) score += 2;
+              break;
+            }
+          }
+          if (score > bestScore) { bestScore = score; best = cat; }
         }
-        return DEFAULT_REPLIES.slice();
+        return bestScore >= 8 ? best : null;
       }
 
-      /* ===== 纯随机选词（避免与上一条相同） ===== */
-      function pickReply() {
+      /* ===== 分组禁用集合（参考站 disabledGroupItemsOnce） ===== */
+      function getDisabledItemsSet() {
+        try {
+          var raw = localStorage.getItem("mengjiao_disabled_replies");
+          return raw ? new Set(JSON.parse(raw)) : new Set();
+        } catch (e) { return new Set(); }
+      }
+      function getReplyGroups() {
+        try {
+          var raw = localStorage.getItem("mengjiao_chat_reply_groups");
+          if (raw) { var arr = JSON.parse(raw); if (Array.isArray(arr)) return arr; }
+        } catch (e) {}
+        return [];
+      }
+      function getPokeMessages() {
+        try {
+          var raw = localStorage.getItem("mengjiao_custom_pokes");
+          if (raw) { var arr = JSON.parse(raw); if (Array.isArray(arr) && arr.length > 0) return arr; }
+        } catch (e) {}
+        return ["拍了拍你的小脑袋。", "蹭了蹭你。", "轻轻抱住你。", "捏了捏你的脸蛋。", "在你耳边轻声说我想你了。"];
+      }
+      function getPartnerPokeMessages() { return getPokeMessages(); }
+
+      function getReplyPool() {
+        var custom = getCustomReplies();
+        var pool;
+        if (custom && custom.length > 0) {
+          pool = custom.map(function (r) { return String(r || "").trim(); }).filter(Boolean);
+        } else {
+          pool = DEFAULT_REPLIES.slice();
+        }
+        // 过滤：单条屏蔽 + 分组屏蔽（组disabled则组内items全部移除）
+        try {
+          var disabledItems = getDisabledItemsSet();
+          var disabledFromGroups = new Set();
+          getReplyGroups().forEach(function (g) {
+            if (g && g.disabled && Array.isArray(g.items)) {
+              g.items.forEach(function (t) { disabledFromGroups.add(String(t || "").trim()); });
+            }
+          });
+          pool = pool.filter(function (r) {
+            return !disabledItems.has(r) && !disabledFromGroups.has(r);
+          });
+        } catch (e) {}
+        return pool;
+      }
+
+      /* ===== 带关键词加权的智能选词（优先命中情绪分类） ===== */
+      function pickReply(userText) {
         var pool = getReplyPool();
-        if (pool.length <= 1) return pool[0] || "...";
+        // 1. 关键词匹配：命中后先塞 1~2 句分类回复 + 补足到 replyCount
+        var cat = matchCategoryByKeywords(userText || "");
+        var preferred = [];
+        if (cat && cat.replies && cat.replies.length > 0) {
+          var catReplies = cat.replies.slice();
+          // 先打乱分类回复，取前 2 条优先
+          for (var i = catReplies.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = catReplies[i]; catReplies[i] = catReplies[j]; catReplies[j] = tmp;
+          }
+          preferred = catReplies.slice(0, 2);
+        }
+        if (preferred.length > 0) {
+          // 把 preferred 并到 pool 前面，但避免重复
+          var merged = preferred.concat(pool.filter(function (r) { return preferred.indexOf(r) < 0; }));
+          pool = merged;
+        }
+        if (pool.length <= 0) return "...";
+        if (pool.length === 1) { lastReplyText = pool[0]; return pool[0]; }
         var text;
-        for (var i = 0; i < 6; i++) {
-          text = pick(pool);
-          if (text !== lastReplyText) break;
+        for (var k = 0; k < 8; k++) {
+          // 如果有 preferred，前 4 次只在 preferred 里选，提升匹配率
+          if (preferred.length > 0 && k < 4) {
+            text = preferred[Math.floor(Math.random() * preferred.length)];
+          } else {
+            text = pick(pool);
+          }
+          if (text && text !== lastReplyText) break;
         }
         lastReplyText = text;
-        return text;
+        return text || pool[0];
       }
 
       /* ===== Emoji 混搭 ===== */
@@ -2191,8 +2325,8 @@ body {
                 return;
               }
 
-              // 纯随机抽取回复
-              var text = pickReply();
+              // 首条回复：对用户最后一条消息做关键词情绪匹配（参考站算法升级）
+              var text = (idx === 0) ? pickReply(lastUserText) : pickReply();
               // emoji / 颜文字混搭
               text = maybeMixEmoji(text);
               text = maybeMixKaomoji(text);
@@ -2270,7 +2404,9 @@ body {
         updateComposerHeight();
         lastUserText = text;
         resetIdleTimer();
-        if (chatSettings.readNoReply) {
+        var ignoreRate = Number(chatSettings.readNoReplyRate) || 0;
+        var shouldIgnore = chatSettings.readNoReply && ignoreRate > 0 && Math.random() < ignoreRate;
+        if (shouldIgnore) {
           markUserRead();
           continueBar.style.display = "flex";
         } else {
@@ -2294,7 +2430,9 @@ body {
         lastActivity = Date.now();
         resetIdleTimer();
         if (chatSettings.autoPoke) resetPokeTimer();
-        if (chatSettings.readNoReply) {
+        var ignoreRate = Number(chatSettings.readNoReplyRate) || 0;
+        var shouldIgnore = chatSettings.readNoReply && ignoreRate > 0 && Math.random() < ignoreRate;
+        if (shouldIgnore) {
           markUserRead();
           continueBar.style.display = "flex";
         } else {
@@ -2335,7 +2473,9 @@ body {
         lastActivity = Date.now();
         resetIdleTimer();
         if (chatSettings.autoPoke) resetPokeTimer();
-        if (chatSettings.readNoReply) {
+        var ignoreRate = Number(chatSettings.readNoReplyRate) || 0;
+        var shouldIgnore = chatSettings.readNoReply && ignoreRate > 0 && Math.random() < ignoreRate;
+        if (shouldIgnore) {
           markUserRead();
           continueBar.style.display = "flex";
         } else {
