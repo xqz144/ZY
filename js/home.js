@@ -215,7 +215,26 @@
     }
 
     // ========== 主页显示/隐藏 ==========
+    // ========== 隐藏所有蒙层的通用兜底（欢迎、承诺、教程、各种遮罩） ==========
+    window.__forceHideAllOverlays = function() {
+        try {
+            var wel = document.getElementById('welcome-animation');
+            if (wel) { wel.classList.add('hidden'); wel.style.display = 'none'; wel.style.visibility = 'hidden'; wel.style.zIndex = '-9999'; }
+            var splash = document.getElementById('splash-declaration');
+            if (splash) { splash.style.display = 'none'; splash.classList.add('splash-fade-out'); }
+            var tour = document.getElementById('tour-overlay');
+            if (tour) tour.style.display = 'none';
+            var onboardingMasks = document.querySelectorAll('.onboarding-modal, .onboarding-overlay, .modal-backdrop, .mask-layer, [class*=modal-mask], [id*=mask], [class*=overlay]');
+            onboardingMasks.forEach(function(m){ try { if (m.id !== 'pet-game' && !m.classList.contains('app-item')) { m.style.display='none'; m.classList.remove('show','active','open');} } catch(e){} });
+        } catch(e) {}
+    };
+    // 初始化后每10秒+页面显示时兜底一次
+    setInterval(window.__forceHideAllOverlays, 10000);
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') window.__forceHideAllOverlays(); });
+    window.addEventListener('pageshow', window.__forceHideAllOverlays);
+
     window.showHomePage = function() {
+        window.__forceHideAllOverlays();
         const homeContainer = document.getElementById('home-container');
         const chatArea = document.querySelector('.main-chat-area');
         const header = document.querySelector('.header');
@@ -1512,6 +1531,7 @@
     };
 
     window.showExtApp = function(appKeyOrId) {
+        window.__forceHideAllOverlays();
         const conf = EXT_APPS[appKeyOrId] || (Object.values(EXT_APPS).find(c => c.key === appKeyOrId));
         if (!conf) return;
         const container = document.getElementById('extapp-' + conf.key);
@@ -1557,6 +1577,7 @@
     };
 
     window.hideExtApp = function(appKeyOrId) {
+        window.__forceHideAllOverlays();
         let conf = null;
         if (appKeyOrId) {
             conf = EXT_APPS[appKeyOrId] || (Object.values(EXT_APPS).find(c => c.key === appKeyOrId));
@@ -1599,9 +1620,9 @@
         if (prev.bodyHomeActive) document.body.classList.add('home-active');
         else document.body.classList.add('home-active');
 
-        // 确保 welcome 动画隐藏
-        const welcomeAnimation = document.getElementById('welcome-animation');
-        if (welcomeAnimation) welcomeAnimation.style.display = 'none';
+        // 强制确保主页状态正确 & 所有蒙层隐藏（这是解决"返回卡住加载界面"的关键兜底）
+        if (typeof window.showHomePage === 'function') window.showHomePage();
+        window.__forceHideAllOverlays();
     };
 
     // 监听子iframe的返回请求

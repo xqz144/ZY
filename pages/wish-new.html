@@ -1594,55 +1594,92 @@ body {
     })();
   </script>
 
-  <!-- 返回按钮兼容父iframe内嵌SPA模式（postMessage），fallback为跳转回主页 -->
-  <script>
-    (function () {
-      // 从文件名解析 extapp key
-      var nameMap = {
-        'diary-new':       'diary',
-        'wish-new':        'wish',
-        'spark-new':       'spark',
-        'anniversary-new': 'anniversary',
-        'music-new':       'music',
-        'call-new':        'call',
-        'history-new':     'history'
-      };
-      var fname = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
-      var extKey = nameMap[fname] || fname;
+  <!-- 返回按钮兼容父iframe内嵌SPA模式（postMessage）—— 所有指向主页的返回<a>统一替换；fallback为跳转回主页 -->
+<script>
+  (function () {
+    var nameMap = {
+      'diary-new':       'diary',
+      'wish-new':        'wish',
+      'spark-new':       'spark',
+      'anniversary-new': 'anniversary',
+      'music-new':       'music',
+      'call-new':        'call',
+      'history-new':     'history'
+    };
+    var fname = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+    var extKey = nameMap[fname] || fname;
+    var FALLBACK_URL = '../index-zy.html';
 
-      window.__extAppBack = function (ev) {
-        var inIframe = (window.top !== window.self);
-        if (inIframe) {
-          try {
-            window.top.postMessage({ type: 'extapp:back', key: extKey }, '*');
-            // 给500ms让父窗口处理，失败fallback跳转
-            setTimeout(function(){
-              try { window.location.replace('../index-zy.html'); } catch(e){}
-            }, 500);
-          } catch (e) {
-            window.location.href = '../index-zy.html';
-          }
-        } else {
-          window.location.href = '../index-zy.html';
+    window.__extAppBack = function (ev) {
+      try { ev && ev.preventDefault && ev.preventDefault(); } catch(e) {}
+      var inIframe = false;
+      try { inIframe = (window.top !== window.self); } catch(e) { inIframe = true; }
+      if (inIframe) {
+        try {
+          window.top.postMessage({ type: 'extapp:back', key: extKey, ts: Date.now() }, '*');
+          // 300ms 兜底：如果父窗没响应/加载出错，就跳回主页
+          setTimeout(function(){
+            try { location.replace(FALLBACK_URL); } catch(e){}
+          }, 300);
+          return false;
+        } catch (e) {
+          location.href = FALLBACK_URL;
+          return false;
         }
-        if (ev && ev.preventDefault) ev.preventDefault();
+      } else {
+        location.href = FALLBACK_URL;
         return false;
-      };
+      }
+    };
 
-      // 给所有指向 ../index-zy.html 的返回 <a> 替换成 onclick __extAppBack
-      document.addEventListener('DOMContentLoaded', function () {
-        var links = document.querySelectorAll('a.back-btn, a[data-dom-id="back-home"], a[data-dom-id="nav-back"], a[data-dom-id="back-nav"]');
-        links.forEach(function (a) {
-          // 只有href是 ../index-zy.html 或 index-new-v2.html 才替换
-          if (a.getAttribute('href') && /index-zy\.html|index-new-v2\.html/.test(a.getAttribute('href'))) {
-            a.setAttribute('data-href-backup', a.getAttribute('href'));
+    // 替换所有 <a href> 指向主页 的返回/后退 <a> 链接
+    function patchBackLinks() {
+      var patched = 0;
+      var as = document.querySelectorAll('a[href]');
+      for (var i=0; i<as.length; i++) {
+        var a = as[i];
+        var href = a.getAttribute('href') || '';
+        // 匹配：index-zy.html 或 index-new-v2.html 或 index-new.html 或 home-app.html 或 home.html
+        if (href && /(index-zy|index-new-v2|index-new|home-app|home)\.html/i.test(href)) {
+          var txt = (a.textContent || '').trim();
+          var cls = a.className || '';
+          var ddi = a.getAttribute && a.getAttribute('data-dom-id') || '';
+          var label = (a.getAttribute && a.getAttribute('aria-label')) || '';
+          // 只有含有 "返回/back/home/后退"语义 或 本身就是 a.back-btn / a[data-dom-id~="back"] 才替换
+          var lookslikeBack = /(back-btn|back|返回|home|后退|nav-back|back-home|back-nav|返回主页|返回首页|back-home|nav-back)/i.test(cls + ' ' + ddi + ' ' + label + ' ' + txt);
+          if (lookslikeBack) {
+            if (a.getAttribute('data-extapp-back-patched')) continue;
+            a.setAttribute('data-extapp-back-patched', '1');
+            a.setAttribute('data-href-backup', href);
             a.setAttribute('href', 'javascript:void(0)');
-            a.addEventListener('click', function (e) { return window.__extAppBack(e); });
+            (function(el){
+              el.addEventListener('click', function(e){ return window.__extAppBack(e); });
+            })(a);
+            patched++;
           }
-        });
-      });
-    })();
-  </script>
+        }
+      }
+      return patched;
+    }
+
+    function runPatchLoop() {
+      var r1 = patchBackLinks();
+      setTimeout(function(){ patchBackLinks(); }, 500);
+      setTimeout(function(){ patchBackLinks(); }, 1500);
+      setTimeout(function(){ patchBackLinks(); }, 3000);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', runPatchLoop);
+    } else {
+      runPatchLoop();
+    }
+
+    // 支持父窗口调用iframe里的返回函数：父窗口可直接 frame.contentWindow.extAppBackDirect()
+    window.extAppBackDirect = function() { return window.__extAppBack(); };
+  })();
+</script>
+
 
 </body>
 </html>

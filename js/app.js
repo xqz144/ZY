@@ -5,6 +5,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const disclaimerModal = document.getElementById('disclaimer-modal');
     const acceptDisclaimerBtn = document.getElementById('accept-disclaimer');
 
+    // ========== 强制隐藏保险：无论初始化成功/失败/卡住，8秒后/15秒轮询兜底隐藏welcome ==========
+    (function installWelcomeForceHideSafetyNet() {
+      function forceHideAllOverlays() {
+        try {
+          var wel = document.getElementById('welcome-animation');
+          if (wel) { wel.classList.add('hidden'); wel.style.display = 'none'; wel.style.visibility = 'hidden'; wel.style.zIndex = '-9999'; }
+          var splash = document.getElementById('splash-declaration');
+          if (splash) { splash.style.display = 'none'; splash.classList.add('splash-fade-out'); }
+          var tour = document.getElementById('tour-overlay');
+          if (tour) tour.style.display = 'none';
+          var onboardingMasks = document.querySelectorAll('.onboarding-modal, .onboarding-overlay, .modal-backdrop, .mask-layer, [class*=modal-mask]');
+          onboardingMasks.forEach(function(m){ try { m.style.display='none'; m.classList.remove('show','active','open');} catch(e){} });
+        } catch(e) {}
+      }
+      // 首次 8 秒绝对兜底（防止 initializeSession/loadData 卡住导致 setTimeout(hideWelcome) 不执行）
+      setTimeout(forceHideAllOverlays, 8000);
+      // 再隔 15 秒、30 秒、60 秒再兜一次（缓存/性能慢的设备）
+      setTimeout(forceHideAllOverlays, 15000);
+      setTimeout(forceHideAllOverlays, 30000);
+      setTimeout(forceHideAllOverlays, 60000);
+      // 15 秒一次常驻轮询（防止任何状态切换时蒙层又出现）
+      setInterval(forceHideAllOverlays, 15000);
+      // 每次用户回到可见页面立即兜一次
+      document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='visible') forceHideAllOverlays(); });
+      window.addEventListener('pageshow', forceHideAllOverlays);
+    })();
+
     const updateLoader = (text, width) => {
         if (welcomeSubtitle) welcomeSubtitle.textContent = text;
         if (loaderBar) loaderBar.style.width = width;
@@ -15,6 +42,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         welcomeScreen.classList.add('hidden');
         setTimeout(() => {
             welcomeScreen.style.display = 'none';
+            welcomeScreen.style.visibility = 'hidden';
+            welcomeScreen.style.zIndex = '-9999';
             // 加载动画结束后显示主页
             if (typeof window.showHomePage === 'function') {
                 window.showHomePage();
