@@ -440,26 +440,6 @@
                         </div>
                         <span class="app-name">摸鱼小记</span>
                     </div>
-                    <div class="app-item" onclick="openApp('diary')">
-                        <div class="app-icon" data-app="diary"><i class="fas fa-clipboard-list"></i></div>
-                        <span class="app-name">朝夕心记</span>
-                    </div>
-                    <div class="app-item" onclick="openApp('fortune')">
-                        <div class="app-icon" data-app="fortune"><i class="fas fa-star-and-crescent"></i></div>
-                        <span class="app-name">运势占卜</span>
-                    </div>
-                    <div class="app-item" onclick="openApp('mood')">
-                        <div class="app-icon" data-app="mood"><i class="fas fa-calendar-day"></i></div>
-                        <span class="app-name">心晴手帐</span>
-                    </div>
-                    <div class="app-item" onclick="openApp('calendar')">
-                        <div class="app-icon" data-app="calendar"><i class="fas fa-calendar-alt"></i></div>
-                        <span class="app-name">日历</span>
-                    </div>
-                    <div class="app-item" onclick="openApp('decide')">
-                        <div class="app-icon" data-app="decide"><i class="fas fa-balance-scale"></i></div>
-                        <span class="app-name">抉择</span>
-                    </div>
                     <div class="app-item" onclick="window.GiftCabinetApp.open()">
                         <div class="app-icon" data-app="gift-cabinet">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
@@ -472,17 +452,9 @@
                         </div>
                         <span class="app-name">礼物柜</span>
                     </div>
-                </div>
-            </div>
-            <div class="apps-page" id="apps-page-2">
-                <div class="apps-grid">
                     <div class="app-item" onclick="openApp('stats')">
                         <div class="app-icon" data-app="stats"><i class="fas fa-chart-bar"></i></div>
                         <span class="app-name">消息统计</span>
-                    </div>
-                    <div class="app-item" onclick="openApp('accounting')">
-                        <div class="app-icon" data-app="accounting"><i class="fas fa-coins"></i></div>
-                        <span class="app-name">同心记账</span>
                     </div>
                     <div class="app-item" onclick="openApp('pet')">
                         <div class="app-icon" data-app="pet">
@@ -496,31 +468,49 @@
                         </div>
                         <span class="app-name">萌宠屋</span>
                     </div>
-                    <div class="app-item" onclick="openApp('ta-phone')">
-                        <div class="app-icon" data-app="ta-phone">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
-                                <rect x="5" y="2" width="14" height="20" rx="2.5"/>
-                                <line x1="10" y1="18" x2="14" y2="18"/>
-                            </svg>
+                    <div class="app-item" onclick="window.open('pages/diary-new.html', '_self')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #f6b3ca, #e88ca8);">
+                            <i class="fas fa-book-heart"></i>
                         </div>
-                        <span class="app-name">TA的手机</span>
+                        <span class="app-label">梦境日记</span>
                     </div>
-                    <div class="app-item" onclick="openApp('map')">
-                        <div class="app-icon" data-app="map">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
-                                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-                                <line x1="8" y1="2" x2="8" y2="18"/>
-                                <line x1="16" y1="6" x2="16" y2="22"/>
-                            </svg>
+                    <div class="app-item" onclick="window.open('pages/wish-new.html', '_self')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #f7bcd0, #eb95b3);">
+                            <i class="fas fa-star"></i>
                         </div>
-                        <span class="app-name">Zmilk地图</span>
+                        <span class="app-label">心愿</span>
+                    </div>
+                    <div class="app-item" onclick="window.open('pages/spark-new.html', '_self')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #ffb86b, #ff8a56);">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <span class="app-label">小火人</span>
+                    </div>
+                    <div class="app-item" onclick="window.open('pages/anniversary-new.html', '_self')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #f8c2d4, #ed98b5);">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <span class="app-label">纪念日</span>
+                    </div>
+                    <div class="app-item" onclick="window.open('pages/music-new.html', '_self')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #f9cfdd, #f2aac3);">
+                            <i class="fas fa-music"></i>
+                        </div>
+                        <span class="app-label">背景音乐</span>
+                    </div>
+                    <div class="app-item" onclick="window.open('pages/call-new.html', '_self')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #f7b8ce, #ed90ae);">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <span class="app-label">梦角来电</span>
+                    </div>
+                    <div class="app-item" onclick="window.open('pages/history-new.html', '_self')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #fbc8d8, #f4a0bc);">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <span class="app-label">传讯记录</span>
                     </div>
                 </div>
-            </div>
-            <!-- 翻页指示器 -->
-            <div class="apps-dots" id="apps-dots">
-                <span class="apps-dot active" onclick="switchAppsPage(0)"></span>
-                <span class="apps-dot" onclick="switchAppsPage(1)"></span>
             </div>
         </div>
 
@@ -2135,6 +2125,9 @@
     </div>
 
     <div class="main-chat-area">
+
+        <!-- 小火人拖拽伴侣 -->
+        <div id="spark-companion" aria-label="小精灵拖拽"></div>
 
         <div class="history-loader" id="history-loader">
             <div class="history-spinner"></div>
@@ -4639,5 +4632,146 @@
             <button class="spark-modal-close" onclick="SparkApp.closeSparkModal()">知道了</button>
         </div>
     </div>
+
+    <!-- 小火人拖拽伴侣样式 -->
+    <style>
+    #spark-companion {
+      position: absolute;
+      width: 92px;
+      height: 104px;
+      z-index: 200;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.2s ease;
+      pointer-events: auto;
+      filter: drop-shadow(0 5px 10px rgba(232,116,154,0.22));
+    }
+    #spark-companion:active { cursor: grabbing; transform: scale(1.08); }
+    #spark-companion img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+    #spark-companion .companion-hint {
+      position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+      font-size: 9px; color: #9a8a92; white-space: nowrap; opacity: 0.5; pointer-events: none;
+    }
+    #spark-companion.dragging { transition: none; z-index: 300; }
+    @keyframes companionBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    #spark-companion:not(.dragging) { animation: companionBob 2.5s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      #spark-companion { animation: none !important; }
+    }
+    </style>
+
+    <!-- 小火人拖拽伴侣脚本 -->
+    <script>
+    (function initCompanion() {
+      var companion = document.getElementById("spark-companion");
+      if (!companion) return;
+      var SPARK_KEY = "mengjiao_spark";
+      var POS_KEY = "mengjiao_companion_pos";
+
+      function updateCompanion() {
+        companion.innerHTML = '<img src="assets/character.png" alt="小火人" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px;pointer-events:none;filter:brightness(1.12) saturate(1.15) contrast(1.05);">' + '<div class="companion-hint">拖拽我</div>';
+      }
+
+      try {
+        var pos = JSON.parse(localStorage.getItem(POS_KEY) || "{}");
+        if (pos.x !== undefined) {
+          companion.style.left = pos.x + "px";
+          companion.style.top = pos.y + "px";
+        } else {
+          companion.style.right = "16px";
+          companion.style.bottom = "80px";
+        }
+      } catch (e) {
+        companion.style.right = "16px";
+        companion.style.bottom = "80px";
+      }
+
+      updateCompanion();
+
+      var dragging = false;
+      var startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+      function onPointerDown(e) {
+        dragging = true;
+        companion.classList.add("dragging");
+        var rect = companion.getBoundingClientRect();
+        var parentRect = companion.parentElement.getBoundingClientRect();
+        origLeft = rect.left - parentRect.left;
+        origTop = rect.top - parentRect.top;
+        startX = e.clientX;
+        startY = e.clientY;
+        companion.style.left = origLeft + "px";
+        companion.style.top = origTop + "px";
+        companion.style.right = "auto";
+        companion.style.bottom = "auto";
+        e.preventDefault();
+      }
+
+      function onPointerMove(e) {
+        if (!dragging) return;
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        var newLeft = origLeft + dx;
+        var newTop = origTop + dy;
+        var parent = companion.parentElement;
+        var maxLeft = parent.clientWidth - companion.offsetWidth;
+        var maxTop = parent.clientHeight - companion.offsetHeight;
+        newLeft = Math.max(0, Math.min(maxLeft, newLeft));
+        newTop = Math.max(0, Math.min(maxTop, newTop));
+        companion.style.left = newLeft + "px";
+        companion.style.top = newTop + "px";
+      }
+
+      function onPointerUp() {
+        if (!dragging) return;
+        dragging = false;
+        companion.classList.remove("dragging");
+        try {
+          localStorage.setItem(POS_KEY, JSON.stringify({
+            x: parseInt(companion.style.left) || 0,
+            y: parseInt(companion.style.top) || 0
+          }));
+        } catch (e) {}
+      }
+
+      companion.addEventListener("pointerdown", onPointerDown);
+      document.addEventListener("pointermove", onPointerMove);
+      document.addEventListener("pointerup", onPointerUp);
+      document.addEventListener("pointercancel", onPointerUp);
+
+      var tapStartT = 0, tapStartX = 0, tapStartY = 0;
+      companion.addEventListener("pointerdown", function(e) {
+        tapStartT = Date.now();
+        tapStartX = e.clientX;
+        tapStartY = e.clientY;
+      });
+      companion.addEventListener("pointerup", function(e) {
+        if (Date.now() - tapStartT < 200 &&
+            Math.abs(e.clientX - tapStartX) < 8 &&
+            Math.abs(e.clientY - tapStartY) < 8) {
+          try {
+            var raw = localStorage.getItem(SPARK_KEY);
+            var d = raw ? JSON.parse(raw) : {};
+            d.avatar = d.avatar || {};
+            var poses = ["idle","wave","cheer","reach","shy","sit"];
+            var cur = poses.indexOf(d.avatar.pose || "idle");
+            if (cur === -1) cur = 0;
+            d.avatar.pose = poses[(cur + 1) % poses.length];
+            localStorage.setItem(SPARK_KEY, JSON.stringify(d));
+            updateCompanion();
+          } catch (e) {}
+        }
+      });
+
+      window.addEventListener("storage", function(e) {
+        if (e.key === SPARK_KEY) updateCompanion();
+      });
+    })();
+    </script>
 </body>
 </html>
