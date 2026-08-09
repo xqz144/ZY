@@ -4595,6 +4595,13 @@
     <script src="js/moyu.js"></script>
     <script src="js/features/map.js"></script>
 
+    <!-- == 跳过入场承诺 & 教程 == -->
+    <script>
+      try {
+        localStorage.setItem('splashPledgeSigned_v3', 'true');
+        localStorage.setItem('tutorialCompleted_v3', 'true');
+      } catch (_) {}
+    </script>
     <!-- == 合并模块 == -->
     <script src="js/games.js"></script>
     <script src="js/features.js"></script>
