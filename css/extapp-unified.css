@@ -1,0 +1,206 @@
+/* =========================================================
+   梦角传讯 · 新功能统一皮肤 (extapp Unified Skin)
+   - 对齐主站 index-zy.html 的风格：Noto Serif SC 中文 + Nunito 西文 + 统一奶茶粉 accent
+   - 应用于 pages/*-new.html 7个功能页面（放在每个页面head最后，做覆盖）
+   ========================================================= */
+
+/* 主站同款字体预连接 + 加载（和 index-zy.html 保持完全一致）*/
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
+
+/* ======= 一、统一主题变量（对齐主站默认奶茶粉主题 accent-color:#F4A6B3） ======= */
+:root, html {
+  /* 字体 — 彻底对齐主站：中文 Noto Serif SC，西文 Nunito。
+     DreamFont 只作为装饰 fallback（避免功能页大量已用 font-serif 的元素断样式）。
+  */
+  --font-family: 'Nunito', 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    'Nunito', 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
+  --font-serif:   'Noto Serif SC', 'Nunito', ui-serif, Georgia, serif;
+  --message-font-family: 'Noto Serif SC', serif;
+
+  /* 颜色（主站默认 奶茶粉 accent）— 覆盖各自页面里的自定义色 */
+  --accent-color: #F4A6B3;
+  --accent-color-rgb: 244, 166, 179;
+  --primary-bg: #f9f9f9;
+  --secondary-bg: #ffffff;
+  --card-background: #ffffff;
+  --card-foreground: #4a3f45;
+  --text-primary: #4a3f45;
+  --text-secondary: #9a8a92;
+  --border-color: rgba(244, 166, 179, 0.30);
+  --input: #f6f3f0;
+  --ring: 244, 166, 179;
+
+  /* 圆角、阴影 — 统一一套 */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius: 14px;
+
+  --shadow-color: 343 40% 60%;
+  --shadow-2xs: 0 2px 4px 0 hsla(343, 30%, 50%, .04);
+  --shadow-xs:  0 2px 4px 0 hsla(343, 30%, 50%, .04);
+  --shadow-sm:  0 3px 8px -1px hsla(343, 30%, 50%, .07), 0 2px 4px -2px hsla(343, 30%, 50%, .05);
+  --shadow:     0 6px 14px -2px hsla(343, 30%, 50%, .10), 0 3px 6px -2px hsla(343, 30%, 50%, .06);
+  --shadow-md:  0 10px 22px -4px hsla(343, 30%, 50%, .12), 0 5px 10px -4px hsla(343, 30%, 50%, .08);
+  --shadow-lg:  0 18px 32px -6px hsla(343, 30%, 50%, .16), 0 10px 18px -6px hsla(343, 30%, 50%, .10);
+  --tracking-normal: .015em;
+}
+
+/* 如果主站切换成了 暖棕/蓝/紫 主题，这里也做兼容（被父窗口 postMessage 同步颜色，见后面的 JS） */
+html[data-color-theme="black-white"]     { --accent-color:#c5a47e; --accent-color-rgb:197,164,126; --border-color:rgba(197,164,126,.30); }
+html[data-color-theme="ocean-blue"]      { --accent-color:#7FA6CD; --accent-color-rgb:127,166,205; --border-color:rgba(127,166,205,.30); }
+html[data-color-theme="purple-dream"]    { --accent-color:#BB9EC7; --accent-color-rgb:187,158,199; --border-color:rgba(187,158,199,.30); }
+html[data-color-theme="matcha-latte"]    { --accent-color:#7BC8A4; --accent-color-rgb:123,200,164; --border-color:rgba(123,200,164,.30); }
+html[data-color-theme="sakura-pink"]     { --accent-color:#F4A6B3; --accent-color-rgb:244,166,179; --border-color:rgba(244,166,179,.30); }
+html[data-color-theme="ink-monochrome"]  { --accent-color:#333333; --accent-color-rgb:51,51,51;   --border-color:rgba(51,51,51,.20); }
+html[data-color-theme="sky-breeze"]      { --accent-color:#A8D8EA; --accent-color-rgb:168,216,234; --border-color:rgba(168,216,234,.30); }
+html[data-color-theme="sunset-peach"]    { --accent-color:#FF9A8B; --accent-color-rgb:255,154,139; --border-color:rgba(255,154,139,.30); }
+html[data-color-theme="olive-garden"]    { --accent-color:#7BA05B; --accent-color-rgb:123,160,91;  --border-color:rgba(123,160,91,.30); }
+html[data-color-theme="classic-blue"]    { --accent-color:#4A90E2; --accent-color-rgb:74,144,226;  --border-color:rgba(74,144,226,.30); }
+
+/* ======= 二、全局基础样式 ======= */
+html, body { font-family: var(--font-family) !important; letter-spacing: var(--tracking-normal); }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* 滚动条统一 主站同款细粉 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(var(--accent-color-rgb), 0.35); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-color-rgb), 0.55); }
+
+/* ======= 三、通用按钮样式 统一 ======= */
+button, [role="button"], .btn, .btn-primary, .btn-secondary, .u-btn {
+  font-family: var(--font-family) !important;
+  letter-spacing: var(--tracking-normal);
+  border-radius: var(--radius-sm) !important;
+  transition: transform .12s ease, box-shadow .2s ease, background .15s ease, opacity .15s ease;
+}
+button:active, [role="button"]:active { transform: scale(0.97); }
+
+/* Primary 实心按钮 统一 */
+.btn-primary,
+button.primary,
+button[type="submit"],
+button[class*="-primary"],
+.btn-primary-like {
+  background: var(--accent-color) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(var(--accent-color-rgb), 0.25);
+}
+.btn-primary:hover, button.primary:hover { opacity: .92; box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.32); }
+
+/* Secondary 幽灵按钮 统一 */
+.btn-secondary,
+button.ghost,
+button[class*="-secondary"],
+.btn-secondary-like {
+  background: rgba(var(--accent-color-rgb), 0.08) !important;
+  color: var(--accent-color) !important;
+  border: 1px solid rgba(var(--accent-color-rgb), 0.22) !important;
+}
+.btn-secondary:hover, button.ghost:hover { background: rgba(var(--accent-color-rgb), 0.14) !important; }
+
+/* ======= 四、输入框/文本域 统一 ======= */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="search"],
+input[type="email"],
+textarea,
+select {
+  font-family: var(--font-family) !important;
+  letter-spacing: var(--tracking-normal);
+  background: var(--secondary-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  outline: none !important;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb), 0.12) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--text-secondary); opacity: .7; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent-color) !important; }
+
+/* ======= 五、卡片/对话框 统一 ======= */
+.card,
+[class*="-card"],
+.panel,
+[class*="-panel"],
+.modal,
+.dialog,
+.sheet,
+[class*="-sheet"] {
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+.card h1, .card h2, .card h3, .card h4, .modal-title, .sheet-title, .panel-title {
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+}
+
+/* 标签/徽章/小状态 */
+.tag, .badge, [class*="-tag"], [class*="-badge"], .pill {
+  font-family: var(--font-family);
+  background: rgba(var(--accent-color-rgb), 0.12);
+  color: var(--accent-color);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ======= 六、功能页顶部"返回 / 标题" 导航栏统一（和主站 iframe 顶栏风格完全一致） ======= */
+.extapp-unified-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: var(--primary-bg, #fff);
+  border-bottom: 1px solid var(--border-color);
+}
+.extapp-unified-nav .extapp-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--accent-color, #F4A6B3);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: background .15s ease;
+  font-family: var(--font-family);
+}
+.extapp-unified-nav .extapp-back-btn:hover { background: rgba(var(--accent-color-rgb), 0.08); }
+.extapp-unified-nav .extapp-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #4a3f45);
+  letter-spacing: .5px;
+  font-family: var(--font-serif);
+}
+.extapp-unified-nav .extapp-right-placeholder { width: 72px; /* 对称占位 */ }
+
+/* ======= 七、标题/正文 排版统一 ======= */
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); color: var(--text-primary); letter-spacing: .01em; }
+p, li, span, td, th, label, a, em, strong { font-family: var(--font-sans); color: var(--text-primary); }
+a { color: var(--accent-color); text-decoration: none; }
+a:hover { text-decoration: underline; }

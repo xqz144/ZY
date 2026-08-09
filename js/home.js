@@ -1637,7 +1637,53 @@
 
         container.style.display = 'flex';
         document.body.classList.add('home-active'); // 允许iframe内滚动
+
+        // ========== 同步主站主题色/深浅色 到 iframe 内 ==========
+        try {
+            var doc = document.documentElement;
+            var colorTheme = doc.getAttribute('data-color-theme');
+            var theme = doc.getAttribute('data-theme');
+            var syncMsg = { type: 'theme:sync', colorTheme: colorTheme, theme: theme, ts: Date.now() };
+            // 立即 postMessage 给当前 iframe
+            if (iframe && iframe.contentWindow) {
+                try { iframe.contentWindow.postMessage(syncMsg, '*'); } catch(e){}
+            }
+            // 额外保险：如果 postMessage 因为 src 还没加载被丢，过 1500ms / 4000ms 再投两次（懒加载场景）
+            [1500, 4000].forEach(function(t){
+                setTimeout(function(){
+                    var ct = document.documentElement.getAttribute('data-color-theme');
+                    var dtt = document.documentElement.getAttribute('data-theme');
+                    var msg = { type: 'theme:sync', colorTheme: ct, theme: dtt, ts: Date.now() };
+                    var iframeEl = document.getElementById('extapp-' + conf.key + '-iframe');
+                    if (iframeEl && iframeEl.contentWindow) {
+                        try { iframeEl.contentWindow.postMessage(msg, '*'); } catch(e){}
+                    }
+                }, t);
+            });
+        } catch(e) {}
     };
+
+    // 主页切换主题/深浅色时，广播到所有已存在的 extapp iframe，保持视觉统一
+    (function installExtAppThemeBroadcaster() {
+        var lastTheme = { color: null, dark: null };
+        function broadcast() {
+            try {
+                var doc = document.documentElement;
+                var color = doc.getAttribute('data-color-theme');
+                var dark = doc.getAttribute('data-theme');
+                if (color === lastTheme.color && dark === lastTheme.dark) return;
+                lastTheme.color = color; lastTheme.dark = dark;
+                var msg = { type: 'theme:sync', colorTheme: color, theme: dark, ts: Date.now() };
+                var iframes = document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]');
+                iframes.forEach(function(f){
+                    if (f && f.contentWindow) { try { f.contentWindow.postMessage(msg, '*'); } catch(e){} }
+                });
+            } catch(e) {}
+        }
+        setInterval(broadcast, 2200);
+        document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') broadcast(); });
+        window.addEventListener('pageshow', broadcast);
+    })();
 
     window.hideExtApp = function(appKeyOrId) {
         window.__forceHideAllOverlays();

@@ -192,6 +192,46 @@ body {
         background-color: currentColor;
       }
     </style>
+
+    <link rel="stylesheet" href="../css/extapp-unified.css">
+
+<script>
+/* 从父窗口同步主题色（奶茶粉/暖棕/紫/蓝等）到 iframe 内 */
+(function () {
+  try {
+    var inIframe = false;
+    try { inIframe = (window.top !== window.self); } catch (e) { inIframe = true; }
+    function applyColorThemeFromParent() {
+      try {
+        var parentRoot = null;
+        try { parentRoot = window.parent.document.documentElement; } catch (e) { parentRoot = null; }
+        if (parentRoot) {
+          var t = parentRoot.getAttribute('data-color-theme');
+          if (t) document.documentElement.setAttribute('data-color-theme', t);
+          var dt = parentRoot.getAttribute('data-theme');
+          if (dt) document.documentElement.setAttribute('data-theme', dt);
+          if (dt === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    }
+    applyColorThemeFromParent();
+    if (inIframe) {
+      window.addEventListener('message', function (ev) {
+        var d = ev.data || {};
+        if (d.type === 'theme:sync' || d.colorTheme || d.theme) {
+          if (d.colorTheme) document.documentElement.setAttribute('data-color-theme', d.colorTheme);
+          if (d.theme) {
+            document.documentElement.setAttribute('data-theme', d.theme);
+            if (d.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+          }
+          applyColorThemeFromParent();
+        }
+      });
+      setInterval(applyColorThemeFromParent, 2500);
+    }
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
   <div class="phone">
