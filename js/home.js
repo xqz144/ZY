@@ -1638,12 +1638,16 @@
         container.style.display = 'flex';
         document.body.classList.add('home-active'); // 允许iframe内滚动
 
-        // ========== 同步主站主题色/深浅色 到 iframe 内 ==========
+        // ========== 同步主站主题色/深浅色/字体 到 iframe 内 ==========
         try {
             var doc = document.documentElement;
             var colorTheme = doc.getAttribute('data-color-theme');
             var theme = doc.getAttribute('data-theme');
-            var syncMsg = { type: 'theme:sync', colorTheme: colorTheme, theme: theme, ts: Date.now() };
+            // 读取主站当前的字体 CSS 变量（用户在外观设置里配置的自定义字体也会同步）
+            var fontVar = doc.style.getPropertyValue('--font-family') || '';
+            var msgFontVar = doc.style.getPropertyValue('--message-font-family') || '';
+            var fontSize = doc.style.getPropertyValue('--font-size') || '';
+            var syncMsg = { type: 'theme:sync', colorTheme: colorTheme, theme: theme, fontFamily: fontVar, messageFontFamily: msgFontVar, fontSize: fontSize, ts: Date.now() };
             // 立即 postMessage 给当前 iframe
             if (iframe && iframe.contentWindow) {
                 try { iframe.contentWindow.postMessage(syncMsg, '*'); } catch(e){}
@@ -1653,7 +1657,10 @@
                 setTimeout(function(){
                     var ct = document.documentElement.getAttribute('data-color-theme');
                     var dtt = document.documentElement.getAttribute('data-theme');
-                    var msg = { type: 'theme:sync', colorTheme: ct, theme: dtt, ts: Date.now() };
+                    var fv = document.documentElement.style.getPropertyValue('--font-family') || '';
+                    var mfv = document.documentElement.style.getPropertyValue('--message-font-family') || '';
+                    var fs = document.documentElement.style.getPropertyValue('--font-size') || '';
+                    var msg = { type: 'theme:sync', colorTheme: ct, theme: dtt, fontFamily: fv, messageFontFamily: mfv, fontSize: fs, ts: Date.now() };
                     var iframeEl = document.getElementById('extapp-' + conf.key + '-iframe');
                     if (iframeEl && iframeEl.contentWindow) {
                         try { iframeEl.contentWindow.postMessage(msg, '*'); } catch(e){}
@@ -1663,17 +1670,20 @@
         } catch(e) {}
     };
 
-    // 主页切换主题/深浅色时，广播到所有已存在的 extapp iframe，保持视觉统一
+    // 主页切换主题/深浅色/字体时，广播到所有已存在的 extapp iframe，保持视觉统一
     (function installExtAppThemeBroadcaster() {
-        var lastTheme = { color: null, dark: null };
+        var lastTheme = { color: null, dark: null, font: null };
         function broadcast() {
             try {
                 var doc = document.documentElement;
                 var color = doc.getAttribute('data-color-theme');
                 var dark = doc.getAttribute('data-theme');
-                if (color === lastTheme.color && dark === lastTheme.dark) return;
-                lastTheme.color = color; lastTheme.dark = dark;
-                var msg = { type: 'theme:sync', colorTheme: color, theme: dark, ts: Date.now() };
+                var font = doc.style.getPropertyValue('--font-family') || '';
+                if (color === lastTheme.color && dark === lastTheme.dark && font === lastTheme.font) return;
+                lastTheme.color = color; lastTheme.dark = dark; lastTheme.font = font;
+                var msgFontVar = doc.style.getPropertyValue('--message-font-family') || '';
+                var fontSize = doc.style.getPropertyValue('--font-size') || '';
+                var msg = { type: 'theme:sync', colorTheme: color, theme: dark, fontFamily: font, messageFontFamily: msgFontVar, fontSize: fontSize, ts: Date.now() };
                 var iframes = document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]');
                 iframes.forEach(function(f){
                     if (f && f.contentWindow) { try { f.contentWindow.postMessage(msg, '*'); } catch(e){} }

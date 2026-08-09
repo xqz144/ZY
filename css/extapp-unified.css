@@ -9,8 +9,9 @@
 
 /* ======= 一、统一主题变量（对齐主站默认奶茶粉主题 accent-color:#F4A6B3） ======= */
 :root, html {
-  /* 字体 — 彻底对齐主站：中文 Noto Serif SC，西文 Nunito。
-     DreamFont 只作为装饰 fallback（避免功能页大量已用 font-serif 的元素断样式）。
+  /* 字体 — 仅设默认 fallback 值（不加 !important）。
+     用户在外观设置里通过"字体链接"配置的自定义字体，会通过 postMessage 同步覆盖此变量。
+     主站 applyCustomFont() 写的是 document.documentElement.style（内联），优先级高于此处。
   */
   --font-family: 'Nunito', 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
   --font-sans:    'Nunito', 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
@@ -60,8 +61,8 @@ html[data-color-theme="sunset-peach"]    { --accent-color:#FF9A8B; --accent-colo
 html[data-color-theme="olive-garden"]    { --accent-color:#7BA05B; --accent-color-rgb:123,160,91;  --border-color:rgba(123,160,91,.30); }
 html[data-color-theme="classic-blue"]    { --accent-color:#4A90E2; --accent-color-rgb:74,144,226;  --border-color:rgba(74,144,226,.30); }
 
-/* ======= 二、全局基础样式 ======= */
-html, body { font-family: var(--font-family) !important; letter-spacing: var(--tracking-normal); }
+/* ======= 二、全局基础样式（不加 !important，让用户在外观设置的字体配置优先） ======= */
+html, body { font-family: var(--font-family); letter-spacing: var(--tracking-normal); }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 /* 滚动条统一 主站同款细粉 */
@@ -70,9 +71,9 @@ html, body { font-family: var(--font-family) !important; letter-spacing: var(--t
 ::-webkit-scrollbar-thumb { background: rgba(var(--accent-color-rgb), 0.35); border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-color-rgb), 0.55); }
 
-/* ======= 三、通用按钮样式 统一 ======= */
+/* ======= 三、通用按钮样式 统一（font-family 不加 !important，跟随 --font-family 变量） ======= */
 button, [role="button"], .btn, .btn-primary, .btn-secondary, .u-btn {
-  font-family: var(--font-family) !important;
+  font-family: var(--font-family);
   letter-spacing: var(--tracking-normal);
   border-radius: var(--radius-sm) !important;
   transition: transform .12s ease, box-shadow .2s ease, background .15s ease, opacity .15s ease;
@@ -113,7 +114,7 @@ input[type="search"],
 input[type="email"],
 textarea,
 select {
-  font-family: var(--font-family) !important;
+  font-family: var(--font-family);
   letter-spacing: var(--tracking-normal);
   background: var(--secondary-bg) !important;
   color: var(--text-primary) !important;

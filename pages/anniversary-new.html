@@ -204,7 +204,7 @@ body {
     <link rel="stylesheet" href="../css/extapp-unified.css">
 
 <script>
-/* 从父窗口同步主题色（奶茶粉/暖棕/紫/蓝等）到 iframe 内 */
+/* 从父窗口同步主题色/字体到 iframe 内（配合主站外观设置） */
 (function () {
   try {
     var inIframe = false;
@@ -219,6 +219,13 @@ body {
           var dt = parentRoot.getAttribute('data-theme');
           if (dt) document.documentElement.setAttribute('data-theme', dt);
           if (dt === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+          /* 同步字体变量（用户在外观设置里配置的自定义字体） */
+          var fv = parentRoot.style.getPropertyValue('--font-family');
+          if (fv) document.documentElement.style.setProperty('--font-family', fv);
+          var mfv = parentRoot.style.getPropertyValue('--message-font-family');
+          if (mfv) document.documentElement.style.setProperty('--message-font-family', mfv);
+          var fs = parentRoot.style.getPropertyValue('--font-size');
+          if (fs) document.documentElement.style.setProperty('--font-size', fs);
         }
       } catch (e) {}
     }
@@ -232,6 +239,10 @@ body {
             document.documentElement.setAttribute('data-theme', d.theme);
             if (d.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
           }
+          /* 同步字体 CSS 变量 */
+          if (d.fontFamily) document.documentElement.style.setProperty('--font-family', d.fontFamily);
+          if (d.messageFontFamily) document.documentElement.style.setProperty('--message-font-family', d.messageFontFamily);
+          if (d.fontSize) document.documentElement.style.setProperty('--font-size', d.fontSize);
           applyColorThemeFromParent();
         }
       });
