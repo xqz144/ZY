@@ -1500,6 +1500,122 @@
         }, { passive: true });
     })();
 
+    // ========== 扩展功能（用户7个功能页）：内嵌iframe方式，SPA内导航 ==========
+    const EXT_APPS = {
+        'diary-new':      { key: 'diary',       page: 'pages/diary-new.html' },
+        'wish-new':       { key: 'wish',        page: 'pages/wish-new.html' },
+        'spark-new':      { key: 'spark',       page: 'pages/spark-new.html' },
+        'anniversary-new':{ key: 'anniversary', page: 'pages/anniversary-new.html' },
+        'music-new':      { key: 'music',       page: 'pages/music-new.html' },
+        'call-new':       { key: 'call',        page: 'pages/call-new.html' },
+        'history-new':    { key: 'history',     page: 'pages/history-new.html' }
+    };
+
+    window.showExtApp = function(appKeyOrId) {
+        const conf = EXT_APPS[appKeyOrId] || (Object.values(EXT_APPS).find(c => c.key === appKeyOrId));
+        if (!conf) return;
+        const container = document.getElementById('extapp-' + conf.key);
+        if (!container) return;
+        const iframe = document.getElementById('extapp-' + conf.key + '-iframe');
+        // 首次显示才加载iframe（懒加载+缓存），之后不重复加载以保留用户状态
+        if (iframe && !iframe.getAttribute('src')) {
+            iframe.setAttribute('src', conf.page);
+        }
+        // 隐藏主页 & 聊天，记录前态
+        window.__preExtAppState = window.__preExtAppState || {};
+        const homeContainer = document.getElementById('home-container');
+        const chatArea = document.querySelector('.main-chat-area');
+        const header = document.querySelector('.header');
+        const inputArea = document.querySelector('.input-area-wrapper');
+        const petContainer = document.getElementById('pet-container');
+        const momentsContainer = document.getElementById('moments-container');
+        window.__preExtAppState = {
+            homeDisplay: homeContainer ? homeContainer.style.display : '',
+            homeActive: homeContainer ? homeContainer.classList.contains('active') : false,
+            chatDisplay: chatArea ? chatArea.style.display : '',
+            headerDisplay: header ? header.style.display : '',
+            inputDisplay: inputArea ? inputArea.style.display : '',
+            petDisplay: petContainer ? petContainer.style.display : '',
+            momentsDisplay: momentsContainer ? momentsContainer.style.display : '',
+            bodyHomeActive: document.body.classList.contains('home-active')
+        };
+        if (petContainer) petContainer.style.display = 'none';
+        if (momentsContainer) {
+            momentsContainer.style.display = 'none';
+            momentsContainer.classList.remove('active');
+        }
+        if (homeContainer) {
+            homeContainer.style.display = 'none';
+            homeContainer.classList.remove('active');
+        }
+        if (chatArea) chatArea.style.display = 'none';
+        if (header) header.style.display = 'none';
+        if (inputArea) inputArea.style.display = 'none';
+
+        container.style.display = 'flex';
+        document.body.classList.add('home-active'); // 允许iframe内滚动
+    };
+
+    window.hideExtApp = function(appKeyOrId) {
+        let conf = null;
+        if (appKeyOrId) {
+            conf = EXT_APPS[appKeyOrId] || (Object.values(EXT_APPS).find(c => c.key === appKeyOrId));
+        }
+        const keys = conf ? [conf.key] : Object.values(EXT_APPS).map(c => c.key);
+        let wasShown = false;
+        keys.forEach(k => {
+            const container = document.getElementById('extapp-' + k);
+            if (container && container.style.display !== 'none') {
+                container.style.display = 'none';
+                wasShown = true;
+                // 通知 iframe 已关闭（可选清理）
+                try {
+                    const iframe = document.getElementById('extapp-' + k + '-iframe');
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({ type: 'extapp:closed', key: k }, '*');
+                    }
+                } catch(e) {}
+            }
+        });
+        if (!wasShown) return;
+
+        // 恢复前态
+        const prev = window.__preExtAppState || {};
+        const homeContainer = document.getElementById('home-container');
+        const chatArea = document.querySelector('.main-chat-area');
+        const header = document.querySelector('.header');
+        const inputArea = document.querySelector('.input-area-wrapper');
+
+        // 默认：回到主页（和 pet/moments 行为一致）
+        if (homeContainer) {
+            homeContainer.style.display = prev.homeDisplay !== undefined ? prev.homeDisplay : 'flex';
+            if (prev.homeActive) homeContainer.classList.add('active');
+            else homeContainer.classList.add('active'); // 默认激活
+        }
+        // 其他元素还原（聊天区默认保持隐藏，因为用户是从主页点进来的）
+        if (chatArea) chatArea.style.display = prev.chatDisplay || 'none';
+        if (header) header.style.display = prev.headerDisplay || 'none';
+        if (inputArea) inputArea.style.display = prev.inputDisplay || 'none';
+        if (prev.bodyHomeActive) document.body.classList.add('home-active');
+        else document.body.classList.add('home-active');
+
+        // 确保 welcome 动画隐藏
+        const welcomeAnimation = document.getElementById('welcome-animation');
+        if (welcomeAnimation) welcomeAnimation.style.display = 'none';
+    };
+
+    // 监听子iframe的返回请求
+    (function setupExtAppPostMessageListener() {
+        if (window.__extAppPmInited) return;
+        window.addEventListener('message', function(ev) {
+            const data = ev.data || {};
+            if (data.type === 'extapp:back') {
+                window.hideExtApp(data.key);
+            }
+        });
+        window.__extAppPmInited = true;
+    })();
+
     // ========== 功能导航 ==========
     window.openApp = function(app) {
         const appActions = {
@@ -1666,7 +1782,15 @@
                         })
                         .catch(err => console.error('加载朋友圈失败:', err));
                 }
-            }
+            },
+            // ========== 用户扩展功能：内嵌iframe，和参考站原有行为一致 ==========
+            'diary-new':       () => window.showExtApp('diary-new'),
+            'wish-new':        () => window.showExtApp('wish-new'),
+            'spark-new':       () => window.showExtApp('spark-new'),
+            'anniversary-new': () => window.showExtApp('anniversary-new'),
+            'music-new':       () => window.showExtApp('music-new'),
+            'call-new':        () => window.showExtApp('call-new'),
+            'history-new':     () => window.showExtApp('history-new')
         };
 
         if (appActions[app]) {

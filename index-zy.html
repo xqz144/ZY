@@ -468,43 +468,43 @@
                         </div>
                         <span class="app-name">萌宠屋</span>
                     </div>
-                    <div class="app-item" onclick="window.open('pages/diary-new.html', '_self')">
+                    <div class="app-item" onclick="openApp('diary-new')">
                         <div class="app-icon" style="background: linear-gradient(145deg, #f6b3ca, #e88ca8);">
                             <i class="fas fa-book-heart"></i>
                         </div>
                         <span class="app-label">梦境日记</span>
                     </div>
-                    <div class="app-item" onclick="window.open('pages/wish-new.html', '_self')">
+                    <div class="app-item" onclick="openApp('wish-new')">
                         <div class="app-icon" style="background: linear-gradient(145deg, #f7bcd0, #eb95b3);">
                             <i class="fas fa-star"></i>
                         </div>
                         <span class="app-label">心愿</span>
                     </div>
-                    <div class="app-item" onclick="window.open('pages/spark-new.html', '_self')">
+                    <div class="app-item" onclick="openApp('spark-new')">
                         <div class="app-icon" style="background: linear-gradient(145deg, #ffb86b, #ff8a56);">
                             <i class="fas fa-fire"></i>
                         </div>
                         <span class="app-label">小火人</span>
                     </div>
-                    <div class="app-item" onclick="window.open('pages/anniversary-new.html', '_self')">
+                    <div class="app-item" onclick="openApp('anniversary-new')">
                         <div class="app-icon" style="background: linear-gradient(145deg, #f8c2d4, #ed98b5);">
                             <i class="fas fa-heart"></i>
                         </div>
                         <span class="app-label">纪念日</span>
                     </div>
-                    <div class="app-item" onclick="window.open('pages/music-new.html', '_self')">
+                    <div class="app-item" onclick="openApp('music-new')">
                         <div class="app-icon" style="background: linear-gradient(145deg, #f9cfdd, #f2aac3);">
                             <i class="fas fa-music"></i>
                         </div>
                         <span class="app-label">背景音乐</span>
                     </div>
-                    <div class="app-item" onclick="window.open('pages/call-new.html', '_self')">
+                    <div class="app-item" onclick="openApp('call-new')">
                         <div class="app-icon" style="background: linear-gradient(145deg, #f7b8ce, #ed90ae);">
                             <i class="fas fa-phone"></i>
                         </div>
                         <span class="app-label">梦角来电</span>
                     </div>
-                    <div class="app-item" onclick="window.open('pages/history-new.html', '_self')">
+                    <div class="app-item" onclick="openApp('history-new')">
                         <div class="app-icon" style="background: linear-gradient(145deg, #fbc8d8, #f4a0bc);">
                             <i class="fas fa-book-open"></i>
                         </div>
@@ -2075,6 +2075,92 @@
         </div>
     </div>
     <!-- ========== 朋友圈模块结束 ========== -->
+
+    <!-- ========== 用户扩展功能模块（内嵌iframe方式，保持SPA一致性） ========== -->
+    <!-- 梦境日记 -->
+    <div class="extapp-container" id="extapp-diary" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-nav" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--primary-bg,#fff);border-bottom:1px solid var(--border-color,rgba(0,0,0,0.08));padding-top:calc(10px + env(safe-area-inset-top,0px));">
+            <button onclick="window.hideExtApp('diary')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--accent-color,#d985a4);font-size:14px;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(var(--accent-color-rgb,217,133,164),0.08)'" onmouseout="this.style.background='transparent'">
+                <i class="fas fa-arrow-left"></i><span>返回</span>
+            </button>
+            <h2 style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary,#4a3f45);">梦境日记</h2>
+            <div style="width:60px;"></div>
+        </div>
+        <iframe id="extapp-diary-iframe" data-src="pages/diary-new.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+
+    <!-- 心愿 -->
+    <div class="extapp-container" id="extapp-wish" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-nav" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--primary-bg,#fff);border-bottom:1px solid var(--border-color,rgba(0,0,0,0.08));padding-top:calc(10px + env(safe-area-inset-top,0px));">
+            <button onclick="window.hideExtApp('wish')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--accent-color,#d985a4);font-size:14px;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(var(--accent-color-rgb,217,133,164),0.08)'" onmouseout="this.style.background='transparent'">
+                <i class="fas fa-arrow-left"></i><span>返回</span>
+            </button>
+            <h2 style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary,#4a3f45);">心愿</h2>
+            <div style="width:60px;"></div>
+        </div>
+        <iframe id="extapp-wish-iframe" data-src="pages/wish-new.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+
+    <!-- 小火人 -->
+    <div class="extapp-container" id="extapp-spark" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-nav" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--primary-bg,#fff);border-bottom:1px solid var(--border-color,rgba(0,0,0,0.08));padding-top:calc(10px + env(safe-area-inset-top,0px));">
+            <button onclick="window.hideExtApp('spark')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--accent-color,#d985a4);font-size:14px;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(var(--accent-color-rgb,217,133,164),0.08)'" onmouseout="this.style.background='transparent'">
+                <i class="fas fa-arrow-left"></i><span>返回</span>
+            </button>
+            <h2 style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary,#4a3f45);">小火人</h2>
+            <div style="width:60px;"></div>
+        </div>
+        <iframe id="extapp-spark-iframe" data-src="pages/spark-new.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+
+    <!-- 纪念日 -->
+    <div class="extapp-container" id="extapp-anniversary" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-nav" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--primary-bg,#fff);border-bottom:1px solid var(--border-color,rgba(0,0,0,0.08));padding-top:calc(10px + env(safe-area-inset-top,0px));">
+            <button onclick="window.hideExtApp('anniversary')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--accent-color,#d985a4);font-size:14px;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(var(--accent-color-rgb,217,133,164),0.08)'" onmouseout="this.style.background='transparent'">
+                <i class="fas fa-arrow-left"></i><span>返回</span>
+            </button>
+            <h2 style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary,#4a3f45);">纪念日</h2>
+            <div style="width:60px;"></div>
+        </div>
+        <iframe id="extapp-anniversary-iframe" data-src="pages/anniversary-new.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+
+    <!-- 背景音乐 -->
+    <div class="extapp-container" id="extapp-music" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-nav" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--primary-bg,#fff);border-bottom:1px solid var(--border-color,rgba(0,0,0,0.08));padding-top:calc(10px + env(safe-area-inset-top,0px));">
+            <button onclick="window.hideExtApp('music')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--accent-color,#d985a4);font-size:14px;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(var(--accent-color-rgb,217,133,164),0.08)'" onmouseout="this.style.background='transparent'">
+                <i class="fas fa-arrow-left"></i><span>返回</span>
+            </button>
+            <h2 style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary,#4a3f45);">背景音乐</h2>
+            <div style="width:60px;"></div>
+        </div>
+        <iframe id="extapp-music-iframe" data-src="pages/music-new.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+
+    <!-- 梦角来电 -->
+    <div class="extapp-container" id="extapp-call" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-nav" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--primary-bg,#fff);border-bottom:1px solid var(--border-color,rgba(0,0,0,0.08));padding-top:calc(10px + env(safe-area-inset-top,0px));">
+            <button onclick="window.hideExtApp('call')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--accent-color,#d985a4);font-size:14px;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(var(--accent-color-rgb,217,133,164),0.08)'" onmouseout="this.style.background='transparent'">
+                <i class="fas fa-arrow-left"></i><span>返回</span>
+            </button>
+            <h2 style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary,#4a3f45);">梦角来电</h2>
+            <div style="width:60px;"></div>
+        </div>
+        <iframe id="extapp-call-iframe" data-src="pages/call-new.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+
+    <!-- 传讯记录 -->
+    <div class="extapp-container" id="extapp-history" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-nav" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--primary-bg,#fff);border-bottom:1px solid var(--border-color,rgba(0,0,0,0.08));padding-top:calc(10px + env(safe-area-inset-top,0px));">
+            <button onclick="window.hideExtApp('history')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:var(--accent-color,#d985a4);font-size:14px;font-weight:500;cursor:pointer;padding:6px 10px;border-radius:10px;transition:background .15s;" onmouseover="this.style.background='rgba(var(--accent-color-rgb,217,133,164),0.08)'" onmouseout="this.style.background='transparent'">
+                <i class="fas fa-arrow-left"></i><span>返回</span>
+            </button>
+            <h2 style="margin:0;font-size:15px;font-weight:700;color:var(--text-primary,#4a3f45);">传讯记录</h2>
+            <div style="width:60px;"></div>
+        </div>
+        <iframe id="extapp-history-iframe" data-src="pages/history-new.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+    <!-- ========== 用户扩展功能模块结束 ========== -->
 
     <div class="header">
         <div class="header-motto"></div>

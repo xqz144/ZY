@@ -1593,5 +1593,56 @@ body {
       render();
     })();
   </script>
+
+  <!-- 返回按钮兼容父iframe内嵌SPA模式（postMessage），fallback为跳转回主页 -->
+  <script>
+    (function () {
+      // 从文件名解析 extapp key
+      var nameMap = {
+        'diary-new':       'diary',
+        'wish-new':        'wish',
+        'spark-new':       'spark',
+        'anniversary-new': 'anniversary',
+        'music-new':       'music',
+        'call-new':        'call',
+        'history-new':     'history'
+      };
+      var fname = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+      var extKey = nameMap[fname] || fname;
+
+      window.__extAppBack = function (ev) {
+        var inIframe = (window.top !== window.self);
+        if (inIframe) {
+          try {
+            window.top.postMessage({ type: 'extapp:back', key: extKey }, '*');
+            // 给500ms让父窗口处理，失败fallback跳转
+            setTimeout(function(){
+              try { window.location.replace('../index-zy.html'); } catch(e){}
+            }, 500);
+          } catch (e) {
+            window.location.href = '../index-zy.html';
+          }
+        } else {
+          window.location.href = '../index-zy.html';
+        }
+        if (ev && ev.preventDefault) ev.preventDefault();
+        return false;
+      };
+
+      // 给所有指向 ../index-zy.html 的返回 <a> 替换成 onclick __extAppBack
+      document.addEventListener('DOMContentLoaded', function () {
+        var links = document.querySelectorAll('a.back-btn, a[data-dom-id="back-home"], a[data-dom-id="nav-back"], a[data-dom-id="back-nav"]');
+        links.forEach(function (a) {
+          // 只有href是 ../index-zy.html 或 index-new-v2.html 才替换
+          if (a.getAttribute('href') && /index-zy\.html|index-new-v2\.html/.test(a.getAttribute('href'))) {
+            a.setAttribute('data-href-backup', a.getAttribute('href'));
+            a.setAttribute('href', 'javascript:void(0)');
+            a.addEventListener('click', function (e) { return window.__extAppBack(e); });
+          }
+        });
+      });
+    })();
+  </script>
+
 </body>
 </html>
