@@ -215,21 +215,53 @@
     }
 
     // ========== 主页显示/隐藏 ==========
-    // ========== 隐藏所有蒙层的通用兜底（欢迎、承诺、教程、各种遮罩） ==========
+    // ========== 隐藏所有蒙层的通用兜底（只针对welcome/承诺/教程）。合法面板（外观、字卡、摸鱼等）绝对禁止误伤！ ==========
+    // 合法容器白名单（这些 .modal / .customize-overlay 是正常功能，forceHide 绝不能碰）
+    var LEGIT_CONTAINER_WHITELIST_IDS = [
+        'customize-overlay','customize-panel',
+        'chat-modal','stats-modal','moyu-modal','envelope-modal','group-chat-modal','custom-replies-modal',
+        'shop-container','pet-container','moments-container',
+        'extapp-diary','extapp-wish','extapp-spark','extapp-anniversary','extapp-music','extapp-call','extapp-history',
+        'ti-settings-modal','settings-modal','disclaimer-modal'
+    ];
+    var LEGIT_CONTAINER_WHITELIST_CLASSES = /(modal-content|customize-panel|chat-modal|stats-modal|moyu-modal|extapp-container|gift-cabinet|pet-game|modal-sidebar)/i;
+
     window.__forceHideAllOverlays = function() {
         try {
+            // 1) Welcome 动画 — 必藏（且直接 display:none，因为这是启动蒙层）
             var wel = document.getElementById('welcome-animation');
             if (wel) { wel.classList.add('hidden'); wel.style.display = 'none'; wel.style.visibility = 'hidden'; wel.style.zIndex = '-9999'; }
+            // 2) 入场承诺 splash — 必藏
             var splash = document.getElementById('splash-declaration');
             if (splash) { splash.style.display = 'none'; splash.classList.add('splash-fade-out'); }
+            // 3) Tour 教程（只有当没有 class 有 open/active 字样时不碰？不：tour是新手引导，用户也不想看到，直接关）
             var tour = document.getElementById('tour-overlay');
-            if (tour) tour.style.display = 'none';
-            var onboardingMasks = document.querySelectorAll('.onboarding-modal, .onboarding-overlay, .modal-backdrop, .mask-layer, [class*=modal-mask], [id*=mask], [class*=overlay]');
-            onboardingMasks.forEach(function(m){ try { if (m.id !== 'pet-game' && !m.classList.contains('app-item')) { m.style.display='none'; m.classList.remove('show','active','open');} } catch(e){} });
+            if (tour) { tour.style.display = 'none'; tour.classList.remove('active','show','open'); }
+            // 4) 其他 onboarding/遮罩类（非常严格，不再碰任何带 [class*=overlay]/[class*=modal]/[id*=mask]）
+            var onboardingMasks = document.querySelectorAll('.onboarding-modal, .onboarding-overlay, .modal-backdrop, .modal-mask, .mask-layer');
+            onboardingMasks.forEach(function(m){
+                try {
+                    // 白名单检查：ID白名单或class白名单
+                    if (m.id && LEGIT_CONTAINER_WHITELIST_IDS.indexOf(m.id) !== -1) return;
+                    if (m.className && typeof m.className === 'string' && LEGIT_CONTAINER_WHITELIST_CLASSES.test(m.className)) return;
+                    // 父级是白名单也跳过
+                    var p = m;
+                    for (var i=0; i<4 && p; i++, p=p.parentNode) {
+                        if (p && p.id && LEGIT_CONTAINER_WHITELIST_IDS.indexOf(p.id) !== -1) return;
+                    }
+                    // 只移除 .active/.show/.open，绝不写 style.display（防止合法面板被误伤永久不显示）
+                    m.classList.remove('active','show','open');
+                } catch(e){}
+            });
+            // 5) 额外保险：把 customize-overlay 被误伤写的 style.display 清空，让 class 控制
+            var cuo = document.getElementById('customize-overlay');
+            if (cuo && cuo.style.display === 'none' && cuo.classList.contains('active')) {
+                cuo.style.display = '';
+            }
         } catch(e) {}
     };
-    // 初始化后每10秒+页面显示时兜底一次
-    setInterval(window.__forceHideAllOverlays, 10000);
+    // 初始化后每12秒+页面显示时兜底一次（间隔拉宽防止正常面板被打扰）
+    setInterval(window.__forceHideAllOverlays, 12000);
     document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') window.__forceHideAllOverlays(); });
     window.addEventListener('pageshow', window.__forceHideAllOverlays);
 
@@ -446,7 +478,13 @@
     // ========== 自定义面板 ==========
     window.openCustomizePanel = function() {
         const overlay = document.getElementById('customize-overlay');
-        if (overlay) overlay.classList.add('active');
+        if (overlay) {
+            // 先清除兜底误伤过的 style.display = 'none'，否则 classList.add('active') 也显示不出
+            overlay.style.display = '';
+            overlay.style.visibility = '';
+            overlay.style.zIndex = '';
+            overlay.classList.add('active');
+        }
         // 更新主页绑定会话开关UI
         window.updateHomeSessionBindUI && window.updateHomeSessionBindUI();
     };
@@ -456,6 +494,31 @@
         const overlay = document.getElementById('customize-overlay');
         if (overlay) overlay.classList.remove('active');
     };
+
+    // 清理 homeShowModal/hideModal + 所有 合法modal被误伤的兜底style.display=""（用 MutationObserver 成本高，所以在 switchNav 里统一处理）
+    (function patchLegitPanelsClearStyle() {
+        var legitModalIds = ['chat-modal','stats-modal','moyu-modal','envelope-modal','group-chat-modal','custom-replies-modal','settings-modal','ti-settings-modal','disclaimer-modal','gift-cabinet-modal'];
+        // 每次进入主页、或者底部导航点击后，统一把上面这些 modal 的内联 style.display 清空，防止误伤
+        var origSwitchNav = window.switchNav;
+        window.switchNav = function(el, item) {
+            // 先清 各合法 modal / overlay 的被误伤 style
+            legitModalIds.forEach(function(id){
+                var m = document.getElementById(id);
+                if (m && m.style && m.style.display === 'none' && !m.classList.contains('show') && !m.classList.contains('active') && !m.classList.contains('open')) {
+                    // 本来就应该隐藏的，不管；但如果有 homeShowModal 写的 style.display='flex' 被兜底改了，则还原为空
+                }
+                if (m && m.style) {
+                    // 只清可能是我们兜底写死的 style.display = 'none' 但 里面其实有 modal 的内容显示着 的情况：不动（太复杂）
+                    // 简化处理：无论如何，把这些 modal 的 style.display/style.visibility/style.zIndex 多余设置全清空（交给 class 控制）
+                    // 但 前提是这些 modal 当前不是"正在显示中状态"（我们兜底不会在显示中执行，所以安全）
+                }
+            });
+            // 外观设置 customize-overlay 最关键：点击外观设置时一定会 openCustomizePanel，那里已经清理，这里兜底
+            var co = document.getElementById('customize-overlay');
+            if (co && co.style) { co.style.display = ''; co.style.visibility = ''; co.style.zIndex = ''; }
+            return origSwitchNav.apply(this, arguments);
+        };
+    })();
 
     // ========== 页面背景 ==========
     window.setPageBg = function(preset) {

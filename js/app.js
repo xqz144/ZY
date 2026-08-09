@@ -7,6 +7,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ========== 强制隐藏保险：无论初始化成功/失败/卡住，8秒后/15秒轮询兜底隐藏welcome ==========
     (function installWelcomeForceHideSafetyNet() {
+      // 合法面板白名单（外观设置/字卡库/聊天设置等，绝对不能误伤）
+      var LEGIT_WHITELIST_IDS = [
+        'customize-overlay','customize-panel',
+        'chat-modal','stats-modal','moyu-modal','envelope-modal','group-chat-modal','custom-replies-modal',
+        'shop-container','pet-container','moments-container',
+        'extapp-diary','extapp-wish','extapp-spark','extapp-anniversary','extapp-music','extapp-call','extapp-history',
+        'ti-settings-modal','settings-modal','disclaimer-modal','gift-cabinet-modal'
+      ];
       function forceHideAllOverlays() {
         try {
           var wel = document.getElementById('welcome-animation');
@@ -14,19 +22,39 @@ document.addEventListener('DOMContentLoaded', async () => {
           var splash = document.getElementById('splash-declaration');
           if (splash) { splash.style.display = 'none'; splash.classList.add('splash-fade-out'); }
           var tour = document.getElementById('tour-overlay');
-          if (tour) tour.style.display = 'none';
-          var onboardingMasks = document.querySelectorAll('.onboarding-modal, .onboarding-overlay, .modal-backdrop, .mask-layer, [class*=modal-mask]');
-          onboardingMasks.forEach(function(m){ try { m.style.display='none'; m.classList.remove('show','active','open');} catch(e){} });
+          if (tour) { tour.style.display = 'none'; tour.classList.remove('active','show','open'); }
+          // 选择器极度收敛：只关真正的启动遮罩类，绝不碰 customize-overlay、各种 .modal
+          var masks = document.querySelectorAll('.onboarding-modal, .onboarding-overlay, .modal-backdrop, .modal-mask, .mask-layer');
+          masks.forEach(function(m){
+            try {
+              // 白名单检查：ID/父级ID在白名单直接跳过
+              var skip = false;
+              var p = m;
+              for (var i=0; i<5 && p; i++, p=p.parentNode) {
+                if (p && p.id && LEGIT_WHITELIST_IDS.indexOf(p.id) !== -1) { skip = true; break; }
+              }
+              if (skip) return;
+              // 只移除状态类，不硬写 style.display（硬写会把外观设置等永久关死）
+              m.classList.remove('active','show','open');
+            } catch(e){}
+          });
+          // 保险：如果 customize-overlay 已经有 .active 却被写了 display:none，清空让 CSS 生效
+          var co = document.getElementById('customize-overlay');
+          if (co && co.classList.contains('active') && co.style && co.style.display === 'none') {
+            co.style.display = '';
+            co.style.visibility = '';
+            co.style.zIndex = '';
+          }
         } catch(e) {}
       }
       // 首次 8 秒绝对兜底（防止 initializeSession/loadData 卡住导致 setTimeout(hideWelcome) 不执行）
       setTimeout(forceHideAllOverlays, 8000);
-      // 再隔 15 秒、30 秒、60 秒再兜一次（缓存/性能慢的设备）
+      // 再隔 15 秒、30 秒、60 秒再兜一次（缓存/性能慢的设备），间隔拉大避免打扰正常面板
       setTimeout(forceHideAllOverlays, 15000);
       setTimeout(forceHideAllOverlays, 30000);
       setTimeout(forceHideAllOverlays, 60000);
-      // 15 秒一次常驻轮询（防止任何状态切换时蒙层又出现）
-      setInterval(forceHideAllOverlays, 15000);
+      // 20 秒一次常驻轮询（间隔拉宽至 20s，防止刚点开外观设置就被兜）
+      setInterval(forceHideAllOverlays, 20000);
       // 每次用户回到可见页面立即兜一次
       document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='visible') forceHideAllOverlays(); });
       window.addEventListener('pageshow', forceHideAllOverlays);
