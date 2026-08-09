@@ -219,8 +219,8 @@ body {
     <!-- 小火人 -->
     <div id="spark-companion" aria-label="小精灵拖拽"></div>
 
-    <!-- 顶部导航 -->
-    <header id="partner-info" class="relative z-20 mx-3 mt-2 flex shrink-0 items-center gap-3 rounded-[22px] border border-[rgba(255,255,255,0.55)] bg-gradient-to-br from-[rgba(255,255,255,0.85)] to-[rgba(255,240,245,0.78)] px-3 pb-3 pt-11 shadow-[var(--shadow-md)] backdrop-blur-md md:mx-4 md:mt-3 md:gap-4 md:rounded-[26px] md:px-4 md:pb-3.5 md:pt-12">
+    <!-- 顶部导航（全宽贴顶，参考 ZY 原生聊天栏） -->
+    <header id="partner-info" class="relative z-20 flex shrink-0 items-center gap-3 border-b border-[rgba(232,164,184,0.14)] bg-gradient-to-b from-[rgba(255,255,255,0.92)] to-[rgba(255,246,249,0.82)] px-3 pb-2.5 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-[box-shadow,transform] duration-300 md:gap-4 md:px-4 md:pb-3" style="padding-top:calc(10px + env(safe-area-inset-top, 0px));">
       <a href="index-new-v2.html" class="back-btn inline-flex shrink-0 items-center gap-1 rounded-xl px-2 py-1.5 text-sm font-medium text-[var(--accent-color)] transition active:scale-95 active:opacity-70 md:text-[15px]" data-dom-id="back-home">
         <i data-lucide="chevron-left" class="h-[18px] w-[18px]"></i>
         <span>返回</span>
@@ -275,8 +275,8 @@ body {
     <!-- 快捷回复面板 -->
     <div id="quickPanel" class="quick-panel z-10 hidden shrink-0 gap-2 overflow-x-auto border-t border-[rgba(232,164,184,0.1)] bg-[var(--secondary-bg)]/80 px-3 py-2 backdrop-blur-sm [-webkit-overflow-scrolling:touch]"></div>
 
-    <!-- 底部输入区 -->
-    <footer id="input-area" class="relative z-20 mx-3 mb-3 mt-1 flex items-end gap-2 rounded-[22px] border border-[rgba(255,255,255,0.55)] bg-gradient-to-br from-[rgba(255,255,255,0.88)] to-[rgba(255,240,245,0.76)] px-2.5 pb-3 pt-2.5 shadow-[var(--shadow-md)] backdrop-blur-md md:mx-4 md:mb-4 md:gap-2.5 md:rounded-[26px] md:px-3 md:pb-3.5 md:pt-3">
+    <!-- 底部输入区（贴底全宽，参考 ZY 原生输入栏） -->
+    <footer id="input-area" class="relative z-20 mt-1 flex items-end gap-2 border-t border-[rgba(232,164,184,0.14)] bg-gradient-to-b from-[rgba(255,246,249,0.78)] to-[rgba(255,255,255,0.96)] px-2.5 pb-[max(10px,env(safe-area-inset-bottom))] pt-2.5 backdrop-blur-xl transition-[border-color,box-shadow,background] duration-200 md:gap-2.5 md:px-3 md:pt-3" style="padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px));">
       <!-- 拍一拍面板 -->
       <div id="pokePanel" class="poke-panel absolute bottom-full left-0 right-0 z-30 hidden max-h-[200px] flex-col gap-2 overflow-y-auto rounded-t-[20px] border-t border-[rgba(232,164,184,0.15)] bg-[var(--secondary-bg)]/95 p-4 shadow-[var(--shadow-lg)] backdrop-blur-md"></div>
 
@@ -929,17 +929,15 @@ body {
       .message-sent, .message-received { max-width: 100%; }
     }
 
-    /* 顶部栏滚动时：阴影加强 + 轻微上移紧凑 */
+    /* 顶部栏滚动时：阴影加强 + 轻微紧凑（现在是贴顶全宽版） */
     #partner-info {
-      transition: box-shadow 0.3s ease, transform 0.3s ease, background 0.3s ease, padding-top 0.3s ease, padding-bottom 0.3s ease;
-      will-change: transform, box-shadow;
+      transition: box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+      will-change: box-shadow, background;
     }
     #partner-info.scrolled {
-      box-shadow: 0 12px 28px -6px rgba(232, 164, 184, 0.18), 0 4px 10px -2px rgba(232, 164, 184, 0.10);
-      transform: translateY(-1px);
-    }
-    @media (max-width: 479px) {
-      #partner-info.scrolled { padding-top: 40px; padding-bottom: 10px; }
+      box-shadow: 0 8px 24px -10px rgba(232, 164, 184, 0.22), 0 2px 8px -2px rgba(232, 164, 184, 0.10);
+      background: linear-gradient(to bottom, rgba(255,255,255,0.97), rgba(255,244,248,0.92));
+      border-color: rgba(232,164,184,0.22);
     }
 
     /* 发送按钮：禁用时灰度+透明，启用时有脉冲光晕 */
@@ -960,11 +958,12 @@ body {
 
     /* 输入区展开动画 + safe-area 加强 */
     #input-area {
-      transition: box-shadow 0.3s ease, transform 0.25s ease;
-      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+      transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
     }
     #input-area.focused {
-      box-shadow: 0 -6px 24px -4px rgba(232, 164, 184, 0.22), var(--shadow-md);
+      box-shadow: 0 -6px 22px -8px rgba(232, 164, 184, 0.22);
+      border-color: rgba(232,164,184,0.28);
+      background: linear-gradient(to bottom, rgba(255,241,246,0.92), rgba(255,255,255,0.98));
     }
 
     /* 输入框高度平滑过渡（max-height 控制动画） */
