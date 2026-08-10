@@ -18,23 +18,17 @@
 
 :root {
   /* bg — 暖灰白，像素描纸 */
-  --background: 30 20% 97%;
-  --card: 0 0% 100%;
   --popover: 0 0% 100%;
 
   /* text — 柔和深灰，不刺眼 */
-  --foreground: 340 12% 28%;
-  --card-foreground: 340 12% 28%;
   --popover-foreground: 340 12% 28%;
   --muted-foreground: 340 10% 55%;
 
   /* accent — 柔粉蜡笔色 */
-  --primary: 343 55% 78%;
   --primary-foreground: 340 15% 22%;
   --secondary: 340 35% 95%;
   --secondary-foreground: 340 12% 28%;
   --muted: 30 18% 94%;
-  --accent: 343 40% 92%;
   --accent-foreground: 340 12% 28%;
 
   /* status */
@@ -43,8 +37,6 @@
 
   /* border — 手绘感浅粉 */
   --border: 343 45% 78% / 0.25;
-  --input: 30 18% 94%;
-  --ring: 343 55% 78%;
 
   /* chart */
   --chart-1: 343 55% 78%;
@@ -64,57 +56,26 @@
   --sidebar-ring: 343 55% 78%;
 
   /* typography */
-  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
   --font-mono: ui-monospace, "SFMono-Regular", monospace;
-
-  --radius: 1.25rem;
-
-  /* shadow — 柔和漂浮感 */
-  --shadow-color: 343 40% 55%;
-  --shadow-2xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
-  --shadow-xs: 0 2px 4px 0 hsl(343 30% 40% / 0.04);
-  --shadow-sm: 0 3px 6px -1px hsl(343 30% 40% / 0.06), 0 2px 4px -2px hsl(343 30% 40% / 0.04);
-  --shadow: 0 4px 10px -1px hsl(343 30% 40% / 0.08), 0 2px 4px -2px hsl(343 30% 40% / 0.05);
-  --shadow-md: 0 8px 16px -4px hsl(343 30% 40% / 0.10), 0 4px 8px -4px hsl(343 30% 40% / 0.06);
-  --shadow-lg: 0 15px 25px -6px hsl(343 30% 40% / 0.12), 0 8px 12px -6px hsl(343 30% 40% / 0.08);
-  --shadow-xl: 0 25px 40px -8px hsl(343 30% 40% / 0.14), 0 12px 20px -8px hsl(343 30% 40% / 0.10);
-  --shadow-2xl: 0 35px 60px -12px hsl(343 30% 40% / 0.18);
 
   --tracking-normal: 0.02em;
   --spacing: 0.3rem;
 
-  /* 直景色值 — 供自定义样式直接引用 */
-  --primary-bg: #f9f7f4;
-  --secondary-bg: #f3f0ec;
-  --accent-color: #e8a4b8;
-  --accent-color-rgb: 232, 164, 184;
-  --text-primary: #4a3f45;
-  --text-secondary: #9a8a92;
-  --border-color: rgba(232, 164, 184, 0.35);
   --chat-bg: #fdfbfa;
 }
 
 .dark {
-  --background: 340 12% 12%;
-  --card: 340 10% 16%;
   --popover: 340 10% 16%;
-  --foreground: 340 15% 92%;
-  --card-foreground: 340 15% 92%;
   --popover-foreground: 340 15% 92%;
   --muted-foreground: 340 10% 65%;
-  --primary: 343 45% 72%;
   --primary-foreground: 340 12% 18%;
   --secondary: 340 15% 24%;
   --secondary-foreground: 340 15% 92%;
   --muted: 340 12% 20%;
-  --accent: 343 25% 28%;
   --accent-foreground: 340 15% 92%;
   --destructive: 0 60% 58%;
   --destructive-foreground: 0 0% 98%;
   --border: 340 12% 26%;
-  --input: 340 12% 22%;
-  --ring: 343 45% 72%;
   --chart-1: 343 45% 72%;
   --chart-2: 343 40% 60%;
   --chart-3: 340 12% 60%;
@@ -128,29 +89,9 @@
   --sidebar-accent-foreground: 340 15% 92%;
   --sidebar-border: 340 12% 26%;
   --sidebar-ring: 343 45% 72%;
-  --font-sans: "DreamFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "DreamFont", "Noto Serif SC", ui-serif, Georgia, serif;
   --font-mono: ui-monospace, "SFMono-Regular", monospace;
-  --radius: 1.25rem;
-  --shadow-color: 343 30% 40%;
-  --shadow-2xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
-  --shadow-xs: 0 2px 4px 0 hsl(340 12% 5% / 0.25);
-  --shadow-sm: 0 3px 6px -1px hsl(340 12% 5% / 0.30), 0 2px 4px -2px hsl(340 12% 5% / 0.25);
-  --shadow: 0 4px 10px -1px hsl(340 12% 5% / 0.35), 0 2px 4px -2px hsl(340 12% 5% / 0.28);
-  --shadow-md: 0 8px 16px -4px hsl(340 12% 5% / 0.40), 0 4px 8px -4px hsl(340 12% 5% / 0.32);
-  --shadow-lg: 0 15px 25px -6px hsl(340 12% 5% / 0.45), 0 8px 12px -6px hsl(340 12% 5% / 0.36);
-  --shadow-xl: 0 25px 40px -8px hsl(340 12% 5% / 0.50), 0 12px 20px -8px hsl(340 12% 5% / 0.40);
-  --shadow-2xl: 0 35px 60px -12px hsl(340 12% 5% / 0.55);
   --tracking-normal: 0.02em;
   --spacing: 0.3rem;
-
-  --primary-bg: #1a1619;
-  --secondary-bg: #242024;
-  --accent-color: #e8a4b8;
-  --accent-color-rgb: 232, 164, 184;
-  --text-primary: #f0e8ec;
-  --text-secondary: #a09098;
-  --border-color: rgba(232, 164, 184, 0.25);
   --chat-bg: #1a1619;
 }
 
@@ -161,7 +102,7 @@ body {
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(232, 164, 184, 0.35); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(var(--accent-color-rgb), 0.35); border-radius: 4px; }
 
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
@@ -247,12 +188,12 @@ body {
 <body>
   <div class="phone">
     <div class="app-bg" id="appBg">
-      <header class="top-bar">
-        <a href="../index-zy.html" class="back-btn" data-dom-id="back-home">
+      <header class="extapp-unified-nav">
+        <a href="../index-zy.html" class="back-btn extapp-back-btn" data-dom-id="back-home">
           <i data-lucide="chevron-left" class="back-icon"></i>
           <span>返回</span>
         </a>
-        <h1 class="top-title">小火人</h1>
+        <h1 class="top-title extapp-title">小火人</h1>
         <div class="top-action">
           <button class="feed-btn" id="feedBtn" data-dom-id="open-feeder">喂食</button>
         </div>

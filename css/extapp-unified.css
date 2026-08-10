@@ -2,12 +2,10 @@
    梦角传讯 · 新功能统一皮肤 (extapp Unified Skin)
    - 对齐主站 index-zy.html 的风格：Noto Serif SC 中文 + Nunito 西文 + 统一奶茶粉 accent
    - 应用于 pages/*-new.html 7个功能页面（放在每个页面head最后，做覆盖）
+   - 也引入主站 index-zy.html 做顶栏统一
    ========================================================= */
 
-/* 主站同款字体预连接 + 加载（和 index-zy.html 保持完全一致）*/
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
-
-/* ======= 一、统一主题变量（对齐主站默认奶茶粉主题 accent-color:#F4A6B3） ======= */
+/* ======= 一、统一主题变量（对齐主站 styles.css 的短名主题体系） ======= */
 :root, html {
   /* 字体 — 仅设默认 fallback 值（不加 !important）。
      用户在外观设置里通过"字体链接"配置的自定义字体，会通过 postMessage 同步覆盖此变量。
@@ -18,26 +16,25 @@
   --font-serif:   'Noto Serif SC', 'Nunito', ui-serif, Georgia, serif;
   --message-font-family: 'Noto Serif SC', serif;
 
-  /* 颜色（主站默认 奶茶粉 accent）— 覆盖各自页面里的自定义色 */
-  --accent-color: #F4A6B3;
-  --accent-color-rgb: 244, 166, 179;
+  /* 颜色（默认值 — 和 styles.css :root 一致，不设 --accent-color 默认值让 styles.css 的主题块生效） */
   --primary-bg: #f9f9f9;
   --secondary-bg: #ffffff;
   --card-background: #ffffff;
-  --card-foreground: #4a3f45;
-  --text-primary: #4a3f45;
-  --text-secondary: #9a8a92;
-  --border-color: rgba(244, 166, 179, 0.30);
+  --card-foreground: #1a1a1a;
+  --text-primary: #1a1a1a;
+  --text-secondary: #7a7a7a;
+  --border-color: #ebebeb;
   --input: #f6f3f0;
   --ring: 244, 166, 179;
+  --home-bg: #f9f9f9;
 
-  /* 圆角、阴影 — 统一一套 */
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 22px;
-  --radius: 14px;
+  /* 圆角、阴影 — 统一套 */
+  --radius-xs: 10px;
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius-lg: 22px;
+  --radius-xl: 26px;
+  --radius: 18px;
 
   --shadow-color: 343 40% 60%;
   --shadow-2xs: 0 2px 4px 0 hsla(343, 30%, 50%, .04);
@@ -49,27 +46,54 @@
   --tracking-normal: .015em;
 }
 
-/* 如果主站切换成了 暖棕/蓝/紫 主题，这里也做兼容（被父窗口 postMessage 同步颜色，见后面的 JS） */
-html[data-color-theme="black-white"]     { --accent-color:#c5a47e; --accent-color-rgb:197,164,126; --border-color:rgba(197,164,126,.30); }
-html[data-color-theme="ocean-blue"]      { --accent-color:#7FA6CD; --accent-color-rgb:127,166,205; --border-color:rgba(127,166,205,.30); }
-html[data-color-theme="purple-dream"]    { --accent-color:#BB9EC7; --accent-color-rgb:187,158,199; --border-color:rgba(187,158,199,.30); }
-html[data-color-theme="matcha-latte"]    { --accent-color:#7BC8A4; --accent-color-rgb:123,200,164; --border-color:rgba(123,200,164,.30); }
-html[data-color-theme="sakura-pink"]     { --accent-color:#F4A6B3; --accent-color-rgb:244,166,179; --border-color:rgba(244,166,179,.30); }
-html[data-color-theme="ink-monochrome"]  { --accent-color:#333333; --accent-color-rgb:51,51,51;   --border-color:rgba(51,51,51,.20); }
-html[data-color-theme="sky-breeze"]      { --accent-color:#A8D8EA; --accent-color-rgb:168,216,234; --border-color:rgba(168,216,234,.30); }
-html[data-color-theme="sunset-peach"]    { --accent-color:#FF9A8B; --accent-color-rgb:255,154,139; --border-color:rgba(255,154,139,.30); }
-html[data-color-theme="olive-garden"]    { --accent-color:#7BA05B; --accent-color-rgb:123,160,91;  --border-color:rgba(123,160,91,.30); }
-html[data-color-theme="classic-blue"]    { --accent-color:#4A90E2; --accent-color-rgb:74,144,226;  --border-color:rgba(74,144,226,.30); }
+/* ======= 主题色覆盖：使用 styles.css 的短名体系（不重新定义 accent 值，只补 --border-color） ======= */
+/* styles.css 已经定义了各主题的 --accent-color / --accent-color-rgb，这里只补充 --border-color 跟随 accent */
+:root[data-color-theme="gold"]        { --border-color: rgba(197,164,126,.22); }
+:root[data-color-theme="blue"]        { --border-color: rgba(127,166,205,.22); }
+:root[data-color-theme="purple"]      { --border-color: rgba(187,158,199,.22); }
+:root[data-color-theme="green"]       { --border-color: rgba(123,200,164,.22); }
+:root[data-color-theme="pink"]        { --border-color: rgba(244,166,179,.22); }
+:root[data-color-theme="black-white"] { --border-color: rgba(51,51,51,.15); }
+:root[data-color-theme="pastel"]      { --border-color: rgba(168,216,234,.22); }
+:root[data-color-theme="sunset"]      { --border-color: rgba(255,154,139,.22); }
+:root[data-color-theme="forest"]      { --border-color: rgba(123,160,91,.22); }
+:root[data-color-theme="ocean"]       { --border-color: rgba(74,144,226,.22); }
+
+/* ======= Dark 主题覆盖（对齐 styles.css 的 dark 变量值） ======= */
+html[data-theme="dark"] {
+  --primary-bg: #121212;
+  --secondary-bg: #1e1e1e;
+  --text-primary: #e5e5e5;
+  --text-secondary: #8c8c8c;
+  --border-color: #2f2f2f;
+  --card-background: #1e1e1e;
+  --card-foreground: #e5e5e5;
+  --input: #2a2a2a;
+  --home-bg: #121212;
+  --shadow-color: 0 0% 20%;
+  --shadow: 0 6px 14px -2px rgba(0,0,0,.30), 0 3px 6px -2px rgba(0,0,0,.20);
+}
+/* dark + 各色彩主题组合（accent-color 保持不变，只调整 border-color 为暗色友好） */
+html[data-theme="dark"][data-color-theme="gold"]        { --border-color: rgba(197,164,126,.25); }
+html[data-theme="dark"][data-color-theme="blue"]        { --border-color: rgba(127,166,205,.25); }
+html[data-theme="dark"][data-color-theme="purple"]      { --border-color: rgba(187,158,199,.25); }
+html[data-theme="dark"][data-color-theme="green"]       { --border-color: rgba(123,200,164,.25); }
+html[data-theme="dark"][data-color-theme="pink"]        { --border-color: rgba(244,166,179,.25); }
+html[data-theme="dark"][data-color-theme="black-white"] { --border-color: rgba(255,255,255,.12); }
+html[data-theme="dark"][data-color-theme="pastel"]      { --border-color: rgba(168,216,234,.25); }
+html[data-theme="dark"][data-color-theme="sunset"]      { --border-color: rgba(255,154,139,.25); }
+html[data-theme="dark"][data-color-theme="forest"]      { --border-color: rgba(123,160,91,.25); }
+html[data-theme="dark"][data-color-theme="ocean"]       { --border-color: rgba(74,144,226,.25); }
 
 /* ======= 二、全局基础样式（不加 !important，让用户在外观设置的字体配置优先） ======= */
 html, body { font-family: var(--font-family); letter-spacing: var(--tracking-normal); }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-/* 滚动条统一 主站同款细粉 */
+/* 滚动条统一 */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(var(--accent-color-rgb), 0.35); border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-color-rgb), 0.55); }
+::-webkit-scrollbar-thumb { background: rgba(var(--accent-color-rgb, 197,164,126), 0.35); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-color-rgb, 197,164,126), 0.55); }
 
 /* ======= 三、通用按钮样式 统一（font-family 不加 !important，跟随 --font-family 变量） ======= */
 button, [role="button"], .btn, .btn-primary, .btn-secondary, .u-btn {
@@ -89,20 +113,20 @@ button[class*="-primary"],
   background: var(--accent-color) !important;
   color: #fff !important;
   border: none !important;
-  box-shadow: 0 2px 8px rgba(var(--accent-color-rgb), 0.25);
+  box-shadow: 0 2px 8px rgba(var(--accent-color-rgb, 197,164,126), 0.25);
 }
-.btn-primary:hover, button.primary:hover { opacity: .92; box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.32); }
+.btn-primary:hover, button.primary:hover { opacity: .92; box-shadow: 0 4px 12px rgba(var(--accent-color-rgb, 197,164,126), 0.32); }
 
 /* Secondary 幽灵按钮 统一 */
 .btn-secondary,
 button.ghost,
 button[class*="-secondary"],
 .btn-secondary-like {
-  background: rgba(var(--accent-color-rgb), 0.08) !important;
+  background: rgba(var(--accent-color-rgb, 197,164,126), 0.08) !important;
   color: var(--accent-color) !important;
-  border: 1px solid rgba(var(--accent-color-rgb), 0.22) !important;
+  border: 1px solid rgba(var(--accent-color-rgb, 197,164,126), 0.22) !important;
 }
-.btn-secondary:hover, button.ghost:hover { background: rgba(var(--accent-color-rgb), 0.14) !important; }
+.btn-secondary:hover, button.ghost:hover { background: rgba(var(--accent-color-rgb, 197,164,126), 0.14) !important; }
 
 /* ======= 四、输入框/文本域 统一 ======= */
 input[type="text"],
@@ -127,7 +151,7 @@ select {
 }
 input:focus, textarea:focus, select:focus {
   border-color: var(--accent-color) !important;
-  box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb), 0.12) !important;
+  box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb, 197,164,126), 0.12) !important;
 }
 input::placeholder, textarea::placeholder { color: var(--text-secondary); opacity: .7; }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent-color) !important; }
@@ -156,7 +180,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent-color) 
 /* 标签/徽章/小状态 */
 .tag, .badge, [class*="-tag"], [class*="-badge"], .pill {
   font-family: var(--font-family);
-  background: rgba(var(--accent-color-rgb), 0.12);
+  background: rgba(var(--accent-color-rgb, 197,164,126), 0.12);
   color: var(--accent-color);
   border-radius: 999px;
   padding: 2px 10px;
@@ -189,12 +213,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent-color) 
   transition: background .15s ease;
   font-family: var(--font-family);
 }
-.extapp-unified-nav .extapp-back-btn:hover { background: rgba(var(--accent-color-rgb), 0.08); }
+.extapp-unified-nav .extapp-back-btn:hover { background: rgba(var(--accent-color-rgb, 197,164,126), 0.08); }
 .extapp-unified-nav .extapp-title {
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: var(--text-primary, #4a3f45);
+  color: var(--text-primary, #1a1a1a);
   letter-spacing: .5px;
   font-family: var(--font-serif);
 }
