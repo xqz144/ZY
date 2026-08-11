@@ -71,7 +71,7 @@
         // 同时写入 localStorage 和 localforage，确保各模块都能读取
         try {
             localStorage.setItem(key, value);
-        } catch(e) {}
+        catch(e) { console.warn('empty catch at home.js:74', e); }
         if (typeof localforage !== 'undefined') {
             localforage.setItem(key, value).catch(() => {});
         }
@@ -251,19 +251,17 @@
                     }
                     // 只移除 .active/.show/.open，绝不写 style.display（防止合法面板被误伤永久不显示）
                     m.classList.remove('active','show','open');
-                } catch(e){}
+                catch(e) { console.warn('empty catch at home.js:254', e); }
             });
             // 5) 额外保险：把 customize-overlay 被误伤写的 style.display 清空，让 class 控制
             var cuo = document.getElementById('customize-overlay');
             if (cuo && cuo.style.display === 'none' && cuo.classList.contains('active')) {
                 cuo.style.display = '';
             }
-        } catch(e) {}
+        } catch(e) { console.warn('__forceHideAllOverlays error:', e); }
     };
-    // 初始化后每12秒+页面显示时兜底一次（间隔拉宽防止正常面板被打扰）
-    setInterval(window.__forceHideAllOverlays, 12000);
-    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') window.__forceHideAllOverlays(); });
-    window.addEventListener('pageshow', window.__forceHideAllOverlays);
+    // 注意：app.js 已注册完整的保险机制（8s/15s/30s/60s 兜底 + 20s 轮询 + 可见性监听），这里不再重复注册，避免双重执行
+    // window.__forceHideAllOverlays 仅保留函数定义，供 showHomePage/hideExtApp/showExtApp 等关键函数主动调用
 
     window.showHomePage = function() {
         window.__forceHideAllOverlays();
@@ -348,7 +346,7 @@
             try {
                 const savedData = JSON.parse(savedDataRaw);
                 hasValidSave = savedData && savedData.currentPet;
-            } catch(e) {}
+            catch(e) { console.warn('empty catch at home.js:349', e); }
         }
 
         if (hasValidSave) {
@@ -969,7 +967,7 @@
                     // 同时保存到 localStorage 作为同步备份
                     try {
                         localStorage.setItem(storageKey, url);
-                    } catch(e) {}
+                    catch(e) { console.warn('empty catch at home.js:970', e); }
                     localforage.setItem(storageKey, url).catch(() => {});
                 }
             }
@@ -1033,11 +1031,11 @@
     };
 
     // ========== 主题系统 ==========
-    function applyTheme(name) {
+    function applyHomeTheme(name) {
         try {
             const theme = themePresets[name];
             if (!theme) {
-                console.warn('Theme not found:', name);
+                console.warn('Home theme not found:', name);
                 return;
             }
 
@@ -1077,10 +1075,14 @@
             homeSetItem('home_theme', name);
             homeRemoveItem('home_theme_custom');
         } catch (e) {
-            console.error('applyTheme error:', e);
+            console.error('applyHomeTheme error:', e);
         }
     }
-    window.applyTheme = applyTheme;
+    window.applyHomeTheme = applyHomeTheme;
+    // 向后兼容：如果外部没有 core.js 的 applyTheme，也把这个挂到 applyTheme 上避免报错
+    if (typeof window.applyTheme !== 'function') {
+        window.applyTheme = applyHomeTheme;
+    }
 
     window.updateThemeColor = function(key, value) {
         currentTheme[key] = value;
@@ -1650,7 +1652,7 @@
             var syncMsg = { type: 'theme:sync', colorTheme: colorTheme, theme: theme, fontFamily: fontVar, messageFontFamily: msgFontVar, fontSize: fontSize, ts: Date.now() };
             // 立即 postMessage 给当前 iframe
             if (iframe && iframe.contentWindow) {
-                try { iframe.contentWindow.postMessage(syncMsg, '*'); } catch(e){}
+                try { iframe.contentWindow.postMessage(syncMsg, '*'); catch(e) { console.warn('empty catch at home.js:1655', e); }
             }
             // 额外保险：如果 postMessage 因为 src 还没加载被丢，过 1500ms / 4000ms 再投两次（懒加载场景）
             [1500, 4000].forEach(function(t){
@@ -1663,36 +1665,67 @@
                     var msg = { type: 'theme:sync', colorTheme: ct, theme: dtt, fontFamily: fv, messageFontFamily: mfv, fontSize: fs, ts: Date.now() };
                     var iframeEl = document.getElementById('extapp-' + conf.key + '-iframe');
                     if (iframeEl && iframeEl.contentWindow) {
-                        try { iframeEl.contentWindow.postMessage(msg, '*'); } catch(e){}
+                        try { iframeEl.contentWindow.postMessage(msg, '*'); catch(e) { console.warn('empty catch at home.js:1668', e); }
                     }
                 }, t);
             });
-        } catch(e) {}
+        catch(e) { console.warn('empty catch at home.js:1672', e); }
     };
 
     // 主页切换主题/深浅色/字体时，广播到所有已存在的 extapp iframe，保持视觉统一
     (function installExtAppThemeBroadcaster() {
         var lastTheme = { color: null, dark: null, font: null };
+        var pollTimer = null;
+        var hasExtAppIframes = function() {
+            return document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]').length > 0;
+        };
         function broadcast() {
             try {
+                // 如果没有任何 extapp iframe 且轮询在跑，停掉它省电
+                if (!hasExtAppIframes()) {
+                    if (pollTimer) {
+                        clearInterval(pollTimer);
+                        pollTimer = null;
+                    }
+                    return;
+                }
                 var doc = document.documentElement;
                 var color = doc.getAttribute('data-color-theme');
                 var dark = doc.getAttribute('data-theme');
                 var font = doc.style.getPropertyValue('--font-family') || '';
-                if (color === lastTheme.color && dark === lastTheme.dark && font === lastTheme.font) return;
-                lastTheme.color = color; lastTheme.dark = dark; lastTheme.font = font;
                 var msgFontVar = doc.style.getPropertyValue('--message-font-family') || '';
                 var fontSize = doc.style.getPropertyValue('--font-size') || '';
+                var changed = (color !== lastTheme.color || dark !== lastTheme.dark || font !== lastTheme.font);
+                lastTheme.color = color; lastTheme.dark = dark; lastTheme.font = font;
                 var msg = { type: 'theme:sync', colorTheme: color, theme: dark, fontFamily: font, messageFontFamily: msgFontVar, fontSize: fontSize, ts: Date.now() };
                 var iframes = document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]');
                 iframes.forEach(function(f){
-                    if (f && f.contentWindow) { try { f.contentWindow.postMessage(msg, '*'); } catch(e){} }
+                    if (f && f.contentWindow) {
+                        try { f.contentWindow.postMessage(msg, '*'); }
+                        catch(e) { console.warn('extapp theme broadcast postMessage error:', e); }
+                    }
                 });
-            } catch(e) {}
+            } catch(e) { console.warn('installExtAppThemeBroadcaster broadcast error:', e); }
         }
-        setInterval(broadcast, 2200);
-        document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') broadcast(); });
-        window.addEventListener('pageshow', broadcast);
+        // 仅在有 extapp iframe 时启动 2.2s 轮询；没有时只在事件触发时检查
+        function ensurePolling() {
+            if (hasExtAppIframes() && !pollTimer) {
+                pollTimer = setInterval(broadcast, 2200);
+            } else if (!hasExtAppIframes() && pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+        }
+        // 页面显示时先检查一次，并确保/停止轮询
+        function onActive() { ensurePolling(); broadcast(); }
+        document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') onActive(); });
+        window.addEventListener('pageshow', onActive);
+        // showExtApp 被调用时也会主动同步一次，这里做兜底
+        setTimeout(onActive, 3000);
+        // 页面卸载时清理定时器
+        window.addEventListener('beforeunload', function() {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        });
     })();
 
     window.hideExtApp = function(appKeyOrId) {
@@ -1714,7 +1747,7 @@
                     if (iframe && iframe.contentWindow) {
                         iframe.contentWindow.postMessage({ type: 'extapp:closed', key: k }, '*');
                     }
-                } catch(e) {}
+                catch(e) { console.warn('empty catch at home.js:1750', e); }
             }
         });
         if (!wasShown) return;
@@ -1729,15 +1762,13 @@
         // 默认：回到主页（和 pet/moments 行为一致）
         if (homeContainer) {
             homeContainer.style.display = prev.homeDisplay !== undefined ? prev.homeDisplay : 'flex';
-            if (prev.homeActive) homeContainer.classList.add('active');
-            else homeContainer.classList.add('active'); // 默认激活
+            homeContainer.classList.add('active');
         }
         // 其他元素还原（聊天区默认保持隐藏，因为用户是从主页点进来的）
         if (chatArea) chatArea.style.display = prev.chatDisplay || 'none';
         if (header) header.style.display = prev.headerDisplay || 'none';
         if (inputArea) inputArea.style.display = prev.inputDisplay || 'none';
-        if (prev.bodyHomeActive) document.body.classList.add('home-active');
-        else document.body.classList.add('home-active');
+        document.body.classList.add('home-active');
 
         // 强制确保主页状态正确 & 所有蒙层隐藏（这是解决"返回卡住加载界面"的关键兜底）
         if (typeof window.showHomePage === 'function') window.showHomePage();
@@ -2173,7 +2204,7 @@
                     if (parsed.signature) profileData[who].signature = parsed.signature;
                     if (parsed.startDate) profileData[who].startDate = parsed.startDate;
                     if (parsed.id) profileData[who].id = parsed.id;
-                } catch(e) {}
+                catch(e) { console.warn('empty catch at home.js:2207', e); }
             }
 
             // 更新头像 DOM（必须在数据加载完成后执行）
@@ -2199,7 +2230,7 @@
         // 主题
         const savedThemeName = homeGetItem('home_theme');
         if (savedThemeName && themePresets[savedThemeName]) {
-            applyTheme(savedThemeName);
+            applyHomeTheme(savedThemeName);
         } else {
             const savedCustomTheme = homeGetItem('home_theme_custom');
             if (savedCustomTheme) {
@@ -2232,7 +2263,7 @@
                         if (hexEl) hexEl.textContent = parsed[key];
                     });
                     document.querySelectorAll('.theme-preset').forEach(el => el.classList.remove('active'));
-                } catch(e) {}
+                catch(e) { console.warn('empty catch at home.js:2266', e); }
             }
         }
 
@@ -2247,7 +2278,7 @@
                         iconEl.innerHTML = `<img src="${customAppIcons[app]}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
                     }
                 });
-            } catch(e) {}
+            catch(e) { console.warn('empty catch at home.js:2281', e); }
         }
 
         // 加载保存的应用顺序
@@ -2256,7 +2287,7 @@
             try {
                 appOrder = JSON.parse(savedOrder);
                 reorderAppItems();
-            } catch(e) {}
+            catch(e) { console.warn('empty catch at home.js:2290', e); }
         } else {
             // 首次加载：按默认顺序重新分页（每页8个）并保存
             reorderAppItems();
@@ -2680,7 +2711,7 @@
                 // 同时保存到 localStorage 作为同步备份
                 try {
                     localStorage.setItem(storageKey, url);
-                } catch(e) {}
+                catch(e) { console.warn('empty catch at home.js:2714', e); }
                 localforage.setItem(storageKey, url).catch(() => {});
             }
         }
@@ -2817,7 +2848,7 @@
         if (preset && preset.dataset.theme) {
             e.preventDefault();
             e.stopPropagation();
-            applyTheme(preset.dataset.theme);
+            applyHomeTheme(preset.dataset.theme);
         }
     }, true); // 使用捕获阶段
 

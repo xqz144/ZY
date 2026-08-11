@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               if (skip) return;
               // 只移除状态类，不硬写 style.display（硬写会把外观设置等永久关死）
               m.classList.remove('active','show','open');
-            } catch(e){}
+            catch(e) { console.warn('empty catch at app.js:39', e); }
           });
           // 保险：如果 customize-overlay 已经有 .active 却被写了 display:none，清空让 CSS 生效
           var co = document.getElementById('customize-overlay');
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             co.style.visibility = '';
             co.style.zIndex = '';
           }
-        } catch(e) {}
+        catch(e) { console.warn('empty catch at app.js:48', e); }
       }
       // 首次 8 秒绝对兜底（防止 initializeSession/loadData 卡住导致 setTimeout(hideWelcome) 不执行）
       setTimeout(forceHideAllOverlays, 8000);
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (document.visibilityState === 'hidden') {
                 try {
                     if (typeof saveTimeout !== 'undefined') clearTimeout(saveTimeout);
-                } catch (e) {}
+                catch(e) { console.warn('empty catch at app.js:148', e); }
                 try { _backupCriticalData(); } catch (e) { console.warn('[visibilitychange] 紧急备份失败:', e); }
                 try {
                     const p = saveData();
@@ -180,11 +180,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         window.addEventListener('pagehide', () => {
-            try { _backupCriticalData(); } catch (e) {}
+            try { _backupCriticalData(); catch(e) { console.warn('empty catch at app.js:183', e); }
         });
 
         window.addEventListener('beforeunload', () => {
-            try { _backupCriticalData(); } catch (e) {}
+            try { _backupCriticalData(); catch(e) { console.warn('empty catch at app.js:187', e); }
         });
 
         setInterval(() => {
@@ -271,7 +271,7 @@ const stickerInput = document.getElementById('sticker-file-input');
                     // 通知其他模块表情包已更新
                     try {
                         window.dispatchEvent(new CustomEvent('stickerLibraryUpdated', { detail: { count: stickerLibrary.length } }));
-                    } catch(e) {}
+                    catch(e) { console.warn('empty catch at app.js:274', e); }
 
                     throttledSaveData();
                     renderReplyLibrary();
