@@ -1675,6 +1675,10 @@
     // 主页切换主题/深浅色/字体时，广播到所有已存在的 extapp iframe，保持视觉统一
     (function installExtAppThemeBroadcaster() {
         var lastTheme = { color: null, dark: null, font: null };
+        var pollTimer = null;
+        var hasExtAppIframes = function() {
+            return document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]').length > 0;
+        };
         function broadcast() {
             try {
                 var doc = document.documentElement;
@@ -1688,13 +1692,29 @@
                 var msg = { type: 'theme:sync', colorTheme: color, theme: dark, fontFamily: font, messageFontFamily: msgFontVar, fontSize: fontSize, ts: Date.now() };
                 var iframes = document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]');
                 iframes.forEach(function(f){
-                    if (f && f.contentWindow) { try { f.contentWindow.postMessage(msg, '*'); } catch(e){} }
+                    if (f && f.contentWindow) {
+                        try { f.contentWindow.postMessage(msg, '*'); }
+                        catch(e) { console.warn('extapp theme broadcast postMessage error:', e); }
+                    }
                 });
-} catch(e) { console.warn('empty catch at home.js:1691', e); }
+            } catch(e) { console.warn('installExtAppThemeBroadcaster broadcast error:', e); }
         }
-        setInterval(broadcast, 2200);
-        document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') broadcast(); });
-        window.addEventListener('pageshow', broadcast);
+        // 仅在有 extapp iframe 时启动 2.2s 轮询；没有时只在事件触发时检查
+        function ensurePolling() {
+            if (hasExtAppIframes() && !pollTimer) {
+                pollTimer = setInterval(broadcast, 2200);
+            } else if (!hasExtAppIframes() && pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+        }
+        function onActive() { ensurePolling(); broadcast(); }
+        document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') onActive(); });
+        window.addEventListener('pageshow', onActive);
+        setTimeout(onActive, 3000);
+        window.addEventListener('beforeunload', function() {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        });
     })();
 
     window.hideExtApp = function(appKeyOrId) {
