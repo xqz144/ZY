@@ -71,7 +71,7 @@
         // 同时写入 localStorage 和 localforage，确保各模块都能读取
         try {
             localStorage.setItem(key, value);
-        catch(e) { console.warn('empty catch at home.js:74', e); }
+} catch(e) { console.warn('empty catch at home.js:74', e); }
         if (typeof localforage !== 'undefined') {
             localforage.setItem(key, value).catch(() => {});
         }
@@ -251,16 +251,16 @@
                     }
                     // 只移除 .active/.show/.open，绝不写 style.display（防止合法面板被误伤永久不显示）
                     m.classList.remove('active','show','open');
-                catch(e) { console.warn('empty catch at home.js:254', e); }
+} catch(e) { console.warn('empty catch at home.js:254', e); }
             });
             // 5) 额外保险：把 customize-overlay 被误伤写的 style.display 清空，让 class 控制
             var cuo = document.getElementById('customize-overlay');
             if (cuo && cuo.style.display === 'none' && cuo.classList.contains('active')) {
                 cuo.style.display = '';
             }
-        } catch(e) { console.warn('__forceHideAllOverlays error:', e); }
+} catch(e) { console.warn('__forceHideAllOverlays error:', e); }
     };
-    // 注意：app.js 已注册完整的保险机制（8s/15s/30s/60s 兜底 + 20s 轮询 + 可见性监听），这里不再重复注册，避免双重执行
+    // 注意：app.js 已注册完整的保险机制（8s/15s/30s/60s 兜底 + 20s 轮询 + 可见性监听），这里不再重复注册
     // window.__forceHideAllOverlays 仅保留函数定义，供 showHomePage/hideExtApp/showExtApp 等关键函数主动调用
 
     window.showHomePage = function() {
@@ -346,7 +346,7 @@
             try {
                 const savedData = JSON.parse(savedDataRaw);
                 hasValidSave = savedData && savedData.currentPet;
-            catch(e) { console.warn('empty catch at home.js:349', e); }
+} catch(e) { console.warn('empty catch at home.js:351', e); }
         }
 
         if (hasValidSave) {
@@ -967,7 +967,7 @@
                     // 同时保存到 localStorage 作为同步备份
                     try {
                         localStorage.setItem(storageKey, url);
-                    catch(e) { console.warn('empty catch at home.js:970', e); }
+} catch(e) { console.warn('empty catch at home.js:972', e); }
                     localforage.setItem(storageKey, url).catch(() => {});
                 }
             }
@@ -1652,7 +1652,7 @@
             var syncMsg = { type: 'theme:sync', colorTheme: colorTheme, theme: theme, fontFamily: fontVar, messageFontFamily: msgFontVar, fontSize: fontSize, ts: Date.now() };
             // 立即 postMessage 给当前 iframe
             if (iframe && iframe.contentWindow) {
-                try { iframe.contentWindow.postMessage(syncMsg, '*'); catch(e) { console.warn('empty catch at home.js:1655', e); }
+                try { iframe.contentWindow.postMessage(syncMsg, '*'); } catch(e){}
             }
             // 额外保险：如果 postMessage 因为 src 还没加载被丢，过 1500ms / 4000ms 再投两次（懒加载场景）
             [1500, 4000].forEach(function(t){
@@ -1665,67 +1665,36 @@
                     var msg = { type: 'theme:sync', colorTheme: ct, theme: dtt, fontFamily: fv, messageFontFamily: mfv, fontSize: fs, ts: Date.now() };
                     var iframeEl = document.getElementById('extapp-' + conf.key + '-iframe');
                     if (iframeEl && iframeEl.contentWindow) {
-                        try { iframeEl.contentWindow.postMessage(msg, '*'); catch(e) { console.warn('empty catch at home.js:1668', e); }
+                        try { iframeEl.contentWindow.postMessage(msg, '*'); } catch(e){}
                     }
                 }, t);
             });
-        catch(e) { console.warn('empty catch at home.js:1672', e); }
+} catch(e) { console.warn('empty catch at home.js:1670', e); }
     };
 
     // 主页切换主题/深浅色/字体时，广播到所有已存在的 extapp iframe，保持视觉统一
     (function installExtAppThemeBroadcaster() {
         var lastTheme = { color: null, dark: null, font: null };
-        var pollTimer = null;
-        var hasExtAppIframes = function() {
-            return document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]').length > 0;
-        };
         function broadcast() {
             try {
-                // 如果没有任何 extapp iframe 且轮询在跑，停掉它省电
-                if (!hasExtAppIframes()) {
-                    if (pollTimer) {
-                        clearInterval(pollTimer);
-                        pollTimer = null;
-                    }
-                    return;
-                }
                 var doc = document.documentElement;
                 var color = doc.getAttribute('data-color-theme');
                 var dark = doc.getAttribute('data-theme');
                 var font = doc.style.getPropertyValue('--font-family') || '';
+                if (color === lastTheme.color && dark === lastTheme.dark && font === lastTheme.font) return;
+                lastTheme.color = color; lastTheme.dark = dark; lastTheme.font = font;
                 var msgFontVar = doc.style.getPropertyValue('--message-font-family') || '';
                 var fontSize = doc.style.getPropertyValue('--font-size') || '';
-                var changed = (color !== lastTheme.color || dark !== lastTheme.dark || font !== lastTheme.font);
-                lastTheme.color = color; lastTheme.dark = dark; lastTheme.font = font;
                 var msg = { type: 'theme:sync', colorTheme: color, theme: dark, fontFamily: font, messageFontFamily: msgFontVar, fontSize: fontSize, ts: Date.now() };
                 var iframes = document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]');
                 iframes.forEach(function(f){
-                    if (f && f.contentWindow) {
-                        try { f.contentWindow.postMessage(msg, '*'); }
-                        catch(e) { console.warn('extapp theme broadcast postMessage error:', e); }
-                    }
+                    if (f && f.contentWindow) { try { f.contentWindow.postMessage(msg, '*'); } catch(e){} }
                 });
-            } catch(e) { console.warn('installExtAppThemeBroadcaster broadcast error:', e); }
+} catch(e) { console.warn('empty catch at home.js:1691', e); }
         }
-        // 仅在有 extapp iframe 时启动 2.2s 轮询；没有时只在事件触发时检查
-        function ensurePolling() {
-            if (hasExtAppIframes() && !pollTimer) {
-                pollTimer = setInterval(broadcast, 2200);
-            } else if (!hasExtAppIframes() && pollTimer) {
-                clearInterval(pollTimer);
-                pollTimer = null;
-            }
-        }
-        // 页面显示时先检查一次，并确保/停止轮询
-        function onActive() { ensurePolling(); broadcast(); }
-        document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') onActive(); });
-        window.addEventListener('pageshow', onActive);
-        // showExtApp 被调用时也会主动同步一次，这里做兜底
-        setTimeout(onActive, 3000);
-        // 页面卸载时清理定时器
-        window.addEventListener('beforeunload', function() {
-            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-        });
+        setInterval(broadcast, 2200);
+        document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') broadcast(); });
+        window.addEventListener('pageshow', broadcast);
     })();
 
     window.hideExtApp = function(appKeyOrId) {
@@ -1747,7 +1716,7 @@
                     if (iframe && iframe.contentWindow) {
                         iframe.contentWindow.postMessage({ type: 'extapp:closed', key: k }, '*');
                     }
-                catch(e) { console.warn('empty catch at home.js:1750', e); }
+} catch(e) { console.warn('empty catch at home.js:1717', e); }
             }
         });
         if (!wasShown) return;
@@ -2204,7 +2173,7 @@
                     if (parsed.signature) profileData[who].signature = parsed.signature;
                     if (parsed.startDate) profileData[who].startDate = parsed.startDate;
                     if (parsed.id) profileData[who].id = parsed.id;
-                catch(e) { console.warn('empty catch at home.js:2207', e); }
+} catch(e) { console.warn('empty catch at home.js:2176', e); }
             }
 
             // 更新头像 DOM（必须在数据加载完成后执行）
@@ -2263,7 +2232,7 @@
                         if (hexEl) hexEl.textContent = parsed[key];
                     });
                     document.querySelectorAll('.theme-preset').forEach(el => el.classList.remove('active'));
-                catch(e) { console.warn('empty catch at home.js:2266', e); }
+} catch(e) { console.warn('empty catch at home.js:2235', e); }
             }
         }
 
@@ -2278,7 +2247,7 @@
                         iconEl.innerHTML = `<img src="${customAppIcons[app]}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
                     }
                 });
-            catch(e) { console.warn('empty catch at home.js:2281', e); }
+} catch(e) { console.warn('empty catch at home.js:2250', e); }
         }
 
         // 加载保存的应用顺序
@@ -2287,7 +2256,7 @@
             try {
                 appOrder = JSON.parse(savedOrder);
                 reorderAppItems();
-            catch(e) { console.warn('empty catch at home.js:2290', e); }
+} catch(e) { console.warn('empty catch at home.js:2259', e); }
         } else {
             // 首次加载：按默认顺序重新分页（每页8个）并保存
             reorderAppItems();
@@ -2711,7 +2680,7 @@
                 // 同时保存到 localStorage 作为同步备份
                 try {
                     localStorage.setItem(storageKey, url);
-                catch(e) { console.warn('empty catch at home.js:2714', e); }
+} catch(e) { console.warn('empty catch at home.js:2683', e); }
                 localforage.setItem(storageKey, url).catch(() => {});
             }
         }

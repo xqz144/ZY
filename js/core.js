@@ -42,8 +42,8 @@
             displayedMessageCount = HISTORY_BATCH_SIZE;
 
             // 立即清除 localStorage 备份，防止 _tryRecoverFromBackup 在 IndexedDB 写入前恢复旧消息
-            try { localStorage.removeItem('BACKUP_V1_critical'); catch(e) { console.warn('empty catch at core.js:45', e); }
-            try { localStorage.removeItem('BACKUP_V1_timestamp'); catch(e) { console.warn('empty catch at core.js:46', e); }
+            try { localStorage.removeItem('BACKUP_V1_critical'); } catch(e) {}
+            try { localStorage.removeItem('BACKUP_V1_timestamp'); } catch(e) {}
 
             // 直接写入 IndexedDB（跳过 500ms 防抖），确保刷新后不恢复
             localforage.setItem(getStorageKey('chatMessages'), []).catch(() => {});
@@ -247,7 +247,7 @@ autoSendInterval: 5,
                     if (e.target.closest('.bg-delete-btn')) return;
                     try {
                         applyBackground(bg.value);
-                        try { safeSetItem(getStorageKey('chatBackground'), bg.value); catch(_) { console.warn('empty catch at core.js:250', _); }
+                        try { safeSetItem(getStorageKey('chatBackground'), bg.value); } catch(_) {}
                         localforage.setItem(getStorageKey('chatBackground'), bg.value);
                         renderBackgroundGallery();
                         showNotification('背景已切换', 'success');
@@ -380,12 +380,12 @@ const loadData = async () => {
         if (!partnerAvatarSrc && SESSION_ID) {
             try {
                 partnerAvatarSrc = localStorage.getItem(`${APP_PREFIX}${SESSION_ID}_partnerAvatar`);
-            catch(e) { console.warn('empty catch at core.js:383', e); }
+} catch(e) { console.warn('empty catch at core.js:383', e); }
         }
         if (!myAvatarSrc && SESSION_ID) {
             try {
                 myAvatarSrc = localStorage.getItem(`${APP_PREFIX}${SESSION_ID}_myAvatar`);
-            catch(e) { console.warn('empty catch at core.js:388', e); }
+} catch(e) { console.warn('empty catch at core.js:388', e); }
         }
         const savedPartnerPersonas = getVal(14);
         const savedShowNameConfig = getVal(15);
@@ -460,7 +460,7 @@ const loadData = async () => {
                         setTimeout(() => saveData(), 1000);
                     }
                 }
-            catch(e) { console.warn('empty catch at core.js:463', e); }
+} catch(e) { console.warn('empty catch at core.js:463', e); }
         } else {
             const backup = _tryRecoverFromBackup();
             if (backup && Array.isArray(backup.messages) && backup.messages.length > 0) {
@@ -530,7 +530,7 @@ const loadData = async () => {
                 scheduleWorkEndCheck();
             }
         }
-        try { const ce = await localforage.getItem(getStorageKey('customEmojis')); if (ce && Array.isArray(ce)) customEmojis = ce; catch(e) { console.warn('empty catch at core.js:533', e); }
+        try { const ce = await localforage.getItem(getStorageKey('customEmojis')); if (ce && Array.isArray(ce)) customEmojis = ce; } catch(e) {}
         if (savedTransferData) transferData = savedTransferData;
         window._customReplies = customReplies;
         window._stickerLibrary = stickerLibrary;
@@ -570,7 +570,7 @@ const loadData = async () => {
             if (typeof checkEnvelopeStatus === 'function') checkEnvelopeStatus();
             if (typeof updateUI === 'function') updateUI();
             if (settings.customBubbleCss) {
-                try { applyCustomBubbleCss(settings.customBubbleCss); catch(e) { console.warn('empty catch at core.js:573', e); }
+                try { applyCustomBubbleCss(settings.customBubbleCss); } catch(e) {}
             }
             // 同步数据到 Home 页
             if (typeof window.syncHomePageData === 'function') {
@@ -1385,7 +1385,7 @@ window.setMoyuUnread = function () {
     // 保存未读状态
     try {
         localforage.setItem(getStorageKey('moyuUnread'), true).catch(() => {});
-    catch(e) { console.warn('empty catch at core.js:1388', e); }
+} catch(e) { console.warn('empty catch at core.js:1388', e); }
 };
 
 // 清除摸鱼未读标记
@@ -1401,7 +1401,7 @@ window.clearMoyuUnread = function () {
     // 保存未读状态
     try {
         localforage.setItem(getStorageKey('moyuUnread'), false).catch(() => {});
-    catch(e) { console.warn('empty catch at core.js:1404', e); }
+} catch(e) { console.warn('empty catch at core.js:1404', e); }
 };
 
 // 关闭通知并标记未读
@@ -2200,7 +2200,7 @@ const addMessage = (message) => {
 
             addMessage({ id: Date.now(), text: pokeText, timestamp: new Date(), type: 'system' });
             if (typeof playSound === 'function') playSound('partner_poke');
-            (function(){try{if(window._typingIndicatorAutoHideTimer){clearTimeout(window._typingIndicatorAutoHideTimer);window._typingIndicatorAutoHideTimer=null;}catch(e) { console.warn('empty catch at core.js:2203', e); }var _tiW=document.getElementById('typing-indicator-wrapper');if(_tiW){var _tiInner=_tiW.querySelector('.typing-indicator');if(_tiInner){_tiInner.classList.add('hiding');setTimeout(function(){_tiW.style.display='none';if(_tiInner)_tiInner.classList.remove('hiding');},240);}else{_tiW.style.display='none';}}})();
+            (function(){try{if(window._typingIndicatorAutoHideTimer){clearTimeout(window._typingIndicatorAutoHideTimer);window._typingIndicatorAutoHideTimer=null;}}catch(e){}var _tiW=document.getElementById('typing-indicator-wrapper');if(_tiW){var _tiInner=_tiW.querySelector('.typing-indicator');if(_tiInner){_tiInner.classList.add('hiding');setTimeout(function(){_tiW.style.display='none';if(_tiInner)_tiInner.classList.remove('hiding');},240);}else{_tiW.style.display='none';}}})();
         };
 
         function sendMessage(textOverride = null, type = 'normal') {
@@ -2599,7 +2599,7 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                         }
                     }
                     if (!replyText && i === replyCount - 1) {
-                        (function(){try{if(window._typingIndicatorAutoHideTimer){clearTimeout(window._typingIndicatorAutoHideTimer);window._typingIndicatorAutoHideTimer=null;}catch(e) { console.warn('empty catch at core.js:2602', e); }var _tiW=document.getElementById('typing-indicator-wrapper');if(_tiW){var _tiInner=_tiW.querySelector('.typing-indicator');if(_tiInner){_tiInner.classList.add('hiding');setTimeout(function(){_tiW.style.display='none';if(_tiInner)_tiInner.classList.remove('hiding');},240);}else{_tiW.style.display='none';}}})();
+                        (function(){try{if(window._typingIndicatorAutoHideTimer){clearTimeout(window._typingIndicatorAutoHideTimer);window._typingIndicatorAutoHideTimer=null;}}catch(e){}var _tiW=document.getElementById('typing-indicator-wrapper');if(_tiW){var _tiInner=_tiW.querySelector('.typing-indicator');if(_tiInner){_tiInner.classList.add('hiding');setTimeout(function(){_tiW.style.display='none';if(_tiInner)_tiInner.classList.remove('hiding');},240);}else{_tiW.style.display='none';}}})();
                         return;
                     }
 
@@ -2607,7 +2607,7 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                     try {
                         const raw = localStorage.getItem('disabledStickerItems');
                         if (raw) disabledStickerItems = new Set(JSON.parse(raw));
-                    catch(e) { console.warn('empty catch at core.js:2610', e); }
+} catch(e) { console.warn('empty catch at core.js:2610', e); }
                     const enabledStickerPool = (stickerLibrary || []).filter(s => !disabledStickerItems.has(s));
                     const shouldSendSticker = enabledStickerPool.length > 0 && Math.random() < 0.2;
 
@@ -2760,7 +2760,7 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                                     clearTimeout(window._typingIndicatorAutoHideTimer);
                                     window._typingIndicatorAutoHideTimer = null;
                                 }
-                            catch(e) { console.warn('empty catch at core.js:2763', e); }
+} catch(e) { console.warn('empty catch at core.js:2763', e); }
                             var _tiW = document.getElementById('typing-indicator-wrapper');
                             if (_tiW) {
                                 var _tiInner = _tiW.querySelector('.typing-indicator');
@@ -2793,11 +2793,11 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                         // 机制性兜底：出错时至少让“正在输入中”消失，避免假死
                         try {
                             (function(){
-                                try { if (window._typingIndicatorAutoHideTimer) { clearTimeout(window._typingIndicatorAutoHideTimer); window._typingIndicatorAutoHideTimer = null; } catch(e2) { console.warn('empty catch at core.js:2796', e2); }
+                                try { if (window._typingIndicatorAutoHideTimer) { clearTimeout(window._typingIndicatorAutoHideTimer); window._typingIndicatorAutoHideTimer = null; } } catch (e2) {}
                                 var _tiW2 = document.getElementById('typing-indicator-wrapper');
                                 if (_tiW2) _tiW2.style.display = 'none';
                             })();
-                        catch(e2) { console.warn('empty catch at core.js:2800', e2); }
+} catch(e2) { console.warn('empty catch at core.js:2800', e2); }
                     }
                 }, delay);
             }
@@ -2937,15 +2937,15 @@ function showModal(modalElement, focusElement = null) {
                 try {
                     let dgCustomData = null, dgStatusPool = null, customWeatherMap = {};
                     if (inclSettings) {
-                        try { dgCustomData = JSON.parse(localStorage.getItem('dg_custom_data') || 'null'); catch(e2) { console.warn('empty catch at core.js:2940', e2); }
-                        try { dgStatusPool = JSON.parse(localStorage.getItem('dg_status_pool') || 'null'); catch(e2) { console.warn('empty catch at core.js:2941', e2); }
+                        try { dgCustomData = JSON.parse(localStorage.getItem('dg_custom_data') || 'null'); } catch(e2) {}
+                        try { dgStatusPool = JSON.parse(localStorage.getItem('dg_status_pool') || 'null'); } catch(e2) {}
                         try {
                             Object.keys(localStorage).forEach(kk => {
                                 if (kk && kk.startsWith('customWeather_')) {
                                     customWeatherMap[kk] = localStorage.getItem(kk);
                                 }
                             });
-                        catch(e2) { console.warn('empty catch at core.js:2948', e2); }
+} catch(e2) { console.warn('empty catch at core.js:2948', e2); }
                     }
 
                     const exportObj = {
@@ -3185,9 +3185,9 @@ function showModal(modalElement, focusElement = null) {
                                     if (settings.customGlobalCss) applyGlobalThemeCss(settings.customGlobalCss);
                                 } catch(e2) { console.warn('导入后样式应用失败', e2); }
                             }
-                            if (importedData.dgCustomData) { try { localStorage.setItem('dg_custom_data', JSON.stringify(importedData.dgCustomData)); catch(e2) { console.warn('empty catch at core.js:3188', e2); } }
-                            if (importedData.dgStatusPool) { try { localStorage.setItem('dg_status_pool', JSON.stringify(importedData.dgStatusPool)); catch(e2) { console.warn('empty catch at core.js:3189', e2); } }
-                            if (importedData.customWeatherMap) { try { Object.keys(importedData.customWeatherMap).forEach(wk => localStorage.setItem(wk, importedData.customWeatherMap[wk])); catch(e2) { console.warn('empty catch at core.js:3190', e2); } }
+                            if (importedData.dgCustomData) { try { localStorage.setItem('dg_custom_data', JSON.stringify(importedData.dgCustomData)); } catch(e2) {} }
+                            if (importedData.dgStatusPool) { try { localStorage.setItem('dg_status_pool', JSON.stringify(importedData.dgStatusPool)); } catch(e2) {} }
+                            if (importedData.customWeatherMap) { try { Object.keys(importedData.customWeatherMap).forEach(wk => localStorage.setItem(wk, importedData.customWeatherMap[wk])); } catch(e2) {} }
                         }
                         if (doReplies  && importedData.customReplies)  customReplies  = importedData.customReplies;
                         if (doReplies  && importedData.customEmojis && Array.isArray(importedData.customEmojis)) customEmojis = importedData.customEmojis;
