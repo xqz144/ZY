@@ -2279,9 +2279,29 @@ const addMessage = (message) => {
                     }
                 }
 
-                // 火花：记录用户发送消息
+                // 火花：记录用户发送消息（连续天数）
                 if (type === 'normal' && typeof window.SparkApp === 'object' && typeof window.SparkApp.recordChat === 'function') {
                     window.SparkApp.recordChat();
+                }
+
+                // 小火人：聊天实时对接 —— 每次发送消息都记录互动
+                if (type === 'normal' && typeof window.SparkTracker === 'object' && typeof window.SparkTracker.recordInteraction === 'function') {
+                    try {
+                        var sparkResult = window.SparkTracker.recordInteraction('chat');
+                        // 通知 spark iframe 刷新（如果已打开）
+                        if (sparkResult) {
+                            var frames = document.querySelectorAll('iframe');
+                            for (var i = 0; i < frames.length; i++) {
+                                try {
+                                    frames[i].contentWindow && frames[i].contentWindow.postMessage({
+                                        type: 'spark:update',
+                                        leveledUp: sparkResult.leveledUp,
+                                        level: sparkResult.level
+                                    }, '*');
+                                } catch (e) {}
+                            }
+                        }
+                    } catch (e) {}
                 }
 
 if (!isBatchMode && type === 'normal') {

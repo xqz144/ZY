@@ -43,13 +43,14 @@ body.home-active {
 .hero-card {
     border-radius: 24px;
     overflow: hidden;
-    min-height: 240px;
+    min-height: 220px;
     box-shadow:
 0 8px 32px rgba(0, 0, 0, 0.08),
 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
     border: 1px solid rgba(255, 255, 255, 0.6);
     position: relative;
     cursor: pointer;
+    display: block;
 }
 
 /* 背景图 - 覆盖整个卡片 */
@@ -63,27 +64,40 @@ body.home-active {
     transition: background 0.5s ease;
 }
 
-/* 上段：纯占位 */
-.hero-card-top {
-    position: relative;
-    height: 80px;
-    z-index: 1;
+/* 整卡统一的柔和渐变蒙层 —— 从图片本体到文字区的过渡 */
+.hero-card::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 58%;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0.08) 40%,
+        rgba(0, 0, 0, 0.38) 100%
+    );
+    pointer-events: none;
+    z-index: 2;
 }
 
-/* 下段：毛玻璃遮罩层 */
-.hero-card-bottom {
+/* 上段：纯占位，完全透明不挡图 */
+.hero-card-top {
     position: relative;
-    padding: 28px 20px 16px;
-    background: linear-gradient(
-180deg,
-rgba(255, 255, 255, 0.35) 0%,
-rgba(255, 255, 255, 0.55) 50%,
-rgba(255, 255, 255, 0.45) 100%
-    );
-    backdrop-filter: blur(50px) saturate(200%);
-    -webkit-backdrop-filter: blur(50px) saturate(200%);
-    border-top: 1px solid rgba(255, 255, 255, 0.4);
-    z-index: 2;
+    height: 44px;
+    z-index: 3;
+}
+
+/* 下段：承载文字，绝对定位到底部，完全透明，让背景图和 ::after 渐变直接露出来 */
+.hero-card-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 76px 20px 20px;
+    background: transparent;
+    z-index: 3;
 }
 
 .hero-content-bottom {
@@ -93,15 +107,16 @@ rgba(255, 255, 255, 0.45) 100%
     gap: 4px;
 }
 
-/* 双人头像 - 浮在分界线上 */
+/* 双人头像 - 浮在卡片中间（绝对定位到 hero-card 中心区域） */
 .hero-avatars-float {
+    position: absolute;
+    left: 50%;
+    top: 58px;
+    transform: translateX(-50%);
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: -30px;
-    margin-bottom: -16px;
-    position: relative;
-    z-index: 10;
+    z-index: 5;
 }
 
 .hero-avatar-wrap {

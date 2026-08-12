@@ -744,11 +744,6 @@
             <div class="today-count" id="chatCount">0/10</div>
           </div>
           <div class="today-row">
-            <div class="today-left"><span class="emoji">🃏</span>抽字卡</div>
-            <div class="today-bar"><div class="today-bar-fill" id="cardBar" style="width:0%"></div></div>
-            <div class="today-count" id="cardCount">0/3</div>
-          </div>
-          <div class="today-row">
             <div class="today-left"><span class="emoji">🌸</span>发朋友圈</div>
             <div class="today-bar"><div class="today-bar-fill" id="momentBar" style="width:0%"></div></div>
             <div class="today-count" id="momentCount">0/2</div>
@@ -895,8 +890,8 @@
         { id: "flower", emoji: "🌸", unlock: 1 }
       ];
 
-      var DAILY_LIMITS = { chat: 10, cards: 3, moments: 2 };
-      var EXP_PER = { chat: 3, cards: 5, moments: 8 };
+      var DAILY_LIMITS = { chat: 10, moments: 2 };
+      var EXP_PER = { chat: 3, moments: 8 };
 
       var FOODS = [
         { id: "star_cookie", name: "星星饼干", emoji: "⭐", exp: 3, fullness: 5, mood: 2, unlock: 1, desc: "咬一口会发出细碎星光，小火苗最爱的零嘴。" },
@@ -996,13 +991,16 @@
         recordInteraction: function (type) {
           var d = this.load();
           var t = todayStr();
-          if (!d.daily[t]) d.daily[t] = { chat: 0, cards: 0, moments: 0 };
+          if (!d.daily[t]) d.daily[t] = { chat: 0, moments: 0 };
           if (d.daily[t][type] >= DAILY_LIMITS[type]) return { gained: 0, leveledUp: false, level: d.level };
           d.daily[t][type]++;
           d.totalInteractions++;
           var gained = EXP_PER[type];
           d.exp += gained;
           d.totalExp += gained;
+          // 每次互动小幅度增加饱腹/心情
+          d.fullness = Math.min(FULLNESS_MAX, d.fullness + 0.3);
+          d.mood = Math.min(MOOD_MAX, d.mood + 0.5);
           if (t !== d.lastActiveDate) {
             if (d.lastActiveDate === yesterdayStr()) d.streak++;
             else if (d.lastActiveDate === t) { /* same day */ }
@@ -1033,8 +1031,8 @@
           var d = this.load();
           if (d.makeupCards <= 0) return false;
           var y = yesterdayStr();
-          if (d.daily[y] && (d.daily[y].chat > 0 || d.daily[y].cards > 0 || d.daily[y].moments > 0)) return false;
-          if (!d.daily[y]) d.daily[y] = { chat: 0, cards: 0, moments: 0 };
+          if (d.daily[y] && (d.daily[y].chat > 0 || d.daily[y].moments > 0)) return false;
+          if (!d.daily[y]) d.daily[y] = { chat: 0, moments: 0 };
           d.daily[y].chat = 1;
           d.makeupCards--;
           if (d.lastActiveDate === y) {
@@ -1071,7 +1069,7 @@
             leveledUp = true;
           }
           var t = todayStr();
-          if (!d.daily[t]) d.daily[t] = { chat: 0, cards: 0, moments: 0 };
+          if (!d.daily[t]) d.daily[t] = { chat: 0, moments: 0 };
           if (t !== d.lastActiveDate) {
             if (d.lastActiveDate === yesterdayStr()) d.streak++;
             else d.streak = 1;
@@ -1103,10 +1101,10 @@
         getState: function () {
           var d = this.load();
           var t = todayStr();
-          var today = d.daily[t] || { chat: 0, cards: 0, moments: 0 };
+          var today = d.daily[t] || { chat: 0, moments: 0 };
           var lastActive = d.lastActiveDate;
           var state = "sleeping";
-          if (lastActive === t && (today.chat > 0 || today.cards > 0 || today.moments > 0)) {
+          if (lastActive === t && (today.chat > 0 || today.moments > 0)) {
             state = "happy";
           } else if (lastActive === yesterdayStr()) {
             state = "calm";
@@ -1434,10 +1432,8 @@
       var moodNum = document.getElementById("moodNum");
       var moodFill = document.getElementById("moodFill");
       var chatCount = document.getElementById("chatCount");
-      var cardCount = document.getElementById("cardCount");
       var momentCount = document.getElementById("momentCount");
       var chatBar = document.getElementById("chatBar");
-      var cardBar = document.getElementById("cardBar");
       var momentBar = document.getElementById("momentBar");
       var milestoneList = document.getElementById("milestoneList");
       var makeupCount = document.getElementById("makeupCount");
@@ -1497,22 +1493,19 @@
 
         var f = Math.max(0, Math.min(FULLNESS_MAX, data.fullness || 0));
         var m = Math.max(0, Math.min(MOOD_MAX, data.mood || 0));
-        fullnessNum.textContent = f + "/" + FULLNESS_MAX;
+        fullnessNum.textContent = Math.round(f) + "/" + FULLNESS_MAX;
         fullnessFill.style.width = f + "%";
-        moodNum.textContent = m + "/" + MOOD_MAX;
+        moodNum.textContent = Math.round(m) + "/" + MOOD_MAX;
         moodFill.style.width = m + "%";
 
         var t = todayStr();
-        var today = data.daily[t] || { chat: 0, cards: 0, moments: 0 };
+        var today = data.daily[t] || { chat: 0, moments: 0 };
         chatCount.textContent = today.chat + "/" + DAILY_LIMITS.chat;
-        cardCount.textContent = today.cards + "/" + DAILY_LIMITS.cards;
         momentCount.textContent = today.moments + "/" + DAILY_LIMITS.moments;
         chatBar.style.width = Math.min(100, (today.chat / DAILY_LIMITS.chat) * 100) + "%";
-        cardBar.style.width = Math.min(100, (today.cards / DAILY_LIMITS.cards) * 100) + "%";
         momentBar.style.width = Math.min(100, (today.moments / DAILY_LIMITS.moments) * 100) + "%";
 
         chatCount.className = "today-count" + (today.chat >= DAILY_LIMITS.chat ? " done" : "");
-        cardCount.className = "today-count" + (today.cards >= DAILY_LIMITS.cards ? " done" : "");
         momentCount.className = "today-count" + (today.moments >= DAILY_LIMITS.moments ? " done" : "");
 
         renderMilestones();
@@ -1642,8 +1635,23 @@
 
       render();
 
+      // localStorage 变化（父窗口写数据时触发） -> 刷新
       window.addEventListener("storage", function (e) {
         if (e.key === SPARK_KEY) render();
+      });
+
+      // 父窗口 postMessage 通知 -> 刷新（更实时）
+      window.addEventListener("message", function (ev) {
+        var d = ev.data || {};
+        if (d.type === "spark:update") {
+          render();
+          if (d.leveledUp) {
+            var lv = (d.level && LEVELS[d.level - 1]) ? d.level : data.level;
+            setTimeout(function () {
+              showLevelUp(lv);
+            }, 300);
+          }
+        }
       });
     })();
   </script>

@@ -237,3 +237,156 @@
   };
 
 })();
+
+/* ==================================================================
+ * 小火人 SparkTracker —— 共享数据层（父窗口与 spark iframe 共用）
+ * 通过 localStorage (key = "mengjiao_spark") 同步数据
+ * ================================================================== */
+(function () {
+  'use strict';
+
+  if (window.SparkTracker) return;
+
+  var SPARK_KEY = "mengjiao_spark";
+
+  var LEVELS = [
+    { lv: 1, title: "小火苗", need: 50 },
+    { lv: 2, title: "小火人", need: 150 },
+    { lv: 3, title: "火精灵", need: 350 },
+    { lv: 4, title: "烈焰使者", need: 700 },
+    { lv: 5, title: "焰神", need: 1200 },
+    { lv: 6, title: "传说之焰", need: 2000 },
+    { lv: 7, title: "永恒之火", need: 999999 }
+  ];
+
+  var DAILY_LIMITS = { chat: 10, moments: 2 };
+  var EXP_PER = { chat: 3, moments: 8 };
+  var FULLNESS_MAX = 100;
+  var MOOD_MAX = 100;
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+  function yesterdayStr() {
+    var d = new Date(); d.setDate(d.getDate()-1);
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+  function monthKey() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+  }
+
+  function defaultData() {
+    return {
+      level: 1,
+      exp: 0,
+      totalExp: 0,
+      streak: 0,
+      lastActiveDate: "",
+      totalInteractions: 0,
+      makeupCards: 1,
+      makeupMonth: monthKey(),
+      milestones: [],
+      avatar: { hairColor: "purple", outfitColor: "maroon", earColor: "brown", eyes: "round", mouth: "smile", accessory: "none", pose: "idle" },
+      daily: {},
+      fullness: 60,
+      mood: 60,
+      lastFed: "",
+      lastVitalUpdate: "",
+      foods: {}
+    };
+  }
+
+  var SparkTracker = {
+    load: function () {
+      try {
+        var raw = localStorage.getItem(SPARK_KEY);
+        if (raw) {
+          var d = JSON.parse(raw);
+          var def = defaultData();
+          for (var k in def) { if (!(k in d)) d[k] = def[k]; }
+          if (!d.avatar) d.avatar = def.avatar;
+          if (typeof d.fullness !== "number") d.fullness = def.fullness;
+          if (typeof d.mood !== "number") d.mood = def.mood;
+          if (!d.foods) d.foods = {};
+          this.updateVitals(d);
+          return d;
+        }
+      } catch (e) {}
+      var fresh = defaultData();
+      fresh.lastVitalUpdate = new Date().toISOString();
+      return fresh;
+    },
+    updateVitals: function (d) {
+      var now = new Date();
+      var last = d.lastVitalUpdate ? new Date(d.lastVitalUpdate) : now;
+      if (isNaN(last.getTime())) last = now;
+      var hours = Math.max(0, (now - last) / 3600000);
+      var fullnessDrop = hours * 2;
+      var moodDrop = hours * 1;
+      d.fullness = Math.max(0, d.fullness - fullnessDrop);
+      d.mood = Math.max(0, d.mood - moodDrop);
+      d.lastVitalUpdate = now.toISOString();
+    },
+    save: function (d) {
+      try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) {}
+    },
+    recordInteraction: function (type) {
+      var d = this.load();
+      var t = todayStr();
+      if (!d.daily[t]) d.daily[t] = { chat: 0, moments: 0 };
+      if (d.daily[t][type] >= DAILY_LIMITS[type]) return { gained: 0, leveledUp: false, level: d.level };
+      d.daily[t][type]++;
+      d.totalInteractions++;
+      var gained = EXP_PER[type] || 0;
+      d.exp += gained;
+      d.totalExp += gained;
+      // 每次互动略微增加饱腹/心情（让聊天能实时带动小火人状态）
+      d.fullness = Math.min(FULLNESS_MAX, d.fullness + 0.3);
+      d.mood = Math.min(MOOD_MAX, d.mood + 0.5);
+      if (t !== d.lastActiveDate) {
+        if (d.lastActiveDate === yesterdayStr()) d.streak++;
+        else d.streak = 1;
+        d.lastActiveDate = t;
+      } else if (d.streak === 0) {
+        d.streak = 1;
+      }
+      var leveledUp = false;
+      while (d.level < LEVELS.length && d.exp >= LEVELS[d.level - 1].need) {
+        d.exp -= LEVELS[d.level - 1].need;
+        d.level++;
+        leveledUp = true;
+      }
+      if (d.makeupMonth !== monthKey()) {
+        d.makeupMonth = monthKey();
+        d.makeupCards = 1;
+      }
+      this.save(d);
+      return { gained: gained, leveledUp: leveledUp, level: d.level };
+    },
+    getState: function () {
+      var d = this.load();
+      var t = todayStr();
+      var today = d.daily[t] || { chat: 0, moments: 0 };
+      var lastActive = d.lastActiveDate;
+      var state = "sleeping";
+      if (lastActive === t && (today.chat > 0 || today.moments > 0)) {
+        state = "happy";
+      } else if (lastActive === yesterdayStr()) {
+        state = "calm";
+      } else {
+        var d2 = new Date((lastActive || "") + "T00:00:00");
+        var now = new Date();
+        var diff = Math.round((now - d2) / 86400000);
+        if (isNaN(diff) || diff < 0) diff = 99;
+        if (diff <= 2) state = "hungry";
+        else if (diff <= 3) state = "weak";
+        else state = "sleeping";
+      }
+      return state;
+    }
+  };
+
+  window.SparkTracker = SparkTracker;
+})();
