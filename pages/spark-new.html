@@ -146,6 +146,52 @@
         50% { opacity: 0.8; transform: translate(-50%, -120%) scale(1.2); }
         100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
     }
+
+    /* 宠物选择器 */
+    .pet-selector {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+    .pet-tab {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        background: var(--card-background);
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.25s ease;
+        font-family: var(--font-family);
+        font-size: 13px;
+        color: var(--text-secondary);
+        box-shadow: var(--shadow-2xs);
+    }
+    .pet-tab .pet-emoji {
+        font-size: 16px;
+    }
+    .pet-tab.active {
+        border-color: var(--accent-color, #b8a9c9);
+        background: linear-gradient(145deg, rgba(var(--accent-color-rgb,184,169,201),0.15), rgba(var(--accent-color-rgb,184,169,201),0.05));
+        color: var(--accent-color, #b8a9c9);
+        font-weight: 600;
+        box-shadow: 0 2px 12px rgba(var(--accent-color-rgb,184,169,0.25);
+    }
+    .pet-tab:first-child {
+        border-radius: 20px 0 0 20px;
+    }
+    .pet-tab:last-child {
+        border-radius: 0 20px 20px 0;
+    }
+    .pet-tab:only-child {
+        border-radius: 20px;
+    }
+    .pet-tab + .pet-tab {
+        margin-left: -2px;
+        border-left: none;
+    }
     .creature-name {
         font-family: var(--font-serif);
         font-size: 17px;
@@ -684,6 +730,9 @@
 <body>
   <div class="app-bg">
     <main class="scroll-area" id="scrollArea">
+        <!-- 宠物选择器 -->
+        <div class="pet-selector" id="petSelector"></div>
+
         <!-- 小火人舞台 -->
         <section class="creature-stage">
           <div class="creature-frame" aria-label="小火人">
@@ -905,6 +954,30 @@
         { id: "flower", emoji: "🌸", unlock: 1 }
       ];
 
+      /* 多宠物注册表 */
+      var PETS = {
+        fire: {
+          id: 'fire',
+          name: '小火人',
+          emoji: '🔥',
+          image: '../assets/character.png',
+          color: '#ff8a56',
+          auraColor: 'rgba(255,184,107,0.45)',
+          frameGradient: 'linear-gradient(145deg, #ffb86b, #ff8a56)'
+        },
+        kirin: {
+          id: 'kirin',
+          name: '玉麒麟',
+          emoji: '🦁',
+          image: '../assets/kirin_embroidery.png',
+          color: '#c9303c',
+          auraColor: 'rgba(201,48,60,0.35)',
+          frameGradient: 'linear-gradient(145deg, #d4a853, #c9303c)'
+        }
+      };
+      var PET_ORDER = ['fire', 'kirin'];
+      var ACTIVE_PET_KEY = 'mengjiao_active_pet';
+
       var DAILY_LIMITS = { chat: 10, moments: 2 };
       var EXP_PER = { chat: 3, moments: 8 };
 
@@ -934,7 +1007,7 @@
         return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
       }
 
-      function defaultData() {
+      function petData(defaultName) {
         return {
           level: 1,
           exp: 0,
@@ -952,7 +1025,17 @@
           lastFed: "",
           lastVitalUpdate: "",
           foods: {},
-          name: "小火人"
+          name: defaultName
+        };
+      }
+
+      function defaultData() {
+        return {
+          activePet: 'fire',
+          pets: {
+            fire: petData('小火人'),
+            kirin: petData('玉麒麟')
+          }
         };
       }
 
@@ -962,169 +1045,196 @@
             var raw = localStorage.getItem(SPARK_KEY);
             if (raw) {
               var d = JSON.parse(raw);
-              var def = defaultData();
-              for (var k in def) { if (!(k in d)) d[k] = def[k]; }
-              if (!d.avatar) d.avatar = def.avatar;
-              if (typeof d.fullness !== "number") d.fullness = def.fullness;
-              if (typeof d.mood !== "number") d.mood = def.mood;
-              if (!d.foods) d.foods = {};
-              var t = todayStr();
-              if (d.lastFed !== t) {
-                FOODS.forEach(function (f) {
-                  if (d.level >= f.unlock) d.foods[f.id] = FOOD_DAILY_STOCK;
-                });
-                d.lastFed = t;
+              /* 旧格式迁移：单宠物数据 → 多宠物结构 */
+              if (!d.pets) {
+                var oldData = {};
+                for (var k in d) { if (k !== 'activePet') oldData[k] = d[k]; }
+                d = {
+                  activePet: 'fire',
+                  pets: { fire: oldData, kirin: petData('玉麒麟') }
+                };
               }
-              this.updateVitals(d);
+              /* 确保所有宠物数据完整 */
+              for (var pid in PETS) {
+                if (!d.pets[pid]) d.pets[pid] = petData(PETS[pid].name);
+                var pd = d.pets[pid];
+                var def = petData(PETS[pid].name);
+                for (var dk in def) { if (!(dk in pd)) pd[dk] = def[dk]; }
+                if (!pd.avatar) pd.avatar = def.avatar;
+                if (typeof pd.fullness !== "number") pd.fullness = def.fullness;
+                if (typeof pd.mood !== "number") pd.mood = def.mood;
+                if (!pd.foods) pd.foods = {};
+                var t = todayStr();
+                if (pd.lastFed !== t) {
+                  FOODS.forEach(function (f) {
+                    if (pd.level >= f.unlock) pd.foods[f.id] = FOOD_DAILY_STOCK;
+                  });
+                  pd.lastFed = t;
+                }
+                this.updateVitals(pd);
+              }
+              if (!d.activePet || !PETS[d.activePet]) d.activePet = 'fire';
               this.save(d);
               return d;
             }
           } catch (e) { console.warn('SparkTracker.load error', e); }
           var fresh = defaultData();
           var t2 = todayStr();
-          FOODS.forEach(function (f) {
-            if (fresh.level >= f.unlock) fresh.foods[f.id] = FOOD_DAILY_STOCK;
-          });
-          fresh.lastFed = t2;
-          fresh.lastVitalUpdate = new Date().toISOString();
+          for (var pid2 in fresh.pets) {
+            FOODS.forEach(function (f) {
+              if (fresh.pets[pid2].level >= f.unlock) fresh.pets[pid2].foods[f.id] = FOOD_DAILY_STOCK;
+            });
+            fresh.pets[pid2].lastFed = t2;
+            fresh.pets[pid2].lastVitalUpdate = new Date().toISOString();
+          }
           return fresh;
         },
-        updateVitals: function (d) {
+        updateVitals: function (petData) {
           var now = new Date();
-          var last = d.lastVitalUpdate ? new Date(d.lastVitalUpdate) : now;
+          var last = petData.lastVitalUpdate ? new Date(petData.lastVitalUpdate) : now;
           if (isNaN(last.getTime())) last = now;
           var hours = Math.max(0, (now - last) / 3600000);
-          var state = this.getState();
+          var state = this.getState(petData);
           var fullnessDrop = hours * 2 + (state === "sleeping" ? hours * 1 : 0);
           var moodDrop = hours * 1;
-          d.fullness = Math.max(0, d.fullness - fullnessDrop);
-          d.mood = Math.max(0, d.mood - moodDrop);
-          d.lastVitalUpdate = now.toISOString();
+          petData.fullness = Math.max(0, petData.fullness - fullnessDrop);
+          petData.mood = Math.max(0, petData.mood - moodDrop);
+          petData.lastVitalUpdate = now.toISOString();
         },
         save: function (d) {
           try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) { console.warn('SparkTracker.save error', e); }
         },
+        /* 获取当前活跃宠物的数据 */
+        current: function (d) {
+          if (!d) d = this.load();
+          return d.pets[d.activePet];
+        },
         setName: function (name) {
           var d = this.load();
-          d.name = String(name || "").trim().slice(0, 12) || "小火人";
+          var pd = d.pets[d.activePet];
+          pd.name = String(name || "").trim().slice(0, 12) || PETS[d.activePet].name;
           this.save(d);
-          return d.name;
+          return pd.name;
         },
         recordInteraction: function (type) {
           var d = this.load();
+          var pd = d.pets[d.activePet];
           var t = todayStr();
-          if (!d.daily[t]) d.daily[t] = { chat: 0, moments: 0 };
-          if (d.daily[t][type] >= DAILY_LIMITS[type]) return { gained: 0, leveledUp: false, level: d.level };
-          d.daily[t][type]++;
-          d.totalInteractions++;
+          if (!pd.daily[t]) pd.daily[t] = { chat: 0, moments: 0 };
+          if (pd.daily[t][type] >= DAILY_LIMITS[type]) return { gained: 0, leveledUp: false, level: pd.level };
+          pd.daily[t][type]++;
+          pd.totalInteractions++;
           var gained = EXP_PER[type];
-          d.exp += gained;
-          d.totalExp += gained;
-          // 每次互动小幅度增加饱腹/心情
-          d.fullness = Math.min(FULLNESS_MAX, d.fullness + 0.3);
-          d.mood = Math.min(MOOD_MAX, d.mood + 0.5);
-          if (t !== d.lastActiveDate) {
-            if (d.lastActiveDate === yesterdayStr()) d.streak++;
-            else if (d.lastActiveDate === t) { /* same day */ }
-            else d.streak = 1;
-            d.lastActiveDate = t;
-          } else if (d.streak === 0) {
-            d.streak = 1;
+          pd.exp += gained;
+          pd.totalExp += gained;
+          pd.fullness = Math.min(FULLNESS_MAX, pd.fullness + 0.3);
+          pd.mood = Math.min(MOOD_MAX, pd.mood + 0.5);
+          if (t !== pd.lastActiveDate) {
+            if (pd.lastActiveDate === yesterdayStr()) pd.streak++;
+            else if (pd.lastActiveDate === t) { /* same day */ }
+            else pd.streak = 1;
+            pd.lastActiveDate = t;
+          } else if (pd.streak === 0) {
+            pd.streak = 1;
           }
           var leveledUp = false;
-          while (d.level < LEVELS.length && d.exp >= LEVELS[d.level - 1].need) {
-            d.exp -= LEVELS[d.level - 1].need;
-            d.level++;
+          while (pd.level < LEVELS.length && pd.exp >= LEVELS[pd.level - 1].need) {
+            pd.exp -= LEVELS[pd.level - 1].need;
+            pd.level++;
             leveledUp = true;
           }
           MILESTONES.forEach(function (m) {
-            if (d.streak >= m.days && d.milestones.indexOf(m.days) === -1) {
-              d.milestones.push(m.days);
+            if (pd.streak >= m.days && pd.milestones.indexOf(m.days) === -1) {
+              pd.milestones.push(m.days);
             }
           });
-          if (d.makeupMonth !== monthKey()) {
-            d.makeupMonth = monthKey();
-            d.makeupCards = 1;
+          if (pd.makeupMonth !== monthKey()) {
+            pd.makeupMonth = monthKey();
+            pd.makeupCards = 1;
           }
           this.save(d);
-          return { gained: gained, leveledUp: leveledUp, level: d.level };
+          return { gained: gained, leveledUp: leveledUp, level: pd.level };
         },
         useMakeup: function () {
           var d = this.load();
-          if (d.makeupCards <= 0) return false;
+          var pd = d.pets[d.activePet];
+          if (pd.makeupCards <= 0) return false;
           var y = yesterdayStr();
-          if (d.daily[y] && (d.daily[y].chat > 0 || d.daily[y].moments > 0)) return false;
-          if (!d.daily[y]) d.daily[y] = { chat: 0, moments: 0 };
-          d.daily[y].chat = 1;
-          d.makeupCards--;
-          if (d.lastActiveDate === y) {
-            d.streak++;
+          if (pd.daily[y] && (pd.daily[y].chat > 0 || pd.daily[y].moments > 0)) return false;
+          if (!pd.daily[y]) pd.daily[y] = { chat: 0, moments: 0 };
+          pd.daily[y].chat = 1;
+          pd.makeupCards--;
+          if (pd.lastActiveDate === y) {
+            pd.streak++;
           } else if (yesterdayStr() === y) {
-            d.streak = Math.max(d.streak, 1);
-            d.lastActiveDate = y;
+            pd.streak = Math.max(pd.streak, 1);
+            pd.lastActiveDate = y;
           }
           MILESTONES.forEach(function (m) {
-            if (d.streak >= m.days && d.milestones.indexOf(m.days) === -1) d.milestones.push(m.days);
+            if (pd.streak >= m.days && pd.milestones.indexOf(m.days) === -1) pd.milestones.push(m.days);
           });
           this.save(d);
           return true;
         },
         feed: function (foodId) {
           var d = this.load();
+          var pd = d.pets[d.activePet];
           var food = FOODS.find(function(f){ return f.id === foodId; });
           if (!food) return { ok: false, reason: "food_not_found" };
-          if (d.level < food.unlock) return { ok: false, reason: "locked" };
-          if (!d.foods[foodId] || d.foods[foodId] <= 0) return { ok: false, reason: "no_stock" };
-          if (d.fullness >= FULLNESS_MAX - 2) return { ok: false, reason: "full" };
+          if (pd.level < food.unlock) return { ok: false, reason: "locked" };
+          if (!pd.foods[foodId] || pd.foods[foodId] <= 0) return { ok: false, reason: "no_stock" };
+          if (pd.fullness >= FULLNESS_MAX - 2) return { ok: false, reason: "full" };
 
-          d.foods[foodId]--;
-          d.fullness = Math.min(FULLNESS_MAX, d.fullness + food.fullness);
-          d.mood = Math.min(MOOD_MAX, d.mood + food.mood);
-          d.exp += food.exp;
-          d.totalExp += food.exp;
-          d.totalInteractions++;
+          pd.foods[foodId]--;
+          pd.fullness = Math.min(FULLNESS_MAX, pd.fullness + food.fullness);
+          pd.mood = Math.min(MOOD_MAX, pd.mood + food.mood);
+          pd.exp += food.exp;
+          pd.totalExp += food.exp;
+          pd.totalInteractions++;
 
           var leveledUp = false;
-          while (d.level < LEVELS.length && d.exp >= LEVELS[d.level - 1].need) {
-            d.exp -= LEVELS[d.level - 1].need;
-            d.level++;
+          while (pd.level < LEVELS.length && pd.exp >= LEVELS[pd.level - 1].need) {
+            pd.exp -= LEVELS[pd.level - 1].need;
+            pd.level++;
             leveledUp = true;
           }
           var t = todayStr();
-          if (!d.daily[t]) d.daily[t] = { chat: 0, moments: 0 };
-          if (t !== d.lastActiveDate) {
-            if (d.lastActiveDate === yesterdayStr()) d.streak++;
-            else d.streak = 1;
-            d.lastActiveDate = t;
+          if (!pd.daily[t]) pd.daily[t] = { chat: 0, moments: 0 };
+          if (t !== pd.lastActiveDate) {
+            if (pd.lastActiveDate === yesterdayStr()) pd.streak++;
+            else pd.streak = 1;
+            pd.lastActiveDate = t;
           }
           MILESTONES.forEach(function (m) {
-            if (d.streak >= m.days && d.milestones.indexOf(m.days) === -1) d.milestones.push(m.days);
+            if (pd.streak >= m.days && pd.milestones.indexOf(m.days) === -1) pd.milestones.push(m.days);
           });
           this.save(d);
-          return { ok: true, food: food, leveledUp: leveledUp, level: d.level };
+          return { ok: true, food: food, leveledUp: leveledUp, level: pd.level };
         },
         pet: function () {
           var d = this.load();
-          if (d.mood >= MOOD_MAX) return { ok: false, reason: "max_mood" };
-          this.updateVitals(d);
-          d.mood = Math.min(MOOD_MAX, d.mood + 5);
-          d.exp += 1;
-          d.totalExp += 1;
-          d.totalInteractions++;
+          var pd = d.pets[d.activePet];
+          if (pd.mood >= MOOD_MAX) return { ok: false, reason: "max_mood" };
+          this.updateVitals(pd);
+          pd.mood = Math.min(MOOD_MAX, pd.mood + 5);
+          pd.exp += 1;
+          pd.totalExp += 1;
+          pd.totalInteractions++;
           var leveledUp = false;
-          while (d.level < LEVELS.length && d.exp >= LEVELS[d.level - 1].need) {
-            d.exp -= LEVELS[d.level - 1].need;
-            d.level++;
+          while (pd.level < LEVELS.length && pd.exp >= LEVELS[pd.level - 1].need) {
+            pd.exp -= LEVELS[pd.level - 1].need;
+            pd.level++;
             leveledUp = true;
           }
           this.save(d);
-          return { ok: true, moodAdded: 5, leveledUp: leveledUp, level: d.level };
+          return { ok: true, moodAdded: 5, leveledUp: leveledUp, level: pd.level };
         },
-        getState: function () {
+        getState: function (petData) {
           var d = this.load();
+          var pd = petData || d.pets[d.activePet];
           var t = todayStr();
-          var today = d.daily[t] || { chat: 0, moments: 0 };
-          var lastActive = d.lastActiveDate;
+          var today = pd.daily[t] || { chat: 0, moments: 0 };
+          var lastActive = pd.lastActiveDate;
           var state = "sleeping";
           if (lastActive === t && (today.chat > 0 || today.moments > 0)) {
             state = "happy";
@@ -1140,6 +1250,15 @@
             else state = "sleeping";
           }
           return state;
+        },
+        /* 切换活跃宠物 */
+        switchPet: function (petId) {
+          var d = this.load();
+          if (!PETS[petId] || !d.pets[petId]) return false;
+          d.activePet = petId;
+          this.save(d);
+          try { localStorage.setItem(ACTIVE_PET_KEY, petId); } catch (e) {}
+          return true;
         }
       };
 
@@ -1437,6 +1556,38 @@
       var data = SparkTracker.load();
       var feederSelectedFood = null;
 
+      var petSelector = document.getElementById("petSelector");
+
+      /* 渲染宠物选择器 */
+      function renderPetSelector() {
+        var html = '';
+        for (var i = 0; i < PET_ORDER.length; i++) {
+          var pid = PET_ORDER[i];
+          var pet = PETS[pid];
+          var active = data.activePet === pid ? ' active' : '';
+          html += '<div class="pet-tab' + active + '" data-pet="' + pid + '">' +
+            '<span class="pet-emoji">' + pet.emoji + '</span>' +
+            '<span>' + pet.name + '</span>' +
+            '</div>';
+        }
+        petSelector.innerHTML = html;
+        var tabs = petSelector.querySelectorAll('.pet-tab');
+        for (var j = 0; j < tabs.length; j++) {
+          tabs[j].addEventListener('click', function () {
+            var pid = this.dataset.pet;
+            if (SparkTracker.switchPet(pid)) {
+              data = SparkTracker.load();
+              renderPetSelector();
+              render();
+              try {
+                localStorage.setItem(ACTIVE_PET_KEY, pid);
+              } catch (e) {}
+            }
+          });
+        }
+      }
+      renderPetSelector();
+
       var creatureSvg = document.getElementById("creatureSvg");
       var creatureWrap = document.getElementById("creatureWrap");
       var creatureName = document.getElementById("creatureName");
@@ -1491,39 +1642,45 @@
 
       function render() {
         data = SparkTracker.load();
-        var state = SparkTracker.getState();
+        var pd = data.pets[data.activePet];
+        var pet = PETS[data.activePet];
+        var state = SparkTracker.getState(pd);
         var info = STATE_INFO[state];
 
-        var sparkName = data.name || "小火人";
-        creatureSvg.innerHTML = '<img src="../assets/character.png" alt="' + sparkName + '" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
+        var sparkName = pd.name || pet.name;
+        creatureSvg.innerHTML = '<img src="' + pet.image + '" alt="' + sparkName + '" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
         creatureWrap.className = "creature-svg-wrap" + (state === "sleeping" ? " sleeping" : "");
         creatureName.textContent = sparkName;
         var stateText = info.text.replace(/小火人/g, sparkName);
         creatureStatusText.textContent = stateText;
         statusBadge.className = "status-badge " + info.class;
         statusBadge.textContent = info.label;
-        var poseObj = POSES.find(function(p){return p.id===data.avatar.pose;}) || POSES[0];
+        var poseObj = POSES.find(function(p){return p.id===pd.avatar.pose;}) || POSES[0];
         creatureStatusText.textContent = stateText + " · " + poseObj.emoji + poseObj.label;
 
-        var lv = LEVELS[Math.min(data.level - 1, LEVELS.length - 1)];
-        levelLabel.textContent = "Lv." + data.level;
+        /* 更新光环颜色 */
+        var aura = document.getElementById("creatureAura");
+        if (aura) aura.style.background = 'radial-gradient(circle, ' + pet.auraColor + ' 0%, transparent 70%)';
+
+        var lv = LEVELS[Math.min(pd.level - 1, LEVELS.length - 1)];
+        levelLabel.textContent = "Lv." + pd.level;
         levelTitle.textContent = lv.title;
-        expText.textContent = data.exp + " / " + lv.need;
-        expFill.style.width = Math.min(100, (data.exp / lv.need) * 100) + "%";
+        expText.textContent = pd.exp + " / " + lv.need;
+        expFill.style.width = Math.min(100, (pd.exp / lv.need) * 100) + "%";
 
-        streakNum.textContent = data.streak;
-        totalExpNum.textContent = data.totalExp;
-        totalInteractNum.textContent = data.totalInteractions;
+        streakNum.textContent = pd.streak;
+        totalExpNum.textContent = pd.totalExp;
+        totalInteractNum.textContent = pd.totalInteractions;
 
-        var f = Math.max(0, Math.min(FULLNESS_MAX, data.fullness || 0));
-        var m = Math.max(0, Math.min(MOOD_MAX, data.mood || 0));
+        var f = Math.max(0, Math.min(FULLNESS_MAX, pd.fullness || 0));
+        var m = Math.max(0, Math.min(MOOD_MAX, pd.mood || 0));
         fullnessNum.textContent = Math.round(f) + "/" + FULLNESS_MAX;
         fullnessFill.style.width = f + "%";
         moodNum.textContent = Math.round(m) + "/" + MOOD_MAX;
         moodFill.style.width = m + "%";
 
         var t = todayStr();
-        var today = data.daily[t] || { chat: 0, moments: 0 };
+        var today = pd.daily[t] || { chat: 0, moments: 0 };
         chatCount.textContent = today.chat + "/" + DAILY_LIMITS.chat;
         momentCount.textContent = today.moments + "/" + DAILY_LIMITS.moments;
         chatBar.style.width = Math.min(100, (today.chat / DAILY_LIMITS.chat) * 100) + "%";
@@ -1533,14 +1690,15 @@
         momentCount.className = "today-count" + (today.moments >= DAILY_LIMITS.moments ? " done" : "");
 
         renderMilestones();
-        makeupCount.textContent = data.makeupCards;
-        makeupBtn.disabled = data.makeupCards <= 0;
+        makeupCount.textContent = pd.makeupCards;
+        makeupBtn.disabled = pd.makeupCards <= 0;
       }
 
       function renderMilestones() {
+        var pd = data.pets[data.activePet];
         milestoneList.innerHTML = "";
         MILESTONES.forEach(function (m) {
-          var unlocked = data.milestones.indexOf(m.days) !== -1;
+          var unlocked = pd.milestones.indexOf(m.days) !== -1;
           var item = document.createElement("div");
           item.className = "milestone-item" + (unlocked ? " unlocked" : "");
           item.innerHTML = '<div class="milestone-circle">' + m.icon + '</div><div class="milestone-label">' + m.label + '</div>';
@@ -1550,10 +1708,15 @@
 
       /* Feeder */
       function openFeeder() {
+        var pet = PETS[data.activePet];
         feederSelectedFood = null;
-        feederHint.textContent = "选择食物喂给小火人吧～";
+        feederHint.textContent = "选择食物喂给" + pet.name + "吧～";
+        document.querySelectorAll('#feedModal .modal-title').forEach(function(el){ el.textContent = '喂食' + pet.name; });
         feederDetail.style.display = "none";
         feedConfirm.disabled = true;
+        /* 动态更新预览图 */
+        var previewImg = feederPreview.querySelector('img');
+        if (previewImg) previewImg.src = pet.image;
         renderFoodGrid();
         feedModal.classList.add("show");
       }
@@ -1562,9 +1725,10 @@
       function renderFoodGrid() {
         foodGrid.innerHTML = "";
         data = SparkTracker.load();
+        var pd = data.pets[data.activePet];
         FOODS.forEach(function (food) {
-          var locked = data.level < food.unlock;
-          var stock = data.foods[food.id] || 0;
+          var locked = pd.level < food.unlock;
+          var stock = pd.foods[food.id] || 0;
           var card = document.createElement("div");
           card.className = "food-card" + (feederSelectedFood === food.id ? " active" : "") + (locked ? " locked" : "");
           card.innerHTML = '<div class="food-emoji">' + food.emoji + '</div><div class="food-name">' + food.name + '</div><div class="food-effect">+' + food.fullness + '饱 +' + food.mood + '心</div>' +
@@ -1591,8 +1755,9 @@
       function doFeed() {
         if (!feederSelectedFood) return;
         var result = SparkTracker.feed(feederSelectedFood);
+        var pet = PETS[data.activePet];
         if (!result.ok) {
-          if (result.reason === "full") toast("小火人已经吃饱啦，等消化一下再喂吧～");
+          if (result.reason === "full") toast(pet.name + "已经吃饱啦，等消化一下再喂吧～");
           else if (result.reason === "no_stock") toast("今天这个食物没有库存了哦");
           else if (result.reason === "locked") toast("等级不够，还不能吃这个");
           else toast("喂食失败");
@@ -1602,7 +1767,7 @@
         var food = result.food;
         feederPreview.classList.add("eating");
         setTimeout(function(){ feederPreview.classList.remove("eating"); }, 550);
-        toast("小火人吃掉了 " + food.name + "，心情变好了 ✨");
+        toast(pet.name + "吃掉了 " + food.name + "，心情变好了 ✨");
         if (result.leveledUp) {
           setTimeout(function(){ showLevelUp(result.level); }, 400);
         }
@@ -1637,8 +1802,9 @@
 
       /* 点击名字 → 自定义取名 */
       creatureName.addEventListener("click", function () {
-        var current = (data.name || "小火人");
-        var input = prompt("给小火人取个名字吧～（最多12字）", current);
+        var pet = PETS[data.activePet];
+        var current = (SparkTracker.current(data).name || pet.name);
+        var input = prompt("给" + pet.name + "取个名字吧～（最多12字）", current);
         if (input === null) return;
         var trimmed = input.trim();
         if (!trimmed) { toast("名字不能为空哦"); return; }
@@ -1650,8 +1816,9 @@
 
       /* Tap creature to pet */
       creatureSvg.addEventListener("click", function (e) {
+        var pet = PETS[data.activePet];
         var state = SparkTracker.getState();
-        var n = (SparkTracker.load().name || "小火人");
+        var n = (SparkTracker.current(data).name || pet.name);
         if (state === "sleeping") { toast(n + "沉睡中，快唤醒它吧 💤"); return; }
         var result = SparkTracker.pet();
         if (!result.ok) { toast("心情已经满啦，" + n + "很开心 ♡"); return; }
@@ -1684,7 +1851,8 @@
         if (d.type === "spark:update") {
           render();
           if (d.leveledUp) {
-            var lv = (d.level && LEVELS[d.level - 1]) ? d.level : data.level;
+            var cur = SparkTracker.current();
+            var lv = (cur && cur.level) ? cur.level : 1;
             setTimeout(function () {
               showLevelUp(lv);
             }, 300);
