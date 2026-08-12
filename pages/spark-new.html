@@ -152,6 +152,20 @@
         font-weight: 600;
         color: var(--text-primary);
         margin-top: 10px;
+        cursor: pointer;
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    .creature-name:hover {
+        background: rgba(var(--accent-color-rgb), 0.12);
+    }
+    .creature-name-edit-hint {
+        font-size: 10px;
+        color: var(--text-secondary);
+        opacity: 0.6;
+        margin-top: 2px;
     }
     .creature-status {
         font-size: 12px;
@@ -683,6 +697,7 @@
             <span class="frame-deco deco-4">♡</span>
           </div>
           <div class="creature-name" id="creatureName">小火人</div>
+          <div class="creature-name-edit-hint" id="creatureNameHint">✏️ 点击名字改名</div>
           <div class="creature-status" id="creatureStatusText">和梦角一起成长中</div>
           <div class="status-badge" id="statusBadge">😊 开心</div>
         </section>
@@ -936,7 +951,8 @@
           mood: 60,
           lastFed: "",
           lastVitalUpdate: "",
-          foods: {}
+          foods: {},
+          name: "小火人"
         };
       }
 
@@ -987,6 +1003,12 @@
         },
         save: function (d) {
           try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) { console.warn('SparkTracker.save error', e); }
+        },
+        setName: function (name) {
+          var d = this.load();
+          d.name = String(name || "").trim().slice(0, 12) || "小火人";
+          this.save(d);
+          return d.name;
         },
         recordInteraction: function (type) {
           var d = this.load();
@@ -1472,14 +1494,16 @@
         var state = SparkTracker.getState();
         var info = STATE_INFO[state];
 
-        creatureSvg.innerHTML = '<img src="../assets/character.png" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
+        var sparkName = data.name || "小火人";
+        creatureSvg.innerHTML = '<img src="../assets/character.png" alt="' + sparkName + '" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
         creatureWrap.className = "creature-svg-wrap" + (state === "sleeping" ? " sleeping" : "");
-        creatureName.textContent = "Lv." + data.level + " " + LEVELS[Math.min(data.level-1, LEVELS.length-1)].title;
-        creatureStatusText.textContent = info.text;
+        creatureName.textContent = sparkName;
+        var stateText = info.text.replace(/小火人/g, sparkName);
+        creatureStatusText.textContent = stateText;
         statusBadge.className = "status-badge " + info.class;
         statusBadge.textContent = info.label;
         var poseObj = POSES.find(function(p){return p.id===data.avatar.pose;}) || POSES[0];
-        creatureStatusText.textContent = info.text + " · " + poseObj.emoji + poseObj.label;
+        creatureStatusText.textContent = stateText + " · " + poseObj.emoji + poseObj.label;
 
         var lv = LEVELS[Math.min(data.level - 1, LEVELS.length - 1)];
         levelLabel.textContent = "Lv." + data.level;
@@ -1611,14 +1635,28 @@
       feedModal.addEventListener("click", function (e) { if (e.target === feedModal) closeFeeder(); });
       makeupBtn.addEventListener("click", useMakeup);
 
+      /* 点击名字 → 自定义取名 */
+      creatureName.addEventListener("click", function () {
+        var current = (data.name || "小火人");
+        var input = prompt("给小火人取个名字吧～（最多12字）", current);
+        if (input === null) return;
+        var trimmed = input.trim();
+        if (!trimmed) { toast("名字不能为空哦"); return; }
+        if (trimmed.length > 12) { toast("名字太长啦，最多12字"); trimmed = trimmed.slice(0, 12); }
+        var finalName = SparkTracker.setName(trimmed);
+        render();
+        toast("改名成功！现在叫「" + finalName + "」啦 ♡");
+      });
+
       /* Tap creature to pet */
       creatureSvg.addEventListener("click", function (e) {
         var state = SparkTracker.getState();
-        if (state === "sleeping") { toast("小火人沉睡中，快唤醒它吧 💤"); return; }
+        var n = (SparkTracker.load().name || "小火人");
+        if (state === "sleeping") { toast(n + "沉睡中，快唤醒它吧 💤"); return; }
         var result = SparkTracker.pet();
-        if (!result.ok) { toast("心情已经满啦，小火人很开心 ♡"); return; }
+        if (!result.ok) { toast("心情已经满啦，" + n + "很开心 ♡"); return; }
         render();
-        toast("你拍了拍小火人，心情 +" + result.moodAdded + " ♡");
+        toast("你拍了拍" + n + "，心情 +" + result.moodAdded + " ♡");
         spawnHeart(e.clientX, e.clientY);
         if (result.leveledUp) {
           setTimeout(function(){ showLevelUp(result.level); }, 200);

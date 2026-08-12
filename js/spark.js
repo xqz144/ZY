@@ -294,7 +294,8 @@
       mood: 60,
       lastFed: "",
       lastVitalUpdate: "",
-      foods: {}
+      foods: {},
+      name: "小火人"
     };
   }
 
@@ -331,6 +332,12 @@
     },
     save: function (d) {
       try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) {}
+    },
+    setName: function (name) {
+      var d = this.load();
+      d.name = String(name || "").trim().slice(0, 12) || "小火人";
+      this.save(d);
+      return d.name;
     },
     recordInteraction: function (type) {
       var d = this.load();

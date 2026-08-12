@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猜拳 · 梦角传讯</title>
+    <link rel="stylesheet" href="../css/extapp-unified.css">
+    <script>
+    /* 从父窗口同步主题色/字体到 iframe 内 */
+    (function () {
+        try {
+            var inIframe = false;
+            try { inIframe = (window.top !== window.self); } catch (e) { inIframe = true; }
+            function applyColorThemeFromParent() {
+                try {
+                    var parentRoot = null;
+                    try { parentRoot = window.parent.document.documentElement; } catch (e) { parentRoot = null; }
+                    if (parentRoot) {
+                        var t = parentRoot.getAttribute('data-color-theme');
+                        if (t) document.documentElement.setAttribute('data-color-theme', t);
+                        var dt = parentRoot.getAttribute('data-theme');
+                        if (dt) document.documentElement.setAttribute('data-theme', dt);
+                        if (dt === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+                        var fv = parentRoot.style.getPropertyValue('--font-family');
+                        if (fv) document.documentElement.style.setProperty('--font-family', fv);
+                        var mfv = parentRoot.style.getPropertyValue('--message-font-family');
+                        if (mfv) document.documentElement.style.setProperty('--message-font-family', mfv);
+                        var fs = parentRoot.style.getPropertyValue('--font-size');
+                        if (fs) document.documentElement.style.setProperty('--font-size', fs);
+                    }
+                } catch (e) {}
+            }
+            applyColorThemeFromParent();
+            if (inIframe) {
+                window.addEventListener('message', function (ev) {
+                    var d = ev.data || {};
+                    if (d.type === 'theme:sync' || d.colorTheme || d.theme) {
+                        if (d.colorTheme) document.documentElement.setAttribute('data-color-theme', d.colorTheme);
+                        if (d.theme) {
+                            document.documentElement.setAttribute('data-theme', d.theme);
+                            if (d.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+                        }
+                        if (d.fontFamily) document.documentElement.style.setProperty('--font-family', d.fontFamily);
+                        if (d.messageFontFamily) document.documentElement.style.setProperty('--message-font-family', d.messageFontFamily);
+                        if (d.fontSize) document.documentElement.style.setProperty('--font-size', d.fontSize);
+                        applyColorThemeFromParent();
+                    }
+                });
+                setInterval(applyColorThemeFromParent, 2500);
+            }
+        } catch (e) {}
+    })();
+    </script>
+    <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+        margin: 0;
+        font-family: var(--font-family);
+        background: var(--primary-bg);
+        color: var(--text-primary);
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(var(--accent-color-rgb,184,169,201), 0.35); border-radius: 4px; }
+
+    .app-bg {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background:
+            radial-gradient(ellipse 500px 300px at 20% 0%, rgba(var(--accent-color-rgb,184,169,201), 0.10), transparent 60%),
+            radial-gradient(ellipse 400px 250px at 90% 10%, rgba(var(--accent-color-rgb,184,169,201), 0.08), transparent 55%),
+            var(--primary-bg);
+    }
+
+    .scroll-area {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 16px 16px 32px;
+    }
+
+    /* ===== 对战区域 ===== */
+    .battle-arena {
+        background: var(--card-background);
+        border-radius: var(--radius-lg);
+        padding: 28px 20px 24px;
+        box-shadow: var(--shadow-sm);
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    .spark-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .spark-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #ffb86b, #ff8a56);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        box-shadow: 0 4px 12px rgba(255,138,86,0.3);
+    }
+    .spark-name-text {
+        font-family: var(--font-serif);
+        font-size: 18px;
+        font-weight: 600;
+    }
+    .spark-level-badge {
+        font-size: 11px;
+        color: var(--text-secondary);
+        background: rgba(var(--accent-color-rgb,184,169,201), 0.12);
+        padding: 2px 8px;
+        border-radius: 8px;
+    }
+
+    /* 对战双方手势区 */
+    .versus-zone {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        margin: 20px 0;
+        position: relative;
+    }
+    .player-side, .spark-side {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .side-label {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    .hand-display {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 44px;
+        background: var(--input, #f6f3f0);
+        border: 2px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+    .hand-display.shaking {
+        animation: shake 0.15s ease-in-out infinite;
+    }
+    .hand-display.winner {
+        border-color: #4caf50;
+        box-shadow: 0 0 16px rgba(76,175,80,0.3);
+        animation: bounce 0.4s ease;
+    }
+    .hand-display.loser {
+        opacity: 0.5;
+        transform: scale(0.9);
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        25% { transform: translateY(-8px) rotate(-10deg); }
+        75% { transform: translateY(-8px) rotate(10deg); }
+    }
+    @keyframes bounce {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+    }
+
+    .vs-text {
+        font-family: var(--font-serif);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* 结果文字 */
+    .result-text {
+        font-family: var(--font-serif);
+        font-size: 24px;
+        font-weight: 700;
+        min-height: 32px;
+        margin: 16px 0 8px;
+        transition: all 0.3s;
+    }
+    .result-text.win { color: #4caf50; }
+    .result-text.lose { color: #e57373; }
+    .result-text.draw { color: var(--text-secondary); }
+    .result-detail {
+        font-size: 13px;
+        color: var(--text-secondary);
+        min-height: 18px;
+    }
+
+    /* ===== 出招按钮 ===== */
+    .choices {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin: 24px 0 12px;
+    }
+    .choice-btn {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        border: none;
+        background: var(--card-background);
+        box-shadow: var(--shadow-sm);
+        font-size: 34px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid transparent;
+    }
+    .choice-btn:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+        border-color: rgba(var(--accent-color-rgb,184,169,201), 0.3);
+    }
+    .choice-btn:active {
+        transform: translateY(-1px) scale(0.95);
+    }
+    .choice-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .choice-label {
+        font-size: 11px;
+        color: var(--text-secondary);
+        text-align: center;
+        margin-top: 4px;
+    }
+    .choice-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* ===== 比分板 ===== */
+    .scoreboard {
+        background: var(--card-background);
+        border-radius: var(--radius-md);
+        padding: 16px 20px;
+        box-shadow: var(--shadow-2xs);
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 16px;
+    }
+    .score-item {
+        text-align: center;
+    }
+    .score-num {
+        font-family: var(--font-serif);
+        font-size: 28px;
+        font-weight: 700;
+    }
+    .score-num.win { color: #4caf50; }
+    .score-num.lose { color: #e57373; }
+    .score-num.draw { color: var(--text-secondary); }
+    .score-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+    .score-divider {
+        width: 1px;
+        background: var(--border-color);
+    }
+
+    /* ===== 奖励提示 ===== */
+    .reward-banner {
+        background: linear-gradient(135deg, rgba(255,184,107,0.12), rgba(255,138,86,0.08));
+        border: 1px solid rgba(255,138,86,0.2);
+        border-radius: var(--radius-md);
+        padding: 14px 18px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .reward-icon {
+        font-size: 22px;
+    }
+    .reward-text {
+        font-size: 13px;
+        color: var(--text-primary);
+        line-height: 1.5;
+    }
+    .reward-text b {
+        color: #ff8a56;
+    }
+
+    /* ===== 历史记录 ===== */
+    .history-section {
+        background: var(--card-background);
+        border-radius: var(--radius-md);
+        padding: 16px 20px;
+        box-shadow: var(--shadow-2xs);
+    }
+    .history-title {
+        font-family: var(--font-serif);
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .history-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .history-item {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    .history-item.W { background: rgba(76,175,80,0.15); color: #4caf50; }
+    .history-item.L { background: rgba(229,115,115,0.15); color: #e57373; }
+    .history-item.D { background: rgba(var(--accent-color-rgb,184,169,201), 0.12); color: var(--text-secondary); }
+    .history-empty {
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    /* ===== 重置按钮 ===== */
+    .reset-btn {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        background: var(--card-background);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        margin-top: 12px;
+        transition: all 0.2s;
+        font-family: var(--font-family);
+    }
+    .reset-btn:hover {
+        background: var(--input, #f6f3f0);
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: rgba(0,0,0,0.75);
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        opacity: 0;
+        transition: all 0.3s;
+        z-index: 9999;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* 升级特效 */
+    .levelup-overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,0.5);
+        z-index: 10000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s;
+    }
+    .levelup-overlay.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .levelup-text {
+        font-family: var(--font-serif);
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffb86b;
+        text-shadow: 0 0 20px rgba(255,184,107,0.6);
+        animation: levelupPulse 0.6s ease;
+    }
+    @keyframes levelupPulse {
+        0% { transform: scale(0.5); opacity: 0; }
+        50% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    </style>
+</head>
+<body>
+<div class="app-bg">
+    <div class="scroll-area">
+
+        <!-- 对战区域 -->
+        <div class="battle-arena">
+            <div class="spark-info">
+                <div class="spark-avatar">🔥</div>
+                <span class="spark-name-text" id="sparkName">小火人</span>
+                <span class="spark-level-badge" id="sparkLevel">Lv.1</span>
+            </div>
+
+            <div class="versus-zone">
+                <div class="player-side">
+                    <div class="side-label">你</div>
+                    <div class="hand-display" id="playerHand">✊</div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div class="spark-side">
+                    <div class="side-label" id="sparkSideLabel">小火人</div>
+                    <div class="hand-display" id="sparkHand">✊</div>
+                </div>
+            </div>
+
+            <div class="result-text" id="resultText">出招吧！</div>
+            <div class="result-detail" id="resultDetail">三局两胜，赢了对小火人有奖励哦～</div>
+        </div>
+
+        <!-- 出招按钮 -->
+        <div class="choices" id="choices">
+            <div class="choice-col">
+                <button class="choice-btn" data-choice="rock">✊</button>
+                <div class="choice-label">石头</div>
+            </div>
+            <div class="choice-col">
+                <button class="choice-btn" data-choice="scissors">✌️</button>
+                <div class="choice-label">剪刀</div>
+            </div>
+            <div class="choice-col">
+                <button class="choice-btn" data-choice="paper">✋</button>
+                <div class="choice-label">布</div>
+            </div>
+        </div>
+
+        <!-- 比分板 -->
+        <div class="scoreboard">
+            <div class="score-item">
+                <div class="score-num win" id="winCount">0</div>
+                <div class="score-label">赢</div>
+            </div>
+            <div class="score-divider"></div>
+            <div class="score-item">
+                <div class="score-num draw" id="drawCount">0</div>
+                <div class="score-label">平</div>
+            </div>
+            <div class="score-divider"></div>
+            <div class="score-item">
+                <div class="score-num lose" id="loseCount">0</div>
+                <div class="score-label">输</div>
+            </div>
+            <div class="score-divider"></div>
+            <div class="score-item">
+                <div class="score-num" id="streakCount" style="color:#ff8a56;">0</div>
+                <div class="score-label">连胜</div>
+            </div>
+        </div>
+
+        <!-- 奖励提示 -->
+        <div class="reward-banner">
+            <div class="reward-icon">🎁</div>
+            <div class="reward-text">
+                赢一局：<b>经验+10</b> 心情+5 饱腹+3<br>
+                平局：经验+2　　输了：心情-1
+            </div>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="history-section">
+            <div class="history-title">📜 最近20局</div>
+            <div class="history-list" id="historyList">
+                <span class="history-empty">还没开始对战，快来猜拳吧～</span>
+            </div>
+            <button class="reset-btn" id="resetBtn">重置比分</button>
+        </div>
+
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="levelup-overlay" id="levelupOverlay">
+    <div class="levelup-text" id="levelupText"></div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    var SPARK_KEY = 'mengjiao_spark';
+    var RPS_KEY = 'mengjiao_rps';
+
+    var HANDS = {
+        rock:     { emoji: '✊', name: '石头' },
+        scissors: { emoji: '✌️', name: '剪刀' },
+        paper:    { emoji: '✋', name: '布' }
+    };
+    var HAND_KEYS = ['rock', 'scissors', 'paper'];
+
+    /* 小火人数据（只读，用于显示名字和等级） */
+    function loadSpark() {
+        try {
+            var raw = localStorage.getItem(SPARK_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return { name: '小火人', level: 1, exp: 0, totalExp: 0, mood: 60, fullness: 60 };
+    }
+
+    function saveSpark(d) {
+        try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) {}
+    }
+
+    /* 猜拳比分数据 */
+    function loadRps() {
+        try {
+            var raw = localStorage.getItem(RPS_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return { win: 0, lose: 0, draw: 0, streak: 0, bestStreak: 0, history: [] };
+    }
+    function saveRps(d) {
+        try { localStorage.setItem(RPS_KEY, JSON.stringify(d)); } catch (e) {}
+    }
+
+    /* 小火人经验/等级 */
+    var LEVELS = [
+        { lv: 1, title: '小火苗', need: 50 },
+        { lv: 2, title: '小火人', need: 150 },
+        { lv: 3, title: '火精灵', need: 350 },
+        { lv: 4, title: '烈焰使者', need: 700 },
+        { lv: 5, title: '焰神', need: 1200 },
+        { lv: 6, title: '传说之焰', need: 2000 },
+        { lv: 7, title: '永恒之火', need: 999999 }
+    ];
+    var FULLNESS_MAX = 100;
+    var MOOD_MAX = 100;
+
+    function addExp(spark, amount) {
+        spark.exp += amount;
+        spark.totalExp += amount;
+        var leveledUp = false;
+        while (spark.level < LEVELS.length && spark.exp >= LEVELS[spark.level - 1].need) {
+            spark.exp -= LEVELS[spark.level - 1].need;
+            spark.level++;
+            leveledUp = true;
+        }
+        return leveledUp;
+    }
+
+    /* DOM */
+    var sparkNameEl = document.getElementById('sparkName');
+    var sparkLevelEl = document.getElementById('sparkLevel');
+    var sparkSideLabel = document.getElementById('sparkSideLabel');
+    var playerHand = document.getElementById('playerHand');
+    var sparkHand = document.getElementById('sparkHand');
+    var resultText = document.getElementById('resultText');
+    var resultDetail = document.getElementById('resultDetail');
+    var choices = document.getElementById('choices');
+    var winCount = document.getElementById('winCount');
+    var drawCount = document.getElementById('drawCount');
+    var loseCount = document.getElementById('loseCount');
+    var streakCount = document.getElementById('streakCount');
+    var historyList = document.getElementById('historyList');
+    var resetBtn = document.getElementById('resetBtn');
+    var toastEl = document.getElementById('toast');
+    var levelupOverlay = document.getElementById('levelupOverlay');
+    var levelupText = document.getElementById('levelupText');
+
+    var isPlaying = false;
+
+    function toast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+    }
+
+    function showLevelUp(level) {
+        var lv = LEVELS[Math.min(level - 1, LEVELS.length - 1)];
+        levelupText.textContent = '🎉 升级！Lv.' + level + ' ' + lv.title;
+        levelupOverlay.classList.add('show');
+        setTimeout(function(){ levelupOverlay.classList.remove('show'); }, 2000);
+    }
+
+    function renderScore() {
+        var rps = loadRps();
+        winCount.textContent = rps.win;
+        drawCount.textContent = rps.draw;
+        loseCount.textContent = rps.lose;
+        streakCount.textContent = rps.streak;
+
+        if (rps.history.length === 0) {
+            historyList.innerHTML = '<span class="history-empty">还没开始对战，快来猜拳吧～</span>';
+        } else {
+            var html = '';
+            var recent = rps.history.slice(-20);
+            for (var i = 0; i < recent.length; i++) {
+                html += '<div class="history-item ' + recent[i] + '">' +
+                    (recent[i] === 'W' ? '赢' : recent[i] === 'L' ? '输' : '平') +
+                    '</div>';
+            }
+            historyList.innerHTML = html;
+        }
+    }
+
+    function renderSparkInfo() {
+        var spark = loadSpark();
+        var name = spark.name || '小火人';
+        sparkNameEl.textContent = name;
+        sparkSideLabel.textContent = name;
+        sparkLevelEl.textContent = 'Lv.' + spark.level;
+    }
+
+    /* 判断胜负：返回 'win' / 'lose' / 'draw' */
+    function judge(player, spark) {
+        if (player === spark) return 'draw';
+        if (
+            (player === 'rock' && spark === 'scissors') ||
+            (player === 'scissors' && spark === 'paper') ||
+            (player === 'paper' && spark === 'rock')
+        ) return 'win';
+        return 'lose';
+    }
+
+    /* 小火人出招：有一点小策略，不是纯随机 */
+    function sparkChoose(playerHistory) {
+        // 30%概率根据玩家上一局出招做反制
+        if (playerHistory && playerHistory.length > 0 && Math.random() < 0.3) {
+            var last = playerHistory[playerHistory.length - 1];
+            // 小火人想出克制玩家上一手的招
+            if (last === 'rock') return 'paper';
+            if (last === 'scissors') return 'rock';
+            if (last === 'paper') return 'scissors';
+        }
+        return HAND_KEYS[Math.floor(Math.random() * 3)];
+    }
+
+    function play(playerChoice) {
+        if (isPlaying) return;
+        isPlaying = true;
+
+        // 禁用按钮
+        var btns = choices.querySelectorAll('.choice-btn');
+        for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
+
+        // 摇手动画
+        playerHand.textContent = '✊';
+        sparkHand.textContent = '✊';
+        playerHand.className = 'hand-display shaking';
+        sparkHand.className = 'hand-display shaking';
+        resultText.textContent = '剪刀…石头…布！';
+        resultText.className = 'result-text';
+        resultDetail.textContent = '';
+
+        var rps = loadRps();
+        var sparkChoice = sparkChoose(rps.history.length > 20 ? rps.history.slice(-20) : rps.history);
+
+        // 1秒后揭晓
+        setTimeout(function () {
+            playerHand.className = 'hand-display';
+            sparkHand.className = 'hand-display';
+            playerHand.textContent = HANDS[playerChoice].emoji;
+            sparkHand.textContent = HANDS[sparkChoice].emoji;
+
+            var result = judge(playerChoice, sparkChoice);
+            var spark = loadSpark();
+            var rewardMsg = '';
+
+            if (result === 'win') {
+                rps.win++;
+                rps.streak++;
+                if (rps.streak > rps.bestStreak) rps.bestStreak = rps.streak;
+                rps.history.push('W');
+
+                // 奖励
+                var leveledUp = addExp(spark, 10);
+                spark.mood = Math.min(MOOD_MAX, spark.mood + 5);
+                spark.fullness = Math.min(FULLNESS_MAX, spark.fullness + 3);
+                rewardMsg = '经验+10  心情+5  饱腹+3';
+
+                playerHand.classList.add('winner');
+                sparkHand.classList.add('loser');
+                resultText.textContent = '🎉 你赢了！';
+                resultText.className = 'result-text win';
+
+                if (leveledUp) {
+                    setTimeout(function(){ showLevelUp(spark.level); }, 500);
+                }
+            } else if (result === 'lose') {
+                rps.lose++;
+                rps.streak = 0;
+                rps.history.push('L');
+
+                spark.mood = Math.max(0, spark.mood - 1);
+                rewardMsg = '心情-1（小火人傲娇了一下）';
+
+                sparkHand.classList.add('winner');
+                playerHand.classList.add('loser');
+                resultText.textContent = '😢 你输了';
+                resultText.className = 'result-text lose';
+            } else {
+                rps.draw++;
+                rps.history.push('D');
+
+                var leveledUp2 = addExp(spark, 2);
+                rewardMsg = '经验+2';
+
+                resultText.textContent = '🤝 平局！';
+                resultText.className = 'result-text draw';
+
+                if (leveledUp2) {
+                    setTimeout(function(){ showLevelUp(spark.level); }, 500);
+                }
+            }
+
+            resultDetail.textContent = '你出了' + HANDS[playerChoice].name + '，' + (spark.name || '小火人') + '出了' + HANDS[sparkChoice].name + '　·　' + rewardMsg;
+
+            // 保存
+            saveRps(rps);
+            saveSpark(spark);
+
+            // 通知父窗口（小火人iframe可能打开着）
+            try {
+                var frames = window.parent.document.querySelectorAll('iframe');
+                for (var j = 0; j < frames.length; j++) {
+                    try {
+                        frames[j].contentWindow && frames[j].contentWindow.postMessage({ type: 'spark:update' }, '*');
+                    } catch (e) {}
+                }
+            } catch (e) {}
+
+            renderScore();
+            renderSparkInfo();
+
+            // 恢复按钮
+            setTimeout(function () {
+                isPlaying = false;
+                for (var k = 0; k < btns.length; k++) btns[k].disabled = false;
+            }, 600);
+        }, 1000);
+    }
+
+    /* 事件绑定 */
+    var btns = choices.querySelectorAll('.choice-btn');
+    for (var i = 0; i < btns.length; i++) {
+        (function (btn) {
+            btn.addEventListener('click', function () {
+                play(btn.dataset.choice);
+            });
+        })(btns[i]);
+    }
+
+    resetBtn.addEventListener('click', function () {
+        if (!confirm('确定重置比分吗？历史记录也会清空哦')) return;
+        saveRps({ win: 0, lose: 0, draw: 0, streak: 0, bestStreak: 0, history: [] });
+        renderScore();
+        toast('比分已重置 ♡');
+    });
+
+    // 监听 spark 数据变化（比如在小火人页面改了名字）
+    window.addEventListener('storage', function (e) {
+        if (e.key === SPARK_KEY) renderSparkInfo();
+    });
+    window.addEventListener('message', function (ev) {
+        var d = ev.data || {};
+        if (d.type === 'spark:update') renderSparkInfo();
+    });
+
+    // 初始化
+    renderSparkInfo();
+    renderScore();
+})();
+</script>
+</body>
+</html>
