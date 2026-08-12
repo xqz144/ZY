@@ -200,22 +200,7 @@ body.home-active {
     opacity: 1;
 }
 
-.hero-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-}
-
-.hero-subtitle {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.92);
-    font-weight: 400;
-    letter-spacing: 0.5px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
+/* 注意：hero-title / hero-subtitle 的样式集中定义在 ~L111-L124（上方） */
 
 /* 独立时间显示 */
 .standalone-time {
