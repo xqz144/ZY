@@ -1938,13 +1938,7 @@
                 }
             },
             // ========== 用户扩展功能：内嵌iframe，和参考站原有行为一致 ==========
-            'diary-new':       () => window.showExtApp('diary-new'),
-            'wish-new':        () => window.showExtApp('wish-new'),
-            'spark-new':       () => window.showExtApp('spark-new'),
-            'anniversary-new': () => window.showExtApp('anniversary-new'),
-            'music-new':       () => window.showExtApp('music-new'),
-            'call-new':        () => window.showExtApp('call-new'),
-            'history-new':     () => window.showExtApp('history-new')
+            'spark-new':       () => window.showExtApp('spark-new')
         };
 
         if (appActions[app]) {
