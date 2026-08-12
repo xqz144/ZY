@@ -725,7 +725,7 @@
 
             preset.onclick = async function() {
                 const heroBg = document.getElementById('hero-bg-inner');
-                if (heroBg) heroBg.style.background = `url(${url}) center/cover no-repeat`;
+                if (heroBg) heroBg.style.background = `url(${url}) center top/cover no-repeat`;
                 await homeSetLargeItem('home_card_bg_custom', url);
                 homeSetItem('home_card_bg', 'custom');
                 document.querySelectorAll('#bg-presets .bg-preset').forEach(el => el.classList.remove('active'));
@@ -797,7 +797,7 @@
         reader.onload = async function(e) {
             const url = e.target.result;
             const heroBg = document.getElementById('hero-bg-inner');
-            if (heroBg) heroBg.style.background = `url(${url}) center/cover no-repeat`;
+            if (heroBg) heroBg.style.background = `url(${url}) center top/cover no-repeat`;
 
             document.querySelectorAll('#bg-presets .bg-preset').forEach(el => el.classList.remove('active'));
             // 使用大容量存储保存自定义背景 URL
@@ -1584,15 +1584,9 @@
         }, { passive: true });
     })();
 
-    // ========== 扩展功能（用户7个功能页）：内嵌iframe方式，SPA内导航 ==========
+    // ========== 扩展功能（小火人功能页）：内嵌iframe方式，SPA内导航 ==========
     const EXT_APPS = {
-        'diary-new':      { key: 'diary',       page: 'pages/diary-new.html' },
-        'wish-new':       { key: 'wish',        page: 'pages/wish-new.html' },
-        'spark-new':      { key: 'spark',       page: 'pages/spark-new.html' },
-        'anniversary-new':{ key: 'anniversary', page: 'pages/anniversary-new.html' },
-        'music-new':      { key: 'music',       page: 'pages/music-new.html' },
-        'call-new':       { key: 'call',        page: 'pages/call-new.html' },
-        'history-new':    { key: 'history',     page: 'pages/history-new.html' }
+        'spark-new':      { key: 'spark',       page: 'pages/spark-new.html' }
     };
 
     window.showExtApp = function(appKeyOrId) {
@@ -2141,7 +2135,7 @@
             const customUrl = await homeGetLargeItem('home_card_bg_custom');
             if (customUrl) {
                 const heroBg = document.getElementById('hero-bg-inner');
-                if (heroBg) heroBg.style.background = `url(${customUrl}) center/cover no-repeat`;
+                if (heroBg) heroBg.style.background = `url(${customUrl}) center top/cover no-repeat`;
             }
         } else if (savedBg && bgPresets[savedBg]) {
             window.setCardBg(savedBg);

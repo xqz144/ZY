@@ -43,6 +43,7 @@ body.home-active {
 .hero-card {
     border-radius: 24px;
     overflow: hidden;
+    min-height: 240px;
     box-shadow:
 0 8px 32px rgba(0, 0, 0, 0.08),
 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
@@ -57,7 +58,7 @@ body.home-active {
     inset: 0;
     background: linear-gradient(135deg, #f5f0f9 0%, #faf8fb 50%, #f8f6f9 100%);
     background-size: cover;
-    background-position: center;
+    background-position: center top;
     z-index: 0;
     transition: background 0.5s ease;
 }

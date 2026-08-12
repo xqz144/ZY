@@ -1,133 +1,681 @@
-﻿<!DOCTYPE html>
-<html lang="zh-CN" class="light">
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小火人 · 梦角传讯</title>
-    <style id="theme-vars">
-/* 梦角传讯 — 动漫手绘风主题 */
-/* 灵感：iOS 桌面小组件 · 柔和粉彩 · 手绘边框 · 可爱装饰 */
-
-@font-face {
-  font-family: 'DreamFont';
-  src: url('https://image.uglycat.cc/dpl50d.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-
-body {
-  font-family: var(--font-sans);
-  letter-spacing: var(--tracking-normal);
-}
-
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(var(--accent-color-rgb), 0.35); border-radius: 4px; }
-
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
-    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
-    <style type="text/tailwindcss">
-  @theme inline {
-    --color-foreground: var(--card-foreground);
-  }
-  @layer base {
-    body { background: var(--card-background); color: var(--card-foreground); }
-    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
-    th { @apply whitespace-nowrap; }
-  }
-    </style>
+    <link rel="stylesheet" href="../css/extapp-unified.css">
+    <script>
+    /* 从父窗口同步主题色/字体到 iframe 内（配合主站外观设置） */
+    (function () {
+        try {
+            var inIframe = false;
+            try { inIframe = (window.top !== window.self); } catch (e) { inIframe = true; }
+            function applyColorThemeFromParent() {
+                try {
+                    var parentRoot = null;
+                    try { parentRoot = window.parent.document.documentElement; } catch (e) { parentRoot = null; }
+                    if (parentRoot) {
+                        var t = parentRoot.getAttribute('data-color-theme');
+                        if (t) document.documentElement.setAttribute('data-color-theme', t);
+                        var dt = parentRoot.getAttribute('data-theme');
+                        if (dt) document.documentElement.setAttribute('data-theme', dt);
+                        if (dt === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+                        var fv = parentRoot.style.getPropertyValue('--font-family');
+                        if (fv) document.documentElement.style.setProperty('--font-family', fv);
+                        var mfv = parentRoot.style.getPropertyValue('--message-font-family');
+                        if (mfv) document.documentElement.style.setProperty('--message-font-family', mfv);
+                        var fs = parentRoot.style.getPropertyValue('--font-size');
+                        if (fs) document.documentElement.style.setProperty('--font-size', fs);
+                    }
+                } catch (e) { console.warn('spark theme sync error', e); }
+            }
+            applyColorThemeFromParent();
+            if (inIframe) {
+                window.addEventListener('message', function (ev) {
+                    var d = ev.data || {};
+                    if (d.type === 'theme:sync' || d.colorTheme || d.theme) {
+                        if (d.colorTheme) document.documentElement.setAttribute('data-color-theme', d.colorTheme);
+                        if (d.theme) {
+                            document.documentElement.setAttribute('data-theme', d.theme);
+                            if (d.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+                        }
+                        if (d.fontFamily) document.documentElement.style.setProperty('--font-family', d.fontFamily);
+                        if (d.messageFontFamily) document.documentElement.style.setProperty('--message-font-family', d.messageFontFamily);
+                        if (d.fontSize) document.documentElement.style.setProperty('--font-size', d.fontSize);
+                        applyColorThemeFromParent();
+                    }
+                });
+                setInterval(applyColorThemeFromParent, 2500);
+            }
+        } catch (e) { console.warn('spark init error', e); }
+    })();
+    </script>
     <style>
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      [data-icon] {
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+        margin: 0;
+        font-family: var(--font-family);
+        background: var(--primary-bg);
+        color: var(--text-primary);
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(var(--accent-color-rgb), 0.35); border-radius: 4px; }
+
+    .app-bg {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background:
+            radial-gradient(ellipse 500px 300px at 20% 0%, rgba(var(--accent-color-rgb), 0.10), transparent 60%),
+            radial-gradient(ellipse 400px 250px at 90% 10%, rgba(var(--accent-color-rgb), 0.08), transparent 55%),
+            var(--primary-bg);
+    }
+
+    .scroll-area {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0 16px 32px;
+        max-width: 520px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    /* Creature */
+    .creature-stage {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 0 4px;
+    }
+    .creature-frame {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        border-radius: 9999px;
+        border: 3px dashed rgba(var(--accent-color-rgb), 0.35);
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at center, rgba(var(--accent-color-rgb), 0.08), transparent 70%);
+        box-shadow: inset 0 0 28px rgba(var(--accent-color-rgb), 0.06);
+    }
+    .creature-aura {
+        position: absolute;
+        top: 8px;
+        width: 184px;
+        height: 184px;
+        border-radius: 9999px;
+        background: radial-gradient(circle, rgba(var(--accent-color-rgb), 0.14), transparent 70%);
+        animation: auraPulse 3s ease-in-out infinite;
+        pointer-events: none;
+    }
+    .frame-deco {
+        position: absolute;
+        font-size: 14px;
+        opacity: 0.7;
+        pointer-events: none;
+    }
+    .frame-deco.deco-1 { top: 18px; left: 24px; transform: rotate(-12deg); }
+    .frame-deco.deco-2 { top: 24px; right: 28px; transform: rotate(8deg); }
+    .frame-deco.deco-3 { bottom: 22px; right: 22px; transform: rotate(15deg); }
+    .frame-deco.deco-4 { bottom: 30px; left: 28px; transform: rotate(-6deg); }
+    @keyframes auraPulse {
+        0%, 100% { opacity: 0.4; transform: scale(0.92); }
+        50% { opacity: 0.85; transform: scale(1.05); }
+    }
+    .creature-svg-wrap {
+        position: relative;
+        z-index: 1;
+        animation: creatureBob 2.5s ease-in-out infinite;
+    }
+    .creature-svg-wrap.sleeping { animation: creatureSleep 3s ease-in-out infinite; }
+    @keyframes creatureBob {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+    @keyframes creatureSleep {
+        0%, 100% { transform: translateY(0) rotate(-2deg); }
+        50% { transform: translateY(2px) rotate(2deg); }
+    }
+    @keyframes heartFloat {
+        0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
+        50% { opacity: 0.8; transform: translate(-50%, -120%) scale(1.2); }
+        100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
+    }
+    .creature-name {
+        font-family: var(--font-serif);
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-top: 10px;
+    }
+    .creature-status {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+    .status-badge {
         display: inline-flex;
         align-items: center;
+        gap: 4px;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-top: 8px;
+        background: rgba(var(--accent-color-rgb), 0.12);
+        color: var(--accent-color);
+        border: 1px solid rgba(var(--accent-color-rgb), 0.2);
+    }
+
+    /* Level & exp */
+    .level-bar {
+        margin-top: 14px;
+        padding: 14px 16px;
+        border-radius: var(--radius-lg);
+        background: var(--card-background);
+        border: 1px solid var(--border-color);
+    }
+    .level-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    .level-info { display: flex; align-items: baseline; gap: 6px; }
+    .level-label {
+        font-family: var(--font-serif);
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--accent-color);
+    }
+    .level-title { font-size: 12px; color: var(--text-secondary); }
+    .exp-text { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .exp-track {
+        height: 10px;
+        border-radius: 9999px;
+        background: rgba(var(--accent-color-rgb), 0.1);
+        overflow: hidden;
+    }
+    .exp-fill {
+        height: 100%;
+        border-radius: 9999px;
+        background: linear-gradient(90deg, var(--accent-color), rgba(var(--accent-color-rgb), 0.6));
+        transition: width 0.6s cubic-bezier(0.3,0,0,1);
+        box-shadow: 0 0 10px -2px rgba(var(--accent-color-rgb), 0.35);
+    }
+
+    /* Vitals */
+    .vitals-section {
+        margin-top: 12px;
+        padding: 14px 16px;
+        border-radius: var(--radius-lg);
+        background: var(--card-background);
+        border: 1px solid var(--border-color);
+    }
+    .vital-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+    .vital-row + .vital-row { margin-top: 10px; margin-bottom: 4px; }
+    .vital-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex; align-items: center; gap: 6px;
+    }
+    .vital-icon { font-size: 15px; }
+    .vital-num { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .vital-track {
+        height: 8px;
+        border-radius: 9999px;
+        background: rgba(var(--accent-color-rgb), 0.08);
+        overflow: hidden;
+    }
+    .vital-fill {
+        height: 100%;
+        border-radius: 9999px;
+        transition: width 0.5s cubic-bezier(0.3,0,0,1);
+    }
+    .vital-fill.fullness { background: linear-gradient(90deg, var(--accent-color), rgba(var(--accent-color-rgb), 0.6)); }
+    .vital-fill.mood { background: linear-gradient(90deg, rgba(var(--accent-color-rgb), 0.6), var(--accent-color)); }
+
+    /* Stats */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 12px;
+    }
+    .stat-card {
+        padding: 14px 6px;
+        border-radius: var(--radius-md);
+        background: var(--card-background);
+        border: 1px solid var(--border-color);
+        text-align: center;
+        transition: transform 0.15s ease;
+    }
+    .stat-card:active { transform: scale(0.96); }
+    .stat-icon { font-size: 20px; line-height: 1; margin-bottom: 5px; }
+    .stat-num {
+        font-family: var(--font-serif);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--accent-color);
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+    .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* Today interactions */
+    .today-section {
+        margin-top: 12px;
+        padding: 16px;
+        border-radius: var(--radius-lg);
+        background: var(--card-background);
+        border: 1px solid var(--border-color);
+    }
+    .today-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+    }
+    .today-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 0;
+    }
+    .today-left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+    .today-left .emoji { font-size: 17px; }
+    .today-count { font-size: 13px; font-weight: 600; color: var(--accent-color); font-variant-numeric: tabular-nums; }
+    .today-count.done { opacity: 0.85; }
+    .today-bar {
+        flex: 1;
+        height: 5px;
+        border-radius: 9999px;
+        background: rgba(var(--accent-color-rgb), 0.08);
+        margin: 0 12px;
+        overflow: hidden;
+        max-width: 100px;
+    }
+    .today-bar-fill {
+        height: 100%;
+        border-radius: 9999px;
+        background: linear-gradient(90deg, var(--accent-color), rgba(var(--accent-color-rgb), 0.6));
+        transition: width 0.4s ease;
+    }
+
+    /* Milestones */
+    .milestone-section {
+        margin-top: 12px;
+        padding: 16px;
+        border-radius: var(--radius-lg);
+        background: var(--card-background);
+        border: 1px solid var(--border-color);
+    }
+    .milestone-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+    }
+    .milestone-list {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+    }
+    .milestone-list::-webkit-scrollbar { display: none; }
+    .milestone-item {
+        flex-shrink: 0;
+        width: 72px;
+        text-align: center;
+    }
+    .milestone-circle {
+        width: 52px; height: 52px;
+        border-radius: 9999px;
+        display: grid; place-items: center;
+        font-size: 24px;
+        margin: 0 auto 5px;
+        border: 2px dashed rgba(var(--accent-color-rgb), 0.2);
+        background: var(--card-background);
+        position: relative;
+        transition: transform 0.15s ease;
+    }
+    .milestone-item.unlocked .milestone-circle {
+        border-style: solid;
+        border-color: var(--accent-color);
+        background: rgba(var(--accent-color-rgb), 0.12);
+        box-shadow: 0 4px 12px -4px rgba(var(--accent-color-rgb), 0.25);
+    }
+    .milestone-item.unlocked .milestone-circle::after {
+        content: '✓';
+        position: absolute;
+        top: -2px; right: -2px;
+        width: 18px; height: 18px;
+        border-radius: 9999px;
+        background: var(--accent-color);
+        color: #fff;
+        font-size: 10px;
+        display: grid; place-items: center;
+        font-weight: 700;
+    }
+    .milestone-label { font-size: 10.5px; color: var(--text-secondary); line-height: 1.3; }
+    .milestone-item.unlocked .milestone-label { color: var(--accent-color); font-weight: 600; }
+
+    /* Makeup card */
+    .makeup-section {
+        margin-top: 12px;
+        padding: 14px 16px;
+        border-radius: var(--radius-lg);
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .makeup-info { display: flex; align-items: center; gap: 10px; }
+    .makeup-icon { font-size: 26px; }
+    .makeup-text { font-size: 13px; color: var(--text-primary); }
+    .makeup-text b { font-family: var(--font-serif); font-size: 15px; color: var(--accent-color); }
+    .makeup-btn {
+        font-size: 12px;
+        padding: 7px 16px;
+        border-radius: 9999px;
+        border: 1px solid rgba(var(--accent-color-rgb), 0.3);
+        background: var(--card-background);
+        color: var(--accent-color);
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.12s ease, background-color 0.12s ease;
+    }
+    .makeup-btn:active { transform: scale(0.94); background: rgba(var(--accent-color-rgb), 0.12); }
+    .makeup-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Quick actions */
+    .action-section {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    .action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        padding: 14px 4px;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+        background: var(--card-background);
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+    }
+    .action-btn:hover { transform: translateY(-2px); }
+    .action-btn:active { transform: scale(0.95); }
+    .action-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 9999px;
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+        background: rgba(var(--accent-color-rgb), 0.12);
+        border: 2px dashed rgba(var(--accent-color-rgb), 0.2);
+    }
+    .action-label { font-size: 12px; color: var(--text-primary); font-weight: 500; }
+    .action-exp { font-size: 10px; color: var(--text-secondary); }
+
+    /* Feed button in top bar */
+    .feed-btn {
+        font-size: 13px;
+        padding: 6px 16px;
+        border-radius: 9999px;
+        border: 1px solid rgba(var(--accent-color-rgb), 0.3);
+        background: var(--card-background);
+        color: var(--accent-color);
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+    }
+    .feed-btn:active { transform: scale(0.94); }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal-sheet {
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        background: var(--card-background);
+        border-radius: 32px 32px 0 0;
+        padding: 20px 18px 28px;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.3,0,0,1);
+        z-index: 101;
+        max-height: 85vh;
+        overflow-y: auto;
+        scrollbar-width: none;
+    }
+    .modal-sheet::-webkit-scrollbar { display: none; }
+    .modal-overlay.show .modal-sheet { transform: translateY(0); }
+    .modal-handle {
+        width: 44px; height: 4px;
+        border-radius: 9999px;
+        background: var(--border-color);
+        margin: 0 auto 16px;
+    }
+    .modal-title {
+        font-family: var(--font-serif);
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        text-align: center;
+    }
+
+    .feeder-preview {
+        display: flex;
         justify-content: center;
-        -webkit-mask-size: contain;
-        mask-size: contain;
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        mask-position: center;
-        background-color: currentColor;
-      }
+        margin-bottom: 12px;
+        position: relative;
+    }
+    .feeder-preview img { transition: transform 0.2s ease; }
+    .feeder-preview.eating img { animation: eatBounce 0.5s ease; }
+    @keyframes eatBounce {
+        0%, 100% { transform: scale(1) translateY(0); }
+        30% { transform: scale(1.08) translateY(-6px); }
+        60% { transform: scale(0.96) translateY(2px); }
+    }
+
+    .feeder-hint {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-align: center;
+        margin-bottom: 14px;
+    }
+
+    .food-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .food-card {
+        position: relative;
+        border-radius: var(--radius-md);
+        border: 2px dashed rgba(var(--accent-color-rgb), 0.2);
+        background: var(--card-background);
+        padding: 12px 6px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.15s ease, border-color 0.15s ease;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .food-card:active { transform: scale(0.95); }
+    .food-card.active {
+        border-style: solid;
+        border-color: var(--accent-color);
+        background: rgba(var(--accent-color-rgb), 0.08);
+    }
+    .food-card.locked {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+    .food-card.locked::after {
+        content: '🔒';
+        position: absolute;
+        top: 8px; right: 8px;
+        font-size: 11px;
+    }
+    .food-emoji { font-size: 32px; line-height: 1; margin-bottom: 5px; }
+    .food-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+    .food-effect { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+    .food-stock {
+        position: absolute;
+        top: 8px; left: 8px;
+        min-width: 20px; height: 20px;
+        padding: 0 5px;
+        border-radius: 9999px;
+        background: var(--accent-color);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        display: grid; place-items: center;
+    }
+
+    .feeder-detail {
+        background: var(--secondary-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 14px;
+        margin-bottom: 16px;
+    }
+    .feeder-detail-title {
+        font-family: var(--font-serif);
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+    .feeder-detail-desc {
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .feeder-actions {
+        display: flex; gap: 12px;
+        margin-top: 6px;
+    }
+    .feeder-btn {
+        flex: 1;
+        height: 46px;
+        border-radius: var(--radius-sm);
+        border: none;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+    .feeder-btn:active { transform: scale(0.97); }
+    .feeder-btn.secondary {
+        background: rgba(var(--accent-color-rgb), 0.1);
+        color: var(--accent-color);
+    }
+    .feeder-btn.primary {
+        background: var(--accent-color);
+        color: #fff;
+        box-shadow: 0 4px 14px -4px rgba(var(--accent-color-rgb), 0.35);
+    }
+    .feeder-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Toast */
+    .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 34px;
+        transform: translateX(-50%) translateY(12px);
+        background: var(--text-primary);
+        color: var(--card-background);
+        font-size: 13px;
+        padding: 9px 20px;
+        border-radius: 9999px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        z-index: 200;
+        white-space: nowrap;
+        backdrop-filter: blur(6px);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Level up effect */
+    .levelup-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+    .levelup-overlay.show { display: flex; }
+    .levelup-text {
+        font-family: var(--font-serif);
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--accent-color);
+        text-shadow: 0 0 20px rgba(var(--accent-color-rgb), 0.6);
+        animation: levelupPop 1.5s ease-out forwards;
+        text-align: center;
+        padding: 0 16px;
+    }
+    @keyframes levelupPop {
+        0% { opacity: 0; transform: scale(0.5); }
+        20% { opacity: 1; transform: scale(1.1); }
+        40% { transform: scale(1); }
+        80% { opacity: 1; transform: scale(1) translateY(-10px); }
+        100% { opacity: 0; transform: scale(1) translateY(-30px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
     </style>
-
-    <link rel="stylesheet" href="../css/extapp-unified.css">
-
-<script>
-/* 从父窗口同步主题色/字体到 iframe 内（配合主站外观设置） */
-(function () {
-  try {
-    var inIframe = false;
-    try { inIframe = (window.top !== window.self); } catch (e) { inIframe = true; }
-    function applyColorThemeFromParent() {
-      try {
-        var parentRoot = null;
-        try { parentRoot = window.parent.document.documentElement; } catch (e) { parentRoot = null; }
-        if (parentRoot) {
-          var t = parentRoot.getAttribute('data-color-theme');
-          if (t) document.documentElement.setAttribute('data-color-theme', t);
-          var dt = parentRoot.getAttribute('data-theme');
-          if (dt) document.documentElement.setAttribute('data-theme', dt);
-          if (dt === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
-          /* 同步字体变量（用户在外观设置里配置的自定义字体） */
-          var fv = parentRoot.style.getPropertyValue('--font-family');
-          if (fv) document.documentElement.style.setProperty('--font-family', fv);
-          var mfv = parentRoot.style.getPropertyValue('--message-font-family');
-          if (mfv) document.documentElement.style.setProperty('--message-font-family', mfv);
-          var fs = parentRoot.style.getPropertyValue('--font-size');
-          if (fs) document.documentElement.style.setProperty('--font-size', fs);
-        }
-      } catch (e) {}
-    }
-    applyColorThemeFromParent();
-    if (inIframe) {
-      window.addEventListener('message', function (ev) {
-        var d = ev.data || {};
-        if (d.type === 'theme:sync' || d.colorTheme || d.theme) {
-          if (d.colorTheme) document.documentElement.setAttribute('data-color-theme', d.colorTheme);
-          if (d.theme) {
-            document.documentElement.setAttribute('data-theme', d.theme);
-            if (d.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
-          }
-          /* 同步字体 CSS 变量 */
-          if (d.fontFamily) document.documentElement.style.setProperty('--font-family', d.fontFamily);
-          if (d.messageFontFamily) document.documentElement.style.setProperty('--message-font-family', d.messageFontFamily);
-          if (d.fontSize) document.documentElement.style.setProperty('--font-size', d.fontSize);
-          applyColorThemeFromParent();
-        }
-      });
-      setInterval(applyColorThemeFromParent, 2500);
-    }
-  } catch (e) {}
-})();
-</script>
 </head>
 <body>
-  <div class="phone">
-    <div class="app-bg" id="appBg">
-      <header class="extapp-unified-nav">
-        <a href="../index-zy.html" class="back-btn extapp-back-btn" data-dom-id="back-home">
-          <i data-lucide="chevron-left" class="back-icon"></i>
-          <span>返回</span>
-        </a>
-        <h1 class="top-title extapp-title">小火人</h1>
-        <div class="top-action">
-          <button class="feed-btn" id="feedBtn" data-dom-id="open-feeder">喂食</button>
-        </div>
-      </header>
-
-      <main class="scroll-area" id="scrollArea">
+  <div class="app-bg">
+    <main class="scroll-area" id="scrollArea">
         <!-- 小火人舞台 -->
         <section class="creature-stage">
           <div class="creature-frame" aria-label="小火人">
             <div class="creature-aura" id="creatureAura"></div>
             <div class="creature-svg-wrap" id="creatureWrap">
-              <div id="creatureSvg" data-dom-id="pet-creature"></div>
+              <div id="creatureSvg"></div>
             </div>
             <span class="frame-deco deco-1">✨</span>
             <span class="frame-deco deco-2">♡</span>
@@ -136,7 +684,7 @@ body {
           </div>
           <div class="creature-name" id="creatureName">小火人</div>
           <div class="creature-status" id="creatureStatusText">和梦角一起成长中</div>
-          <div class="status-badge happy" id="statusBadge">😊 开心</div>
+          <div class="status-badge" id="statusBadge">😊 开心</div>
         </section>
 
         <!-- 等级经验 -->
@@ -146,11 +694,12 @@ body {
               <span class="level-label" id="levelLabel">Lv.1</span>
               <span class="level-title" id="levelTitle">小火苗</span>
             </div>
-            <span class="exp-text" id="expText">0 / 50</span>
+            <button class="feed-btn" id="feedBtn">喂食</button>
           </div>
           <div class="exp-track">
             <div class="exp-fill" id="expFill" style="width:0%"></div>
           </div>
+          <div style="text-align:right;margin-top:4px;"><span class="exp-text" id="expText">0 / 50</span></div>
         </section>
 
         <!-- 饱食度 / 心情 -->
@@ -218,755 +767,42 @@ body {
             <div class="makeup-icon">🎫</div>
             <div class="makeup-text">补签卡 <b id="makeupCount">1</b> 张</div>
           </div>
-          <button class="makeup-btn" id="makeupBtn" data-dom-id="makeup-action">补昨日</button>
+          <button class="makeup-btn" id="makeupBtn">补昨日</button>
         </section>
+    </main>
 
-        <!-- 快捷入口 -->
-        <section class="action-section">
-          <a href="chat-new.html" class="action-btn" data-dom-id="go-chat">
-            <span class="action-icon">💬</span>
-            <span class="action-label">去对话</span>
-            <span class="action-exp">+3 exp</span>
-          </a>
-          <a href="cards-new.html" class="action-btn" data-dom-id="go-cards">
-            <span class="action-icon">🃏</span>
-            <span class="action-label">抽字卡</span>
-            <span class="action-exp">+5 exp</span>
-          </a>
-          <a href="moments-new.html" class="action-btn" data-dom-id="go-moments">
-            <span class="action-icon">🌸</span>
-            <span class="action-label">朋友圈</span>
-            <span class="action-exp">+8 exp</span>
-          </a>
-        </section>
-      </main>
+    <!-- 喂食面板 -->
+    <div class="modal-overlay" id="feedModal">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">喂食小火人</div>
+        <div class="feeder-preview" id="feederPreview">
+          <img src="../assets/character.png" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;filter:brightness(1.12) saturate(1.15) contrast(1.05);">
+        </div>
+        <div class="feeder-hint" id="feederHint">选择食物喂给小火人吧～</div>
 
-      <!-- 喂食面板 -->
-      <div class="modal-overlay" id="feedModal">
-        <div class="modal-sheet">
-          <div class="modal-handle"></div>
-          <div class="modal-title">喂食小火人</div>
-          <div class="feeder-preview" id="feederPreview">
-            <img src="../assets/character.png" alt="小火人" style="width:160px;height:180px;object-fit:contain;display:block;filter:brightness(1.12) saturate(1.15) contrast(1.05);">
-          </div>
-          <div class="feeder-hint" id="feederHint">选择食物喂给小火人吧～</div>
+        <div class="food-grid" id="foodGrid"></div>
 
-          <div class="food-grid" id="foodGrid"></div>
+        <div class="feeder-detail" id="feederDetail" style="display:none;">
+          <div class="feeder-detail-title" id="detailTitle"></div>
+          <div class="feeder-detail-desc" id="detailDesc"></div>
+        </div>
 
-          <div class="feeder-detail" id="feederDetail" style="display:none;">
-            <div class="feeder-detail-title" id="detailTitle"></div>
-            <div class="feeder-detail-desc" id="detailDesc"></div>
-          </div>
-
-          <div class="feeder-actions">
-            <button class="feeder-btn secondary" id="feedClose" data-dom-id="feeder-close">关闭</button>
-            <button class="feeder-btn primary" id="feedConfirm" disabled data-dom-id="feeder-confirm">喂食</button>
-          </div>
+        <div class="feeder-actions">
+          <button class="feeder-btn secondary" id="feedClose">关闭</button>
+          <button class="feeder-btn primary" id="feedConfirm" disabled>喂食</button>
         </div>
       </div>
-
-      <!-- 升级特效 -->
-      <div class="levelup-overlay" id="levelupOverlay">
-        <div class="levelup-text" id="levelupText"></div>
-      </div>
-
-      <!-- 轻提示 -->
-      <div class="toast" id="toast"></div>
     </div>
+
+    <!-- 升级特效 -->
+    <div class="levelup-overlay" id="levelupOverlay">
+      <div class="levelup-text" id="levelupText"></div>
+    </div>
+
+    <!-- 轻提示 -->
+    <div class="toast" id="toast"></div>
   </div>
-
-  <style>
-    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-    html { -webkit-font-smoothing: antialiased; }
-    body { margin: 0; }
-
-    .phone {
-      position: relative;
-      width: 100%;
-      max-width: 420px;
-      height: 100vh;
-      max-height: 880px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      background: hsl(var(--background));
-      margin: 0 auto;
-    }
-    @media (min-width: 480px) {
-      .phone {
-        height: 860px;
-        border-radius: 40px;
-        border: 10px solid hsl(var(--foreground));
-        box-shadow: var(--shadow-xl), 0 0 0 2px hsl(var(--foreground) / 0.12);
-      }
-      .phone::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 50%;
-        transform: translateX(-50%);
-        width: 150px; height: 28px;
-        background: hsl(var(--foreground));
-        border-radius: 0 0 18px 18px;
-        z-index: 100;
-      }
-    }
-
-    .app-bg {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      position: relative;
-      background:
-        radial-gradient(ellipse 500px 300px at 20% 0%, hsl(var(--primary) / 0.18), transparent 60%),
-        radial-gradient(ellipse 400px 250px at 90% 10%, hsl(var(--primary) / 0.14), transparent 55%),
-        linear-gradient(180deg, var(--primary-bg), var(--secondary-bg));
-    }
-
-    /* Top bar */
-    .top-bar {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 44px 16px 8px;
-      flex-shrink: 0;
-    }
-    @media (max-width: 479px) { .top-bar { padding-top: 16px; } }
-    .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      font-size: 15px;
-      color: var(--accent-color);
-      text-decoration: none;
-      padding: 6px 8px;
-      font-weight: 500;
-      flex-shrink: 0;
-      min-width: 64px;
-      transition: opacity 0.15s ease;
-    }
-    .back-btn:active { opacity: 0.6; }
-    .back-icon { width: 18px; height: 18px; }
-    .top-title {
-      font-family: var(--font-serif);
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-primary);
-      text-align: center;
-      flex: 1;
-      letter-spacing: 0.02em;
-    }
-    .top-action {
-      flex-shrink: 0;
-      min-width: 64px;
-      display: flex;
-      justify-content: flex-end;
-    }
-    .feed-btn {
-      font-size: 13px;
-      padding: 6px 16px;
-      border-radius: 9999px;
-      border: 1px solid hsl(var(--primary) / 0.35);
-      background: hsl(var(--card) / 0.72);
-      color: var(--accent-color);
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: var(--shadow-xs);
-      transition: transform 0.15s ease, background-color 0.15s ease;
-    }
-    .feed-btn:active { transform: scale(0.94); background: hsl(var(--accent)); }
-
-    /* Scroll area */
-    .scroll-area {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 0 16px 24px;
-      scrollbar-width: none;
-      position: relative;
-      z-index: 1;
-    }
-    .scroll-area::-webkit-scrollbar { display: none; }
-
-    /* Creature */
-    .creature-stage {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 8px 0 4px;
-    }
-    .creature-frame {
-      position: relative;
-      width: 220px;
-      height: 220px;
-      border-radius: 9999px;
-      border: 3px dashed hsl(var(--primary) / 0.45);
-      display: grid;
-      place-items: center;
-      background: radial-gradient(circle at center, hsl(var(--primary) / 0.14), transparent 70%);
-      box-shadow: inset 0 0 28px hsl(var(--primary) / 0.1), var(--shadow-sm);
-    }
-    .creature-aura {
-      position: absolute;
-      top: 10px;
-      width: 200px;
-      height: 200px;
-      border-radius: 9999px;
-      background: radial-gradient(circle, hsl(var(--primary) / 0.22), transparent 70%);
-      animation: auraPulse 3s ease-in-out infinite;
-      pointer-events: none;
-    }
-    .frame-deco {
-      position: absolute;
-      font-size: 14px;
-      opacity: 0.8;
-      pointer-events: none;
-      filter: drop-shadow(0 1px 2px hsl(var(--primary) / 0.25));
-    }
-    .frame-deco.deco-1 { top: 18px; left: 24px; transform: rotate(-12deg); }
-    .frame-deco.deco-2 { top: 24px; right: 28px; transform: rotate(8deg); }
-    .frame-deco.deco-3 { bottom: 22px; right: 22px; transform: rotate(15deg); }
-    .frame-deco.deco-4 { bottom: 30px; left: 28px; transform: rotate(-6deg); }
-    @keyframes auraPulse {
-      0%, 100% { opacity: 0.5; transform: scale(0.92); }
-      50% { opacity: 0.95; transform: scale(1.05); }
-    }
-    .creature-svg-wrap {
-      position: relative;
-      z-index: 1;
-      animation: creatureBob 2.5s ease-in-out infinite;
-    }
-    .creature-svg-wrap.sleeping { animation: creatureSleep 3s ease-in-out infinite; }
-    @keyframes creatureBob {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-6px); }
-    }
-    @keyframes creatureSleep {
-      0%, 100% { transform: translateY(0) rotate(-2deg); }
-      50% { transform: translateY(2px) rotate(2deg); }
-    }
-    @keyframes heartFloat {
-      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
-      50% { opacity: 0.8; transform: translate(-50%, -120%) scale(1.2); }
-      100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
-    }
-    .creature-name {
-      font-family: var(--font-serif);
-      font-size: 17px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-top: 10px;
-    }
-    .creature-status {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 12px;
-      border-radius: 9999px;
-      font-size: 12px;
-      font-weight: 500;
-      margin-top: 8px;
-      background: hsl(var(--accent));
-      color: var(--text-primary);
-      border: 1px solid hsl(var(--primary) / 0.22);
-    }
-
-    /* Level & exp */
-    .level-bar {
-      margin-top: 14px;
-      padding: 14px 16px;
-      border-radius: 24px;
-      background: hsl(var(--card) / 0.78);
-      border: 1px solid hsl(var(--primary) / 0.16);
-      box-shadow: var(--shadow-xs);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .level-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-    .level-info { display: flex; align-items: baseline; gap: 6px; }
-    .level-label {
-      font-family: var(--font-serif);
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--accent-color);
-    }
-    .level-title { font-size: 12px; color: var(--text-secondary); }
-    .exp-text { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-    .exp-track {
-      height: 10px;
-      border-radius: 9999px;
-      background: hsl(var(--primary) / 0.12);
-      overflow: hidden;
-    }
-    .exp-fill {
-      height: 100%;
-      border-radius: 9999px;
-      background: linear-gradient(90deg, var(--accent-color), hsl(var(--primary)));
-      transition: width 0.6s cubic-bezier(0.3,0,0,1);
-      box-shadow: 0 0 10px -2px hsl(var(--primary) / 0.45);
-    }
-
-    /* Vitals */
-    .vitals-section {
-      margin-top: 12px;
-      padding: 14px 16px;
-      border-radius: 24px;
-      background: hsl(var(--card) / 0.78);
-      border: 1px solid hsl(var(--primary) / 0.14);
-      box-shadow: var(--shadow-xs);
-    }
-    .vital-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-    .vital-row + .vital-row { margin-top: 10px; margin-bottom: 4px; }
-    .vital-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .vital-icon { font-size: 15px; }
-    .vital-num { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-    .vital-track {
-      height: 8px;
-      border-radius: 9999px;
-      background: hsl(var(--primary) / 0.1);
-      overflow: hidden;
-    }
-    .vital-fill {
-      height: 100%;
-      border-radius: 9999px;
-      transition: width 0.5s cubic-bezier(0.3,0,0,1);
-    }
-    .vital-fill.fullness { background: linear-gradient(90deg, var(--accent-color), hsl(var(--primary))); }
-    .vital-fill.mood { background: linear-gradient(90deg, hsl(var(--primary)), var(--accent-color)); }
-
-    /* Stats */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 12px;
-    }
-    .stat-card {
-      padding: 14px 6px;
-      border-radius: 24px;
-      background: hsl(var(--card) / 0.78);
-      border: 1px solid hsl(var(--primary) / 0.14);
-      text-align: center;
-      box-shadow: var(--shadow-xs);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .stat-card:active { transform: scale(0.96); }
-    .stat-icon { font-size: 20px; line-height: 1; margin-bottom: 5px; }
-    .stat-num {
-      font-family: var(--font-serif);
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--accent-color);
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-    }
-    .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
-
-    /* Today interactions */
-    .today-section {
-      margin-top: 12px;
-      padding: 16px;
-      border-radius: 24px;
-      background: hsl(var(--card) / 0.72);
-      border: 1px solid hsl(var(--primary) / 0.12);
-      box-shadow: var(--shadow-xs);
-    }
-    .today-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 12px;
-    }
-    .today-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px 0;
-    }
-    .today-left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
-    .today-left .emoji { font-size: 17px; }
-    .today-count { font-size: 13px; font-weight: 600; color: var(--accent-color); font-variant-numeric: tabular-nums; }
-    .today-count.done { color: var(--accent-color); opacity: 0.85; }
-    .today-bar {
-      flex: 1;
-      height: 5px;
-      border-radius: 9999px;
-      background: hsl(var(--primary) / 0.1);
-      margin: 0 12px;
-      overflow: hidden;
-      max-width: 100px;
-    }
-    .today-bar-fill {
-      height: 100%;
-      border-radius: 9999px;
-      background: linear-gradient(90deg, var(--accent-color), hsl(var(--primary)));
-      transition: width 0.4s ease;
-    }
-
-    /* Milestones */
-    .milestone-section {
-      margin-top: 12px;
-      padding: 16px;
-      border-radius: 24px;
-      background: hsl(var(--card) / 0.72);
-      border: 1px solid hsl(var(--primary) / 0.12);
-      box-shadow: var(--shadow-xs);
-    }
-    .milestone-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 12px;
-    }
-    .milestone-list {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding-bottom: 2px;
-    }
-    .milestone-list::-webkit-scrollbar { display: none; }
-    .milestone-item {
-      flex-shrink: 0;
-      width: 72px;
-      text-align: center;
-    }
-    .milestone-circle {
-      width: 52px; height: 52px;
-      border-radius: 9999px;
-      display: grid; place-items: center;
-      font-size: 24px;
-      margin: 0 auto 5px;
-      border: 2px dashed hsl(var(--primary) / 0.22);
-      background: hsl(var(--card) / 0.7);
-      position: relative;
-      transition: transform 0.15s ease;
-    }
-    .milestone-item.unlocked .milestone-circle {
-      border-style: solid;
-      border-color: var(--accent-color);
-      background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary) / 0.35));
-      box-shadow: 0 4px 12px -4px hsl(var(--primary) / 0.35);
-    }
-    .milestone-item.unlocked .milestone-circle::after {
-      content: '✓';
-      position: absolute;
-      top: -2px; right: -2px;
-      width: 18px; height: 18px;
-      border-radius: 9999px;
-      background: var(--accent-color);
-      color: hsl(var(--card));
-      font-size: 10px;
-      display: grid; place-items: center;
-      font-weight: 700;
-    }
-    .milestone-label { font-size: 10.5px; color: var(--text-secondary); line-height: 1.3; }
-    .milestone-item.unlocked .milestone-label { color: var(--accent-color); font-weight: 600; }
-
-    /* Makeup card */
-    .makeup-section {
-      margin-top: 12px;
-      padding: 14px 16px;
-      border-radius: 24px;
-      background: hsl(var(--secondary) / 0.85);
-      border: 1px solid hsl(var(--primary) / 0.18);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow-xs);
-    }
-    .makeup-info { display: flex; align-items: center; gap: 10px; }
-    .makeup-icon { font-size: 26px; }
-    .makeup-text { font-size: 13px; color: var(--text-primary); }
-    .makeup-text b { font-family: var(--font-serif); font-size: 15px; color: var(--accent-color); }
-    .makeup-btn {
-      font-size: 12px;
-      padding: 7px 16px;
-      border-radius: 9999px;
-      border: 1px solid hsl(var(--primary) / 0.35);
-      background: hsl(var(--card));
-      color: var(--accent-color);
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.12s ease, background-color 0.12s ease;
-    }
-    .makeup-btn:active { transform: scale(0.94); background: hsl(var(--accent)); }
-    .makeup-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* Quick actions */
-    .action-section {
-      margin-top: 14px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-    .action-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      padding: 14px 4px;
-      border-radius: 26px;
-      border: 1px solid hsl(var(--primary) / 0.15);
-      background: hsl(var(--card) / 0.72);
-      text-decoration: none;
-      cursor: pointer;
-      box-shadow: var(--shadow-xs);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-    }
-    .action-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-    .action-btn:active { transform: scale(0.95); background: hsl(var(--accent)); }
-    .action-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: 9999px;
-      display: grid;
-      place-items: center;
-      font-size: 22px;
-      background: hsl(var(--accent));
-      border: 2px dashed hsl(var(--primary) / 0.25);
-    }
-    .action-label { font-size: 12px; color: var(--text-primary); font-weight: 500; }
-    .action-exp { font-size: 10px; color: var(--text-secondary); }
-
-    /* Modal */
-    .modal-overlay {
-      position: absolute;
-      inset: 0;
-      background: hsl(var(--foreground) / 0.35);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-    .modal-overlay.show { opacity: 1; pointer-events: auto; }
-    .modal-sheet {
-      position: absolute;
-      left: 0; right: 0; bottom: 0;
-      background: hsl(var(--card) / 0.96);
-      border-radius: 32px 32px 0 0;
-      padding: 20px 18px 28px;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.3,0,0,1);
-      z-index: 101;
-      max-height: 85vh;
-      overflow-y: auto;
-      scrollbar-width: none;
-      box-shadow: var(--shadow-lg);
-    }
-    .modal-sheet::-webkit-scrollbar { display: none; }
-    .modal-overlay.show .modal-sheet { transform: translateY(0); }
-    .modal-handle {
-      width: 44px; height: 4px;
-      border-radius: 9999px;
-      background: hsl(var(--foreground) / 0.12);
-      margin: 0 auto 16px;
-    }
-    .modal-title {
-      font-family: var(--font-serif);
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .feeder-preview {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 12px;
-      position: relative;
-    }
-    .feeder-preview img { transition: transform 0.2s ease; }
-    .feeder-preview.eating img { animation: eatBounce 0.5s ease; }
-    @keyframes eatBounce {
-      0%, 100% { transform: scale(1) translateY(0); }
-      30% { transform: scale(1.08) translateY(-6px); }
-      60% { transform: scale(0.96) translateY(2px); }
-    }
-
-    .feeder-hint {
-      font-size: 12px;
-      color: var(--text-secondary);
-      text-align: center;
-      margin-bottom: 14px;
-    }
-
-    .food-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .food-card {
-      position: relative;
-      border-radius: 24px;
-      border: 2px dashed hsl(var(--primary) / 0.22);
-      background: hsl(var(--card) / 0.65);
-      padding: 12px 6px;
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
-      aspect-ratio: 1 / 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .food-card:active { transform: scale(0.95); }
-    .food-card.active {
-      border-style: solid;
-      border-color: var(--accent-color);
-      background: hsl(var(--accent));
-    }
-    .food-card.locked {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-    .food-card.locked::after {
-      content: '🔒';
-      position: absolute;
-      top: 8px; right: 8px;
-      font-size: 11px;
-    }
-    .food-emoji { font-size: 32px; line-height: 1; margin-bottom: 5px; }
-    .food-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
-    .food-effect { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
-    .food-stock {
-      position: absolute;
-      top: 8px; left: 8px;
-      min-width: 20px; height: 20px;
-      padding: 0 5px;
-      border-radius: 9999px;
-      background: var(--accent-color);
-      color: hsl(var(--card));
-      font-size: 10px;
-      font-weight: 700;
-      display: grid; place-items: center;
-    }
-
-    .feeder-detail {
-      background: hsl(var(--secondary) / 0.75);
-      border: 1px solid hsl(var(--primary) / 0.18);
-      border-radius: 20px;
-      padding: 14px;
-      margin-bottom: 16px;
-    }
-    .feeder-detail-title {
-      font-family: var(--font-serif);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 6px;
-    }
-    .feeder-detail-desc {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.5;
-    }
-
-    .feeder-actions {
-      display: flex; gap: 12px;
-      margin-top: 6px;
-    }
-    .feeder-btn {
-      flex: 1;
-      height: 46px;
-      border-radius: 16px;
-      border: none;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.12s ease, opacity 0.12s ease;
-    }
-    .feeder-btn:active { transform: scale(0.97); }
-    .feeder-btn.secondary { background: hsl(var(--accent)); color: var(--accent-color); }
-    .feeder-btn.primary {
-      background: linear-gradient(135deg, hsl(var(--primary)), var(--accent-color));
-      color: hsl(var(--card));
-      box-shadow: 0 4px 14px -4px hsl(var(--primary) / 0.45);
-    }
-    .feeder-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    /* Toast */
-    .toast {
-      position: absolute;
-      left: 50%;
-      bottom: 34px;
-      transform: translateX(-50%) translateY(12px);
-      background: hsl(var(--foreground) / 0.88);
-      color: hsl(var(--background));
-      font-size: 13px;
-      padding: 9px 20px;
-      border-radius: 9999px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      z-index: 50;
-      white-space: nowrap;
-      backdrop-filter: blur(6px);
-      box-shadow: var(--shadow-md);
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* Level up effect */
-    .levelup-overlay {
-      position: absolute;
-      inset: 0;
-      z-index: 80;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    .levelup-overlay.show { display: flex; }
-    .levelup-text {
-      font-family: var(--font-serif);
-      font-size: 28px;
-      font-weight: 700;
-      color: hsl(var(--card));
-      text-shadow: 0 0 20px hsl(var(--primary) / 0.8), 0 2px 8px hsl(var(--foreground) / 0.3);
-      animation: levelupPop 1.5s ease-out forwards;
-      text-align: center;
-      padding: 0 16px;
-    }
-    @keyframes levelupPop {
-      0% { opacity: 0; transform: scale(0.5); }
-      20% { opacity: 1; transform: scale(1.1); }
-      40% { transform: scale(1); }
-      80% { opacity: 1; transform: scale(1) translateY(-10px); }
-      100% { opacity: 0; transform: scale(1) translateY(-30px); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-    }
-  </style>
 
   <script>
     (function () {
@@ -1121,7 +957,6 @@ body {
               if (typeof d.fullness !== "number") d.fullness = def.fullness;
               if (typeof d.mood !== "number") d.mood = def.mood;
               if (!d.foods) d.foods = {};
-              /* 每日首次进入刷新食物库存 */
               var t = todayStr();
               if (d.lastFed !== t) {
                 FOODS.forEach(function (f) {
@@ -1129,12 +964,11 @@ body {
                 });
                 d.lastFed = t;
               }
-              /* 根据离线时间更新饱食度/心情 */
               this.updateVitals(d);
               this.save(d);
               return d;
             }
-          } catch (e) {}
+          } catch (e) { console.warn('SparkTracker.load error', e); }
           var fresh = defaultData();
           var t2 = todayStr();
           FOODS.forEach(function (f) {
@@ -1149,7 +983,6 @@ body {
           var last = d.lastVitalUpdate ? new Date(d.lastVitalUpdate) : now;
           if (isNaN(last.getTime())) last = now;
           var hours = Math.max(0, (now - last) / 3600000);
-          /* 每小时饱食度 -2，心情 -1；沉睡状态额外 -1 饱食 */
           var state = this.getState();
           var fullnessDrop = hours * 2 + (state === "sleeping" ? hours * 1 : 0);
           var moodDrop = hours * 1;
@@ -1158,7 +991,7 @@ body {
           d.lastVitalUpdate = now.toISOString();
         },
         save: function (d) {
-          try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) {}
+          try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) { console.warn('SparkTracker.save error', e); }
         },
         recordInteraction: function (type) {
           var d = this.load();
@@ -1329,15 +1162,10 @@ body {
               '<stop offset="100%" stop-color="' + darkenColor(hair, 10) + '"/>' +
             '</radialGradient>' +
           '</defs>' +
-          /* Shadow */
           '<ellipse cx="100" cy="205" rx="34" ry="5" fill="#000" opacity="0.08"/>' +
-          /* Tail */
           renderTail(pose, earColor) +
-          /* Body + Legs + Arms */
           bodySvg + legsSvg + armsSvg +
-          /* Head group */
           '<g opacity="' + bodyOpacity + '">' +
-            /* Unified hair crown */
             '<path d="M 44 92 Q 36 64 44 44 Q 56 20 80 24 Q 94 14 112 18 Q 140 20 154 44 Q 162 64 156 92 Q 152 106 146 100 Q 138 110 128 102 Q 120 112 108 104 Q 100 108 92 104 Q 80 112 72 102 Q 62 110 54 100 Q 48 106 44 92 Z" fill="url(#hairGrad)"/>' +
             '<ellipse cx="100" cy="54" rx="48" ry="34" fill="' + darkenColor(hair, 22) + '" opacity="0.18"/>' +
             '<circle cx="100" cy="82" r="40" fill="' + skin + '"/>' +
@@ -1458,7 +1286,7 @@ body {
               '<ellipse cx="70" cy="172" rx="7" ry="10" fill="' + outfit + '" transform="rotate(-10 70 172)"/>' +
               '<ellipse cx="130" cy="172" rx="7" ry="10" fill="' + outfit + '" transform="rotate(10 130 172)"/>' +
               '</g>';
-          default: /* idle */
+          default:
             return '<g>' +
               '<ellipse cx="50" cy="145" rx="7" ry="14" fill="' + outfit + '" transform="rotate(12 50 145)"/>' +
               '<circle cx="45" cy="158" r="5.5" fill="' + skin + '"/>' +
@@ -1492,7 +1320,7 @@ body {
           case "heart":
             return '<text x="' + lx + '" y="' + (cy+5) + '" font-size="13" text-anchor="middle">❤️</text>' +
                    '<text x="' + rx + '" y="' + (cy+5) + '" font-size="13" text-anchor="middle">❤️</text>';
-          default: /* round */
+          default:
             return '<ellipse cx="' + lx + '" cy="' + cy + '" rx="5.5" ry="6.5" fill="#5a3040"/>' +
                    '<ellipse cx="' + rx + '" cy="' + cy + '" rx="5.5" ry="6.5" fill="#5a3040"/>' +
                    '<circle cx="' + (lx+2) + '" cy="' + (cy-2) + '" r="2" fill="#fff"/>' +
@@ -1518,7 +1346,7 @@ body {
           case "whistle":
             return '<path d="M 90 ' + cy + ' Q 95 ' + (cy-2) + ' 100 ' + cy + '" stroke="#5a3040" stroke-width="2" fill="none" stroke-linecap="round"/>' +
                    '<circle cx="106" cy="' + (cy-1) + '" r="2.5" fill="#5a3040"/>';
-          default: /* smile */
+          default:
             return '<path d="M 90 ' + cy + ' Q 100 ' + (cy+6) + ' 110 ' + cy + '" stroke="#5a3040" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
         }
       }
@@ -1601,6 +1429,10 @@ body {
       var streakNum = document.getElementById("streakNum");
       var totalExpNum = document.getElementById("totalExpNum");
       var totalInteractNum = document.getElementById("totalInteractNum");
+      var fullnessNum = document.getElementById("fullnessNum");
+      var fullnessFill = document.getElementById("fullnessFill");
+      var moodNum = document.getElementById("moodNum");
+      var moodFill = document.getElementById("moodFill");
       var chatCount = document.getElementById("chatCount");
       var cardCount = document.getElementById("cardCount");
       var momentCount = document.getElementById("momentCount");
@@ -1810,100 +1642,72 @@ body {
 
       render();
 
-      /* Check for interaction gains from other pages (via URL param or storage event) */
       window.addEventListener("storage", function (e) {
         if (e.key === SPARK_KEY) render();
       });
     })();
   </script>
-  <script>lucide.createIcons();</script>
 
-  <!-- 返回按钮兼容父iframe内嵌SPA模式（postMessage）—— 所有指向主页的返回<a>统一替换；fallback为跳转回主页 -->
-<script>
-  (function () {
-    var nameMap = {
-      'diary-new':       'diary',
-      'wish-new':        'wish',
-      'spark-new':       'spark',
-      'anniversary-new': 'anniversary',
-      'music-new':       'music',
-      'call-new':        'call',
-      'history-new':     'history'
-    };
-    var fname = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
-    var extKey = nameMap[fname] || fname;
-    var FALLBACK_URL = '../index-zy.html';
+  <!-- 返回按钮兼容父iframe内嵌SPA模式（postMessage） -->
+  <script>
+    (function () {
+      var nameMap = { 'spark-new': 'spark' };
+      var fname = (location.pathname.split('/').pop() || '').replace(/\.html?$/i, '');
+      var extKey = nameMap[fname] || fname;
+      var FALLBACK_URL = '../index-zy.html';
 
-    window.__extAppBack = function (ev) {
-      try { ev && ev.preventDefault && ev.preventDefault(); } catch(e) {}
-      var inIframe = false;
-      try { inIframe = (window.top !== window.self); } catch(e) { inIframe = true; }
-      if (inIframe) {
-        try {
-          window.top.postMessage({ type: 'extapp:back', key: extKey, ts: Date.now() }, '*');
-          // 300ms 兜底：如果父窗没响应/加载出错，就跳回主页
-          setTimeout(function(){
-            try { location.replace(FALLBACK_URL); } catch(e){}
-          }, 300);
-          return false;
-        } catch (e) {
+      window.__extAppBack = function (ev) {
+        try { ev && ev.preventDefault && ev.preventDefault(); } catch(e) {}
+        var inIframe = false;
+        try { inIframe = (window.top !== window.self); } catch(e) { inIframe = true; }
+        if (inIframe) {
+          try {
+            window.top.postMessage({ type: 'extapp:back', key: extKey, ts: Date.now() }, '*');
+            setTimeout(function(){ try { location.replace(FALLBACK_URL); } catch(e){} }, 300);
+            return false;
+          } catch (e) {
+            location.href = FALLBACK_URL;
+            return false;
+          }
+        } else {
           location.href = FALLBACK_URL;
           return false;
         }
-      } else {
-        location.href = FALLBACK_URL;
-        return false;
-      }
-    };
+      };
 
-    // 替换所有 <a href> 指向主页 的返回/后退 <a> 链接
-    function patchBackLinks() {
-      var patched = 0;
-      var as = document.querySelectorAll('a[href]');
-      for (var i=0; i<as.length; i++) {
-        var a = as[i];
-        var href = a.getAttribute('href') || '';
-        // 匹配：index-zy.html 或 index-new-v2.html 或 index-new.html 或 home-app.html 或 home.html
-        if (href && /(index-zy|index-new-v2|index-new|home-app|home)\.html/i.test(href)) {
-          var txt = (a.textContent || '').trim();
-          var cls = a.className || '';
-          var ddi = a.getAttribute && a.getAttribute('data-dom-id') || '';
-          var label = (a.getAttribute && a.getAttribute('aria-label')) || '';
-          // 只有含有 "返回/back/home/后退"语义 或 本身就是 a.back-btn / a[data-dom-id~="back"] 才替换
-          var lookslikeBack = /(back-btn|back|返回|home|后退|nav-back|back-home|back-nav|返回主页|返回首页|back-home|nav-back)/i.test(cls + ' ' + ddi + ' ' + label + ' ' + txt);
-          if (lookslikeBack) {
-            if (a.getAttribute('data-extapp-back-patched')) continue;
-            a.setAttribute('data-extapp-back-patched', '1');
-            a.setAttribute('data-href-backup', href);
-            a.setAttribute('href', 'javascript:void(0)');
-            (function(el){
-              el.addEventListener('click', function(e){ return window.__extAppBack(e); });
-            })(a);
-            patched++;
+      function patchBackLinks() {
+        var as = document.querySelectorAll('a[href]');
+        for (var i=0; i<as.length; i++) {
+          var a = as[i];
+          var href = a.getAttribute('href') || '';
+          if (href && /(index-zy|index-new-v2|index-new|home-app|home)\.html/i.test(href)) {
+            var txt = (a.textContent || '').trim();
+            var cls = a.className || '';
+            var ddi = a.getAttribute && a.getAttribute('data-dom-id') || '';
+            var label = (a.getAttribute && a.getAttribute('aria-label')) || '';
+            var lookslikeBack = /(back-btn|back|返回|home|后退|nav-back|back-home|back-nav)/i.test(cls + ' ' + ddi + ' ' + label + ' ' + txt);
+            if (lookslikeBack) {
+              if (a.getAttribute('data-extapp-back-patched')) continue;
+              a.setAttribute('data-extapp-back-patched', '1');
+              a.setAttribute('href', 'javascript:void(0)');
+              (function(el){
+                el.addEventListener('click', function(e){ return window.__extAppBack(e); });
+              })(a);
+            }
           }
         }
       }
-      return patched;
-    }
 
-    function runPatchLoop() {
-      var r1 = patchBackLinks();
-      setTimeout(function(){ patchBackLinks(); }, 500);
-      setTimeout(function(){ patchBackLinks(); }, 1500);
-      setTimeout(function(){ patchBackLinks(); }, 3000);
-    }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', patchBackLinks);
+      } else {
+        patchBackLinks();
+      }
+      setTimeout(patchBackLinks, 500);
+      setTimeout(patchBackLinks, 1500);
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', runPatchLoop);
-    } else {
-      runPatchLoop();
-    }
-
-    // 支持父窗口调用iframe里的返回函数：父窗口可直接 frame.contentWindow.extAppBackDirect()
-    window.extAppBackDirect = function() { return window.__extAppBack(); };
-  })();
-</script>
-
-
+      window.extAppBackDirect = function() { return window.__extAppBack(); };
+    })();
+  </script>
 </body>
 </html>
