@@ -378,10 +378,7 @@
                 <span>✏️ 点击自定义</span>
             </div>
             
-            <!-- 上段：纯占位 -->
-            <div class="hero-card-top"></div>
-            
-            <!-- 头像：骑在分界线上 -->
+            <!-- 头像：绝对定位到卡片中上部 -->
             <div class="hero-avatars-float">
                 <div class="hero-avatar-wrap hero-avatar-left" onclick="event.stopPropagation(); showProfile('me')">
                     <img class="hero-avatar" id="avatar-me" src="https://api.dicebear.com/7.x/avataaars/svg?seed=me" alt="我">
@@ -394,12 +391,10 @@
                 </div>
             </div>
 
-            <!-- 下段：毛玻璃遮罩 -->
-            <div class="hero-card-bottom">
-                <div class="hero-content-bottom">
-                    <div class="hero-title" id="hero-title">我 & 梦角</div>
-                    <div class="hero-subtitle" id="hero-subtitle">两颗缠绕的心 会走同一条路</div>
-                </div>
+            <!-- 标题文字：绝对定位到底部（背景蒙层由 ::after 伪元素提供，不挡图） -->
+            <div class="hero-content-bottom">
+                <div class="hero-title" id="hero-title">我 & 梦角</div>
+                <div class="hero-subtitle" id="hero-subtitle">两颗缠绕的心 会走同一条路</div>
             </div>
         </div>
 

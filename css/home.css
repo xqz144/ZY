@@ -44,74 +44,49 @@ body.home-active {
     border-radius: 24px;
     overflow: hidden;
     min-height: 220px;
+    height: 240px; /* 固定高度，彻底避免内部元素造成"块"感 */
     box-shadow:
 0 8px 32px rgba(0, 0, 0, 0.08),
 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
     border: 1px solid rgba(255, 255, 255, 0.6);
     position: relative;
     cursor: pointer;
-    display: block;
 }
 
-/* 背景图 - 覆盖整个卡片 */
+/* 背景图 - 覆盖整个卡片，永远完整显示 */
 .hero-bg-full {
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg, #f5f0f9 0%, #faf8fb 50%, #f8f6f9 100%);
     background-size: cover;
-    background-position: center top;
+    background-position: center center; /* 居中显示，不让顶部留白 */
     z-index: 0;
     transition: background 0.5s ease;
 }
 
-/* 整卡统一的柔和渐变蒙层 —— 从图片本体到文字区的过渡 */
+/* 统一的下半段渐变遮罩 —— 只在底部需要文字处提供柔和过渡，绝不挡图的主体部分 */
 .hero-card::after {
     content: "";
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 58%;
+    height: 48%;
     background: linear-gradient(
         180deg,
         rgba(0, 0, 0, 0) 0%,
-        rgba(0, 0, 0, 0.08) 40%,
-        rgba(0, 0, 0, 0.38) 100%
+        rgba(0, 0, 0, 0.12) 45%,
+        rgba(0, 0, 0, 0.42) 100%
     );
     pointer-events: none;
     z-index: 2;
 }
 
-/* 上段：纯占位，完全透明不挡图 */
-.hero-card-top {
-    position: relative;
-    height: 44px;
-    z-index: 3;
-}
-
-/* 下段：承载文字，绝对定位到底部，完全透明，让背景图和 ::after 渐变直接露出来 */
-.hero-card-bottom {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 76px 20px 20px;
-    background: transparent;
-    z-index: 3;
-}
-
-.hero-content-bottom {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-/* 双人头像 - 浮在卡片中间（绝对定位到 hero-card 中心区域） */
+/* 双人头像 - 绝对定位到卡片竖直方向黄金分割点 */
 .hero-avatars-float {
     position: absolute;
     left: 50%;
-    top: 58px;
+    top: 52px;
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
@@ -119,9 +94,33 @@ body.home-active {
     z-index: 5;
 }
 
-.hero-avatar-wrap {
-    position: relative;
-    cursor: pointer;
+/* 标题文字：绝对定位到底部，不使用任何容器块，背景完全靠 ::after 渐变 */
+.hero-content-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 3;
+    pointer-events: none; /* 不挡住卡片的自定义点击（事件冒泡） */
+}
+
+.hero-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #3a3a3a; /* 默认：与 themePresets.default.title 一致 */
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.hero-subtitle {
+    font-size: 13px;
+    color: #8a8a8a; /* 默认：与 themePresets.default.subtitle 一致 */
+    font-weight: 400;
+    letter-spacing: 0.5px;
 }
 
 .hero-avatar-left {

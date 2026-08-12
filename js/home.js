@@ -773,11 +773,31 @@
         const momentsContainer = document.getElementById('moments-container');
         if (momentsContainer) {
             momentsContainer.classList.toggle('dark-mode', isDark);
-            console.log('[Home] dark mode sync:', { preset, isDark, hasClass: momentsContainer.classList.contains('dark-mode') });
-            // 强制应用深色模式样式（调试用）
             if (isDark) {
                 momentsContainer.style.background = '#1a1a1a';
                 momentsContainer.style.color = '#e0e0e0';
+            }
+        }
+
+        // 无论预设/自上传背景：默认先用theme对应颜色；如果是图片（自上传）或夜间预设，则改用白色+阴影
+        const titleEl = document.getElementById('hero-title');
+        const subEl = document.getElementById('hero-subtitle');
+        if (titleEl) {
+            if (isDark) {
+                titleEl.style.color = 'rgba(255,255,255,0.95)';
+                titleEl.style.textShadow = '0 2px 8px rgba(0,0,0,0.5)';
+            } else {
+                titleEl.style.color = (currentTheme && currentTheme.title) || '#3a3a3a';
+                titleEl.style.textShadow = '';
+            }
+        }
+        if (subEl) {
+            if (isDark) {
+                subEl.style.color = 'rgba(255,255,255,0.9)';
+                subEl.style.textShadow = '0 1px 4px rgba(0,0,0,0.4)';
+            } else {
+                subEl.style.color = (currentTheme && currentTheme.subtitle) || '#8a8a8a';
+                subEl.style.textShadow = '';
             }
         }
 
@@ -797,12 +817,24 @@
         reader.onload = async function(e) {
             const url = e.target.result;
             const heroBg = document.getElementById('hero-bg-inner');
-            if (heroBg) heroBg.style.background = `url(${url}) center top/cover no-repeat`;
+            if (heroBg) heroBg.style.background = `url(${url}) center center/cover no-repeat`;
 
             document.querySelectorAll('#bg-presets .bg-preset').forEach(el => el.classList.remove('active'));
             // 使用大容量存储保存自定义背景 URL
             await homeSetLargeItem('home_card_bg_custom', url);
             homeSetItem('home_card_bg', 'custom');
+
+            // 自定义图片背景 → 把标题/副标题设为白色+阴影，保证在任意图片上可读
+            const titleEl = document.getElementById('hero-title');
+            const subEl = document.getElementById('hero-subtitle');
+            if (titleEl) {
+                titleEl.style.color = 'rgba(255,255,255,0.98)';
+                titleEl.style.textShadow = '0 2px 10px rgba(0,0,0,0.55), 0 0 3px rgba(0,0,0,0.35)';
+            }
+            if (subEl) {
+                subEl.style.color = 'rgba(255,255,255,0.92)';
+                subEl.style.textShadow = '0 1px 6px rgba(0,0,0,0.45)';
+            }
         };
         reader.readAsDataURL(file);
     };
@@ -2129,7 +2161,18 @@
             const customUrl = await homeGetLargeItem('home_card_bg_custom');
             if (customUrl) {
                 const heroBg = document.getElementById('hero-bg-inner');
-                if (heroBg) heroBg.style.background = `url(${customUrl}) center top/cover no-repeat`;
+                if (heroBg) heroBg.style.background = `url(${customUrl}) center center/cover no-repeat`;
+                // 自定义图片背景 → 白色+阴影文字
+                const titleEl = document.getElementById('hero-title');
+                const subEl = document.getElementById('hero-subtitle');
+                if (titleEl) {
+                    titleEl.style.color = 'rgba(255,255,255,0.98)';
+                    titleEl.style.textShadow = '0 2px 10px rgba(0,0,0,0.55), 0 0 3px rgba(0,0,0,0.35)';
+                }
+                if (subEl) {
+                    subEl.style.color = 'rgba(255,255,255,0.92)';
+                    subEl.style.textShadow = '0 1px 6px rgba(0,0,0,0.45)';
+                }
             }
         } else if (savedBg && bgPresets[savedBg]) {
             window.setCardBg(savedBg);
