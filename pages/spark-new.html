@@ -964,18 +964,9 @@
           color: '#ff8a56',
           auraColor: 'rgba(255,184,107,0.45)',
           frameGradient: 'linear-gradient(145deg, #ffb86b, #ff8a56)'
-        },
-        kirin: {
-          id: 'kirin',
-          name: '玉麒麟',
-          emoji: '🦁',
-          image: '../assets/kirin_embroidery.png',
-          color: '#c9303c',
-          auraColor: 'rgba(201,48,60,0.35)',
-          frameGradient: 'linear-gradient(145deg, #d4a853, #c9303c)'
         }
       };
-      var PET_ORDER = ['fire', 'kirin'];
+      var PET_ORDER = ['fire'];
       var ACTIVE_PET_KEY = 'mengjiao_active_pet';
 
       var DAILY_LIMITS = { chat: 10, moments: 2 };
@@ -1033,8 +1024,7 @@
         return {
           activePet: 'fire',
           pets: {
-            fire: petData('小火人'),
-            kirin: petData('玉麒麟')
+            fire: petData('小火人')
           }
         };
       }
@@ -1051,7 +1041,7 @@
                 for (var k in d) { if (k !== 'activePet') oldData[k] = d[k]; }
                 d = {
                   activePet: 'fire',
-                  pets: { fire: oldData, kirin: petData('玉麒麟') }
+                  pets: { fire: oldData }
                 };
               }
               /* 确保所有宠物数据完整 */

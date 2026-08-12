@@ -241,7 +241,7 @@
 /* ==================================================================
  * 小火人 SparkTracker —— 共享数据层（父窗口与 spark iframe 共用）
  * 通过 localStorage (key = "mengjiao_spark") 同步数据
- * 支持多宠物：fire（小火人）/ kirin（玉麒麟），通过 activePet 切换
+ * 支持多宠物扩展，通过 activePet 切换（目前仅 fire 一只，随时可加）
  * ================================================================== */
 (function () {
   'use strict';
@@ -277,16 +277,9 @@
       emoji: '🔥',
       image: 'assets/character.png',
       color: '#ff8a56'
-    },
-    kirin: {
-      id: 'kirin',
-      name: '玉麒麟',
-      emoji: '🦁',
-      image: 'assets/kirin_embroidery.png',
-      color: '#c9303c'
     }
   };
-  var PET_ORDER = ['fire', 'kirin'];
+  var PET_ORDER = ['fire'];
 
   var DAILY_LIMITS = { chat: 10, moments: 2 };
   var EXP_PER = { chat: 3, moments: 8 };
@@ -332,8 +325,7 @@
     return {
       activePet: 'fire',
       pets: {
-        fire: petData('小火人'),
-        kirin: petData('玉麒麟')
+        fire: petData('小火人')
       }
     };
   }
@@ -356,7 +348,7 @@
             for (var k in d) { if (k !== 'activePet') oldData[k] = d[k]; }
             d = {
               activePet: 'fire',
-              pets: { fire: oldData, kirin: petData('玉麒麟') }
+              pets: { fire: oldData }
             };
           }
           /* 确保所有宠物数据完整 */
