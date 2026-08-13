@@ -278,8 +278,8 @@ var FLOORS = [
 /* 泳池矩形（渲染成浅蓝色平台在一层右侧） */
 var POOL = { x0: 9, x1: 12, y0: 3, y1: 6, floor: -0.35, color: '#b7e1f0', border: '#7eb9d1' };
 
-/* 楼梯位置（从一层到二层）：方向沿 row 增加方向向上 */
-var STAIRS = { x0: 1, x1: 2, y0: 3, y1: 6, floor: 0, color: '#c9a279', edge: '#9d7a55' };
+/* 楼梯位置（从一层到二层）：方向沿 row 增加方向向上，终点(y=5)正好落在二层地板(y≤5)范围内 */
+var STAIRS = { x0: 1, x1: 2, y0: 2, y1: 5, floor: 0, color: '#c9a279', edge: '#9d7a55' };
 
 /* 墙壁颜色 */
 var WALL_COLOR = {
@@ -641,14 +641,17 @@ function renderHouse() {
   if (POOL) g = g.concat(drawPlatform(POOL, 'poolTile', POOL.border, true));
 
   /* --- 一层地板 + 墙 --- */
-  g = g.concat(drawPlatform(FLOORS[0], 'floor0Tile', FLOORS[0].border, true));
+  g = g.concat(drawPlatform(FLOORS[0], 'floor0Tile', FLOORS[0].border, true, true));
   g = g.concat(drawWalls(FLOORS[0], WALL_COLOR));
 
-  /* --- 楼梯 --- */
+  /* --- 二层楼板在一层投下的投影（让两层感明显） --- */
+  g = g.concat(drawSlabShadow(FLOORS[1]));
+
+  /* --- 楼梯（在二层楼板之前画，保证楼梯在楼板下侧面上方） --- */
   g = g.concat(drawStairs(STAIRS));
 
-  /* --- 二层地板 + 墙 + 帐篷挂布 --- */
-  g = g.concat(drawPlatform(FLOORS[1], 'floor1Tile', FLOORS[1].border, false));
+  /* --- 二层：完整四周厚度楼板 + 墙 + 帐篷挂布 --- */
+  g = g.concat(drawPlatform(FLOORS[1], 'floor1Tile', FLOORS[1].border, false, true));
   g = g.concat(drawWalls(FLOORS[1], WALL_COLOR));
   g = g.concat(drawCanopy(FLOORS[1]));  // 帐篷尖顶挂布
 
@@ -662,20 +665,24 @@ function renderHouse() {
   svg.style.transform = 'translate(-' + (vbW / 2) + 'px, -' + (vbH / 2) + 'px)';
 }
 
-/* 画一个平台地板 (平台的顶面四边形 + 一个侧面厚度) */
-function drawPlatform(fl, tileRef, borderColor, drawThickness) {
+/* 画一个平台地板 (平台的顶面四边形 + 侧面厚度)
+ *   drawThickness: 是否画侧面厚度
+ *   isGroundFloor:  true=一层（只画右+前两个外露侧面）
+ *                   false=二层（画完整四周侧面，体现吊起来的楼板感）
+ */
+function drawPlatform(fl, tileRef, borderColor, drawThickness, isGroundFloor) {
   var out = [];
-  var p1 = worldToScreen(fl.x0, fl.y0, fl.floor);
-  var p2 = worldToScreen(fl.x1, fl.y0, fl.floor);
-  var p3 = worldToScreen(fl.x1, fl.y1, fl.floor);
-  var p4 = worldToScreen(fl.x0, fl.y1, fl.floor);
+  var p1 = worldToScreen(fl.x0, fl.y0, fl.floor);  /* 后左 */
+  var p2 = worldToScreen(fl.x1, fl.y0, fl.floor);  /* 后右 */
+  var p3 = worldToScreen(fl.x1, fl.y1, fl.floor);  /* 前右 */
+  var p4 = worldToScreen(fl.x0, fl.y1, fl.floor);  /* 前左 */
   var shadowRef = fl.floor === 0 ? 'floorShadow0' : 'floorShadow1';
   /* 顶面（填充 tile 图案） */
   out.push(
     '<path class="floor" data-floor="' + fl.floor + '" ' +
     'd="M' + p1.x + ',' + p1.y + ' L' + p2.x + ',' + p2.y +
     ' L' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y + ' Z" ' +
-    'fill="url(#' + tileRef + ')" stroke="' + borderColor + '" stroke-width="1.5" stroke-linejoin="round"/>'
+    'fill="url(#' + tileRef + ')" stroke="' + borderColor + '" stroke-width="1.2" stroke-linejoin="round"/>'
   );
   /* 地板内阴影（增强立体感） */
   out.push(
@@ -683,25 +690,79 @@ function drawPlatform(fl, tileRef, borderColor, drawThickness) {
     ' L' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y + ' Z" ' +
     'fill="url(#' + shadowRef + ')" pointer-events="none"/>'
   );
-  /* 厚度侧条（仅主楼层画，泳池只画薄边） */
-  if (drawThickness && fl.floor >= 0) {
-    var thick = 10;
-    /* 右侧 (p2 → p3 向下) */
-    var p2d = { x: p2.x + ISO_W/2 * thick/ISO_UNIT, y: p2.y + ISO_H/2 * thick/ISO_UNIT };
-    var p3d = { x: p3.x - ISO_W/2 * thick/ISO_UNIT, y: p3.y + ISO_H/2 * thick/ISO_UNIT };
-    out.push(
-      '<path d="M' + p2.x + ',' + p2.y + ' L' + p3.x + ',' + p3.y +
-      ' L' + p3d.x + ',' + p3d.y + ' L' + p2d.x + ',' + p2d.y + ' Z" ' +
-      'fill="#c9a372" stroke="#9d7a55" stroke-width="1" opacity="0.9"/>'
-    );
-    /* 前侧 (p3 → p4 向下) */
-    var p4d = { x: p4.x - ISO_W/2 * thick/ISO_UNIT, y: p4.y + ISO_H/2 * thick/ISO_UNIT };
-    out.push(
-      '<path d="M' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y +
-      ' L' + p4d.x + ',' + p4d.y + ' L' + p3d.x + ',' + p3d.y + ' Z" ' +
-      'fill="#b38d5a" stroke="#8d6a45" stroke-width="1" opacity="0.9"/>'
-    );
+  /* 厚度侧条 */
+  if (drawThickness) {
+    var thick = isGroundFloor ? 10 : FLOOR_H * 0.5;  /* 二层楼板厚度更大，像一块真实的板 */
+    /* 偏移函数：沿"向下"方向（投影方向）延伸 thick 像素 */
+    function off(p) { return { x: p.x, y: p.y + thick }; }
+    var p1d = off(p1), p2d = off(p2), p3d = off(p3), p4d = off(p4);
+
+    if (isGroundFloor) {
+      /* 一层：只画右、前 2 个外露侧 */
+      out.push(
+        '<path d="M' + p2.x + ',' + p2.y + ' L' + p3.x + ',' + p3.y +
+        ' L' + p3d.x + ',' + p3d.y + ' L' + p2d.x + ',' + p2d.y + ' Z" ' +
+        'fill="#c9a372" stroke="#9d7a55" stroke-width="0.8" opacity="0.92"/>'
+      );
+      out.push(
+        '<path d="M' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y +
+        ' L' + p4d.x + ',' + p4d.y + ' L' + p3d.x + ',' + p3d.y + ' Z" ' +
+        'fill="#b38d5a" stroke="#8d6a45" stroke-width="0.8" opacity="0.92"/>'
+      );
+    } else {
+      /* 二层：画完整 4 个侧面，体现"楼板厚度"，就像真的抬起来了 */
+      /* 后 (p1→p2 向下) —— 最亮 */
+      out.push(
+        '<path d="M' + p1.x + ',' + p1.y + ' L' + p2.x + ',' + p2.y +
+        ' L' + p2d.x + ',' + p2d.y + ' L' + p1d.x + ',' + p1d.y + ' Z" ' +
+        'fill="#caa679" stroke="#9d7a55" stroke-width="0.8" opacity="0.95"/>'
+      );
+      /* 右 (p2→p3 向下) —— 中等亮 */
+      out.push(
+        '<path d="M' + p2.x + ',' + p2.y + ' L' + p3.x + ',' + p3.y +
+        ' L' + p3d.x + ',' + p3d.y + ' L' + p2d.x + ',' + p2d.y + ' Z" ' +
+        'fill="#b6915f" stroke="#8c6a40" stroke-width="0.8" opacity="0.95"/>'
+      );
+      /* 前 (p3→p4 向下) —— 最暗 */
+      out.push(
+        '<path d="M' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y +
+        ' L' + p4d.x + ',' + p4d.y + ' L' + p3d.x + ',' + p3d.y + ' Z" ' +
+        'fill="#9e7948" stroke="#7a5a30" stroke-width="0.8" opacity="0.95"/>'
+      );
+      /* 左 (p4→p1 向下) —— 中等暗 */
+      out.push(
+        '<path d="M' + p4.x + ',' + p4.y + ' L' + p1.x + ',' + p1.y +
+        ' L' + p1d.x + ',' + p1d.y + ' L' + p4d.x + ',' + p4d.y + ' Z" ' +
+        'fill="#ad8957" stroke="#8c6a40" stroke-width="0.8" opacity="0.95"/>'
+      );
+      /* 楼板底面边缘描一圈暗线，加强"板"的轮廓感 */
+      out.push(
+        '<path d="M' + p1d.x + ',' + p1d.y + ' L' + p2d.x + ',' + p2d.y +
+        ' L' + p3d.x + ',' + p3d.y + ' L' + p4d.x + ',' + p4d.y + ' Z" ' +
+        'fill="none" stroke="#7a5a30" stroke-width="0.8" opacity="0.6"/>'
+      );
+    }
   }
+  return out;
+}
+
+/* 画二层楼板在一层地板上投下的投影阴影 —— 大幅增强两层的层次感 */
+function drawSlabShadow(upperFloor) {
+  var out = [];
+  /* 阴影偏移：向屏幕右下方偏移，模拟光照方向 */
+  var dx = 12, dy = 18;
+  var p1 = worldToScreen(upperFloor.x0, upperFloor.y0, 0);
+  var p2 = worldToScreen(upperFloor.x1, upperFloor.y0, 0);
+  var p3 = worldToScreen(upperFloor.x1, upperFloor.y1, 0);
+  var p4 = worldToScreen(upperFloor.x0, upperFloor.y1, 0);
+  out.push(
+    '<path d="M' + (p1.x + dx) + ',' + (p1.y + dy) +
+    ' L' + (p2.x + dx) + ',' + (p2.y + dy) +
+    ' L' + (p3.x + dx) + ',' + (p3.y + dy) +
+    ' L' + (p4.x + dx) + ',' + (p4.y + dy) + ' Z" ' +
+    'fill="rgba(50,30,10,0.35)" stroke="rgba(50,30,10,0.12)" stroke-width="1" ' +
+    'filter="url(#floorShadow0)" opacity="0.7" pointer-events="none"/>'
+  );
   return out;
 }
 
@@ -779,61 +840,106 @@ function drawWalls(fl, wc) {
   return out;
 }
 
-/* 画楼梯（从 f=0 爬到 f=1，步数 = 8） */
+/* 画楼梯：从一层(f=0)爬3级台阶到二层(f=1)，顶端必须正好落在二层地板上
+ * 关键：最后一级结束时 floor=1，且 col/row 位置位于二层地板范围内（即 FLOORS[1] 的 x、y 范围内）
+ */
 function drawStairs(s) {
   var out = [];
-  var steps = 8;
-  var prevBot = null, prevTop = null;
+  var steps = 3;   /* 3级楼梯就够连接 f=0 到 f=1，视觉更真实 */
+  var prevBot = null;
+
   for (var i = 0; i < steps; i++) {
     var t0 = i / steps;
     var t1 = (i + 1) / steps;
-    /* 每一级的 4 个角：沿 row 方向前进 */
+    /* 每一级沿 row 方向前进，同时 floor 升高 */
     var cy0 = s.y0 + (s.y1 - s.y0) * t0;
     var cy1 = s.y0 + (s.y1 - s.y0) * t1;
-    var f0 = t0;  /* 0..1 */
+    var f0 = t0;
     var f1 = t1;
     var A = worldToScreen(s.x0, cy0, f0);   /* 左前 */
     var B = worldToScreen(s.x1, cy0, f0);   /* 右前 */
     var C = worldToScreen(s.x1, cy1, f1);   /* 右后 */
     var D = worldToScreen(s.x0, cy1, f1);   /* 左后 */
-    /* 踏面 (top) —— 亮色 */
+
+    /* 踏面 (top) —— 暖色亮面 */
     out.push(
       '<path class="stair" d="M' + A.x + ',' + A.y + ' L' + B.x + ',' + B.y +
       ' L' + C.x + ',' + C.y + ' L' + D.x + ',' + D.y + ' Z" ' +
-      'fill="#dab088" stroke="#a07a50" stroke-width="0.8"/>'
+      'fill="#d6ab7e" stroke="#8a6234" stroke-width="0.8"/>'
     );
-    /* 踢面 (riser)：用前一级底部连接当前踏面前沿 —— 暗色 */
+    /* 踢面 (riser) —— 暗色（连接前一级底部到当前踏面前沿） */
     if (prevBot) {
+      var pAi = prevBot.A, pBi = prevBot.B;
+      var pAit = { x: pAi.x, y: A.y };
+      var pBit = { x: pBi.x, y: B.y };
       out.push(
-        '<path class="stair" d="M' + prevBot.A.x + ',' + prevBot.A.y +
-        ' L' + prevBot.B.x + ',' + prevBot.B.y +
-        ' L' + B.x + ',' + B.y + ' L' + A.x + ',' + A.y + ' Z" ' +
-        'fill="#a87a4e" stroke="#8d6a45" stroke-width="0.8"/>'
+        '<path class="stair" d="M' + pAi.x + ',' + pAi.y +
+        ' L' + pBi.x + ',' + pBi.y +
+        ' L' + pBit.x + ',' + pBit.y +
+        ' L' + pAit.x + ',' + pAit.y + ' Z" ' +
+        'fill="#a87a4e" stroke="#8d6a45" stroke-width="0.6"/>'
+      );
+      out.push(
+        '<path d="M' + pAit.x + ',' + pAit.y +
+        ' L' + pBit.x + ',' + pBit.y +
+        ' L' + B.x + ',' + B.y +
+        ' L' + A.x + ',' + A.y + ' Z" ' +
+        'fill="#bd8c5e" stroke="#8d6a45" stroke-width="0.6"/>'
+      );
+    } else {
+      /* 第一级的"起步"踢面：从地板(f=-0.05)升到 A,B 的高度 */
+      var Ai0 = worldToScreen(s.x0, cy0, -0.03);
+      var Bi0 = worldToScreen(s.x1, cy0, -0.03);
+      out.push(
+        '<path d="M' + Ai0.x + ',' + Ai0.y +
+        ' L' + Bi0.x + ',' + Bi0.y +
+        ' L' + B.x + ',' + B.y +
+        ' L' + A.x + ',' + A.y + ' Z" ' +
+        'fill="#a87a4e" stroke="#8d6a45" stroke-width="0.6"/>'
       );
     }
-    prevBot = { A: A, B: B };
-    prevTop = { C: C, D: D };
+    prevBot = { A: D, B: C };   /* 下一级的底部 = 当前级的踏面后沿 */
   }
-  /* 楼梯侧墙（左右两侧） */
-  var sideStartA = worldToScreen(s.x0, s.y0, 0);
-  var sideStartB = worldToScreen(s.x1, s.y0, 0);
-  var sideEndA = worldToScreen(s.x0, s.y1, 1);
-  var sideEndB = worldToScreen(s.x1, s.y1, 1);
-  /* 左侧 (x0) */
+
+  /* 楼梯顶部"小平台"：把最后一级后沿(D,C,f=1)无缝连接到二层地板的前边缘 */
+  var lastD = worldToScreen(s.x0, s.y1, 1);   /* 最后一级踏面后左 */
+  var lastC = worldToScreen(s.x1, s.y1, 1);   /* 最后一级踏面后右 */
+  var slabFrontL = worldToScreen(FLOORS[1].x0, FLOORS[1].y0 + 0.01, 1);  /* 二层地板前左(向前探一点) */
+  var slabFrontR = worldToScreen(FLOORS[1].x1, FLOORS[1].y0 + 0.01, 1);  /* 二层地板前右 */
+  /* 连接：楼梯顶端后沿 → 二层地板前边缘，形成一个过渡小平台 */
   out.push(
-    '<path d="M' + sideStartA.x + ',' + sideStartA.y +
-    ' L' + sideStartA.x + ',' + (sideStartA.y + 10) +
-    ' L' + sideEndA.x + ',' + (sideEndA.y + 10) +
-    ' L' + sideEndA.x + ',' + sideEndA.y +
-    ' Z" fill="#9e7548" stroke="#77552f" stroke-width="1"/>'
+    '<path class="stair" d="M' + lastD.x + ',' + lastD.y +
+    ' L' + lastC.x + ',' + lastC.y +
+    ' L' + slabFrontR.x + ',' + slabFrontR.y +
+    ' L' + slabFrontL.x + ',' + slabFrontL.y + ' Z" ' +
+    'fill="#cd9c6e" stroke="#8a6234" stroke-width="0.8"/>'
   );
-  /* 右侧 (x1) */
+
+  /* 楼梯两侧的侧挡板（斜边）：从起点一直连到顶层平台 */
+  var s0_A = worldToScreen(s.x0, s.y0, -0.03);  /* 楼梯起点左前底 */
+  var s0_B = worldToScreen(s.x1, s.y0, -0.03);  /* 楼梯起点右前底 */
+  var sT_D = slabFrontL;                         /* 楼梯终点左后（二层地板前边缘左） */
+  var sT_C = slabFrontR;                         /* 楼梯终点右后（二层地板前边缘右） */
+
+  /* 左侧板 (s0_A → sT_D 向下延伸 8px 做厚度) */
+  var s0_A_d = { x: s0_A.x, y: s0_A.y + 6 };
+  var sT_D_d = { x: sT_D.x, y: sT_D.y + 6 };
   out.push(
-    '<path d="M' + sideStartB.x + ',' + sideStartB.y +
-    ' L' + sideStartB.x + ',' + (sideStartB.y + 10) +
-    ' L' + sideEndB.x + ',' + (sideEndB.y + 10) +
-    ' L' + sideEndB.x + ',' + sideEndB.y +
-    ' Z" fill="#9e7548" stroke="#77552f" stroke-width="1"/>'
+    '<path d="M' + s0_A.x + ',' + s0_A.y +
+    ' L' + s0_A_d.x + ',' + s0_A_d.y +
+    ' L' + sT_D_d.x + ',' + sT_D_d.y +
+    ' L' + sT_D.x + ',' + sT_D.y +
+    ' Z" fill="#8e6334" stroke="#6a4620" stroke-width="0.6"/>'
+  );
+  /* 右侧板 */
+  var s0_B_d = { x: s0_B.x, y: s0_B.y + 6 };
+  var sT_C_d = { x: sT_C.x, y: sT_C.y + 6 };
+  out.push(
+    '<path d="M' + s0_B.x + ',' + s0_B.y +
+    ' L' + s0_B_d.x + ',' + s0_B_d.y +
+    ' L' + sT_C_d.x + ',' + sT_C_d.y +
+    ' L' + sT_C.x + ',' + sT_C.y +
+    ' Z" fill="#a67a44" stroke="#6a4620" stroke-width="0.6"/>'
   );
   return out;
 }
