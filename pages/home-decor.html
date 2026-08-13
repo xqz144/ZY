@@ -2,24 +2,24 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>家园装修</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
       font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-      background: linear-gradient(180deg, #fdf6ee 0%, #f5ede0 100%);
-      color: #5a4a42; user-select: none;
+      background: linear-gradient(180deg, #fef8ef 0%, #f4ead9 100%);
+      color: #5a4a42; user-select: none; touch-action: none;
     }
     #app { display: flex; flex-direction: column; height: 100vh; }
 
     /* ===== 顶栏 ===== */
     .topbar {
       flex-shrink: 0; display: flex; align-items: center; gap: 8px;
-      padding: 10px 14px; background: rgba(255,255,255,0.75);
+      padding: 10px 14px; background: rgba(255,255,255,0.8);
       backdrop-filter: blur(12px); border-bottom: 1px solid rgba(210,190,170,0.3);
-      z-index: 10;
+      z-index: 20;
     }
     .coins {
       display: flex; align-items: center; gap: 4px;
@@ -28,78 +28,107 @@
       color: #b8860b; box-shadow: 0 2px 6px rgba(200,160,50,0.15);
     }
     .room-name { flex: 1; text-align: center; font-size: 16px; font-weight: 600; color: #7a5c4a; }
-    .edit-btn {
-      padding: 5px 14px; border: none; border-radius: 16px;
-      background: linear-gradient(135deg, #c8b6ff, #9a7eff);
-      color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
-      transition: transform 0.15s;
+    .topbtn {
+      padding: 5px 12px; border: none; border-radius: 16px;
+      background: #fff; color: #7a5c4a; font-size: 13px; font-weight: 600;
+      cursor: pointer; box-shadow: 0 2px 6px rgba(160,130,100,0.12);
     }
-    .edit-btn:active { transform: scale(0.92); }
-    .edit-btn.active { background: linear-gradient(135deg, #ff9a8b, #ff6a5a); }
+    .topbtn:active { transform: scale(0.93); }
+    .topbtn.zoom { width: 32px; padding: 5px 0; text-align: center; }
 
-    /* ===== 房间区域 ===== */
+    /* ===== 房间视口 ===== */
     .room-area {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      overflow: hidden; padding: 12px; position: relative;
+      flex: 1; overflow: hidden; position: relative;
+      background:
+        radial-gradient(ellipse at 50% 60%, rgba(255,225,180,0.4), transparent 60%),
+        linear-gradient(180deg, #fbf2df 0%, #f4e6c8 100%);
     }
-    .room-wrapper {
-      position: relative; border-radius: 16px; overflow: hidden;
-      box-shadow: 0 8px 28px rgba(160,130,100,0.18);
+    .room-stage {
+      position: absolute; top: 50%; left: 50%;
+      transform-origin: 0 0;
+      width: 0; height: 0;
     }
-    .room-grid {
-      display: grid; gap: 1px; background: #d4c5a8; padding: 1px;
-      border-radius: 16px;
+    .room-root {
+      position: absolute;
+      transform-origin: 0 0;
+      width: 0; height: 0;
     }
-    .grid-cell {
-      background: #f0e6d2; position: relative;
-      transition: background 0.15s;
-    }
-    .grid-cell:nth-child(even) { background: #ece0c8; }
-    /* 棋盘格交错 */
-    .grid-cell.checker { background: #ece0c8; }
 
-    /* 放置预览 */
-    .grid-cell.preview-ok { background: rgba(120, 220, 130, 0.4) !important; }
-    .grid-cell.preview-bad { background: rgba(240, 130, 110, 0.35) !important; }
+    /* ===== 等距房间（SVG 构建）===== */
+    .house-svg {
+      position: absolute;
+      overflow: visible;
+      pointer-events: none;
+    }
+    .house-svg .floor  { pointer-events: auto; }
+    .house-svg .wall   { pointer-events: none; }
+    .house-svg .stair  { pointer-events: none; }
 
     /* ===== 家具层 ===== */
-    .furniture-layer { position: absolute; top: 0; left: 0; pointer-events: none; }
+    .furniture-layer {
+      position: absolute; top: 0; left: 0; width: 0; height: 0;
+      pointer-events: none;
+    }
     .placed-item {
       position: absolute; pointer-events: auto; cursor: grab;
-      transition: box-shadow 0.15s, transform 0.1s;
-      border-radius: 6px; overflow: hidden;
+      transform-origin: 50% 95%;
+      will-change: transform;
     }
     .placed-item img {
       width: 100%; height: 100%; object-fit: contain;
+      display: block;
       pointer-events: none; -webkit-user-drag: none;
+      filter: drop-shadow(0 6px 4px rgba(80,55,20,0.18));
     }
     .placed-item.selected {
-      box-shadow: 0 0 0 3px #9a7eff, 0 4px 12px rgba(154,126,255,0.3);
-      z-index: 100;
+      z-index: 999;
     }
-    .placed-item.dragging { cursor: grabbing; opacity: 0.8; z-index: 200; }
-    .placed-item.placing-ghost { opacity: 0.5; pointer-events: none; }
+    .placed-item.selected img {
+      filter:
+        drop-shadow(0 0 0 #6a3cff)
+        drop-shadow(0 8px 6px rgba(154,126,255,0.45));
+    }
+    .placed-item.selected::after {
+      content: '';
+      position: absolute;
+      left: 15%; right: 15%; bottom: -2px; height: 10px;
+      background: rgba(154,126,255,0.25);
+      border-radius: 50%;
+      filter: blur(4px);
+    }
+    .placed-item.dragging { cursor: grabbing; opacity: 0.82; z-index: 1000; }
+    .placed-item.placing-ghost { opacity: 0.55; pointer-events: none; }
+
+    .furn-halo-ok, .furn-halo-bad {
+      position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 60%);
+      width: 80%; height: 18px; border-radius: 50%;
+      filter: blur(6px); opacity: 0.75;
+      pointer-events: none;
+    }
+    .furn-halo-ok  { background: rgba(120,220,130,0.7); }
+    .furn-halo-bad { background: rgba(240,120,110,0.7); }
 
     /* ===== 选中操作栏 ===== */
     .action-bar {
       flex-shrink: 0; display: flex; gap: 10px; justify-content: center;
-      padding: 8px 14px; background: rgba(255,255,255,0.8);
+      padding: 8px 14px; background: rgba(255,255,255,0.88);
       backdrop-filter: blur(8px); border-top: 1px solid rgba(210,190,170,0.3);
+      z-index: 20;
     }
     .action-bar button {
       padding: 8px 18px; border: none; border-radius: 18px; font-size: 14px;
       font-weight: 600; cursor: pointer; transition: transform 0.15s;
     }
     .action-bar button:active { transform: scale(0.92); }
-    .btn-rotate { background: linear-gradient(135deg, #c8b6ff, #9a7eff); color: #fff; }
+    .btn-rotate  { background: linear-gradient(135deg, #c8b6ff, #9a7eff); color: #fff; }
     .btn-recycle { background: linear-gradient(135deg, #ffc8b6, #ff8a6a); color: #fff; }
-    .btn-cancel { background: #eee; color: #888; }
+    .btn-cancel  { background: #eee; color: #888; }
 
     /* ===== 底部面板 ===== */
     .bottom-panel {
-      flex-shrink: 0; background: rgba(255,255,255,0.9);
+      flex-shrink: 0; background: rgba(255,255,255,0.92);
       backdrop-filter: blur(12px); border-top: 1px solid rgba(210,190,170,0.3);
-      max-height: 38vh; display: flex; flex-direction: column;
+      max-height: 38vh; display: flex; flex-direction: column; z-index: 20;
     }
     .panel-tabs { display: flex; border-bottom: 2px solid rgba(210,190,170,0.2); }
     .panel-tab {
@@ -132,34 +161,34 @@
     .furniture-card.cant-afford { opacity: 0.5; }
     .furniture-card .fc-img {
       width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-      background: #faf6f0; border-radius: 8px; margin-bottom: 4px; overflow: hidden;
+      background: linear-gradient(135deg, #faf6f0 0%, #f3e8d4 100%);
+      border-radius: 10px; margin-bottom: 4px; overflow: hidden;
     }
-    .furniture-card .fc-img img { width: 90%; height: 90%; object-fit: contain; }
-    .furniture-card .fc-name { font-size: 12px; font-weight: 600; color: #5a4a42; }
+    .furniture-card .fc-img img { width: 86%; height: 86%; object-fit: contain; }
+    .furniture-card .fc-name  { font-size: 12px; font-weight: 600; color: #5a4a42; }
     .furniture-card .fc-price { font-size: 11px; color: #c09020; font-weight: 600; }
     .furniture-card .fc-count { font-size: 11px; color: #4aa854; font-weight: 600; }
-    .furniture-card .fc-size { font-size: 10px; color: #aaa; }
+    .furniture-card .fc-size  { font-size: 10px; color: #aaa; }
 
     /* Toast */
     .toast {
       position: fixed; bottom: 42vh; left: 50%; transform: translateX(-50%);
       background: rgba(70,55,45,0.88); color: #fff; padding: 8px 18px;
-      border-radius: 20px; font-size: 13px; z-index: 9999; pointer-events: none;
+      border-radius: 20px; font-size: 13px; z-index: 99999; pointer-events: none;
       opacity: 0; transition: opacity 0.25s, bottom 0.25s;
     }
     .toast.show { opacity: 1; bottom: calc(42vh + 10px); }
 
     /* 放置模式提示 */
     .place-hint {
-      position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
+      position: fixed; top: 58px; left: 50%; transform: translateX(-50%);
       background: rgba(154,126,255,0.92); color: #fff; padding: 6px 16px;
       border-radius: 16px; font-size: 13px; z-index: 50; pointer-events: none;
-      animation: pulse 1.5s ease-in-out infinite;
+      box-shadow: 0 4px 12px rgba(154,126,255,0.25);
     }
-    @keyframes pulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
 
     /* 空库存提示 */
-    .empty-hint { text-align: center; padding: 30px 0; color: #bbb; font-size: 14px; }
+    .empty-hint { text-align: center; padding: 30px 0; color: #bbb; font-size: 14px; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -168,26 +197,31 @@
   <div class="topbar">
     <div class="coins">💰 <span id="coinCount">1000</span></div>
     <div class="room-name">我的小窝</div>
-    <button class="edit-btn" id="editBtn">编辑</button>
+    <button class="topbtn zoom" id="zoomOut" title="缩小">−</button>
+    <button class="topbtn zoom" id="zoomIn" title="放大">+</button>
   </div>
 
-  <!-- 房间 -->
+  <!-- 房间视口（支持缩放/平移） -->
   <div class="room-area" id="roomArea">
-    <div class="room-wrapper" id="roomWrapper">
-      <div class="room-grid" id="roomGrid"></div>
-      <div class="furniture-layer" id="furnitureLayer"></div>
+    <div class="room-stage" id="roomStage">
+      <div class="room-root" id="roomRoot">
+        <!-- SVG 房子 -->
+        <svg class="house-svg" id="houseSvg"></svg>
+        <!-- 家具层 -->
+        <div class="furniture-layer" id="furnitureLayer"></div>
+      </div>
     </div>
   </div>
 
   <!-- 选中操作栏 -->
   <div class="action-bar" id="actionBar" style="display:none;">
-    <button class="btn-rotate" id="btnRotate">🔄 旋转</button>
+    <button class="btn-rotate"  id="btnRotate">🔄 旋转</button>
     <button class="btn-recycle" id="btnRecycle">♻️ 收回</button>
-    <button class="btn-cancel" id="btnCancel">✕ 取消</button>
+    <button class="btn-cancel"  id="btnCancel">✕ 取消</button>
   </div>
 
   <!-- 放置提示 -->
-  <div class="place-hint" id="placeHint" style="display:none;">点击空位放置家具</div>
+  <div class="place-hint" id="placeHint" style="display:none;">点击任意地板位置放置家具</div>
 
   <!-- 底部面板 -->
   <div class="bottom-panel">
@@ -209,24 +243,62 @@
 
 <script>
 /* ========================================================================
- * 家园装修 —— 数据层 + 交互逻辑
+ * 家园装修 v2
+ *   - 等距户型图（2层楼 + 楼梯 + 门 + 泳池 + 帐篷尖顶挂布）
+ *   - 家具按 1×1 / 1×2 / 2×2 / 2×1 / 3×2 等“世界单位”自由摆放，取消网格强制对齐
+ *   - 支持滚轮/双指缩放 + 拖拽平移 + 触摸手势
+ *   - 家具去白底（drop-shadow + object-fit: contain）
  * ====================================================================== */
 
 var STORAGE_KEY = 'leisureHomeDecor';
-var CELL_SIZE = 54;
-var COLS = 6;
-var ROWS = 5;
 
-/* 家具定义 */
+/* ---- 等距几何常量 ---- */
+var ISO_UNIT = 52;               // 1 世界单位 = 等距 tile 的边长（像素，在 scale=1 下）
+var ISO_W = ISO_UNIT * 2;        // 等距 tile 宽
+var ISO_H = ISO_UNIT;            // 等距 tile 高
+var FLOOR_H = 90;                // 一层楼的高度（墙高）
+var STAIRS_H = FLOOR_H;          // 楼梯总高度
+var STAIRS_W = ISO_UNIT * 3;     // 楼梯宽度（3 个 tile）
+
+/* ---- 户型定义（世界坐标系统：col, row, floor） ----
+ *   floor 0  = 一层（底层）
+ *   floor 1  = 二层（上层）
+ *   每一层是一个矩形地板区域，用 { x0, x1, y0, y1, floor } 表示矩形
+ *   （x0/x1 是 col 范围，左闭右开；y0/y1 是 row 范围，左闭右开）
+ */
+var FLOORS = [
+  // 一层（主入口 + 泳池旁露台 + 楼梯区）
+  { x0: 0, x1: 9, y0: 0, y1: 7, floor: 0, color: '#f6e8d0', border: '#d6bf98' },
+  // 二层（楼上大房间）
+  { x0: 2, x1: 8, y0: 1, y1: 5, floor: 1, color: '#f3e3c8', border: '#cdb283' }
+];
+/* 泳池矩形（渲染成浅蓝色平台在一层右侧） */
+var POOL = { x0: 9, x1: 12, y0: 3, y1: 6, floor: -0.35, color: '#b7e1f0', border: '#7eb9d1' };
+
+/* 楼梯位置（从一层到二层）：方向沿 row 增加方向向上 */
+var STAIRS = { x0: 1, x1: 2, y0: 3, y1: 6, floor: 0, color: '#c9a279', edge: '#9d7a55' };
+
+/* 墙壁颜色 */
+var WALL_COLOR = {
+  left:   '#f0cfa0',   /* 左墙（从左下→左上） */
+  right:  '#e2b986',   /* 右墙（从右下→右上） */
+  back:   '#f7dcb6',   /* 后墙 */
+  edge:   '#b68a5a'    /* 墙线 */
+};
+
+/* ---- 家具定义 ----
+ *   每个家具 w/h 是等距 tile 单位（不是像素）
+ *   displayScale 让图像显示时略小/大
+ */
 var FURNITURE = [
-  { id: 'sofa',      name: '沙发',  img: '../assets/furniture/sofa.jpg',      price: 200, w: 2, h: 1, cat: 'living' },
-  { id: 'bed',       name: '床',    img: '../assets/furniture/bed.jpg',       price: 300, w: 2, h: 2, cat: 'bedroom' },
-  { id: 'table',     name: '餐桌',  img: '../assets/furniture/table.jpg',     price: 150, w: 2, h: 2, cat: 'kitchen' },
-  { id: 'chair',     name: '椅子',  img: '../assets/furniture/chair.jpg',     price: 60,  w: 1, h: 1, cat: 'kitchen' },
-  { id: 'bookshelf', name: '书架',  img: '../assets/furniture/bookshelf.jpg', price: 180, w: 1, h: 2, cat: 'living' },
-  { id: 'rug',       name: '地毯',  img: '../assets/furniture/rug.jpg',       price: 100, w: 3, h: 2, cat: 'decor' },
-  { id: 'plant',     name: '盆栽',  img: '../assets/furniture/plant.jpg',     price: 50,  w: 1, h: 1, cat: 'decor' },
-  { id: 'lamp',      name: '台灯',  img: '../assets/furniture/lamp.jpg',      price: 80,  w: 1, h: 1, cat: 'decor' }
+  { id: 'sofa',      name: '沙发',   img: '../assets/furniture/sofa.jpg',      price: 200, w: 2, h: 1, cat: 'living',  displayScale: 0.95 },
+  { id: 'bed',       name: '床',     img: '../assets/furniture/bed.jpg',       price: 300, w: 2, h: 2, cat: 'bedroom', displayScale: 1.00 },
+  { id: 'table',     name: '餐桌',   img: '../assets/furniture/table.jpg',     price: 150, w: 2, h: 2, cat: 'kitchen', displayScale: 0.90 },
+  { id: 'chair',     name: '椅子',   img: '../assets/furniture/chair.jpg',     price: 60,  w: 1, h: 1, cat: 'kitchen', displayScale: 0.85 },
+  { id: 'bookshelf', name: '书架',   img: '../assets/furniture/bookshelf.jpg', price: 180, w: 1, h: 2, cat: 'living',  displayScale: 1.00 },
+  { id: 'rug',       name: '地毯',   img: '../assets/furniture/rug.jpg',       price: 100, w: 3, h: 2, cat: 'decor',   displayScale: 1.00 },
+  { id: 'plant',     name: '盆栽',   img: '../assets/furniture/plant.jpg',     price: 50,  w: 1, h: 1, cat: 'decor',   displayScale: 0.80 },
+  { id: 'lamp',      name: '台灯',   img: '../assets/furniture/lamp.jpg',      price: 80,  w: 1, h: 1, cat: 'decor',   displayScale: 0.85 }
 ];
 
 var CATEGORIES = [
@@ -240,17 +312,113 @@ var CATEGORIES = [
 var FURN_MAP = {};
 FURNITURE.forEach(function(f) { FURN_MAP[f.id] = f; });
 
-/* 状态 */
+/* ---- 视口变换 ---- */
+var view = { scale: 0.72, tx: 0, ty: 0, minS: 0.35, maxS: 2.0 };
+
+/* ---- 状态 ---- */
 var data = null;
 var currentTab = 'shop';
 var currentCat = 'all';
-var placingFid = null;   /* 正在放置的家具id（从库存选的） */
-var selectedUid = null;  /* 选中的已放置家具uid */
-var editMode = false;
-var dragState = null;    /* 拖拽状态 */
+var placingFid = null;
+var selectedUid = null;
+var dragState = null;       /* 拖拽家具中 */
+var panState = null;        /* 平移视口中 */
+var pinchState = null;      /* 双指缩放中 */
 var uidCounter = 0;
+var previewUid = null;      /* 放置模式下跟随鼠标的幽灵家具 uid（临时） */
 
-/* ===== 数据持久化 ===== */
+/* ========================================================================
+ * 坐标系统工具
+ * ====================================================================== */
+/* 世界坐标 (col, row, floor) → 屏幕像素坐标 (x, y) 相对 stage 原点
+ *   返回值是 { x, y }：SVG / div 定位时使用
+ *   col/row 可以是小数（实现自由摆放）
+ */
+function worldToScreen(col, row, floor) {
+  return {
+    x: (col - row) * (ISO_W / 2),
+    y: (col + row) * (ISO_H / 2) - (floor || 0) * FLOOR_H
+  };
+}
+/* 从屏幕像素坐标（stage 相对）反推世界 col/row（floor 已知） */
+function screenToWorld(px, py, floor) {
+  var yOff = py + (floor || 0) * FLOOR_H;
+  var a = px / (ISO_W / 2);
+  var b = yOff / (ISO_H / 2);
+  return {
+    col: (a + b) / 2,
+    row: (b - a) / 2
+  };
+}
+
+/* 检查世界坐标（col,row,floor）是否在任意一块地板矩形内（允许小数，按中心点判断） */
+function isInsideAnyFloor(col, row, floor, w, h) {
+  /* 用家具 4 个角 + 中心都必须落在同层地板或泳池（泳池也能放） */
+  var pts = [
+    [col, row], [col + w, row], [col, row + h], [col + w, row + h],
+    [col + w/2, row + h/2]
+  ];
+  for (var i = 0; i < pts.length; i++) {
+    var c = pts[i][0], r = pts[i][1];
+    var ok = false;
+    for (var j = 0; j < FLOORS.length; j++) {
+      var f = FLOORS[j];
+      if (Math.abs(f.floor - floor) < 0.1 &&
+          c >= f.x0 && c <= f.x1 && r >= f.y0 && r <= f.y1) { ok = true; break; }
+    }
+    if (!ok && POOL && Math.abs(POOL.floor - floor) < 0.1) {
+      if (c >= POOL.x0 && c <= POOL.x1 && r >= POOL.y0 && r <= POOL.y1) ok = true;
+    }
+    if (!ok) return false;
+  }
+  return true;
+}
+
+/* 家具 AABB 碰撞检查（基于世界 col/row，同楼层比较） */
+function aabbOverlap(a, sa, b, sb) {
+  return a.col < b.col + sb.w && a.col + sa.w > b.col &&
+         a.row < b.row + sb.h && a.row + sa.h > b.row;
+}
+function canPlaceAt(fid, col, row, floor, rotation, ignoreUid) {
+  var f = FURN_MAP[fid];
+  if (!f) return { ok: false, reason: '未知家具' };
+  var sz = furnSize(f, rotation);
+  /* 同层地板检查 */
+  if (!isInsideAnyFloor(col, row, floor, sz.w, sz.h)) {
+    return { ok: false, reason: '要放在地板上哦' };
+  }
+  /* 重叠检查 */
+  for (var i = 0; i < data.placed.length; i++) {
+    var p = data.placed[i];
+    if (p.uid === ignoreUid) continue;
+    if (Math.abs(p.floor - floor) > 0.1) continue;
+    var pf = FURN_MAP[p.fid];
+    if (!pf) continue;
+    var psz = furnSize(pf, p.rotation);
+    if (aabbOverlap({col:col,row:row}, sz, p, psz)) {
+      return { ok: false, reason: '和别的家具重叠了' };
+    }
+  }
+  return { ok: true };
+}
+
+function furnSize(f, rotation) {
+  return (rotation % 180 === 0) ? { w: f.w, h: f.h } : { w: f.h, h: f.h };
+}
+
+/* 深度排序 y 值：用于家具绘制顺序
+ *   先按 floor 分层，再按 col+row（等距“下方先绘制”，上方后绘制覆盖）
+ */
+function sortDepth(a, b) {
+  if (Math.abs(a.floor - b.floor) > 0.01) return a.floor - b.floor;
+  var za = a.col + a.row;
+  var zb = b.col + b.row;
+  return za - zb;
+}
+
+/* ========================================================================
+ * 数据层
+ * ====================================================================== */
 function loadData() {
   try {
     var raw = localStorage.getItem(STORAGE_KEY);
@@ -258,7 +426,12 @@ function loadData() {
       var d = JSON.parse(raw);
       if (typeof d.coins !== 'number') d.coins = 1000;
       if (!d.inventory) d.inventory = {};
-      if (!d.placed) d.placed = [];
+      if (!Array.isArray(d.placed)) d.placed = [];
+      /* v1 → v2 数据迁移：网格(col,row,floor) 的位置从 6×5 搬到新世界坐标（放到一层中央） */
+      d.placed.forEach(function(p) {
+        if (typeof p.floor !== 'number') p.floor = 0;
+        if (typeof p.rotation !== 'number') p.rotation = 0;
+      });
       return d;
     }
   } catch(e) {}
@@ -268,7 +441,9 @@ function saveData() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
 }
 
-/* ===== 工具函数 ===== */
+/* ========================================================================
+ * 工具
+ * ====================================================================== */
 function toast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg;
@@ -277,81 +452,423 @@ function toast(msg) {
   t._timer = setTimeout(function(){ t.classList.remove('show'); }, 2000);
 }
 
-function getFurnSize(f, rotation) {
-  return rotation % 180 === 0 ? { w: f.w, h: f.h } : { w: f.h, h: f.w };
-}
+/* ========================================================================
+ * SVG 房子渲染
+ * ====================================================================== */
+function renderHouse() {
+  var svg = document.getElementById('houseSvg');
+  svg.setAttribute('width', 1);
+  svg.setAttribute('height', 1);
+  var g = [];
+  var defs =
+    '<defs>' +
+    '  <pattern id="floor0Tile" width="' + ISO_W + '" height="' + ISO_H + '" patternUnits="userSpaceOnUse">' +
+    '    <path d="M0,' + (ISO_H/2) + ' L' + (ISO_W/2) + ',0 L' + ISO_W + ',' + (ISO_H/2) + ' L' + (ISO_W/2) + ',' + ISO_H + ' Z" fill="#f3e6cc" stroke="#d6bf98" stroke-width="1"/>' +
+    '  </pattern>' +
+    '  <pattern id="floor1Tile" width="' + ISO_W + '" height="' + ISO_H + '" patternUnits="userSpaceOnUse">' +
+    '    <path d="M0,' + (ISO_H/2) + ' L' + (ISO_W/2) + ',0 L' + ISO_W + ',' + (ISO_H/2) + ' L' + (ISO_W/2) + ',' + ISO_H + ' Z" fill="#efe0c0" stroke="#c9ad7f" stroke-width="1"/>' +
+    '  </pattern>' +
+    '  <pattern id="poolTile" width="' + ISO_W + '" height="' + ISO_H + '" patternUnits="userSpaceOnUse">' +
+    '    <path d="M0,' + (ISO_H/2) + ' L' + (ISO_W/2) + ',0 L' + ISO_W + ',' + (ISO_H/2) + ' L' + (ISO_W/2) + ',' + ISO_H + ' Z" fill="#c7e6f4" stroke="#87bfd6" stroke-width="1"/>' +
+    '    <path d="M' + (ISO_W*0.18) + ',' + (ISO_H*0.45) + ' q' + (ISO_W*0.1) + ',' + (-ISO_H*0.08) + ' ' + (ISO_W*0.2) + ',0 t' + (ISO_W*0.2) + ',0" stroke="#8fc2d9" stroke-width="1.2" fill="none" opacity="0.7"/>' +
+    '  </pattern>' +
+    '</defs>';
 
-/* 检查能否放置（边界 + 重叠） */
-function canPlace(fid, x, y, rotation, ignoreUid) {
-  var f = FURN_MAP[fid];
-  if (!f) return false;
-  var sz = getFurnSize(f, rotation);
-  /* 边界检查 */
-  if (x < 0 || y < 0 || x + sz.w > COLS || y + sz.h > ROWS) return false;
-  /* 重叠检查 */
-  for (var i = 0; i < data.placed.length; i++) {
-    var p = data.placed[i];
-    if (p.uid === ignoreUid) continue;
-    var ps = getFurnSize(FURN_MAP[p.fid], p.rotation);
-    if (x < p.x + ps.w && x + sz.w > p.x && y < p.y + ps.h && y + sz.h > p.y) return false;
+  /* 计算整个房子 AABB（含泳池和上下层），用于 SVG viewBox */
+  var bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  function addPoint(c, r, f) {
+    var p = worldToScreen(c, r, f);
+    if (p.x < bounds.minX) bounds.minX = p.x;
+    if (p.x > bounds.maxX) bounds.maxX = p.x;
+    if (p.y < bounds.minY) bounds.minY = p.y;
+    if (p.y > bounds.maxY) bounds.maxY = p.y;
   }
-  return true;
+  FLOORS.forEach(function(fl) {
+    addPoint(fl.x0, fl.y0, fl.floor);
+    addPoint(fl.x1, fl.y1, fl.floor);
+    addPoint(fl.x0, fl.y1, fl.floor + 1);
+    addPoint(fl.x1, fl.y0, fl.floor + 1);
+  });
+  if (POOL) {
+    addPoint(POOL.x0, POOL.y0, POOL.floor);
+    addPoint(POOL.x1, POOL.y1, POOL.floor);
+  }
+  var pad = 120;
+  bounds.minX -= pad; bounds.minY -= pad * 1.2;
+  bounds.maxX += pad; bounds.maxY += pad * 0.6;
+  var vbW = bounds.maxX - bounds.minX;
+  var vbH = bounds.maxY - bounds.minY;
+  svg.setAttribute('viewBox', bounds.minX + ' ' + bounds.minY + ' ' + vbW + ' ' + vbH);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  /* --- 泳池（最底层） --- */
+  if (POOL) g = g.concat(drawPlatform(POOL, 'poolTile', POOL.border, true));
+
+  /* --- 一层地板 + 墙 --- */
+  g = g.concat(drawPlatform(FLOORS[0], 'floor0Tile', FLOORS[0].border, true));
+  g = g.concat(drawWalls(FLOORS[0], WALL_COLOR));
+
+  /* --- 楼梯 --- */
+  g = g.concat(drawStairs(STAIRS));
+
+  /* --- 二层地板 + 墙 + 帐篷挂布 --- */
+  g = g.concat(drawPlatform(FLOORS[1], 'floor1Tile', FLOORS[1].border, false));
+  g = g.concat(drawWalls(FLOORS[1], WALL_COLOR));
+  g = g.concat(drawCanopy(FLOORS[1]));  // 帐篷尖顶挂布
+
+  /* --- 装饰：帐篷绳、旗杆小人（可选，美化） --- */
+  g = g.concat(drawFlags(FLOORS[1]));
+  g = g.concat(drawFenceAndLamp());
+
+  svg.innerHTML = defs + g.join('');
 }
 
-/* ===== 渲染 ===== */
-function renderTopbar() {
-  document.getElementById('coinCount').textContent = data.coins;
-  var btn = document.getElementById('editBtn');
-  btn.textContent = editMode ? '完成' : '编辑';
-  btn.classList.toggle('active', editMode);
+/* 画一个平台地板 (平台的顶面四边形 + 一个侧面厚度) */
+function drawPlatform(fl, tileRef, borderColor, drawThickness) {
+  var out = [];
+  var p1 = worldToScreen(fl.x0, fl.y0, fl.floor);
+  var p2 = worldToScreen(fl.x1, fl.y0, fl.floor);
+  var p3 = worldToScreen(fl.x1, fl.y1, fl.floor);
+  var p4 = worldToScreen(fl.x0, fl.y1, fl.floor);
+  /* 顶面（填充 tile 图案） */
+  out.push(
+    '<path class="floor" data-floor="' + fl.floor + '" ' +
+    'd="M' + p1.x + ',' + p1.y + ' L' + p2.x + ',' + p2.y +
+    ' L' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y + ' Z" ' +
+    'fill="url(#' + tileRef + ')" stroke="' + borderColor + '" stroke-width="2" stroke-linejoin="round"/>'
+  );
+  /* 厚度侧条（仅主楼层画，泳池只画薄边） */
+  if (drawThickness && fl.floor >= 0) {
+    var thick = 12;
+    /* 右侧 (p2 → p3 向下) */
+    var p2d = { x: p2.x + ISO_W/2 * thick/ISO_UNIT, y: p2.y + ISO_H/2 * thick/ISO_UNIT };
+    var p3d = { x: p3.x - ISO_W/2 * thick/ISO_UNIT, y: p3.y + ISO_H/2 * thick/ISO_UNIT };
+    out.push(
+      '<path d="M' + p2.x + ',' + p2.y + ' L' + p3.x + ',' + p3.y +
+      ' L' + p3d.x + ',' + p3d.y + ' L' + p2d.x + ',' + p2d.y + ' Z" ' +
+      'fill="#c9a372" stroke="#9d7a55" stroke-width="1.2" opacity="0.9"/>'
+    );
+    /* 前侧 (p3 → p4 向下) */
+    var p4d = { x: p4.x - ISO_W/2 * thick/ISO_UNIT, y: p4.y + ISO_H/2 * thick/ISO_UNIT };
+    out.push(
+      '<path d="M' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y +
+      ' L' + p4d.x + ',' + p4d.y + ' L' + p3d.x + ',' + p3d.y + ' Z" ' +
+      'fill="#b38d5a" stroke="#8d6a45" stroke-width="1.2" opacity="0.9"/>'
+    );
+  }
+  return out;
 }
 
-function renderRoom() {
-  var grid = document.getElementById('roomGrid');
-  grid.style.gridTemplateColumns = 'repeat(' + COLS + ', ' + CELL_SIZE + 'px)';
-  grid.style.gridTemplateRows = 'repeat(' + ROWS + ', ' + CELL_SIZE + 'px)';
-  grid.innerHTML = '';
-  for (var r = 0; r < ROWS; r++) {
-    for (var c = 0; c < COLS; c++) {
-      var cell = document.createElement('div');
-      cell.className = 'grid-cell';
-      if ((r + c) % 2 === 0) cell.classList.add('checker');
-      cell.dataset.x = c;
-      cell.dataset.y = r;
-      grid.appendChild(cell);
+/* 画三面墙（后墙 + 左墙 + 右墙） */
+function drawWalls(fl, wc) {
+  var out = [];
+  /* 后墙： (x0,y0,floor) → (x1,y0,floor) → (x1,y0,floor+1) → (x0,y0,floor+1) */
+  var b0 = worldToScreen(fl.x0, fl.y0, fl.floor);
+  var b1 = worldToScreen(fl.x1, fl.y0, fl.floor);
+  var t0 = worldToScreen(fl.x0, fl.y0, fl.floor + 1);
+  var t1 = worldToScreen(fl.x1, fl.y0, fl.floor + 1);
+  out.push(
+    '<path class="wall" d="M' + b0.x + ',' + b0.y + ' L' + b1.x + ',' + b1.y +
+    ' L' + t1.x + ',' + t1.y + ' L' + t0.x + ',' + t0.y + ' Z" ' +
+    'fill="' + wc.back + '" stroke="' + wc.edge + '" stroke-width="1.5"/>'
+  );
+  /* 左墙： (x0,y0,floor) → (x0,y1,floor) → (x0,y1,floor+1) → (x0,y0,floor+1) */
+  var b2 = worldToScreen(fl.x0, fl.y1, fl.floor);
+  var t2 = worldToScreen(fl.x0, fl.y1, fl.floor + 1);
+  out.push(
+    '<path class="wall" d="M' + b0.x + ',' + b0.y + ' L' + b2.x + ',' + b2.y +
+    ' L' + t2.x + ',' + t2.y + ' L' + t0.x + ',' + t0.y + ' Z" ' +
+    'fill="' + wc.left + '" stroke="' + wc.edge + '" stroke-width="1.5"/>'
+  );
+  /* 右墙： (x1,y0,floor) → (x1,y1,floor) → (x1,y1,floor+1) → (x1,y0,floor+1) */
+  var b3 = worldToScreen(fl.x1, fl.y1, fl.floor);
+  var t3 = worldToScreen(fl.x1, fl.y1, fl.floor + 1);
+  out.push(
+    '<path class="wall" d="M' + b1.x + ',' + b1.y + ' L' + b3.x + ',' + b3.y +
+    ' L' + t3.x + ',' + t3.y + ' L' + t1.x + ',' + t1.y + ' Z" ' +
+    'fill="' + wc.right + '" stroke="' + wc.edge + '" stroke-width="1.5"/>'
+  );
+  /* 门：在右墙上抠一个门洞（一层，右侧墙上 y 大的一侧） */
+  if (fl.floor === 0) {
+    var doorCx = (fl.x1 + fl.x1) / 2;       /* col = x1 */
+    var doorCy = (fl.y0 + fl.y1) / 2;       /* row 中间 */
+    var dA = worldToScreen(fl.x1, doorCy - 0.5, 0);
+    var dB = worldToScreen(fl.x1, doorCy + 0.5, 0);
+    var dAt = worldToScreen(fl.x1, doorCy - 0.5, 0.85);
+    var dBt = worldToScreen(fl.x1, doorCy + 0.5, 0.85);
+    /* 门洞（深棕色，带一点点台阶） */
+    out.push(
+      '<path d="M' + dA.x + ',' + dA.y + ' L' + dB.x + ',' + dB.y +
+      ' L' + dBt.x + ',' + dBt.y + ' Q' + ((dBt.x + dAt.x)/2) + ',' + (dBt.y - 18) +
+      ' ' + dAt.x + ',' + dAt.y + ' Z" fill="#6e4b2c" stroke="#4a3118" stroke-width="1.5"/>'
+    );
+    /* 门内亮 */
+    out.push(
+      '<path d="M' + (dA.x+2) + ',' + (dA.y+2) + ' L' + (dB.x-2) + ',' + (dB.y-2) +
+      ' L' + (dBt.x-2) + ',' + (dBt.y-2) +
+      ' Q' + ((dBt.x + dAt.x)/2) + ',' + (dBt.y - 22) +
+      ' ' + (dAt.x+2) + ',' + (dAt.y-2) +
+      ' Z" fill="#2d1a0a"/>'
+    );
+  }
+  return out;
+}
+
+/* 画楼梯（从 f=0 爬到 f=1，步数 = 8） */
+function drawStairs(s) {
+  var out = [];
+  var steps = 8;
+  var prevBot = null, prevTop = null;
+  for (var i = 0; i < steps; i++) {
+    var t0 = i / steps;
+    var t1 = (i + 1) / steps;
+    /* 每一级的 4 个角：沿 row 方向前进 */
+    var cy0 = s.y0 + (s.y1 - s.y0) * t0;
+    var cy1 = s.y0 + (s.y1 - s.y0) * t1;
+    var f0 = t0;  /* 0..1 */
+    var f1 = t1;
+    var A = worldToScreen(s.x0, cy0, f0);   /* 左前 */
+    var B = worldToScreen(s.x1, cy0, f0);   /* 右前 */
+    var C = worldToScreen(s.x1, cy1, f1);   /* 右后 */
+    var D = worldToScreen(s.x0, cy1, f1);   /* 左后 */
+    /* 踏面 (top) */
+    out.push(
+      '<path class="stair" d="M' + A.x + ',' + A.y + ' L' + B.x + ',' + B.y +
+      ' L' + C.x + ',' + C.y + ' L' + D.x + ',' + D.y + ' Z" ' +
+      'fill="#d5a679" stroke="#a07a50" stroke-width="1.2"/>'
+    );
+    /* 踢面 (riser)：用前一级底部连接当前踏面前沿 */
+    if (prevBot) {
+      out.push(
+        '<path class="stair" d="M' + prevBot.A.x + ',' + prevBot.A.y +
+        ' L' + prevBot.B.x + ',' + prevBot.B.y +
+        ' L' + B.x + ',' + B.y + ' L' + A.x + ',' + A.y + ' Z" ' +
+        'fill="#b98a5e" stroke="#8d6a45" stroke-width="1"/>'
+      );
+    }
+    prevBot = { A: A, B: B };
+    prevTop = { C: C, D: D };
+  }
+  /* 楼梯侧墙（左右两侧） */
+  var sideStartA = worldToScreen(s.x0, s.y0, 0);
+  var sideStartB = worldToScreen(s.x1, s.y0, 0);
+  var sideEndA = worldToScreen(s.x0, s.y1, 1);
+  var sideEndB = worldToScreen(s.x1, s.y1, 1);
+  /* 左侧 (x0) */
+  out.push(
+    '<path d="M' + sideStartA.x + ',' + sideStartA.y +
+    ' L' + sideStartA.x + ',' + (sideStartA.y + 12) +
+    ' L' + sideEndA.x + ',' + (sideEndA.y + 12) +
+    ' L' + sideEndA.x + ',' + sideEndA.y +
+    ' Z" fill="#9e7548" stroke="#77552f" stroke-width="1.2"/>'
+  );
+  /* 右侧 (x1) */
+  out.push(
+    '<path d="M' + sideStartB.x + ',' + sideStartB.y +
+    ' L' + sideStartB.x + ',' + (sideStartB.y + 12) +
+    ' L' + sideEndB.x + ',' + (sideEndB.y + 12) +
+    ' L' + sideEndB.x + ',' + sideEndB.y +
+    ' Z" fill="#9e7548" stroke="#77552f" stroke-width="1.2"/>'
+  );
+  return out;
+}
+
+/* 帐篷尖顶挂布（用户户型图顶部的金色帐篷装饰） */
+function drawCanopy(fl) {
+  var out = [];
+  /* 从后墙顶部两个角，拉起一个帐篷尖顶（尖点在后墙中点上方） */
+  var wallT0 = worldToScreen(fl.x0, fl.y0, fl.floor + 1);
+  var wallT1 = worldToScreen(fl.x1, fl.y0, fl.floor + 1);
+  var peak = worldToScreen((fl.x0 + fl.x1) / 2, fl.y0 - 1.6, fl.floor + 1.6);
+  /* 帐篷布（半透明金色） */
+  out.push(
+    '<path d="M' + wallT0.x + ',' + wallT0.y +
+    ' L' + peak.x + ',' + peak.y +
+    ' L' + wallT1.x + ',' + wallT1.y + ' Z" ' +
+    'fill="#e6c772" stroke="#a07c1f" stroke-width="1.5" fill-opacity="0.78"/>'
+  );
+  /* 挂布边缘的流苏锯齿 */
+  var n = 14;
+  for (var i = 0; i <= n; i++) {
+    var t = i / n;
+    /* 从 peak 到 wallT0/wallT1 的点 */
+    function lerp(a, b, t){ return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }; }
+    var pL = lerp(peak, wallT0, t);
+    var pR = lerp(peak, wallT1, t);
+    if (i % 2 === 0) {
+      var off = 8;
+      out.push('<circle cx="' + pL.x + '" cy="' + pL.y + '" r="3" fill="#fff1b8" stroke="#b5891e" stroke-width="0.8"/>');
+      out.push('<circle cx="' + pR.x + '" cy="' + pR.y + '" r="3" fill="#fff1b8" stroke="#b5891e" stroke-width="0.8"/>');
     }
   }
-  /* 设置 wrapper 尺寸 */
-  var wrapper = document.getElementById('roomWrapper');
-  wrapper.style.width = (COLS * CELL_SIZE + 2) + 'px';
-  wrapper.style.height = (ROWS * CELL_SIZE + 2) + 'px';
-
-  renderFurniture();
+  /* 四角柱上的小金顶装饰（在左后/右后/左前/右前立柱顶端） */
+  var posts = [
+    worldToScreen(fl.x0, fl.y0, fl.floor + 1),
+    worldToScreen(fl.x1, fl.y0, fl.floor + 1),
+    worldToScreen(fl.x0, fl.y1, fl.floor + 1),
+    worldToScreen(fl.x1, fl.y1, fl.floor + 1)
+  ];
+  posts.forEach(function(p) {
+    out.push('<path d="M' + (p.x-6) + ',' + p.y +
+      ' L' + (p.x+6) + ',' + p.y +
+      ' L' + p.x + ',' + (p.y - 22) + ' Z" ' +
+      'fill="#e8c364" stroke="#9a6e18" stroke-width="1.2"/>');
+  });
+  return out;
 }
 
+/* 二层前后悬挂的挂旗（用户图中帐篷顶上的黄色飘旗） */
+function drawFlags(fl) {
+  var out = [];
+  var flags = [
+    { c: fl.x0 + 1, r: fl.y0 - 0.3, f: fl.floor + 1.2 },
+    { c: fl.x0 + 3, r: fl.y0 - 0.5, f: fl.floor + 1.5 },
+    { c: fl.x1 - 3, r: fl.y0 - 0.5, f: fl.floor + 1.5 },
+    { c: fl.x1 - 1, r: fl.y0 - 0.3, f: fl.floor + 1.2 }
+  ];
+  flags.forEach(function(flg) {
+    var p = worldToScreen(flg.c, flg.r, flg.f);
+    out.push(
+      '<path d="M' + p.x + ',' + (p.y - 2) +
+      ' L' + (p.x + 18) + ',' + (p.y + 10) +
+      ' L' + p.x + ',' + (p.y + 22) + ' Z" ' +
+      'fill="#f1d064" stroke="#9a6e18" stroke-width="1.1"/>'
+    );
+    out.push('<line x1="' + p.x + '" y1="' + (p.y - 30) + '" x2="' + p.x + '" y2="' + (p.y + 28) + '" stroke="#7a5820" stroke-width="1.5"/>');
+  });
+  return out;
+}
+
+/* 一层前侧外栏杆 + 右侧灯柱小人（美化） */
+function drawFenceAndLamp() {
+  var out = [];
+  /* 简单的底部地面草坪（画在一层地板外） */
+  var g1 = worldToScreen(FLOORS[0].x0 - 1.5, FLOORS[0].y1 + 0.8, -0.5);
+  var g2 = worldToScreen(FLOORS[0].x1 + 3.5, FLOORS[0].y1 + 2.6, -0.5);
+  out.push(
+    '<path d="M' + g1.x + ',' + g1.y + ' L' + g2.x + ',' + g1.y +
+    ' L' + g2.x + ',' + (g1.y + 200) + ' L' + g1.x + ',' + (g1.y + 200) +
+    ' Z" fill="#d5e4b2" opacity="0.55"/>'
+  );
+  /* 右下灯柱 */
+  var lp = worldToScreen(FLOORS[0].x1 + 2.2, FLOORS[0].y1 + 1.1, -0.1);
+  out.push(
+    '<rect x="' + (lp.x - 3) + '" y="' + (lp.y - 32) + '" width="6" height="32" fill="#c7a06a" stroke="#8a6633" stroke-width="1"/>'
+  );
+  out.push(
+    '<path d="M' + (lp.x - 10) + ',' + (lp.y - 32) +
+    ' L' + (lp.x + 10) + ',' + (lp.y - 32) +
+    ' L' + (lp.x + 6) + ',' + (lp.y - 50) +
+    ' L' + (lp.x - 6) + ',' + (lp.y - 50) + ' Z" ' +
+    'fill="#ffe794" stroke="#b38d2a" stroke-width="1.2"/>'
+  );
+  return out;
+}
+
+/* ========================================================================
+ * 家具渲染
+ * ====================================================================== */
 function renderFurniture() {
   var layer = document.getElementById('furnitureLayer');
   layer.innerHTML = '';
-  data.placed.forEach(function(p) {
+
+  /* 先按深度排序 */
+  var all = data.placed.slice();
+  if (placingFid && previewUid != null) {
+    /* 加个幽灵预览项 */
+    all.push({ uid: previewUid, fid: placingFid, col: previewPos.col, row: previewPos.row, floor: previewPos.floor, rotation: 0, _ghost: true });
+  }
+  all.sort(sortDepth);
+
+  all.forEach(function(p) {
     var f = FURN_MAP[p.fid];
     if (!f) return;
-    var sz = getFurnSize(f, p.rotation);
+    var sz = furnSize(f, p.rotation || 0);
     var el = document.createElement('div');
     el.className = 'placed-item';
+    if (p._ghost) el.classList.add('placing-ghost');
     if (p.uid === selectedUid) el.classList.add('selected');
-    el.style.left = (p.x * CELL_SIZE + 1) + 'px';
-    el.style.top = (p.y * CELL_SIZE + 1) + 'px';
-    el.style.width = (sz.w * CELL_SIZE - 2) + 'px';
-    el.style.height = (sz.h * CELL_SIZE - 2) + 'px';
+    if (dragState && dragState.placed && dragState.placed.uid === p.uid) el.classList.add('dragging');
+
+    /* 图像显示尺寸（像素） */
+    var imgPx = Math.min(ISO_W * sz.w, ISO_H * sz.h * 2) * (f.displayScale || 1);
+    el.style.width  = imgPx + 'px';
+    el.style.height = imgPx * 1.0 + 'px';
+
+    /* 定位：中心点在家具 (col+w/2, row+h/2) 的等距屏幕位置 */
+    var center = worldToScreen(p.col + sz.w / 2, p.row + sz.h / 2, p.floor);
+    /* 让家具底部中心对齐这个点：translate(-50%, -95%) */
+    el.style.transform =
+      'translate(' + center.x + 'px, ' + center.y + 'px)' +
+      ' translate(-50%, -90%)' +
+      (p.rotation ? ' rotate(' + p.rotation + 'deg)' : '');
+
     el.dataset.uid = p.uid;
     var img = document.createElement('img');
     img.src = f.img;
     img.alt = f.name;
-    if (p.rotation) img.style.transform = 'rotate(' + p.rotation + 'deg)';
     el.appendChild(img);
+
+    /* 放置预览：加 OK/Bad halo */
+    if (p._ghost) {
+      var chk = canPlaceAt(p.fid, p.col, p.row, p.floor, p.rotation || 0);
+      var halo = document.createElement('div');
+      halo.className = chk.ok ? 'furn-halo-ok' : 'furn-halo-bad';
+      el.appendChild(halo);
+      el.style.zIndex = chk.ok ? 500 : 500;
+    }
+
     layer.appendChild(el);
-    bindItemDrag(el, p);
+    if (!p._ghost) bindItemDrag(el, p);
   });
+}
+
+/* ========================================================================
+ * 视口缩放 / 平移
+ * ====================================================================== */
+function applyView() {
+  var stage = document.getElementById('roomStage');
+  /* roomStage 本来是 top:50% left:50% 定位；我们再叠加 translate + scale */
+  stage.style.transform =
+    'translate(' + view.tx + 'px, ' + view.ty + 'px) scale(' + view.scale + ')';
+}
+
+function zoomAt(factor, cx, cy) {
+  /* cx,cy 是 room-area 内的相对像素点（缩放不动点） */
+  var area = document.getElementById('roomArea');
+  var rect = area.getBoundingClientRect();
+  var sx = cx - rect.left - rect.width / 2;   /* 相对 stage 初始中心（未 applyView 前） */
+  var sy = cy - rect.top - rect.height / 2;
+  var oldScale = view.scale;
+  var newScale = Math.max(view.minS, Math.min(view.maxS, oldScale * factor));
+  if (Math.abs(newScale - oldScale) < 1e-3) return;
+  /* 让 (sx, sy) 这个点在缩放前后在同一个屏幕位置：
+   *   tx' + sx * newScale = tx + sx * oldScale
+   */
+  view.tx += sx * (oldScale - newScale);
+  view.ty += sy * (oldScale - newScale);
+  view.scale = newScale;
+  applyView();
+}
+
+function fitView() {
+  var area = document.getElementById('roomArea');
+  var svg = document.getElementById('houseSvg');
+  /* 让 svg viewBox 完整装进 area */
+  var vb = svg.viewBox.baseVal;
+  if (!vb || vb.width === 0) { view.scale = 0.72; view.tx = 0; view.ty = 0; applyView(); return; }
+  var rect = area.getBoundingClientRect();
+  var s = Math.min(rect.width / vb.width, rect.height / vb.height) * 0.95;
+  view.scale = Math.max(view.minS, Math.min(view.maxS, s));
+  view.tx = 0; view.ty = 0;
+  applyView();
+}
+
+/* ========================================================================
+ * 顶栏 / 商店 / 库存 / Tab 渲染
+ * ====================================================================== */
+function renderTopbar() {
+  document.getElementById('coinCount').textContent = data.coins;
 }
 
 function renderShop() {
@@ -406,14 +923,27 @@ function renderInventory() {
   }
 }
 
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.panel-tab').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  document.getElementById('shopPanel').style.display = tab === 'shop' ? '' : 'none';
+  document.getElementById('inventoryPanel').style.display = tab === 'inventory' ? '' : 'none';
+  if (tab === 'inventory') renderInventory();
+}
+
 function renderAll() {
   renderTopbar();
-  renderRoom();
+  renderHouse();
+  renderFurniture();
   renderShop();
   renderInventory();
 }
 
-/* ===== 商店：购买 ===== */
+/* ========================================================================
+ * 业务：购买 / 放置 / 选中 / 旋转 / 收回
+ * ====================================================================== */
 function buyFurniture(fid) {
   var f = FURN_MAP[fid];
   if (!f) return;
@@ -425,102 +955,111 @@ function buyFurniture(fid) {
   renderTopbar();
   renderShop();
   renderInventory();
-  /* 自动切到库存 tab */
   switchTab('inventory');
 }
 
-/* ===== 库存 → 放置模式 ===== */
+var previewPos = { col: 2, row: 2, floor: 0 };
+
 function startPlacing(fid) {
   if (placingFid === fid) { cancelPlacing(); return; }
   placingFid = fid;
   selectedUid = null;
-  editMode = true;
+  previewUid = 'ghost_' + Date.now();
   document.getElementById('placeHint').style.display = 'block';
   document.getElementById('actionBar').style.display = 'none';
-  renderTopbar();
+  renderInventory();
+  renderFurniture();
+}
+function cancelPlacing() {
+  placingFid = null;
+  previewUid = null;
+  document.getElementById('placeHint').style.display = 'none';
   renderInventory();
   renderFurniture();
 }
 
-function cancelPlacing() {
-  placingFid = null;
-  document.getElementById('placeHint').style.display = 'none';
-  clearPreview();
-  renderInventory();
-}
+/* 根据视口/屏幕坐标决定放到哪一层 + 世界 col/row */
+function pickFloorAndWorld(clientX, clientY) {
+  /* 先把 clientX/Y 转成 stage 相对坐标 */
+  var area = document.getElementById('roomArea');
+  var rect = area.getBoundingClientRect();
+  var sx = (clientX - rect.left - rect.width / 2 - view.tx) / view.scale;
+  var sy = (clientY - rect.top  - rect.height / 2 - view.ty) / view.scale;
 
-/* 网格预览 */
-function clearPreview() {
-  document.querySelectorAll('.grid-cell').forEach(function(c) {
-    c.classList.remove('preview-ok', 'preview-bad');
-  });
-}
-function showPreview(x, y) {
-  clearPreview();
-  if (!placingFid) return;
-  var f = FURN_MAP[placingFid];
-  var sz = getFurnSize(f, 0);
-  var ok = canPlace(placingFid, x, y, 0);
-  for (var dy = 0; dy < sz.h; dy++) {
-    for (var dx = 0; dx < sz.w; dx++) {
-      var cx = x + dx, cy = y + dy;
-      if (cx >= 0 && cx < COLS && cy >= 0 && cy < ROWS) {
-        var cell = document.querySelector('.grid-cell[data-x="' + cx + '"][data-y="' + cy + '"]');
-        if (cell) cell.classList.add(ok ? 'preview-ok' : 'preview-bad');
-      }
+  /* 先投影到 floor=1 看是否落到二层地板；否则看 floor=0；否则用 floor=0 */
+  var tryFloors = [1, 0, POOL ? POOL.floor : 0];
+  for (var i = 0; i < tryFloors.length; i++) {
+    var fl = tryFloors[i];
+    var w = screenToWorld(sx, sy, fl);
+    /* 判断是否在该层地板 */
+    var inF = false;
+    for (var j = 0; j < FLOORS.length; j++) {
+      var ff = FLOORS[j];
+      if (Math.abs(ff.floor - fl) < 0.1 &&
+          w.col >= ff.x0 && w.col <= ff.x1 && w.row >= ff.y0 && w.row <= ff.y1) { inF = true; break; }
     }
+    if (!inF && POOL && Math.abs(POOL.floor - fl) < 0.1) {
+      if (w.col >= POOL.x0 && w.col <= POOL.x1 && w.row >= POOL.y0 && w.row <= POOL.y1) inF = true;
+    }
+    if (inF) return { col: w.col, row: w.row, floor: fl };
   }
+  return { col: 0, row: 0, floor: 0, invalid: true };
 }
 
-/* 放置家具 */
-function placeFurniture(x, y) {
+function tryPlaceAt(clientX, clientY) {
   if (!placingFid) return;
-  if (!canPlace(placingFid, x, y, 0)) { toast('这里放不下哦'); return; }
+  var w = pickFloorAndWorld(clientX, clientY);
+  if (w.invalid) { toast('要放在房子里面哦'); return; }
+  var f = FURN_MAP[placingFid];
+  var sz = furnSize(f, 0);
+  /* 对齐到 0.1 tile（既自由又稳定） */
+  var col = Math.round((w.col - sz.w / 2) * 10) / 10;
+  var row = Math.round((w.row - sz.h / 2) * 10) / 10;
+  var chk = canPlaceAt(placingFid, col, row, w.floor, 0);
+  if (!chk.ok) { toast(chk.reason); return; }
   var uid = ++uidCounter;
-  data.placed.push({ uid: uid, fid: placingFid, x: x, y: y, rotation: 0 });
+  data.placed.push({ uid: uid, fid: placingFid, col: col, row: row, floor: w.floor, rotation: 0 });
   data.inventory[placingFid]--;
   if (data.inventory[placingFid] <= 0) delete data.inventory[placingFid];
   saveData();
   toast('摆放成功！');
-  /* 如果还有库存，继续放置同款 */
   if (data.inventory[placingFid]) {
-    renderAll();
+    previewUid = 'ghost_' + Date.now();
+    renderInventory();
+    renderFurniture();
   } else {
     cancelPlacing();
-    renderAll();
+    renderInventory();
+    renderFurniture();
   }
 }
 
-/* ===== 选中已放置家具 ===== */
 function selectPlaced(uid) {
   if (selectedUid === uid) { deselect(); return; }
   selectedUid = uid;
   placingFid = null;
+  previewUid = null;
   document.getElementById('placeHint').style.display = 'none';
   document.getElementById('actionBar').style.display = 'flex';
-  renderTopbar();
   renderFurniture();
+  renderInventory();
 }
-
 function deselect() {
   selectedUid = null;
   document.getElementById('actionBar').style.display = 'none';
   renderFurniture();
 }
-
-/* 旋转 */
 function rotateSelected() {
   if (!selectedUid) return;
   var p = data.placed.find(function(p) { return p.uid === selectedUid; });
   if (!p) return;
   var newRot = (p.rotation + 90) % 360;
-  if (!canPlace(p.fid, p.x, p.y, newRot, selectedUid)) { toast('旋转后放不下，换个位置试试'); return; }
+  var chk = canPlaceAt(p.fid, p.col, p.row, p.floor, newRot, selectedUid);
+  if (!chk.ok) { toast(chk.reason); return; }
   p.rotation = newRot;
   saveData();
   renderFurniture();
 }
-
-/* 收回 */
 function recycleSelected() {
   if (!selectedUid) return;
   var idx = data.placed.findIndex(function(p) { return p.uid === selectedUid; });
@@ -534,62 +1073,60 @@ function recycleSelected() {
   renderAll();
 }
 
-/* ===== 拖拽移动 ===== */
+/* ========================================================================
+ * 家具拖拽（像素→世界）
+ * ====================================================================== */
 function bindItemDrag(el, placed) {
-  var startX, startY, origX, origY, moved;
+  var startX, startY, origCol, origRow, moved;
 
   function onDown(e) {
-    if (placingFid) return; /* 放置模式下不拖拽 */
+    if (placingFid) return;
     e.preventDefault();
     e.stopPropagation();
     var pt = e.touches ? e.touches[0] : e;
-    startX = pt.clientX;
-    startY = pt.clientY;
-    origX = placed.x;
-    origY = placed.y;
+    startX = pt.clientX; startY = pt.clientY;
+    origCol = placed.col; origRow = placed.row;
     moved = false;
     selectPlaced(placed.uid);
-    el.classList.add('dragging');
-    dragState = { el: el, placed: placed };
+    dragState = { el: el, placed: placed, startX: startX, startY: startY, origCol: origCol, origRow: origRow };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
     document.addEventListener('touchmove', onMove, { passive: false });
     document.addEventListener('touchend', onUp);
   }
-
   function onMove(e) {
     if (!dragState) return;
     e.preventDefault();
+    e.stopPropagation();
     var pt = e.touches ? e.touches[0] : e;
     var dx = pt.clientX - startX;
     var dy = pt.clientY - startY;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
-    /* 实时跟随手指（像素级） */
-    var px = origX * CELL_SIZE + dx;
-    var py = origY * CELL_SIZE + dy;
-    el.style.left = (px + 1) + 'px';
-    el.style.top = (py + 1) + 'px';
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+    /* dx, dy 是屏幕像素 → 先 stage-local → 再反推世界 col/row 偏移 */
+    var area = document.getElementById('roomArea');
+    var rect = area.getBoundingClientRect();
+    var sx0 = (startX - rect.left - rect.width/2 - view.tx) / view.scale;
+    var sy0 = (startY - rect.top  - rect.height/2 - view.ty) / view.scale;
+    var sx1 = sx0 + dx / view.scale;
+    var sy1 = sy0 + dy / view.scale;
+    var w0 = screenToWorld(sx0, sy0, placed.floor);
+    var w1 = screenToWorld(sx1, sy1, placed.floor);
+    var newCol = Math.round((origCol + (w1.col - w0.col)) * 10) / 10;
+    var newRow = Math.round((origRow + (w1.row - w0.row)) * 10) / 10;
+    placed.col = newCol;
+    placed.row = newRow;
+    renderFurniture();
   }
-
-  function onUp() {
+  function onUp(e) {
     if (!dragState) return;
-    el.classList.remove('dragging');
-    var pt = (event.changedTouches && event.changedTouches[0]) || event;
-    /* 计算松手位置对应的网格坐标 */
-    var grid = document.getElementById('roomGrid');
-    var rect = grid.getBoundingClientRect();
-    var relX = pt.clientX - rect.left;
-    var relY = pt.clientY - rect.top;
-    var gx = Math.round(relX / CELL_SIZE - (getFurnSize(FURN_MAP[placed.fid], placed.rotation).w / 2));
-    var gy = Math.round(relY / CELL_SIZE - (getFurnSize(FURN_MAP[placed.fid], placed.rotation).h / 2));
-    gx = Math.max(0, Math.min(COLS - 1, gx));
-    gy = Math.max(0, Math.min(ROWS - 1, gy));
-
-    if (moved && canPlace(placed.fid, gx, gy, placed.rotation, placed.uid)) {
-      placed.x = gx;
-      placed.y = gy;
-      saveData();
+    /* 如果位置不合法 → 弹回原位 */
+    var chk = canPlaceAt(placed.fid, placed.col, placed.row, placed.floor, placed.rotation || 0, placed.uid);
+    if (!chk.ok) {
+      placed.col = origCol;
+      placed.row = origRow;
+      if (moved) toast(chk.reason);
     }
+    saveData();
     renderFurniture();
     dragState = null;
     document.removeEventListener('mousemove', onMove);
@@ -602,76 +1139,151 @@ function bindItemDrag(el, placed) {
   el.addEventListener('touchstart', onDown, { passive: false });
 }
 
-/* ===== 网格交互 ===== */
-function bindGrid() {
-  var grid = document.getElementById('roomGrid');
-  grid.addEventListener('click', function(e) {
-    var cell = e.target.closest('.grid-cell');
-    if (!cell) return;
-    var x = parseInt(cell.dataset.x);
-    var y = parseInt(cell.dataset.y);
+/* ========================================================================
+ * 视口交互：缩放 / 平移 / 双指
+ * ====================================================================== */
+function bindViewport() {
+  var area = document.getElementById('roomArea');
+
+  /* 滚轮缩放（桌面端） */
+  area.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var factor = e.deltaY < 0 ? 1.12 : (1 / 1.12);
+    zoomAt(factor, e.clientX, e.clientY);
+  }, { passive: false });
+
+  /* 鼠标中键或空白处拖拽平移 */
+  area.addEventListener('mousedown', function(e) {
+    /* 左键 + 没点到家具/SVG floor（或编辑未激活）时支持空白拖动 */
+    var tgt = e.target;
+    var dragPan = (e.button === 1);  /* 中键强制平移 */
+    if (!dragPan && e.button === 0) {
+      /* 点击在家具层上且没有选中家具 → 平移；点到家具层元素由家具自己处理（stopPropagation） */
+      dragPan = (!placingFid);
+    }
+    if (!dragPan) return;
+    panState = { sx: e.clientX, sy: e.clientY, tx: view.tx, ty: view.ty };
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!panState) return;
+    view.tx = panState.tx + (e.clientX - panState.sx);
+    view.ty = panState.ty + (e.clientY - panState.sy);
+    applyView();
+  });
+  document.addEventListener('mouseup', function() { panState = null; });
+
+  /* 触摸：单指=平移；双指=捏合缩放+平移；放置模式下单指点击/拖动预览 */
+  area.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1) {
+      panState = { sx: e.touches[0].clientX, sy: e.touches[0].clientY, tx: view.tx, ty: view.ty };
+    } else if (e.touches.length === 2) {
+      panState = null;
+      var t0 = e.touches[0], t1 = e.touches[1];
+      var cx = (t0.clientX + t1.clientX) / 2;
+      var cy = (t0.clientY + t1.clientY) / 2;
+      var dx = t1.clientX - t0.clientX, dy = t1.clientY - t0.clientY;
+      pinchState = {
+        cx: cx, cy: cy, dist: Math.sqrt(dx*dx + dy*dy),
+        scale: view.scale, tx: view.tx, ty: view.ty
+      };
+    }
+  }, { passive: false });
+
+  area.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (pinchState && e.touches.length === 2) {
+      var t0 = e.touches[0], t1 = e.touches[1];
+      var cx = (t0.clientX + t1.clientX) / 2;
+      var cy = (t0.clientY + t1.clientY) / 2;
+      var dx = t1.clientX - t0.clientX, dy = t1.clientY - t0.clientY;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      var factor = dist / pinchState.dist;
+      /* 先以 pinchState.cx/cy 为不动点做缩放到 pinchState.scale*factor */
+      var area = document.getElementById('roomArea');
+      var rect = area.getBoundingClientRect();
+      var oldS = pinchState.scale;
+      var newS = Math.max(view.minS, Math.min(view.maxS, oldS * factor));
+      var sx = pinchState.cx - rect.left - rect.width/2;
+      var sy = pinchState.cy - rect.top  - rect.height/2;
+      var nTx = pinchState.tx + sx * (oldS - newS);
+      var nTy = pinchState.ty + sy * (oldS - newS);
+      /* 再加平移（双指中心的移动） */
+      nTx += (cx - pinchState.cx);
+      nTy += (cy - pinchState.cy);
+      view.scale = newS; view.tx = nTx; view.ty = nTy;
+      applyView();
+    } else if (panState && e.touches.length === 1) {
+      view.tx = panState.tx + (e.touches[0].clientX - panState.sx);
+      view.ty = panState.ty + (e.touches[0].clientY - panState.sy);
+      applyView();
+    }
+  }, { passive: false });
+
+  area.addEventListener('touchend', function(e) {
+    if (e.touches.length < 2) pinchState = null;
+    if (e.touches.length === 0) panState = null;
+  });
+
+  /* 点击空白区域 / SVG 地板：放置模式下放置家具；否则取消选中 */
+  area.addEventListener('click', function(e) {
+    var tgt = e.target;
+    /* 点到家具或家具图片 → 家具自己的 click 会处理（stopPropagation 没有，但我们在绑定里只靠 mousedown/touchstart） */
+    if (tgt.closest('.placed-item')) return;
     if (placingFid) {
-      placeFurniture(x, y);
+      tryPlaceAt(e.clientX, e.clientY);
     } else if (selectedUid) {
       deselect();
     }
   });
-  /* 鼠标移动预览（桌面端） */
-  grid.addEventListener('mousemove', function(e) {
+
+  /* 桌面移动鼠标 → 更新放置预览位置 */
+  area.addEventListener('mousemove', function(e) {
     if (!placingFid) return;
-    var cell = e.target.closest('.grid-cell');
-    if (!cell) return;
-    var x = parseInt(cell.dataset.x);
-    var y = parseInt(cell.dataset.y);
-    showPreview(x, y);
+    var w = pickFloorAndWorld(e.clientX, e.clientY);
+    if (w.invalid) return;
+    var f = FURN_MAP[placingFid];
+    var sz = furnSize(f, 0);
+    previewPos.col = Math.round((w.col - sz.w/2) * 10) / 10;
+    previewPos.row = Math.round((w.row - sz.h/2) * 10) / 10;
+    previewPos.floor = w.floor;
+    renderFurniture();
   });
-  grid.addEventListener('mouseleave', clearPreview);
-  /* 触摸预览 */
-  grid.addEventListener('touchmove', function(e) {
-    if (!placingFid) return;
-    e.preventDefault();
-    var pt = e.touches[0];
-    var cell = document.elementFromPoint(pt.clientX, pt.clientY);
-    if (cell && cell.classList.contains('grid-cell')) {
-      showPreview(parseInt(cell.dataset.x), parseInt(cell.dataset.y));
-    }
-  }, { passive: false });
 }
 
-/* ===== Tab 切换 ===== */
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.panel-tab').forEach(function(t) {
-    t.classList.toggle('active', t.dataset.tab === tab);
-  });
-  document.getElementById('shopPanel').style.display = tab === 'shop' ? '' : 'none';
-  document.getElementById('inventoryPanel').style.display = tab === 'inventory' ? '' : 'none';
-  if (tab === 'inventory') renderInventory();
-}
-
-/* ===== 编辑模式 ===== */
-function toggleEdit() {
-  editMode = !editMode;
-  if (!editMode) { cancelPlacing(); deselect(); }
-  renderTopbar();
-}
-
-/* ===== 初始化 ===== */
+/* ========================================================================
+ * 初始化
+ * ====================================================================== */
 function init() {
   data = loadData();
-  /* 恢复 uidCounter */
   data.placed.forEach(function(p) { if (p.uid >= uidCounter) uidCounter = p.uid + 1; });
 
+  /* 初次渲染 */
+  renderHouse();
+  applyView();
   renderAll();
-  bindGrid();
+  fitView();
+
+  bindViewport();
 
   document.querySelectorAll('.panel-tab').forEach(function(t) {
     t.onclick = function() { switchTab(t.dataset.tab); };
   });
-  document.getElementById('editBtn').onclick = toggleEdit;
-  document.getElementById('btnRotate').onclick = rotateSelected;
+  document.getElementById('btnRotate').onclick  = rotateSelected;
   document.getElementById('btnRecycle').onclick = recycleSelected;
-  document.getElementById('btnCancel').onclick = deselect;
+  document.getElementById('btnCancel').onclick  = deselect;
+
+  document.getElementById('zoomIn').onclick = function() {
+    var rect = document.getElementById('roomArea').getBoundingClientRect();
+    zoomAt(1.2, rect.left + rect.width / 2, rect.top + rect.height / 2);
+  };
+  document.getElementById('zoomOut').onclick = function() {
+    var rect = document.getElementById('roomArea').getBoundingClientRect();
+    zoomAt(1 / 1.2, rect.left + rect.width / 2, rect.top + rect.height / 2);
+  };
+
+  /* 尺寸变化 → 重新 fit */
+  window.addEventListener('resize', function() { fitView(); });
 }
 
 init();
