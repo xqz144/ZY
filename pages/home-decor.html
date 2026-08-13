@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>家园装修</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #fdf6ee 0%, #f5ede0 100%);
+      color: #5a4a42; user-select: none;
+    }
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ===== 顶栏 ===== */
+    .topbar {
+      flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(12px); border-bottom: 1px solid rgba(210,190,170,0.3);
+      z-index: 10;
+    }
+    .coins {
+      display: flex; align-items: center; gap: 4px;
+      background: linear-gradient(135deg, #fff5d6, #ffe9a8);
+      padding: 5px 12px; border-radius: 20px; font-size: 15px; font-weight: 700;
+      color: #b8860b; box-shadow: 0 2px 6px rgba(200,160,50,0.15);
+    }
+    .room-name { flex: 1; text-align: center; font-size: 16px; font-weight: 600; color: #7a5c4a; }
+    .edit-btn {
+      padding: 5px 14px; border: none; border-radius: 16px;
+      background: linear-gradient(135deg, #c8b6ff, #9a7eff);
+      color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .edit-btn:active { transform: scale(0.92); }
+    .edit-btn.active { background: linear-gradient(135deg, #ff9a8b, #ff6a5a); }
+
+    /* ===== 房间区域 ===== */
+    .room-area {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; padding: 12px; position: relative;
+    }
+    .room-wrapper {
+      position: relative; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 8px 28px rgba(160,130,100,0.18);
+    }
+    .room-grid {
+      display: grid; gap: 1px; background: #d4c5a8; padding: 1px;
+      border-radius: 16px;
+    }
+    .grid-cell {
+      background: #f0e6d2; position: relative;
+      transition: background 0.15s;
+    }
+    .grid-cell:nth-child(even) { background: #ece0c8; }
+    /* 棋盘格交错 */
+    .grid-cell.checker { background: #ece0c8; }
+
+    /* 放置预览 */
+    .grid-cell.preview-ok { background: rgba(120, 220, 130, 0.4) !important; }
+    .grid-cell.preview-bad { background: rgba(240, 130, 110, 0.35) !important; }
+
+    /* ===== 家具层 ===== */
+    .furniture-layer { position: absolute; top: 0; left: 0; pointer-events: none; }
+    .placed-item {
+      position: absolute; pointer-events: auto; cursor: grab;
+      transition: box-shadow 0.15s, transform 0.1s;
+      border-radius: 6px; overflow: hidden;
+    }
+    .placed-item img {
+      width: 100%; height: 100%; object-fit: contain;
+      pointer-events: none; -webkit-user-drag: none;
+    }
+    .placed-item.selected {
+      box-shadow: 0 0 0 3px #9a7eff, 0 4px 12px rgba(154,126,255,0.3);
+      z-index: 100;
+    }
+    .placed-item.dragging { cursor: grabbing; opacity: 0.8; z-index: 200; }
+    .placed-item.placing-ghost { opacity: 0.5; pointer-events: none; }
+
+    /* ===== 选中操作栏 ===== */
+    .action-bar {
+      flex-shrink: 0; display: flex; gap: 10px; justify-content: center;
+      padding: 8px 14px; background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(8px); border-top: 1px solid rgba(210,190,170,0.3);
+    }
+    .action-bar button {
+      padding: 8px 18px; border: none; border-radius: 18px; font-size: 14px;
+      font-weight: 600; cursor: pointer; transition: transform 0.15s;
+    }
+    .action-bar button:active { transform: scale(0.92); }
+    .btn-rotate { background: linear-gradient(135deg, #c8b6ff, #9a7eff); color: #fff; }
+    .btn-recycle { background: linear-gradient(135deg, #ffc8b6, #ff8a6a); color: #fff; }
+    .btn-cancel { background: #eee; color: #888; }
+
+    /* ===== 底部面板 ===== */
+    .bottom-panel {
+      flex-shrink: 0; background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(12px); border-top: 1px solid rgba(210,190,170,0.3);
+      max-height: 38vh; display: flex; flex-direction: column;
+    }
+    .panel-tabs { display: flex; border-bottom: 2px solid rgba(210,190,170,0.2); }
+    .panel-tab {
+      flex: 1; padding: 10px; border: none; background: none;
+      font-size: 14px; font-weight: 600; color: #aaa; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s;
+    }
+    .panel-tab.active { color: #9a7eff; border-bottom-color: #9a7eff; }
+
+    .panel-content { flex: 1; overflow-y: auto; padding: 10px 12px; }
+
+    /* 分类条 */
+    .cat-bar { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px; }
+    .cat-chip {
+      padding: 4px 12px; border-radius: 14px; font-size: 12px; white-space: nowrap;
+      background: #f0e8da; color: #8a7a6a; cursor: pointer; transition: all 0.15s;
+    }
+    .cat-chip.active { background: #9a7eff; color: #fff; }
+
+    /* 家具卡片网格 */
+    .furniture-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px; }
+    .furniture-card {
+      background: #fff; border-radius: 12px; padding: 8px; text-align: center;
+      box-shadow: 0 2px 8px rgba(160,130,100,0.1); cursor: pointer;
+      transition: transform 0.12s; border: 2px solid transparent;
+    }
+    .furniture-card:active { transform: scale(0.93); }
+    .furniture-card.owned { border-color: #8ce08a; }
+    .furniture-card.selected { border-color: #9a7eff; box-shadow: 0 0 0 2px rgba(154,126,255,0.2); }
+    .furniture-card.cant-afford { opacity: 0.5; }
+    .furniture-card .fc-img {
+      width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      background: #faf6f0; border-radius: 8px; margin-bottom: 4px; overflow: hidden;
+    }
+    .furniture-card .fc-img img { width: 90%; height: 90%; object-fit: contain; }
+    .furniture-card .fc-name { font-size: 12px; font-weight: 600; color: #5a4a42; }
+    .furniture-card .fc-price { font-size: 11px; color: #c09020; font-weight: 600; }
+    .furniture-card .fc-count { font-size: 11px; color: #4aa854; font-weight: 600; }
+    .furniture-card .fc-size { font-size: 10px; color: #aaa; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 42vh; left: 50%; transform: translateX(-50%);
+      background: rgba(70,55,45,0.88); color: #fff; padding: 8px 18px;
+      border-radius: 20px; font-size: 13px; z-index: 9999; pointer-events: none;
+      opacity: 0; transition: opacity 0.25s, bottom 0.25s;
+    }
+    .toast.show { opacity: 1; bottom: calc(42vh + 10px); }
+
+    /* 放置模式提示 */
+    .place-hint {
+      position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
+      background: rgba(154,126,255,0.92); color: #fff; padding: 6px 16px;
+      border-radius: 16px; font-size: 13px; z-index: 50; pointer-events: none;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
+
+    /* 空库存提示 */
+    .empty-hint { text-align: center; padding: 30px 0; color: #bbb; font-size: 14px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <div class="coins">💰 <span id="coinCount">1000</span></div>
+    <div class="room-name">我的小窝</div>
+    <button class="edit-btn" id="editBtn">编辑</button>
+  </div>
+
+  <!-- 房间 -->
+  <div class="room-area" id="roomArea">
+    <div class="room-wrapper" id="roomWrapper">
+      <div class="room-grid" id="roomGrid"></div>
+      <div class="furniture-layer" id="furnitureLayer"></div>
+    </div>
+  </div>
+
+  <!-- 选中操作栏 -->
+  <div class="action-bar" id="actionBar" style="display:none;">
+    <button class="btn-rotate" id="btnRotate">🔄 旋转</button>
+    <button class="btn-recycle" id="btnRecycle">♻️ 收回</button>
+    <button class="btn-cancel" id="btnCancel">✕ 取消</button>
+  </div>
+
+  <!-- 放置提示 -->
+  <div class="place-hint" id="placeHint" style="display:none;">点击空位放置家具</div>
+
+  <!-- 底部面板 -->
+  <div class="bottom-panel">
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="shop">🛒 商店</button>
+      <button class="panel-tab" data-tab="inventory">📦 库存</button>
+    </div>
+    <div class="panel-content" id="shopPanel">
+      <div class="cat-bar" id="catBar"></div>
+      <div class="furniture-grid" id="shopGrid"></div>
+    </div>
+    <div class="panel-content" id="inventoryPanel" style="display:none;">
+      <div class="furniture-grid" id="invGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========================================================================
+ * 家园装修 —— 数据层 + 交互逻辑
+ * ====================================================================== */
+
+var STORAGE_KEY = 'leisureHomeDecor';
+var CELL_SIZE = 54;
+var COLS = 6;
+var ROWS = 5;
+
+/* 家具定义 */
+var FURNITURE = [
+  { id: 'sofa',      name: '沙发',  img: '../assets/furniture/sofa.jpg',      price: 200, w: 2, h: 1, cat: 'living' },
+  { id: 'bed',       name: '床',    img: '../assets/furniture/bed.jpg',       price: 300, w: 2, h: 2, cat: 'bedroom' },
+  { id: 'table',     name: '餐桌',  img: '../assets/furniture/table.jpg',     price: 150, w: 2, h: 2, cat: 'kitchen' },
+  { id: 'chair',     name: '椅子',  img: '../assets/furniture/chair.jpg',     price: 60,  w: 1, h: 1, cat: 'kitchen' },
+  { id: 'bookshelf', name: '书架',  img: '../assets/furniture/bookshelf.jpg', price: 180, w: 1, h: 2, cat: 'living' },
+  { id: 'rug',       name: '地毯',  img: '../assets/furniture/rug.jpg',       price: 100, w: 3, h: 2, cat: 'decor' },
+  { id: 'plant',     name: '盆栽',  img: '../assets/furniture/plant.jpg',     price: 50,  w: 1, h: 1, cat: 'decor' },
+  { id: 'lamp',      name: '台灯',  img: '../assets/furniture/lamp.jpg',      price: 80,  w: 1, h: 1, cat: 'decor' }
+];
+
+var CATEGORIES = [
+  { id: 'all',     name: '全部' },
+  { id: 'living',  name: '客厅' },
+  { id: 'bedroom', name: '卧室' },
+  { id: 'kitchen', name: '厨房' },
+  { id: 'decor',   name: '装饰' }
+];
+
+var FURN_MAP = {};
+FURNITURE.forEach(function(f) { FURN_MAP[f.id] = f; });
+
+/* 状态 */
+var data = null;
+var currentTab = 'shop';
+var currentCat = 'all';
+var placingFid = null;   /* 正在放置的家具id（从库存选的） */
+var selectedUid = null;  /* 选中的已放置家具uid */
+var editMode = false;
+var dragState = null;    /* 拖拽状态 */
+var uidCounter = 0;
+
+/* ===== 数据持久化 ===== */
+function loadData() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      var d = JSON.parse(raw);
+      if (typeof d.coins !== 'number') d.coins = 1000;
+      if (!d.inventory) d.inventory = {};
+      if (!d.placed) d.placed = [];
+      return d;
+    }
+  } catch(e) {}
+  return { coins: 1000, inventory: {}, placed: [] };
+}
+function saveData() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+/* ===== 工具函数 ===== */
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+function getFurnSize(f, rotation) {
+  return rotation % 180 === 0 ? { w: f.w, h: f.h } : { w: f.h, h: f.w };
+}
+
+/* 检查能否放置（边界 + 重叠） */
+function canPlace(fid, x, y, rotation, ignoreUid) {
+  var f = FURN_MAP[fid];
+  if (!f) return false;
+  var sz = getFurnSize(f, rotation);
+  /* 边界检查 */
+  if (x < 0 || y < 0 || x + sz.w > COLS || y + sz.h > ROWS) return false;
+  /* 重叠检查 */
+  for (var i = 0; i < data.placed.length; i++) {
+    var p = data.placed[i];
+    if (p.uid === ignoreUid) continue;
+    var ps = getFurnSize(FURN_MAP[p.fid], p.rotation);
+    if (x < p.x + ps.w && x + sz.w > p.x && y < p.y + ps.h && y + sz.h > p.y) return false;
+  }
+  return true;
+}
+
+/* ===== 渲染 ===== */
+function renderTopbar() {
+  document.getElementById('coinCount').textContent = data.coins;
+  var btn = document.getElementById('editBtn');
+  btn.textContent = editMode ? '完成' : '编辑';
+  btn.classList.toggle('active', editMode);
+}
+
+function renderRoom() {
+  var grid = document.getElementById('roomGrid');
+  grid.style.gridTemplateColumns = 'repeat(' + COLS + ', ' + CELL_SIZE + 'px)';
+  grid.style.gridTemplateRows = 'repeat(' + ROWS + ', ' + CELL_SIZE + 'px)';
+  grid.innerHTML = '';
+  for (var r = 0; r < ROWS; r++) {
+    for (var c = 0; c < COLS; c++) {
+      var cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      if ((r + c) % 2 === 0) cell.classList.add('checker');
+      cell.dataset.x = c;
+      cell.dataset.y = r;
+      grid.appendChild(cell);
+    }
+  }
+  /* 设置 wrapper 尺寸 */
+  var wrapper = document.getElementById('roomWrapper');
+  wrapper.style.width = (COLS * CELL_SIZE + 2) + 'px';
+  wrapper.style.height = (ROWS * CELL_SIZE + 2) + 'px';
+
+  renderFurniture();
+}
+
+function renderFurniture() {
+  var layer = document.getElementById('furnitureLayer');
+  layer.innerHTML = '';
+  data.placed.forEach(function(p) {
+    var f = FURN_MAP[p.fid];
+    if (!f) return;
+    var sz = getFurnSize(f, p.rotation);
+    var el = document.createElement('div');
+    el.className = 'placed-item';
+    if (p.uid === selectedUid) el.classList.add('selected');
+    el.style.left = (p.x * CELL_SIZE + 1) + 'px';
+    el.style.top = (p.y * CELL_SIZE + 1) + 'px';
+    el.style.width = (sz.w * CELL_SIZE - 2) + 'px';
+    el.style.height = (sz.h * CELL_SIZE - 2) + 'px';
+    el.dataset.uid = p.uid;
+    var img = document.createElement('img');
+    img.src = f.img;
+    img.alt = f.name;
+    if (p.rotation) img.style.transform = 'rotate(' + p.rotation + 'deg)';
+    el.appendChild(img);
+    layer.appendChild(el);
+    bindItemDrag(el, p);
+  });
+}
+
+function renderShop() {
+  var catBar = document.getElementById('catBar');
+  catBar.innerHTML = '';
+  CATEGORIES.forEach(function(cat) {
+    var chip = document.createElement('div');
+    chip.className = 'cat-chip' + (cat.id === currentCat ? ' active' : '');
+    chip.textContent = cat.name;
+    chip.onclick = function() { currentCat = cat.id; renderShop(); };
+    catBar.appendChild(chip);
+  });
+
+  var grid = document.getElementById('shopGrid');
+  grid.innerHTML = '';
+  FURNITURE.forEach(function(f) {
+    if (currentCat !== 'all' && f.cat !== currentCat) return;
+    var card = document.createElement('div');
+    card.className = 'furniture-card';
+    if (data.coins < f.price) card.classList.add('cant-afford');
+    card.innerHTML =
+      '<div class="fc-img"><img src="' + f.img + '" alt="' + f.name + '"></div>' +
+      '<div class="fc-name">' + f.name + '</div>' +
+      '<div class="fc-price">💰' + f.price + '</div>' +
+      '<div class="fc-size">' + f.w + '×' + f.h + '</div>';
+    card.onclick = function() { buyFurniture(f.id); };
+    grid.appendChild(card);
+  });
+}
+
+function renderInventory() {
+  var grid = document.getElementById('invGrid');
+  grid.innerHTML = '';
+  var hasAny = false;
+  FURNITURE.forEach(function(f) {
+    var count = data.inventory[f.id] || 0;
+    if (count <= 0) return;
+    hasAny = true;
+    var card = document.createElement('div');
+    card.className = 'furniture-card owned';
+    if (placingFid === f.id) card.classList.add('selected');
+    card.innerHTML =
+      '<div class="fc-img"><img src="' + f.img + '" alt="' + f.name + '"></div>' +
+      '<div class="fc-name">' + f.name + '</div>' +
+      '<div class="fc-count">x' + count + '</div>' +
+      '<div class="fc-size">' + f.w + '×' + f.h + '</div>';
+    card.onclick = function() { startPlacing(f.id); };
+    grid.appendChild(card);
+  });
+  if (!hasAny) {
+    grid.innerHTML = '<div class="empty-hint">还没有家具哦<br>去商店买几个吧～</div>';
+  }
+}
+
+function renderAll() {
+  renderTopbar();
+  renderRoom();
+  renderShop();
+  renderInventory();
+}
+
+/* ===== 商店：购买 ===== */
+function buyFurniture(fid) {
+  var f = FURN_MAP[fid];
+  if (!f) return;
+  if (data.coins < f.price) { toast('金币不足，差 ' + (f.price - data.coins) + ' 💰'); return; }
+  data.coins -= f.price;
+  data.inventory[fid] = (data.inventory[fid] || 0) + 1;
+  saveData();
+  toast('买入「' + f.name + '」💰-' + f.price);
+  renderTopbar();
+  renderShop();
+  renderInventory();
+  /* 自动切到库存 tab */
+  switchTab('inventory');
+}
+
+/* ===== 库存 → 放置模式 ===== */
+function startPlacing(fid) {
+  if (placingFid === fid) { cancelPlacing(); return; }
+  placingFid = fid;
+  selectedUid = null;
+  editMode = true;
+  document.getElementById('placeHint').style.display = 'block';
+  document.getElementById('actionBar').style.display = 'none';
+  renderTopbar();
+  renderInventory();
+  renderFurniture();
+}
+
+function cancelPlacing() {
+  placingFid = null;
+  document.getElementById('placeHint').style.display = 'none';
+  clearPreview();
+  renderInventory();
+}
+
+/* 网格预览 */
+function clearPreview() {
+  document.querySelectorAll('.grid-cell').forEach(function(c) {
+    c.classList.remove('preview-ok', 'preview-bad');
+  });
+}
+function showPreview(x, y) {
+  clearPreview();
+  if (!placingFid) return;
+  var f = FURN_MAP[placingFid];
+  var sz = getFurnSize(f, 0);
+  var ok = canPlace(placingFid, x, y, 0);
+  for (var dy = 0; dy < sz.h; dy++) {
+    for (var dx = 0; dx < sz.w; dx++) {
+      var cx = x + dx, cy = y + dy;
+      if (cx >= 0 && cx < COLS && cy >= 0 && cy < ROWS) {
+        var cell = document.querySelector('.grid-cell[data-x="' + cx + '"][data-y="' + cy + '"]');
+        if (cell) cell.classList.add(ok ? 'preview-ok' : 'preview-bad');
+      }
+    }
+  }
+}
+
+/* 放置家具 */
+function placeFurniture(x, y) {
+  if (!placingFid) return;
+  if (!canPlace(placingFid, x, y, 0)) { toast('这里放不下哦'); return; }
+  var uid = ++uidCounter;
+  data.placed.push({ uid: uid, fid: placingFid, x: x, y: y, rotation: 0 });
+  data.inventory[placingFid]--;
+  if (data.inventory[placingFid] <= 0) delete data.inventory[placingFid];
+  saveData();
+  toast('摆放成功！');
+  /* 如果还有库存，继续放置同款 */
+  if (data.inventory[placingFid]) {
+    renderAll();
+  } else {
+    cancelPlacing();
+    renderAll();
+  }
+}
+
+/* ===== 选中已放置家具 ===== */
+function selectPlaced(uid) {
+  if (selectedUid === uid) { deselect(); return; }
+  selectedUid = uid;
+  placingFid = null;
+  document.getElementById('placeHint').style.display = 'none';
+  document.getElementById('actionBar').style.display = 'flex';
+  renderTopbar();
+  renderFurniture();
+}
+
+function deselect() {
+  selectedUid = null;
+  document.getElementById('actionBar').style.display = 'none';
+  renderFurniture();
+}
+
+/* 旋转 */
+function rotateSelected() {
+  if (!selectedUid) return;
+  var p = data.placed.find(function(p) { return p.uid === selectedUid; });
+  if (!p) return;
+  var newRot = (p.rotation + 90) % 360;
+  if (!canPlace(p.fid, p.x, p.y, newRot, selectedUid)) { toast('旋转后放不下，换个位置试试'); return; }
+  p.rotation = newRot;
+  saveData();
+  renderFurniture();
+}
+
+/* 收回 */
+function recycleSelected() {
+  if (!selectedUid) return;
+  var idx = data.placed.findIndex(function(p) { return p.uid === selectedUid; });
+  if (idx < 0) return;
+  var p = data.placed[idx];
+  data.inventory[p.fid] = (data.inventory[p.fid] || 0) + 1;
+  data.placed.splice(idx, 1);
+  saveData();
+  deselect();
+  toast('已收回「' + FURN_MAP[p.fid].name + '」');
+  renderAll();
+}
+
+/* ===== 拖拽移动 ===== */
+function bindItemDrag(el, placed) {
+  var startX, startY, origX, origY, moved;
+
+  function onDown(e) {
+    if (placingFid) return; /* 放置模式下不拖拽 */
+    e.preventDefault();
+    e.stopPropagation();
+    var pt = e.touches ? e.touches[0] : e;
+    startX = pt.clientX;
+    startY = pt.clientY;
+    origX = placed.x;
+    origY = placed.y;
+    moved = false;
+    selectPlaced(placed.uid);
+    el.classList.add('dragging');
+    dragState = { el: el, placed: placed };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+
+  function onMove(e) {
+    if (!dragState) return;
+    e.preventDefault();
+    var pt = e.touches ? e.touches[0] : e;
+    var dx = pt.clientX - startX;
+    var dy = pt.clientY - startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+    /* 实时跟随手指（像素级） */
+    var px = origX * CELL_SIZE + dx;
+    var py = origY * CELL_SIZE + dy;
+    el.style.left = (px + 1) + 'px';
+    el.style.top = (py + 1) + 'px';
+  }
+
+  function onUp() {
+    if (!dragState) return;
+    el.classList.remove('dragging');
+    var pt = (event.changedTouches && event.changedTouches[0]) || event;
+    /* 计算松手位置对应的网格坐标 */
+    var grid = document.getElementById('roomGrid');
+    var rect = grid.getBoundingClientRect();
+    var relX = pt.clientX - rect.left;
+    var relY = pt.clientY - rect.top;
+    var gx = Math.round(relX / CELL_SIZE - (getFurnSize(FURN_MAP[placed.fid], placed.rotation).w / 2));
+    var gy = Math.round(relY / CELL_SIZE - (getFurnSize(FURN_MAP[placed.fid], placed.rotation).h / 2));
+    gx = Math.max(0, Math.min(COLS - 1, gx));
+    gy = Math.max(0, Math.min(ROWS - 1, gy));
+
+    if (moved && canPlace(placed.fid, gx, gy, placed.rotation, placed.uid)) {
+      placed.x = gx;
+      placed.y = gy;
+      saveData();
+    }
+    renderFurniture();
+    dragState = null;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onUp);
+  }
+
+  el.addEventListener('mousedown', onDown);
+  el.addEventListener('touchstart', onDown, { passive: false });
+}
+
+/* ===== 网格交互 ===== */
+function bindGrid() {
+  var grid = document.getElementById('roomGrid');
+  grid.addEventListener('click', function(e) {
+    var cell = e.target.closest('.grid-cell');
+    if (!cell) return;
+    var x = parseInt(cell.dataset.x);
+    var y = parseInt(cell.dataset.y);
+    if (placingFid) {
+      placeFurniture(x, y);
+    } else if (selectedUid) {
+      deselect();
+    }
+  });
+  /* 鼠标移动预览（桌面端） */
+  grid.addEventListener('mousemove', function(e) {
+    if (!placingFid) return;
+    var cell = e.target.closest('.grid-cell');
+    if (!cell) return;
+    var x = parseInt(cell.dataset.x);
+    var y = parseInt(cell.dataset.y);
+    showPreview(x, y);
+  });
+  grid.addEventListener('mouseleave', clearPreview);
+  /* 触摸预览 */
+  grid.addEventListener('touchmove', function(e) {
+    if (!placingFid) return;
+    e.preventDefault();
+    var pt = e.touches[0];
+    var cell = document.elementFromPoint(pt.clientX, pt.clientY);
+    if (cell && cell.classList.contains('grid-cell')) {
+      showPreview(parseInt(cell.dataset.x), parseInt(cell.dataset.y));
+    }
+  }, { passive: false });
+}
+
+/* ===== Tab 切换 ===== */
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.panel-tab').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  document.getElementById('shopPanel').style.display = tab === 'shop' ? '' : 'none';
+  document.getElementById('inventoryPanel').style.display = tab === 'inventory' ? '' : 'none';
+  if (tab === 'inventory') renderInventory();
+}
+
+/* ===== 编辑模式 ===== */
+function toggleEdit() {
+  editMode = !editMode;
+  if (!editMode) { cancelPlacing(); deselect(); }
+  renderTopbar();
+}
+
+/* ===== 初始化 ===== */
+function init() {
+  data = loadData();
+  /* 恢复 uidCounter */
+  data.placed.forEach(function(p) { if (p.uid >= uidCounter) uidCounter = p.uid + 1; });
+
+  renderAll();
+  bindGrid();
+
+  document.querySelectorAll('.panel-tab').forEach(function(t) {
+    t.onclick = function() { switchTab(t.dataset.tab); };
+  });
+  document.getElementById('editBtn').onclick = toggleEdit;
+  document.getElementById('btnRotate').onclick = rotateSelected;
+  document.getElementById('btnRecycle').onclick = recycleSelected;
+  document.getElementById('btnCancel').onclick = deselect;
+}
+
+init();
+</script>
+</body>
+</html>
