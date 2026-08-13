@@ -44,19 +44,19 @@
         linear-gradient(180deg, #fbf2df 0%, #f4e6c8 100%);
     }
     .room-stage {
-      position: absolute; top: 50%; left: 50%;
-      transform-origin: 0 0;
-      width: 0; height: 0;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      transform-origin: 50% 50%;
     }
     .room-root {
-      position: absolute;
-      transform-origin: 0 0;
-      width: 0; height: 0;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      transform-origin: 50% 50%;
     }
 
     /* ===== 等距房间（SVG 构建）===== */
     .house-svg {
       position: absolute;
+      top: 50%; left: 50%;
+      transform-origin: 0 0;
       overflow: visible;
       pointer-events: none;
     }
@@ -66,7 +66,10 @@
 
     /* ===== 家具层 ===== */
     .furniture-layer {
-      position: absolute; top: 0; left: 0; width: 0; height: 0;
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 0; height: 0;
+      transform-origin: 0 0;
       pointer-events: none;
     }
     .placed-item {
@@ -452,13 +455,91 @@ function toast(msg) {
   t._timer = setTimeout(function(){ t.classList.remove('show'); }, 2000);
 }
 
+/* 图片透明化缓存 */
+var _transparentImageCache = {};
+
+/* 将JPG图片的白色背景转为透明
+ * 使用Canvas处理：检测接近白色的像素，将其alpha设为0
+ */
+function makeImageTransparent(imgUrl, callback) {
+  if (_transparentImageCache[imgUrl]) {
+    callback(_transparentImageCache[imgUrl]);
+    return;
+  }
+  var img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() {
+    var canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imageData.data;
+
+    /* 检测白色背景并转为透明
+     * 策略：找到图片边缘的平均颜色作为背景色，将相似颜色设为透明
+     * 使用容差范围来处理抗锯齿边缘
+     */
+    var bgColor = sampleBackgroundColor(data, canvas.width, canvas.height);
+    var tolerance = 35;  /* 颜色容差 */
+
+    for (var i = 0; i < data.length; i += 4) {
+      var r = data[i], g = data[i + 1], b = data[i + 2];
+      var dist = colorDistance(r, g, b, bgColor.r, bgColor.g, bgColor.b);
+      if (dist < tolerance) {
+        /* 边缘过渡区域：根据距离调整透明度 */
+        var alpha = Math.min(255, dist / tolerance * 255);
+        data[i + 3] = alpha;
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    var resultUrl = canvas.toDataURL('image/png');
+    _transparentImageCache[imgUrl] = resultUrl;
+    callback(resultUrl);
+  };
+  img.onerror = function() {
+    /* 加载失败则返回原图 */
+    callback(imgUrl);
+  };
+  img.src = imgUrl;
+}
+
+/* 采样图片四角的平均颜色作为背景色 */
+function sampleBackgroundColor(data, w, h) {
+  var samples = [];
+  var samplePoints = [
+    [0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1],  /* 四角 */
+    [Math.floor(w / 2), 0], [Math.floor(w / 2), h - 1],  /* 上下中 */
+    [0, Math.floor(h / 2)], [w - 1, Math.floor(h / 2)]   /* 左右中 */
+  ];
+  for (var i = 0; i < samplePoints.length; i++) {
+    var idx = (samplePoints[i][1] * w + samplePoints[i][0]) * 4;
+    samples.push([data[idx], data[idx + 1], data[idx + 2]]);
+  }
+  var sumR = 0, sumG = 0, sumB = 0;
+  for (var j = 0; j < samples.length; j++) {
+    sumR += samples[j][0];
+    sumG += samples[j][1];
+    sumB += samples[j][2];
+  }
+  return { r: Math.round(sumR / samples.length), g: Math.round(sumG / samples.length), b: Math.round(sumB / samples.length) };
+}
+
+/* 计算两个RGB颜色的欧几里得距离 */
+function colorDistance(r1, g1, b1, r2, g2, b2) {
+  var dr = r1 - r2, dg = g1 - g2, db = b1 - b2;
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
 /* ========================================================================
  * SVG 房子渲染
  * ====================================================================== */
+var HOUSE_BOUNDS = null;  // 存储房子的bounds用于坐标转换
+
 function renderHouse() {
   var svg = document.getElementById('houseSvg');
-  svg.setAttribute('width', 1);
-  svg.setAttribute('height', 1);
   var g = [];
   var defs =
     '<defs>' +
@@ -496,8 +577,15 @@ function renderHouse() {
   var pad = 120;
   bounds.minX -= pad; bounds.minY -= pad * 1.2;
   bounds.maxX += pad; bounds.maxY += pad * 0.6;
+
+  HOUSE_BOUNDS = bounds;  // 保存bounds用于坐标转换
+
   var vbW = bounds.maxX - bounds.minX;
   var vbH = bounds.maxY - bounds.minY;
+
+  /* 设置SVG尺寸为viewBox尺寸，这样1个SVG单位=1个像素 */
+  svg.setAttribute('width', vbW);
+  svg.setAttribute('height', vbH);
   svg.setAttribute('viewBox', bounds.minX + ' ' + bounds.minY + ' ' + vbW + ' ' + vbH);
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
@@ -521,6 +609,9 @@ function renderHouse() {
   g = g.concat(drawFenceAndLamp());
 
   svg.innerHTML = defs + g.join('');
+
+  /* 调整SVG位置使其居中：将SVG原点（0,0）对齐到viewBox中心 */
+  svg.style.transform = 'translate(-' + (vbW / 2) + 'px, -' + (vbH / 2) + 'px)';
 }
 
 /* 画一个平台地板 (平台的顶面四边形 + 一个侧面厚度) */
@@ -768,8 +859,29 @@ function drawFenceAndLamp() {
 /* ========================================================================
  * 家具渲染
  * ====================================================================== */
+function getFurnitureTransform() {
+  /* 获取furniture-layer需要的变换，使其与SVG对齐 */
+  if (!HOUSE_BOUNDS) return '';
+  var vbW = HOUSE_BOUNDS.maxX - HOUSE_BOUNDS.minX;
+  var vbH = HOUSE_BOUNDS.maxY - HOUSE_BOUNDS.minY;
+  /* SVG使用translate(-vbW/2, -vbH/2)居中，furniture-layer也需要同样的变换 */
+  return 'translate(-' + (vbW / 2) + 'px, -' + (vbH / 2) + 'px)';
+}
+
+function worldToScreenWithOffset(col, row, floor) {
+  /* 带bounds偏移的坐标转换，与SVG内部坐标对齐 */
+  var p = worldToScreen(col, row, floor);
+  if (HOUSE_BOUNDS) {
+    p.x -= HOUSE_BOUNDS.minX;
+    p.y -= HOUSE_BOUNDS.minY;
+  }
+  return p;
+}
+
 function renderFurniture() {
   var layer = document.getElementById('furnitureLayer');
+  /* 设置furniture-layer的变换使其与SVG对齐 */
+  layer.style.transform = getFurnitureTransform();
   layer.innerHTML = '';
 
   /* 先按深度排序 */
@@ -795,9 +907,9 @@ function renderFurniture() {
     el.style.width  = imgPx + 'px';
     el.style.height = imgPx * 1.0 + 'px';
 
-    /* 定位：中心点在家具 (col+w/2, row+h/2) 的等距屏幕位置 */
-    var center = worldToScreen(p.col + sz.w / 2, p.row + sz.h / 2, p.floor);
-    /* 让家具底部中心对齐这个点：translate(-50%, -95%) */
+    /* 定位：中心点在家具 (col+w/2, row+h/2) 的等距屏幕位置（带bounds偏移） */
+    var center = worldToScreenWithOffset(p.col + sz.w / 2, p.row + sz.h / 2, p.floor);
+    /* 让家具底部中心对齐这个点：translate(-50%, -90%) */
     el.style.transform =
       'translate(' + center.x + 'px, ' + center.y + 'px)' +
       ' translate(-50%, -90%)' +
@@ -807,6 +919,12 @@ function renderFurniture() {
     var img = document.createElement('img');
     img.src = f.img;
     img.alt = f.name;
+    /* 应用透明化处理（异步） */
+    makeImageTransparent(f.img, function(transparentUrl) {
+      if (img.src !== transparentUrl) {
+        img.src = transparentUrl;
+      }
+    });
     el.appendChild(img);
 
     /* 放置预览：加 OK/Bad halo */
@@ -890,7 +1008,7 @@ function renderShop() {
     card.className = 'furniture-card';
     if (data.coins < f.price) card.classList.add('cant-afford');
     card.innerHTML =
-      '<div class="fc-img"><img src="' + f.img + '" alt="' + f.name + '"></div>' +
+      '<div class="fc-img"><img src="' + getFurnitureImg(f.id) + '" alt="' + f.name + '"></div>' +
       '<div class="fc-name">' + f.name + '</div>' +
       '<div class="fc-price">💰' + f.price + '</div>' +
       '<div class="fc-size">' + f.w + '×' + f.h + '</div>';
@@ -911,7 +1029,7 @@ function renderInventory() {
     card.className = 'furniture-card owned';
     if (placingFid === f.id) card.classList.add('selected');
     card.innerHTML =
-      '<div class="fc-img"><img src="' + f.img + '" alt="' + f.name + '"></div>' +
+      '<div class="fc-img"><img src="' + getFurnitureImg(f.id) + '" alt="' + f.name + '"></div>' +
       '<div class="fc-name">' + f.name + '</div>' +
       '<div class="fc-count">x' + count + '</div>' +
       '<div class="fc-size">' + f.w + '×' + f.h + '</div>';
@@ -980,17 +1098,37 @@ function cancelPlacing() {
 
 /* 根据视口/屏幕坐标决定放到哪一层 + 世界 col/row */
 function pickFloorAndWorld(clientX, clientY) {
-  /* 先把 clientX/Y 转成 stage 相对坐标 */
+  /* 先把 clientX/Y 转成 stage 相对坐标（去除视图变换） */
   var area = document.getElementById('roomArea');
   var rect = area.getBoundingClientRect();
   var sx = (clientX - rect.left - rect.width / 2 - view.tx) / view.scale;
   var sy = (clientY - rect.top  - rect.height / 2 - view.ty) / view.scale;
 
+  /* 现在sx, sy是"stage"坐标，原点在视图中心
+   * furniture-layer使用translate(-vbW/2, -vbH/2)
+   * 所以要从stage坐标转到furniture-layer内部坐标，需要加上vbW/2, vbH/2
+   * 然后再减去bounds偏移(minX, minY)得到SVG内部坐标
+   * 最后通过screenToWorld转回世界坐标
+   */
+  if (HOUSE_BOUNDS) {
+    var vbW = HOUSE_BOUNDS.maxX - HOUSE_BOUNDS.minX;
+    var vbH = HOUSE_BOUNDS.maxY - HOUSE_BOUNDS.minY;
+    /* 反向应用furniture-layer的变换 */
+    var svgX = sx + vbW / 2;
+    var svgY = sy + vbH / 2;
+    /* 反向应用bounds偏移，得到worldToScreen输出的坐标 */
+    var screenX = svgX + HOUSE_BOUNDS.minX;
+    var screenY = svgY + HOUSE_BOUNDS.minY;
+  } else {
+    var screenX = sx;
+    var screenY = sy;
+  }
+
   /* 先投影到 floor=1 看是否落到二层地板；否则看 floor=0；否则用 floor=0 */
   var tryFloors = [1, 0, POOL ? POOL.floor : 0];
   for (var i = 0; i < tryFloors.length; i++) {
     var fl = tryFloors[i];
-    var w = screenToWorld(sx, sy, fl);
+    var w = screenToWorld(screenX, screenY, fl);
     /* 判断是否在该层地板 */
     var inF = false;
     for (var j = 0; j < FLOORS.length; j++) {
@@ -1076,6 +1214,23 @@ function recycleSelected() {
 /* ========================================================================
  * 家具拖拽（像素→世界）
  * ====================================================================== */
+function screenToWorldWithOffset(sx, sy, floor) {
+  /* 从stage坐标（已去除视图变换）转到世界坐标，考虑bounds偏移和furniture-layer变换 */
+  if (HOUSE_BOUNDS) {
+    var vbW = HOUSE_BOUNDS.maxX - HOUSE_BOUNDS.minX;
+    var vbH = HOUSE_BOUNDS.maxY - HOUSE_BOUNDS.minY;
+    /* 反向应用furniture-layer的变换 */
+    var svgX = sx + vbW / 2;
+    var svgY = sy + vbH / 2;
+    /* 反向应用bounds偏移 */
+    var screenX = svgX + HOUSE_BOUNDS.minX;
+    var screenY = svgY + HOUSE_BOUNDS.minY;
+    return screenToWorld(screenX, screenY, floor);
+  } else {
+    return screenToWorld(sx, sy, floor);
+  }
+}
+
 function bindItemDrag(el, placed) {
   var startX, startY, origCol, origRow, moved;
 
@@ -1109,8 +1264,8 @@ function bindItemDrag(el, placed) {
     var sy0 = (startY - rect.top  - rect.height/2 - view.ty) / view.scale;
     var sx1 = sx0 + dx / view.scale;
     var sy1 = sy0 + dy / view.scale;
-    var w0 = screenToWorld(sx0, sy0, placed.floor);
-    var w1 = screenToWorld(sx1, sy1, placed.floor);
+    var w0 = screenToWorldWithOffset(sx0, sy0, placed.floor);
+    var w1 = screenToWorldWithOffset(sx1, sy1, placed.floor);
     var newCol = Math.round((origCol + (w1.col - w0.col)) * 10) / 10;
     var newRow = Math.round((origRow + (w1.row - w0.row)) * 10) / 10;
     placed.col = newCol;
@@ -1258,6 +1413,15 @@ function init() {
   data = loadData();
   data.placed.forEach(function(p) { if (p.uid >= uidCounter) uidCounter = p.uid + 1; });
 
+  /* 预加载家具图片并透明化 */
+  FURNITURE.forEach(function(f) {
+    makeImageTransparent(f.img, function() {
+      /* 图片透明化完成后，重新渲染商店和库存 */
+      renderShop();
+      renderInventory();
+    });
+  });
+
   /* 初次渲染 */
   renderHouse();
   applyView();
@@ -1284,6 +1448,16 @@ function init() {
 
   /* 尺寸变化 → 重新 fit */
   window.addEventListener('resize', function() { fitView(); });
+}
+
+/* 获取透明化后的家具图片URL（如果已处理） */
+function getFurnitureImg(fid) {
+  var f = FURN_MAP[fid];
+  if (!f) return '';
+  if (_transparentImageCache[f.img]) {
+    return _transparentImageCache[f.img];
+  }
+  return f.img;
 }
 
 init();
