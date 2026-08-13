@@ -294,14 +294,36 @@ var WALL_COLOR = {
  *   displayScale 让图像显示时略小/大
  */
 var FURNITURE = [
-  { id: 'sofa',      name: '沙发',   img: '../assets/furniture/sofa.jpg',      price: 200, w: 2, h: 1, cat: 'living',  displayScale: 0.95 },
-  { id: 'bed',       name: '床',     img: '../assets/furniture/bed.jpg',       price: 300, w: 2, h: 2, cat: 'bedroom', displayScale: 1.00 },
-  { id: 'table',     name: '餐桌',   img: '../assets/furniture/table.jpg',     price: 150, w: 2, h: 2, cat: 'kitchen', displayScale: 0.90 },
-  { id: 'chair',     name: '椅子',   img: '../assets/furniture/chair.jpg',     price: 60,  w: 1, h: 1, cat: 'kitchen', displayScale: 0.85 },
-  { id: 'bookshelf', name: '书架',   img: '../assets/furniture/bookshelf.jpg', price: 180, w: 1, h: 2, cat: 'living',  displayScale: 1.00 },
-  { id: 'rug',       name: '地毯',   img: '../assets/furniture/rug.jpg',       price: 100, w: 3, h: 2, cat: 'decor',   displayScale: 1.00 },
-  { id: 'plant',     name: '盆栽',   img: '../assets/furniture/plant.jpg',     price: 50,  w: 1, h: 1, cat: 'decor',   displayScale: 0.80 },
-  { id: 'lamp',      name: '台灯',   img: '../assets/furniture/lamp.jpg',      price: 80,  w: 1, h: 1, cat: 'decor',   displayScale: 0.85 }
+  /* —— 客厅 —— */
+  { id: 'sofa',                 name: '奶油沙发',       img: '../assets/furniture/sofa.jpg',                 price: 200, w: 2, h: 1, cat: 'living', displayScale: 0.95 },
+  { id: 'sofa-retro-orange',    name: '复古橙色沙发',   img: '../assets/furniture/sofa-retro-orange.jpg',    price: 220, w: 2, h: 1, cat: 'living', displayScale: 0.95 },
+  { id: 'sofa-black-white',     name: '黑白现代沙发',   img: '../assets/furniture/sofa-black-white.jpg',     price: 240, w: 2, h: 1, cat: 'living', displayScale: 0.95 },
+  { id: 'sofa-blue-floral',     name: '蓝碎花沙发',     img: '../assets/furniture/sofa-blue-floral.jpg',     price: 230, w: 2, h: 1, cat: 'living', displayScale: 0.95 },
+  { id: 'sofa-country-green',   name: '乡村绿沙发',     img: '../assets/furniture/sofa-country-green.jpg',   price: 220, w: 2, h: 1, cat: 'living', displayScale: 0.95 },
+  { id: 'sofa-red-plaid',       name: '红格纹沙发',     img: '../assets/furniture/sofa-red-plaid.jpg',       price: 220, w: 2, h: 1, cat: 'living', displayScale: 0.95 },
+  { id: 'sofa-spring-festival', name: '新春喜庆沙发',   img: '../assets/furniture/sofa-spring-festival.jpg', price: 260, w: 2, h: 1, cat: 'living', displayScale: 0.95 },
+  { id: 'sofa-sunken-wood',     name: '原木凹陷沙发',   img: '../assets/furniture/sofa-sunken-wood.jpg',     price: 250, w: 2, h: 1, cat: 'living', displayScale: 0.95 },
+  /* —— 卧室 —— */
+  { id: 'bed',                  name: '经典大床',       img: '../assets/furniture/bed.jpg',                  price: 300, w: 2, h: 2, cat: 'bedroom', displayScale: 1.00 },
+  { id: 'bed-caramel',          name: '焦糖可可双人床', img: '../assets/furniture/bed-caramel.jpg',          price: 320, w: 2, h: 2, cat: 'bedroom', displayScale: 1.00 },
+  { id: 'bed-orange-tatami',    name: '橙色榻榻米床',   img: '../assets/furniture/bed-orange-tatami.jpg',    price: 310, w: 2, h: 2, cat: 'bedroom', displayScale: 1.00 },
+  /* —— 厨房/餐厅 —— */
+  { id: 'table',                name: '经典餐桌',       img: '../assets/furniture/table.jpg',                price: 150, w: 2, h: 2, cat: 'kitchen', displayScale: 0.90 },
+  { id: 'table-round-lace',     name: '蕾丝圆桌',       img: '../assets/furniture/table-round-lace.jpg',     price: 170, w: 2, h: 2, cat: 'kitchen', displayScale: 0.90 },
+  { id: 'table-square-lace',    name: '蕾丝方桌',       img: '../assets/furniture/table-square-lace.jpg',    price: 165, w: 2, h: 2, cat: 'kitchen', displayScale: 0.90 },
+  { id: 'chair',                name: '椅子',           img: '../assets/furniture/chair.jpg',                price: 60,  w: 1, h: 1, cat: 'kitchen', displayScale: 0.85 },
+  /* —— 收纳 —— */
+  { id: 'bookshelf',            name: '经典书架',       img: '../assets/furniture/bookshelf.jpg',            price: 180, w: 1, h: 2, cat: 'storage', displayScale: 1.00 },
+  { id: 'cabinet-vintage-bookshelf', name: '复古书柜',   img: '../assets/furniture/cabinet-vintage-bookshelf.jpg', price: 200, w: 1, h: 2, cat: 'storage', displayScale: 1.00 },
+  { id: 'cabinet-stereo-bookshelf',  name: '立体书柜',   img: '../assets/furniture/cabinet-stereo-bookshelf.jpg', price: 210, w: 1, h: 2, cat: 'storage', displayScale: 1.00 },
+  { id: 'cabinet-butterfly-long',    name: '蝴蝶长柜',   img: '../assets/furniture/cabinet-butterfly-long.jpg',   price: 230, w: 3, h: 1, cat: 'storage', displayScale: 0.95 },
+  { id: 'wardrobe-rattan',           name: '藤编衣柜',   img: '../assets/furniture/wardrobe-rattan.jpg',          price: 260, w: 2, h: 1, cat: 'storage', displayScale: 0.95 },
+  { id: 'wardrobe-blue-double',      name: '蓝色双门衣柜', img: '../assets/furniture/wardrobe-blue-double.jpg',    price: 280, w: 2, h: 1, cat: 'storage', displayScale: 0.95 },
+  { id: 'corner-cabinet-midcentury', name: '中世纪角柜', img: '../assets/furniture/corner-cabinet-midcentury.jpg', price: 190, w: 1, h: 1, cat: 'storage', displayScale: 0.90 },
+  /* —— 装饰 —— */
+  { id: 'rug',                  name: '大地毯',         img: '../assets/furniture/rug.jpg',                  price: 100, w: 3, h: 2, cat: 'decor',   displayScale: 1.00 },
+  { id: 'plant',                name: '盆栽',           img: '../assets/furniture/plant.jpg',                price: 50,  w: 1, h: 1, cat: 'decor',   displayScale: 0.80 },
+  { id: 'lamp',                 name: '台灯',           img: '../assets/furniture/lamp.jpg',                 price: 80,  w: 1, h: 1, cat: 'decor',   displayScale: 0.85 }
 ];
 
 var CATEGORIES = [
@@ -309,6 +331,7 @@ var CATEGORIES = [
   { id: 'living',  name: '客厅' },
   { id: 'bedroom', name: '卧室' },
   { id: 'kitchen', name: '厨房' },
+  { id: 'storage', name: '收纳' },
   { id: 'decor',   name: '装饰' }
 ];
 
