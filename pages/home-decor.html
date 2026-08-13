@@ -256,10 +256,10 @@
 var STORAGE_KEY = 'leisureHomeDecor';
 
 /* ---- 等距几何常量 ---- */
-var ISO_UNIT = 52;               // 1 世界单位 = 等距 tile 的边长（像素，在 scale=1 下）
+var ISO_UNIT = 34;               // 1 世界单位 = 等距 tile 的边长（像素，在 scale=1 下）
 var ISO_W = ISO_UNIT * 2;        // 等距 tile 宽
 var ISO_H = ISO_UNIT;            // 等距 tile 高
-var FLOOR_H = 90;                // 一层楼的高度（墙高）
+var FLOOR_H = 72;                // 一层楼的高度（墙高）
 var STAIRS_H = FLOOR_H;          // 楼梯总高度
 var STAIRS_W = ISO_UNIT * 3;     // 楼梯宽度（3 个 tile）
 
@@ -283,10 +283,13 @@ var STAIRS = { x0: 1, x1: 2, y0: 3, y1: 6, floor: 0, color: '#c9a279', edge: '#9
 
 /* 墙壁颜色 */
 var WALL_COLOR = {
-  left:   '#f0cfa0',   /* 左墙（从左下→左上） */
-  right:  '#e2b986',   /* 右墙（从右下→右上） */
-  back:   '#f7dcb6',   /* 后墙 */
-  edge:   '#b68a5a'    /* 墙线 */
+  left:   '#e8c896',   /* 左墙（偏亮） */
+  right:  '#c9a36e',   /* 右墙（偏暗，受光少） */
+  back:   '#f2dab2',   /* 后墙（最亮，受光面） */
+  edge:   '#9d7548',   /* 墙线 */
+  leftDark: '#c4a374', /* 左墙暗部 */
+  rightDark: '#a07e4e',/* 右墙暗部 */
+  backDark: '#d8bc8e'  /* 后墙暗部 */
 };
 
 /* ---- 家具定义 ----
@@ -339,7 +342,7 @@ var FURN_MAP = {};
 FURNITURE.forEach(function(f) { FURN_MAP[f.id] = f; });
 
 /* ---- 视口变换 ---- */
-var view = { scale: 0.72, tx: 0, ty: 0, minS: 0.35, maxS: 2.0 };
+var view = { scale: 1.0, tx: 0, ty: 0, minS: 0.35, maxS: 2.5 };
 
 /* ---- 状态 ---- */
 var data = null;
@@ -564,18 +567,40 @@ var HOUSE_BOUNDS = null;  // 存储房子的bounds用于坐标转换
 function renderHouse() {
   var svg = document.getElementById('houseSvg');
   var g = [];
+
+  /* 渐变定义：为每面墙创建从上到下的明暗渐变，增强立体感 */
   var defs =
     '<defs>' +
+    /* 一层地板 tile —— 更细的网格，暖色调 */
     '  <pattern id="floor0Tile" width="' + ISO_W + '" height="' + ISO_H + '" patternUnits="userSpaceOnUse">' +
-    '    <path d="M0,' + (ISO_H/2) + ' L' + (ISO_W/2) + ',0 L' + ISO_W + ',' + (ISO_H/2) + ' L' + (ISO_W/2) + ',' + ISO_H + ' Z" fill="#f3e6cc" stroke="#d6bf98" stroke-width="1"/>' +
+    '    <path d="M0,' + (ISO_H/2) + ' L' + (ISO_W/2) + ',0 L' + ISO_W + ',' + (ISO_H/2) + ' L' + (ISO_W/2) + ',' + ISO_H + ' Z" fill="#f5ead0" stroke="#dcc69a" stroke-width="0.6" opacity="0.7"/>' +
     '  </pattern>' +
+    /* 二层地板 tile */
     '  <pattern id="floor1Tile" width="' + ISO_W + '" height="' + ISO_H + '" patternUnits="userSpaceOnUse">' +
-    '    <path d="M0,' + (ISO_H/2) + ' L' + (ISO_W/2) + ',0 L' + ISO_W + ',' + (ISO_H/2) + ' L' + (ISO_W/2) + ',' + ISO_H + ' Z" fill="#efe0c0" stroke="#c9ad7f" stroke-width="1"/>' +
+    '    <path d="M0,' + (ISO_H/2) + ' L' + (ISO_W/2) + ',0 L' + ISO_W + ',' + (ISO_H/2) + ' L' + (ISO_W/2) + ',' + ISO_H + ' Z" fill="#f0e0c2" stroke="#cdb078" stroke-width="0.6" opacity="0.7"/>' +
     '  </pattern>' +
+    /* 泳池 tile */
     '  <pattern id="poolTile" width="' + ISO_W + '" height="' + ISO_H + '" patternUnits="userSpaceOnUse">' +
-    '    <path d="M0,' + (ISO_H/2) + ' L' + (ISO_W/2) + ',0 L' + ISO_W + ',' + (ISO_H/2) + ' L' + (ISO_W/2) + ',' + ISO_H + ' Z" fill="#c7e6f4" stroke="#87bfd6" stroke-width="1"/>' +
-    '    <path d="M' + (ISO_W*0.18) + ',' + (ISO_H*0.45) + ' q' + (ISO_W*0.1) + ',' + (-ISO_H*0.08) + ' ' + (ISO_W*0.2) + ',0 t' + (ISO_W*0.2) + ',0" stroke="#8fc2d9" stroke-width="1.2" fill="none" opacity="0.7"/>' +
+    '    <path d="M0,' + (ISO_H/2) + ' L' + (ISO_W/2) + ',0 L' + ISO_W + ',' + (ISO_H/2) + ' L' + (ISO_W/2) + ',' + ISO_H + ' Z" fill="#b8deef" stroke="#7ab5d0" stroke-width="0.6"/>' +
+    '    <path d="M' + (ISO_W*0.18) + ',' + (ISO_H*0.45) + ' q' + (ISO_W*0.1) + ',' + (-ISO_H*0.08) + ' ' + (ISO_W*0.2) + ',0 t' + (ISO_W*0.2) + ',0" stroke="#8fc2d9" stroke-width="0.8" fill="none" opacity="0.7"/>' +
     '  </pattern>' +
+    /* 墙壁渐变：顶部亮、底部暗，模拟环境光 */
+    '  <linearGradient id="wallBackGrad" x1="0" y1="0" x2="0" y2="1">' +
+    '    <stop offset="0" stop-color="#f5dfb8"/><stop offset="0.5" stop-color="#eed2a4"/><stop offset="1" stop-color="#d8bc8e"/>' +
+    '  </linearGradient>' +
+    '  <linearGradient id="wallLeftGrad" x1="0" y1="0" x2="0" y2="1">' +
+    '    <stop offset="0" stop-color="#ecca98"/><stop offset="0.5" stop-color="#dcba84"/><stop offset="1" stop-color="#c4a374"/>' +
+    '  </linearGradient>' +
+    '  <linearGradient id="wallRightGrad" x1="0" y1="0" x2="0" y2="1">' +
+    '    <stop offset="0" stop-color="#d2aa78"/><stop offset="0.5" stop-color="#bf9760"/><stop offset="1" stop-color="#a07e4e"/>' +
+    '  </linearGradient>' +
+    /* 地板内阴影渐变（边缘暗、中心亮） */
+    '  <radialGradient id="floorShadow0" cx="0.5" cy="0.4" r="0.7">' +
+    '    <stop offset="0" stop-color="rgba(0,0,0,0)"/><stop offset="0.7" stop-color="rgba(0,0,0,0)"/><stop offset="1" stop-color="rgba(80,50,10,0.18)"/>' +
+    '  </radialGradient>' +
+    '  <radialGradient id="floorShadow1" cx="0.5" cy="0.4" r="0.7">' +
+    '    <stop offset="0" stop-color="rgba(0,0,0,0)"/><stop offset="0.7" stop-color="rgba(0,0,0,0)"/><stop offset="1" stop-color="rgba(80,50,10,0.15)"/>' +
+    '  </radialGradient>' +
     '</defs>';
 
   /* 计算整个房子 AABB（含泳池和上下层），用于 SVG viewBox */
@@ -644,36 +669,43 @@ function drawPlatform(fl, tileRef, borderColor, drawThickness) {
   var p2 = worldToScreen(fl.x1, fl.y0, fl.floor);
   var p3 = worldToScreen(fl.x1, fl.y1, fl.floor);
   var p4 = worldToScreen(fl.x0, fl.y1, fl.floor);
+  var shadowRef = fl.floor === 0 ? 'floorShadow0' : 'floorShadow1';
   /* 顶面（填充 tile 图案） */
   out.push(
     '<path class="floor" data-floor="' + fl.floor + '" ' +
     'd="M' + p1.x + ',' + p1.y + ' L' + p2.x + ',' + p2.y +
     ' L' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y + ' Z" ' +
-    'fill="url(#' + tileRef + ')" stroke="' + borderColor + '" stroke-width="2" stroke-linejoin="round"/>'
+    'fill="url(#' + tileRef + ')" stroke="' + borderColor + '" stroke-width="1.5" stroke-linejoin="round"/>'
+  );
+  /* 地板内阴影（增强立体感） */
+  out.push(
+    '<path d="M' + p1.x + ',' + p1.y + ' L' + p2.x + ',' + p2.y +
+    ' L' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y + ' Z" ' +
+    'fill="url(#' + shadowRef + ')" pointer-events="none"/>'
   );
   /* 厚度侧条（仅主楼层画，泳池只画薄边） */
   if (drawThickness && fl.floor >= 0) {
-    var thick = 12;
+    var thick = 10;
     /* 右侧 (p2 → p3 向下) */
     var p2d = { x: p2.x + ISO_W/2 * thick/ISO_UNIT, y: p2.y + ISO_H/2 * thick/ISO_UNIT };
     var p3d = { x: p3.x - ISO_W/2 * thick/ISO_UNIT, y: p3.y + ISO_H/2 * thick/ISO_UNIT };
     out.push(
       '<path d="M' + p2.x + ',' + p2.y + ' L' + p3.x + ',' + p3.y +
       ' L' + p3d.x + ',' + p3d.y + ' L' + p2d.x + ',' + p2d.y + ' Z" ' +
-      'fill="#c9a372" stroke="#9d7a55" stroke-width="1.2" opacity="0.9"/>'
+      'fill="#c9a372" stroke="#9d7a55" stroke-width="1" opacity="0.9"/>'
     );
     /* 前侧 (p3 → p4 向下) */
     var p4d = { x: p4.x - ISO_W/2 * thick/ISO_UNIT, y: p4.y + ISO_H/2 * thick/ISO_UNIT };
     out.push(
       '<path d="M' + p3.x + ',' + p3.y + ' L' + p4.x + ',' + p4.y +
       ' L' + p4d.x + ',' + p4d.y + ' L' + p3d.x + ',' + p3d.y + ' Z" ' +
-      'fill="#b38d5a" stroke="#8d6a45" stroke-width="1.2" opacity="0.9"/>'
+      'fill="#b38d5a" stroke="#8d6a45" stroke-width="1" opacity="0.9"/>'
     );
   }
   return out;
 }
 
-/* 画三面墙（后墙 + 左墙 + 右墙） */
+/* 画三面墙（后墙 + 左墙 + 右墙）—— 使用渐变填充增强立体感 */
 function drawWalls(fl, wc) {
   var out = [];
   /* 后墙： (x0,y0,floor) → (x1,y0,floor) → (x1,y0,floor+1) → (x0,y0,floor+1) */
@@ -684,7 +716,7 @@ function drawWalls(fl, wc) {
   out.push(
     '<path class="wall" d="M' + b0.x + ',' + b0.y + ' L' + b1.x + ',' + b1.y +
     ' L' + t1.x + ',' + t1.y + ' L' + t0.x + ',' + t0.y + ' Z" ' +
-    'fill="' + wc.back + '" stroke="' + wc.edge + '" stroke-width="1.5"/>'
+    'fill="url(#wallBackGrad)" stroke="' + wc.edge + '" stroke-width="1.2"/>'
   );
   /* 左墙： (x0,y0,floor) → (x0,y1,floor) → (x0,y1,floor+1) → (x0,y0,floor+1) */
   var b2 = worldToScreen(fl.x0, fl.y1, fl.floor);
@@ -692,7 +724,7 @@ function drawWalls(fl, wc) {
   out.push(
     '<path class="wall" d="M' + b0.x + ',' + b0.y + ' L' + b2.x + ',' + b2.y +
     ' L' + t2.x + ',' + t2.y + ' L' + t0.x + ',' + t0.y + ' Z" ' +
-    'fill="' + wc.left + '" stroke="' + wc.edge + '" stroke-width="1.5"/>'
+    'fill="url(#wallLeftGrad)" stroke="' + wc.edge + '" stroke-width="1.2"/>'
   );
   /* 右墙： (x1,y0,floor) → (x1,y1,floor) → (x1,y1,floor+1) → (x1,y0,floor+1) */
   var b3 = worldToScreen(fl.x1, fl.y1, fl.floor);
@@ -700,7 +732,26 @@ function drawWalls(fl, wc) {
   out.push(
     '<path class="wall" d="M' + b1.x + ',' + b1.y + ' L' + b3.x + ',' + b3.y +
     ' L' + t3.x + ',' + t3.y + ' L' + t1.x + ',' + t1.y + ' Z" ' +
-    'fill="' + wc.right + '" stroke="' + wc.edge + '" stroke-width="1.5"/>'
+    'fill="url(#wallRightGrad)" stroke="' + wc.edge + '" stroke-width="1.2"/>'
+  );
+  /* 墙角高光线（在两面墙的交界处画亮线，增强棱角感） */
+  var edgeColor = 'rgba(255,240,200,0.5)';
+  out.push(
+    '<line x1="' + b0.x + '" y1="' + b0.y + '" x2="' + t0.x + '" y2="' + t0.y + '" stroke="' + edgeColor + '" stroke-width="1.5" opacity="0.6"/>'
+  );
+  out.push(
+    '<line x1="' + b1.x + '" y1="' + b1.y + '" x2="' + t1.x + '" y2="' + t1.y + '" stroke="' + edgeColor + '" stroke-width="1" opacity="0.4"/>'
+  );
+  out.push(
+    '<line x1="' + t0.x + '" y1="' + t0.y + '" x2="' + t1.x + '" y2="' + t1.y + '" stroke="' + edgeColor + '" stroke-width="1.2" opacity="0.5"/>'
+  );
+  /* 墙脚阴影线（地板与墙交界处画暗线） */
+  var shadowColor = 'rgba(80,50,10,0.25)';
+  out.push(
+    '<line x1="' + b0.x + '" y1="' + b0.y + '" x2="' + b1.x + '" y2="' + b1.y + '" stroke="' + shadowColor + '" stroke-width="2" opacity="0.5"/>'
+  );
+  out.push(
+    '<line x1="' + b0.x + '" y1="' + b0.y + '" x2="' + b2.x + '" y2="' + b2.y + '" stroke="' + shadowColor + '" stroke-width="2" opacity="0.4"/>'
   );
   /* 门：在右墙上抠一个门洞（一层，右侧墙上 y 大的一侧） */
   if (fl.floor === 0) {
@@ -713,15 +764,15 @@ function drawWalls(fl, wc) {
     /* 门洞（深棕色，带一点点台阶） */
     out.push(
       '<path d="M' + dA.x + ',' + dA.y + ' L' + dB.x + ',' + dB.y +
-      ' L' + dBt.x + ',' + dBt.y + ' Q' + ((dBt.x + dAt.x)/2) + ',' + (dBt.y - 18) +
-      ' ' + dAt.x + ',' + dAt.y + ' Z" fill="#6e4b2c" stroke="#4a3118" stroke-width="1.5"/>'
+      ' L' + dBt.x + ',' + dBt.y + ' Q' + ((dBt.x + dAt.x)/2) + ',' + (dBt.y - 14) +
+      ' ' + dAt.x + ',' + dAt.y + ' Z" fill="#6e4b2c" stroke="#4a3118" stroke-width="1.2"/>'
     );
     /* 门内亮 */
     out.push(
-      '<path d="M' + (dA.x+2) + ',' + (dA.y+2) + ' L' + (dB.x-2) + ',' + (dB.y-2) +
-      ' L' + (dBt.x-2) + ',' + (dBt.y-2) +
-      ' Q' + ((dBt.x + dAt.x)/2) + ',' + (dBt.y - 22) +
-      ' ' + (dAt.x+2) + ',' + (dAt.y-2) +
+      '<path d="M' + (dA.x+1.5) + ',' + (dA.y+1.5) + ' L' + (dB.x-1.5) + ',' + (dB.y-1.5) +
+      ' L' + (dBt.x-1.5) + ',' + (dBt.y-1.5) +
+      ' Q' + ((dBt.x + dAt.x)/2) + ',' + (dBt.y - 18) +
+      ' ' + (dAt.x+1.5) + ',' + (dAt.y-1.5) +
       ' Z" fill="#2d1a0a"/>'
     );
   }
@@ -745,19 +796,19 @@ function drawStairs(s) {
     var B = worldToScreen(s.x1, cy0, f0);   /* 右前 */
     var C = worldToScreen(s.x1, cy1, f1);   /* 右后 */
     var D = worldToScreen(s.x0, cy1, f1);   /* 左后 */
-    /* 踏面 (top) */
+    /* 踏面 (top) —— 亮色 */
     out.push(
       '<path class="stair" d="M' + A.x + ',' + A.y + ' L' + B.x + ',' + B.y +
       ' L' + C.x + ',' + C.y + ' L' + D.x + ',' + D.y + ' Z" ' +
-      'fill="#d5a679" stroke="#a07a50" stroke-width="1.2"/>'
+      'fill="#dab088" stroke="#a07a50" stroke-width="0.8"/>'
     );
-    /* 踢面 (riser)：用前一级底部连接当前踏面前沿 */
+    /* 踢面 (riser)：用前一级底部连接当前踏面前沿 —— 暗色 */
     if (prevBot) {
       out.push(
         '<path class="stair" d="M' + prevBot.A.x + ',' + prevBot.A.y +
         ' L' + prevBot.B.x + ',' + prevBot.B.y +
         ' L' + B.x + ',' + B.y + ' L' + A.x + ',' + A.y + ' Z" ' +
-        'fill="#b98a5e" stroke="#8d6a45" stroke-width="1"/>'
+        'fill="#a87a4e" stroke="#8d6a45" stroke-width="0.8"/>'
       );
     }
     prevBot = { A: A, B: B };
@@ -771,18 +822,18 @@ function drawStairs(s) {
   /* 左侧 (x0) */
   out.push(
     '<path d="M' + sideStartA.x + ',' + sideStartA.y +
-    ' L' + sideStartA.x + ',' + (sideStartA.y + 12) +
-    ' L' + sideEndA.x + ',' + (sideEndA.y + 12) +
+    ' L' + sideStartA.x + ',' + (sideStartA.y + 10) +
+    ' L' + sideEndA.x + ',' + (sideEndA.y + 10) +
     ' L' + sideEndA.x + ',' + sideEndA.y +
-    ' Z" fill="#9e7548" stroke="#77552f" stroke-width="1.2"/>'
+    ' Z" fill="#9e7548" stroke="#77552f" stroke-width="1"/>'
   );
   /* 右侧 (x1) */
   out.push(
     '<path d="M' + sideStartB.x + ',' + sideStartB.y +
-    ' L' + sideStartB.x + ',' + (sideStartB.y + 12) +
-    ' L' + sideEndB.x + ',' + (sideEndB.y + 12) +
+    ' L' + sideStartB.x + ',' + (sideStartB.y + 10) +
+    ' L' + sideEndB.x + ',' + (sideEndB.y + 10) +
     ' L' + sideEndB.x + ',' + sideEndB.y +
-    ' Z" fill="#9e7548" stroke="#77552f" stroke-width="1.2"/>'
+    ' Z" fill="#9e7548" stroke="#77552f" stroke-width="1"/>'
   );
   return out;
 }
@@ -793,13 +844,13 @@ function drawCanopy(fl) {
   /* 从后墙顶部两个角，拉起一个帐篷尖顶（尖点在后墙中点上方） */
   var wallT0 = worldToScreen(fl.x0, fl.y0, fl.floor + 1);
   var wallT1 = worldToScreen(fl.x1, fl.y0, fl.floor + 1);
-  var peak = worldToScreen((fl.x0 + fl.x1) / 2, fl.y0 - 1.6, fl.floor + 1.6);
+  var peak = worldToScreen((fl.x0 + fl.x1) / 2, fl.y0 - 1.2, fl.floor + 1.4);
   /* 帐篷布（半透明金色） */
   out.push(
     '<path d="M' + wallT0.x + ',' + wallT0.y +
     ' L' + peak.x + ',' + peak.y +
     ' L' + wallT1.x + ',' + wallT1.y + ' Z" ' +
-    'fill="#e6c772" stroke="#a07c1f" stroke-width="1.5" fill-opacity="0.78"/>'
+    'fill="#e6c772" stroke="#a07c1f" stroke-width="1.2" fill-opacity="0.78"/>'
   );
   /* 挂布边缘的流苏锯齿 */
   var n = 14;
@@ -810,9 +861,8 @@ function drawCanopy(fl) {
     var pL = lerp(peak, wallT0, t);
     var pR = lerp(peak, wallT1, t);
     if (i % 2 === 0) {
-      var off = 8;
-      out.push('<circle cx="' + pL.x + '" cy="' + pL.y + '" r="3" fill="#fff1b8" stroke="#b5891e" stroke-width="0.8"/>');
-      out.push('<circle cx="' + pR.x + '" cy="' + pR.y + '" r="3" fill="#fff1b8" stroke="#b5891e" stroke-width="0.8"/>');
+      out.push('<circle cx="' + pL.x + '" cy="' + pL.y + '" r="2.5" fill="#fff1b8" stroke="#b5891e" stroke-width="0.6"/>');
+      out.push('<circle cx="' + pR.x + '" cy="' + pR.y + '" r="2.5" fill="#fff1b8" stroke="#b5891e" stroke-width="0.6"/>');
     }
   }
   /* 四角柱上的小金顶装饰（在左后/右后/左前/右前立柱顶端） */
@@ -823,10 +873,10 @@ function drawCanopy(fl) {
     worldToScreen(fl.x1, fl.y1, fl.floor + 1)
   ];
   posts.forEach(function(p) {
-    out.push('<path d="M' + (p.x-6) + ',' + p.y +
-      ' L' + (p.x+6) + ',' + p.y +
-      ' L' + p.x + ',' + (p.y - 22) + ' Z" ' +
-      'fill="#e8c364" stroke="#9a6e18" stroke-width="1.2"/>');
+    out.push('<path d="M' + (p.x-5) + ',' + p.y +
+      ' L' + (p.x+5) + ',' + p.y +
+      ' L' + p.x + ',' + (p.y - 18) + ' Z" ' +
+      'fill="#e8c364" stroke="#9a6e18" stroke-width="1"/>');
   });
   return out;
 }
@@ -835,20 +885,20 @@ function drawCanopy(fl) {
 function drawFlags(fl) {
   var out = [];
   var flags = [
-    { c: fl.x0 + 1, r: fl.y0 - 0.3, f: fl.floor + 1.2 },
-    { c: fl.x0 + 3, r: fl.y0 - 0.5, f: fl.floor + 1.5 },
-    { c: fl.x1 - 3, r: fl.y0 - 0.5, f: fl.floor + 1.5 },
-    { c: fl.x1 - 1, r: fl.y0 - 0.3, f: fl.floor + 1.2 }
+    { c: fl.x0 + 1, r: fl.y0 - 0.3, f: fl.floor + 1.1 },
+    { c: fl.x0 + 3, r: fl.y0 - 0.5, f: fl.floor + 1.3 },
+    { c: fl.x1 - 3, r: fl.y0 - 0.5, f: fl.floor + 1.3 },
+    { c: fl.x1 - 1, r: fl.y0 - 0.3, f: fl.floor + 1.1 }
   ];
   flags.forEach(function(flg) {
     var p = worldToScreen(flg.c, flg.r, flg.f);
     out.push(
       '<path d="M' + p.x + ',' + (p.y - 2) +
-      ' L' + (p.x + 18) + ',' + (p.y + 10) +
-      ' L' + p.x + ',' + (p.y + 22) + ' Z" ' +
-      'fill="#f1d064" stroke="#9a6e18" stroke-width="1.1"/>'
+      ' L' + (p.x + 14) + ',' + (p.y + 8) +
+      ' L' + p.x + ',' + (p.y + 18) + ' Z" ' +
+      'fill="#f1d064" stroke="#9a6e18" stroke-width="0.8"/>'
     );
-    out.push('<line x1="' + p.x + '" y1="' + (p.y - 30) + '" x2="' + p.x + '" y2="' + (p.y + 28) + '" stroke="#7a5820" stroke-width="1.5"/>');
+    out.push('<line x1="' + p.x + '" y1="' + (p.y - 24) + '" x2="' + p.x + '" y2="' + (p.y + 22) + '" stroke="#7a5820" stroke-width="1.2"/>');
   });
   return out;
 }
@@ -867,14 +917,14 @@ function drawFenceAndLamp() {
   /* 右下灯柱 */
   var lp = worldToScreen(FLOORS[0].x1 + 2.2, FLOORS[0].y1 + 1.1, -0.1);
   out.push(
-    '<rect x="' + (lp.x - 3) + '" y="' + (lp.y - 32) + '" width="6" height="32" fill="#c7a06a" stroke="#8a6633" stroke-width="1"/>'
+    '<rect x="' + (lp.x - 2.5) + '" y="' + (lp.y - 26) + '" width="5" height="26" fill="#c7a06a" stroke="#8a6633" stroke-width="0.8"/>'
   );
   out.push(
-    '<path d="M' + (lp.x - 10) + ',' + (lp.y - 32) +
-    ' L' + (lp.x + 10) + ',' + (lp.y - 32) +
-    ' L' + (lp.x + 6) + ',' + (lp.y - 50) +
-    ' L' + (lp.x - 6) + ',' + (lp.y - 50) + ' Z" ' +
-    'fill="#ffe794" stroke="#b38d2a" stroke-width="1.2"/>'
+    '<path d="M' + (lp.x - 8) + ',' + (lp.y - 26) +
+    ' L' + (lp.x + 8) + ',' + (lp.y - 26) +
+    ' L' + (lp.x + 5) + ',' + (lp.y - 42) +
+    ' L' + (lp.x - 5) + ',' + (lp.y - 42) + ' Z" ' +
+    'fill="#ffe794" stroke="#b38d2a" stroke-width="1"/>'
   );
   return out;
 }
@@ -997,7 +1047,7 @@ function fitView() {
   var svg = document.getElementById('houseSvg');
   /* 让 svg viewBox 完整装进 area */
   var vb = svg.viewBox.baseVal;
-  if (!vb || vb.width === 0) { view.scale = 0.72; view.tx = 0; view.ty = 0; applyView(); return; }
+  if (!vb || vb.width === 0) { view.scale = 1.0; view.tx = 0; view.ty = 0; applyView(); return; }
   var rect = area.getBoundingClientRect();
   var s = Math.min(rect.width / vb.width, rect.height / vb.height) * 0.95;
   view.scale = Math.max(view.minS, Math.min(view.maxS, s));
