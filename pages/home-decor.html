@@ -999,17 +999,9 @@ function drawFlags(fl) {
   return out;
 }
 
-/* 一层前侧外栏杆 + 右侧灯柱小人（美化） */
+/* 右侧灯柱（美化） */
 function drawFenceAndLamp() {
   var out = [];
-  /* 简单的底部地面草坪（画在一层地板外） */
-  var g1 = worldToScreen(FLOORS[0].x0 - 1.5, FLOORS[0].y1 + 0.8, -0.5);
-  var g2 = worldToScreen(FLOORS[0].x1 + 3.5, FLOORS[0].y1 + 2.6, -0.5);
-  out.push(
-    '<path d="M' + g1.x + ',' + g1.y + ' L' + g2.x + ',' + g1.y +
-    ' L' + g2.x + ',' + (g1.y + 200) + ' L' + g1.x + ',' + (g1.y + 200) +
-    ' Z" fill="#d5e4b2" opacity="0.55"/>'
-  );
   /* 右下灯柱 */
   var lp = worldToScreen(FLOORS[0].x1 + 2.2, FLOORS[0].y1 + 1.1, -0.1);
   out.push(
