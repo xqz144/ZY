@@ -264,22 +264,19 @@ var STAIRS_H = FLOOR_H;          // 楼梯总高度
 var STAIRS_W = ISO_UNIT * 3;     // 楼梯宽度（3 个 tile）
 
 /* ---- 户型定义（世界坐标系统：col, row, floor） ----
- *   floor 0  = 一层（底层）
- *   floor 1  = 二层（上层）
+ *   仅保留一层（单层大房间），floor 始终为 0
  *   每一层是一个矩形地板区域，用 { x0, x1, y0, y1, floor } 表示矩形
  *   （x0/x1 是 col 范围，左闭右开；y0/y1 是 row 范围，左闭右开）
  */
 var FLOORS = [
-  // 一层（主入口 + 泳池旁露台 + 楼梯区）
-  { x0: 0, x1: 9, y0: 0, y1: 7, floor: 0, color: '#f6e8d0', border: '#d6bf98' },
-  // 二层（楼上大房间）
-  { x0: 2, x1: 8, y0: 1, y1: 5, floor: 1, color: '#f3e3c8', border: '#cdb283' }
+  // 单层大房间（主入口 + 泳池旁露台）
+  { x0: 0, x1: 9, y0: 0, y1: 7, floor: 0, color: '#f6e8d0', border: '#d6bf98' }
 ];
 /* 泳池矩形（渲染成浅蓝色平台在一层右侧） */
 var POOL = { x0: 9, x1: 12, y0: 3, y1: 6, floor: -0.35, color: '#b7e1f0', border: '#7eb9d1' };
 
-/* 楼梯位置（从一层到二层）：方向沿 row 增加方向向上，终点(y=5)正好落在二层地板(y≤5)范围内 */
-var STAIRS = { x0: 1, x1: 2, y0: 2, y1: 5, floor: 0, color: '#c9a279', edge: '#9d7a55' };
+/* 楼梯（已移除，保留空对象避免代码引用报错） */
+var STAIRS = null;
 
 /* 墙壁颜色 */
 var WALL_COLOR = {
@@ -456,10 +453,15 @@ function loadData() {
       if (typeof d.coins !== 'number') d.coins = 1000;
       if (!d.inventory) d.inventory = {};
       if (!Array.isArray(d.placed)) d.placed = [];
-      /* v1 → v2 数据迁移：网格(col,row,floor) 的位置从 6×5 搬到新世界坐标（放到一层中央） */
+      /* 迁移：统一所有家具都落到一层单层户型内 */
       d.placed.forEach(function(p) {
-        if (typeof p.floor !== 'number') p.floor = 0;
         if (typeof p.rotation !== 'number') p.rotation = 0;
+        /* 原来二层(floor=1)的家具 → 挪到一层，同时保证 col/row 落在一层 FLOORS[0] 范围内 */
+        if (p.floor != 0) {
+          p.col = Math.max(FLOORS[0].x0 + 0.5, Math.min(FLOORS[0].x1 - 2.5, p.col));
+          p.row = Math.max(FLOORS[0].y0 + 0.5, Math.min(FLOORS[0].y1 - 2.5, p.row));
+          p.floor = 0;
+        }
       });
       return d;
     }
@@ -640,23 +642,11 @@ function renderHouse() {
   /* --- 泳池（最底层） --- */
   if (POOL) g = g.concat(drawPlatform(POOL, 'poolTile', POOL.border, true));
 
-  /* --- 一层地板 + 墙 --- */
+  /* --- 单层地板 + 三面墙 --- */
   g = g.concat(drawPlatform(FLOORS[0], 'floor0Tile', FLOORS[0].border, true, true));
   g = g.concat(drawWalls(FLOORS[0], WALL_COLOR));
 
-  /* --- 二层楼板在一层投下的投影（让两层感明显） --- */
-  g = g.concat(drawSlabShadow(FLOORS[1]));
-
-  /* --- 楼梯（在二层楼板之前画，保证楼梯在楼板下侧面上方） --- */
-  g = g.concat(drawStairs(STAIRS));
-
-  /* --- 二层：完整四周厚度楼板 + 墙 + 帐篷挂布 --- */
-  g = g.concat(drawPlatform(FLOORS[1], 'floor1Tile', FLOORS[1].border, false, true));
-  g = g.concat(drawWalls(FLOORS[1], WALL_COLOR));
-  g = g.concat(drawCanopy(FLOORS[1]));  // 帐篷尖顶挂布
-
-  /* --- 装饰：帐篷绳、旗杆小人（可选，美化） --- */
-  g = g.concat(drawFlags(FLOORS[1]));
+  /* --- 装饰：外围草坪 + 灯柱（美化） --- */
   g = g.concat(drawFenceAndLamp());
 
   svg.innerHTML = defs + g.join('');
@@ -1303,8 +1293,8 @@ function pickFloorAndWorld(clientX, clientY) {
     var screenY = sy;
   }
 
-  /* 先投影到 floor=1 看是否落到二层地板；否则看 floor=0；否则用 floor=0 */
-  var tryFloors = [1, 0, POOL ? POOL.floor : 0];
+  /* 单层结构：直接在 floor=0 检测；还可以放到泳池里 */
+  var tryFloors = [0, POOL ? POOL.floor : 0];
   for (var i = 0; i < tryFloors.length; i++) {
     var fl = tryFloors[i];
     var w = screenToWorld(screenX, screenY, fl);
