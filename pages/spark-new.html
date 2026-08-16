@@ -962,12 +962,24 @@
           name: '小火人',
           emoji: '🔥',
           image: '../assets/character.png',
+          avatar: '../assets/character.png',
           color: '#ff8a56',
           auraColor: 'rgba(255,184,107,0.45)',
           frameGradient: 'linear-gradient(145deg, #ffb86b, #ff8a56)'
+        },
+        kirin: {
+          id: 'kirin',
+          name: '玉麒麟',
+          emoji: '🦁',
+          image: '../assets/kirin_front.png',
+          avatar: '../assets/kirin_avatar.png',
+          color: '#b79050',
+          auraColor: 'rgba(214,183,120,0.45)',
+          frameGradient: 'linear-gradient(145deg, #f0d38a, #a77c3f)',
+          fallbackImage: '../assets/kirin_embroidery.png'
         }
       };
-      var PET_ORDER = ['fire'];
+      var PET_ORDER = ['fire', 'kirin'];
       var ACTIVE_PET_KEY = 'mengjiao_active_pet';
 
       var DAILY_LIMITS = { chat: 10, moments: 2 };
@@ -1025,7 +1037,8 @@
         return {
           activePet: 'fire',
           pets: {
-            fire: petData('小火人')
+            fire: petData('小火人'),
+            kirin: petData('玉麒麟')
           }
         };
       }
@@ -1639,7 +1652,8 @@
         var info = STATE_INFO[state];
 
         var sparkName = pd.name || pet.name;
-        creatureSvg.innerHTML = '<img src="' + pet.image + '" alt="' + sparkName + '" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
+        var fb = pet.fallbackImage ? "this.onerror=null;this.src='" + pet.fallbackImage + "';" : "";
+        creatureSvg.innerHTML = '<img src="' + pet.image + '" alt="' + sparkName + '" onError="' + fb + '" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
         creatureWrap.className = "creature-svg-wrap" + (state === "sleeping" ? " sleeping" : "");
         creatureName.textContent = sparkName;
         var stateText = info.text.replace(/小火人/g, sparkName);
@@ -1705,9 +1719,16 @@
         document.querySelectorAll('#feedModal .modal-title').forEach(function(el){ el.textContent = '喂食' + pet.name; });
         feederDetail.style.display = "none";
         feedConfirm.disabled = true;
-        /* 动态更新预览图 */
+        /* 动态更新预览图（加载失败自动 fallback 到备用图） */
         var previewImg = feederPreview.querySelector('img');
-        if (previewImg) previewImg.src = pet.image;
+        if (previewImg) {
+          if (pet.fallbackImage) {
+            previewImg.onerror = function() { this.onerror = null; this.src = pet.fallbackImage; };
+          } else {
+            previewImg.onerror = null;
+          }
+          previewImg.src = pet.image;
+        }
         renderFoodGrid();
         feedModal.classList.add("show");
         feedModal.style.cssText = "display:block;opacity:1;pointer-events:auto;";
