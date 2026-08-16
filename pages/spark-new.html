@@ -150,9 +150,16 @@
     /* 宠物选择器 */
     .pet-selector {
         display: flex;
+        align-items: center;
         justify-content: center;
         gap: 8px;
         margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+    .pet-selector-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-right: 4px;
     }
     .pet-tab {
         display: flex;
@@ -179,18 +186,8 @@
         font-weight: 600;
         box-shadow: 0 2px 12px rgba(var(--accent-color-rgb,184,169,0.25);
     }
-    .pet-tab:first-child {
-        border-radius: 20px 0 0 20px;
-    }
-    .pet-tab:last-child {
-        border-radius: 0 20px 20px 0;
-    }
-    .pet-tab:only-child {
-        border-radius: 20px;
-    }
     .pet-tab + .pet-tab {
-        margin-left: -2px;
-        border-left: none;
+        margin-left: 2px;
     }
     .creature-name {
         font-family: var(--font-serif);
@@ -727,6 +724,7 @@
         *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
     </style>
+    <script src="../js/spark-shared.js"></script>
 </head>
 <body>
   <div class="app-bg">
@@ -955,42 +953,20 @@
         { id: "flower", emoji: "🌸", unlock: 1 }
       ];
 
-      /* 多宠物注册表 */
-      var PETS = {
-        fire: {
-          id: 'fire',
-          name: '小火人',
-          emoji: '🔥',
-          image: '../assets/character.png',
-          avatar: '../assets/character.png',
-          color: '#ff8a56',
-          auraColor: 'rgba(255,184,107,0.45)',
-          frameGradient: 'linear-gradient(145deg, #ffb86b, #ff8a56)'
-        },
-        kirin: {
-          id: 'kirin',
-          name: '玉麒麟',
-          emoji: '🦁',
-          image: '../assets/kirin_front.png',
-          avatar: '../assets/kirin_front.png',
-          color: '#b79050',
-          auraColor: 'rgba(214,183,120,0.45)',
-          frameGradient: 'linear-gradient(145deg, #f0d38a, #a77c3f)'
-        }
-      };
-      var PET_ORDER = ['fire', 'kirin'];
-      var ACTIVE_PET_KEY = 'mengjiao_active_pet';
+      /* 形态注册表 & 共享常量（统一走 SparkShared，本页只做薄封装） */
+      var FORMS = SparkShared.FORMS;
+      var FORM_ORDER = SparkShared.FORM_ORDER;
 
       var DAILY_LIMITS = { chat: 10, moments: 2 };
       var EXP_PER = { chat: 3, moments: 8 };
 
       var FOODS = [
-        { id: "star_cookie", name: "星星饼干", emoji: "⭐", exp: 3, fullness: 5, mood: 2, unlock: 1, desc: "咬一口会发出细碎星光，小火苗最爱的零嘴。" },
+        { id: "star_cookie", name: "星星饼干", emoji: "⭐", exp: 3, fullness: 5, mood: 2, unlock: 1, desc: "咬一口会发出细碎星光，它最爱的零嘴。" },
         { id: "pudding", name: "草莓布丁", emoji: "🍮", exp: 5, fullness: 8, mood: 3, unlock: 1, desc: "软软甜甜，吃完嘴角都会翘起来。" },
-        { id: "honey_bread", name: "蜜糖面包", emoji: "🍞", exp: 6, fullness: 12, mood: 4, unlock: 2, desc: "淋了蜂蜜的温热面包，能让小火人暖一整天。" },
+        { id: "honey_bread", name: "蜜糖面包", emoji: "🍞", exp: 6, fullness: 12, mood: 4, unlock: 2, desc: "淋了蜂蜜的温热面包，能让它暖一整天。" },
         { id: "berry_cake", name: "蓝莓蛋糕", emoji: "🫐", exp: 8, fullness: 10, mood: 5, unlock: 2, desc: "酸甜的蓝莓配上绵密奶油，是成长的小奖励。" },
         { id: "mooncake", name: "月光蛋糕", emoji: "🌙", exp: 12, fullness: 15, mood: 8, unlock: 3, desc: "只在梦里发光的蛋糕，吃完会偷偷笑。" },
-        { id: "flame_skewer", name: "火焰烤串", emoji: "🍢", exp: 15, fullness: 18, mood: 10, unlock: 4, desc: "辣呼呼的能量串，火焰使者专属料理。" },
+        { id: "flame_skewer", name: "火焰烤串", emoji: "🍢", exp: 15, fullness: 18, mood: 10, unlock: 4, desc: "辣呼呼的能量串，专属的能量料理。" },
         { id: "rainbow_candy", name: "彩虹糖", emoji: "🌈", exp: 20, fullness: 25, mood: 15, unlock: 5, desc: "七种颜色七种心情，传说级甜品。" }
       ];
       var FOOD_DAILY_STOCK = 3;
@@ -1010,118 +986,63 @@
         return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
       }
 
-      function petData(defaultName) {
-        return {
-          level: 1,
-          exp: 0,
-          totalExp: 0,
-          streak: 0,
-          lastActiveDate: "",
-          totalInteractions: 0,
-          makeupCards: 1,
-          makeupMonth: monthKey(),
-          milestones: [],
-          avatar: { hairColor: "purple", outfitColor: "maroon", earColor: "brown", eyes: "round", mouth: "smile", accessory: "none", pose: "idle" },
-          daily: {},
-          fullness: 60,
-          mood: 60,
-          lastFed: "",
-          lastVitalUpdate: "",
-          foods: {},
-          name: defaultName
-        };
-      }
-
-      function defaultData() {
-        return {
-          activePet: 'fire',
-          pets: {
-            fire: petData('小火人'),
-            kirin: petData('玉麒麟')
-          }
-        };
-      }
-
+      /**
+       * SparkTracker（新版）：
+       * 只有 1 只宠物，所有读写都通过 SparkShared 做统一的新/旧结构迁移。
+       * 形态切换 form 与 改名 name 存在同一结构里，其它页面刷新即可同步。
+       */
       window.SparkTracker = {
         load: function () {
-          try {
-            var raw = localStorage.getItem(SPARK_KEY);
-            if (raw) {
-              var d = JSON.parse(raw);
-              /* 旧格式迁移：单宠物数据 → 多宠物结构 */
-              if (!d.pets) {
-                var oldData = {};
-                for (var k in d) { if (k !== 'activePet') oldData[k] = d[k]; }
-                d = {
-                  activePet: 'fire',
-                  pets: { fire: oldData }
-                };
-              }
-              /* 确保所有宠物数据完整 */
-              for (var pid in PETS) {
-                if (!d.pets[pid]) d.pets[pid] = petData(PETS[pid].name);
-                var pd = d.pets[pid];
-                var def = petData(PETS[pid].name);
-                for (var dk in def) { if (!(dk in pd)) pd[dk] = def[dk]; }
-                if (!pd.avatar) pd.avatar = def.avatar;
-                if (typeof pd.fullness !== "number") pd.fullness = def.fullness;
-                if (typeof pd.mood !== "number") pd.mood = def.mood;
-                if (!pd.foods) pd.foods = {};
-                var t = todayStr();
-                if (pd.lastFed !== t) {
-                  FOODS.forEach(function (f) {
-                    if (pd.level >= f.unlock) pd.foods[f.id] = FOOD_DAILY_STOCK;
-                  });
-                  pd.lastFed = t;
-                }
-                this.updateVitals(pd);
-              }
-              if (!d.activePet || !PETS[d.activePet]) d.activePet = 'fire';
-              this.save(d);
-              return d;
-            }
-          } catch (e) { console.warn('SparkTracker.load error', e); }
-          var fresh = defaultData();
-          var t2 = todayStr();
-          for (var pid2 in fresh.pets) {
+          var data = SparkShared.load();
+          var pd = data.pet;
+          // 每日食物库存刷新
+          var t = todayStr();
+          if (pd.lastFed !== t) {
             FOODS.forEach(function (f) {
-              if (fresh.pets[pid2].level >= f.unlock) fresh.pets[pid2].foods[f.id] = FOOD_DAILY_STOCK;
+              if (pd.level >= f.unlock) pd.foods[f.id] = FOOD_DAILY_STOCK;
             });
-            fresh.pets[pid2].lastFed = t2;
-            fresh.pets[pid2].lastVitalUpdate = new Date().toISOString();
+            pd.lastFed = t;
+            SparkShared.save(data);
           }
-          return fresh;
+          this.updateVitals(pd, false);
+          return data;
         },
-        updateVitals: function (petData) {
+        updateVitals: function (pd, autoSave) {
           var now = new Date();
-          var last = petData.lastVitalUpdate ? new Date(petData.lastVitalUpdate) : now;
+          var last = pd.lastVitalUpdate ? new Date(pd.lastVitalUpdate) : now;
           if (isNaN(last.getTime())) last = now;
           var hours = Math.max(0, (now - last) / 3600000);
-          var state = this.getState(petData);
+          var state = this.getState(pd);
           var fullnessDrop = hours * 2 + (state === "sleeping" ? hours * 1 : 0);
           var moodDrop = hours * 1;
-          petData.fullness = Math.max(0, petData.fullness - fullnessDrop);
-          petData.mood = Math.max(0, petData.mood - moodDrop);
-          petData.lastVitalUpdate = now.toISOString();
+          pd.fullness = Math.max(0, pd.fullness - fullnessDrop);
+          pd.mood = Math.max(0, pd.mood - moodDrop);
+          pd.lastVitalUpdate = now.toISOString();
+          if (autoSave !== false) {
+            var d = SparkShared.load();
+            d.pet = pd;
+            SparkShared.save(d);
+          }
         },
-        save: function (d) {
-          try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) { console.warn('SparkTracker.save error', e); }
-        },
-        /* 获取当前活跃宠物的数据 */
-        current: function (d) {
-          if (!d) d = this.load();
-          return d.pets[d.activePet];
-        },
+        save: function (d) { SparkShared.save(d); },
+        current: function (d) { return (d || this.load()).pet; },
         setName: function (name) {
-          var d = this.load();
-          var pd = d.pets[d.activePet];
-          pd.name = String(name || "").trim().slice(0, 12) || PETS[d.activePet].name;
-          this.save(d);
-          return pd.name;
+          var n = SparkShared.setName(name);
+          // 通知父窗口（如果存在）立即刷新相关文案
+          try { window.parent && window.parent.postMessage({ type: "spark:update" }, "*"); } catch (e) {}
+          return n;
+        },
+        /* 切形态 —— 同一个体，换外观 */
+        switchForm: function (formId) {
+          var ok = SparkShared.setForm(formId);
+          if (ok) {
+            try { window.parent && window.parent.postMessage({ type: "spark:update" }, "*"); } catch (e) {}
+          }
+          return ok;
         },
         recordInteraction: function (type) {
-          var d = this.load();
-          var pd = d.pets[d.activePet];
+          var data = SparkShared.load();
+          var pd = data.pet;
           var t = todayStr();
           if (!pd.daily[t]) pd.daily[t] = { chat: 0, moments: 0 };
           if (pd.daily[t][type] >= DAILY_LIMITS[type]) return { gained: 0, leveledUp: false, level: pd.level };
@@ -1134,33 +1055,24 @@
           pd.mood = Math.min(MOOD_MAX, pd.mood + 0.5);
           if (t !== pd.lastActiveDate) {
             if (pd.lastActiveDate === yesterdayStr()) pd.streak++;
-            else if (pd.lastActiveDate === t) { /* same day */ }
-            else pd.streak = 1;
+            else if (pd.lastActiveDate !== t) pd.streak = 1;
             pd.lastActiveDate = t;
           } else if (pd.streak === 0) {
             pd.streak = 1;
           }
-          var leveledUp = false;
-          while (pd.level < LEVELS.length && pd.exp >= LEVELS[pd.level - 1].need) {
-            pd.exp -= LEVELS[pd.level - 1].need;
-            pd.level++;
-            leveledUp = true;
-          }
-          MILESTONES.forEach(function (m) {
-            if (pd.streak >= m.days && pd.milestones.indexOf(m.days) === -1) {
-              pd.milestones.push(m.days);
-            }
-          });
+          var leveledUp = this._levelUpIfNeeded(pd);
+          this._checkMilestones(pd);
           if (pd.makeupMonth !== monthKey()) {
             pd.makeupMonth = monthKey();
             pd.makeupCards = 1;
           }
-          this.save(d);
+          SparkShared.save(data);
+          try { window.parent && window.parent.postMessage({ type: "spark:update", leveledUp: leveledUp }, "*"); } catch (e) {}
           return { gained: gained, leveledUp: leveledUp, level: pd.level };
         },
         useMakeup: function () {
-          var d = this.load();
-          var pd = d.pets[d.activePet];
+          var data = SparkShared.load();
+          var pd = data.pet;
           if (pd.makeupCards <= 0) return false;
           var y = yesterdayStr();
           if (pd.daily[y] && (pd.daily[y].chat > 0 || pd.daily[y].moments > 0)) return false;
@@ -1173,15 +1085,13 @@
             pd.streak = Math.max(pd.streak, 1);
             pd.lastActiveDate = y;
           }
-          MILESTONES.forEach(function (m) {
-            if (pd.streak >= m.days && pd.milestones.indexOf(m.days) === -1) pd.milestones.push(m.days);
-          });
-          this.save(d);
+          this._checkMilestones(pd);
+          SparkShared.save(data);
           return true;
         },
         feed: function (foodId) {
-          var d = this.load();
-          var pd = d.pets[d.activePet];
+          var data = SparkShared.load();
+          var pd = data.pet;
           var food = FOODS.find(function(f){ return f.id === foodId; });
           if (!food) return { ok: false, reason: "food_not_found" };
           if (pd.level < food.unlock) return { ok: false, reason: "locked" };
@@ -1194,13 +1104,7 @@
           pd.exp += food.exp;
           pd.totalExp += food.exp;
           pd.totalInteractions++;
-
-          var leveledUp = false;
-          while (pd.level < LEVELS.length && pd.exp >= LEVELS[pd.level - 1].need) {
-            pd.exp -= LEVELS[pd.level - 1].need;
-            pd.level++;
-            leveledUp = true;
-          }
+          var leveledUp = this._levelUpIfNeeded(pd);
           var t = todayStr();
           if (!pd.daily[t]) pd.daily[t] = { chat: 0, moments: 0 };
           if (t !== pd.lastActiveDate) {
@@ -1208,33 +1112,26 @@
             else pd.streak = 1;
             pd.lastActiveDate = t;
           }
-          MILESTONES.forEach(function (m) {
-            if (pd.streak >= m.days && pd.milestones.indexOf(m.days) === -1) pd.milestones.push(m.days);
-          });
-          this.save(d);
+          this._checkMilestones(pd);
+          SparkShared.save(data);
+          try { window.parent && window.parent.postMessage({ type: "spark:update", leveledUp: leveledUp }, "*"); } catch (e) {}
           return { ok: true, food: food, leveledUp: leveledUp, level: pd.level };
         },
         pet: function () {
-          var d = this.load();
-          var pd = d.pets[d.activePet];
+          var data = SparkShared.load();
+          var pd = data.pet;
           if (pd.mood >= MOOD_MAX) return { ok: false, reason: "max_mood" };
-          this.updateVitals(pd);
+          this.updateVitals(pd, false);
           pd.mood = Math.min(MOOD_MAX, pd.mood + 5);
           pd.exp += 1;
           pd.totalExp += 1;
           pd.totalInteractions++;
-          var leveledUp = false;
-          while (pd.level < LEVELS.length && pd.exp >= LEVELS[pd.level - 1].need) {
-            pd.exp -= LEVELS[pd.level - 1].need;
-            pd.level++;
-            leveledUp = true;
-          }
-          this.save(d);
+          var leveledUp = this._levelUpIfNeeded(pd);
+          SparkShared.save(data);
           return { ok: true, moodAdded: 5, leveledUp: leveledUp, level: pd.level };
         },
         getState: function (petData) {
-          var d = this.load();
-          var pd = petData || d.pets[d.activePet];
+          var pd = petData || SparkShared.load().pet;
           var t = todayStr();
           var today = pd.daily[t] || { chat: 0, moments: 0 };
           var lastActive = pd.lastActiveDate;
@@ -1254,14 +1151,21 @@
           }
           return state;
         },
-        /* 切换活跃宠物 */
-        switchPet: function (petId) {
-          var d = this.load();
-          if (!PETS[petId] || !d.pets[petId]) return false;
-          d.activePet = petId;
-          this.save(d);
-          try { localStorage.setItem(ACTIVE_PET_KEY, petId); } catch (e) {}
-          return true;
+        _levelUpIfNeeded: function (pd) {
+          var leveledUp = false;
+          while (pd.level < LEVELS.length && pd.exp >= LEVELS[pd.level - 1].need) {
+            pd.exp -= LEVELS[pd.level - 1].need;
+            pd.level++;
+            leveledUp = true;
+          }
+          return leveledUp;
+        },
+        _checkMilestones: function (pd) {
+          MILESTONES.forEach(function (m) {
+            if (pd.streak >= m.days && pd.milestones.indexOf(m.days) === -1) {
+              pd.milestones.push(m.days);
+            }
+          });
         }
       };
 
@@ -1561,35 +1465,35 @@
 
       var petSelector = document.getElementById("petSelector");
 
-      /* 渲染宠物选择器 */
-      function renderPetSelector() {
+      /* 渲染「形态切换器」（同一个体，两种外观） */
+      function renderFormSelector() {
+        var shared = SparkShared.readPet('page');
         var html = '';
-        for (var i = 0; i < PET_ORDER.length; i++) {
-          var pid = PET_ORDER[i];
-          var pet = PETS[pid];
-          var active = data.activePet === pid ? ' active' : '';
-          html += '<div class="pet-tab' + active + '" data-pet="' + pid + '">' +
-            '<span class="pet-emoji">' + pet.emoji + '</span>' +
-            '<span>' + pet.name + '</span>' +
+        for (var i = 0; i < FORM_ORDER.length; i++) {
+          var fid = FORM_ORDER[i];
+          var fd = FORMS[fid];
+          var active = data.form === fid ? ' active' : '';
+          html += '<div class="pet-tab form-tab' + active + '" data-form="' + fid + '">' +
+            '<span class="pet-emoji">' + fd.emoji + '</span>' +
+            '<span>' + fd.label + '</span>' +
             '</div>';
         }
+        // 加一个标签说明（仅视觉）
+        html = '<span class="pet-selector-label">形态：</span>' + html;
         petSelector.innerHTML = html;
-        var tabs = petSelector.querySelectorAll('.pet-tab');
+        var tabs = petSelector.querySelectorAll('.form-tab');
         for (var j = 0; j < tabs.length; j++) {
           tabs[j].addEventListener('click', function () {
-            var pid = this.dataset.pet;
-            if (SparkTracker.switchPet(pid)) {
+            var fid = this.dataset.form;
+            if (SparkTracker.switchForm(fid)) {
               data = SparkTracker.load();
-              renderPetSelector();
+              renderFormSelector();
               render();
-              try {
-                localStorage.setItem(ACTIVE_PET_KEY, pid);
-              } catch (e) {}
             }
           });
         }
       }
-      renderPetSelector();
+      renderFormSelector();
 
       var creatureSvg = document.getElementById("creatureSvg");
       var creatureWrap = document.getElementById("creatureWrap");
@@ -1629,11 +1533,11 @@
       var levelupText = document.getElementById("levelupText");
 
       var STATE_INFO = {
-        happy: { label: "😊 开心", text: "今天和梦角互动过了，真开心！", class: "happy" },
-        calm: { label: "😌 平静", text: "今天还没和梦角互动哦", class: "calm" },
-        hungry: { label: "😋 想念", text: "梦角好想你，快来互动吧", class: "hungry" },
-        weak: { label: "😢 虚弱", text: "好久没互动了，火花快灭了…", class: "weak" },
-        sleeping: { label: "😴 沉睡", text: "小火人沉睡了，快唤醒它", class: "sleeping" }
+        happy:    { label: "😊 开心", text: "今天和它互动过了，真开心！", class: "happy" },
+        calm:     { label: "😌 平静", text: "今天还没和它互动哦",       class: "calm" },
+        hungry:   { label: "😋 想念", text: "它好想你，快来互动吧",     class: "hungry" },
+        weak:     { label: "😢 虚弱", text: "好久没互动了，火花快灭了…", class: "weak" },
+        sleeping: { label: "😴 沉睡", text: "它沉睡了，快唤醒它",       class: "sleeping" }
       };
 
       function toast(msg) {
@@ -1645,17 +1549,23 @@
 
       function render() {
         data = SparkTracker.load();
-        var pd = data.pets[data.activePet];
-        var pet = PETS[data.activePet];
+        var pd = data.pet;
+        var shared = SparkShared.readPet('page');
         var state = SparkTracker.getState(pd);
         var info = STATE_INFO[state];
+        var sparkName = shared.name;
 
-        var sparkName = pd.name || pet.name;
-        var fb = pet.fallbackImage ? "this.onerror=null;this.src='" + pet.fallbackImage + "';" : "";
-        creatureSvg.innerHTML = '<img src="' + pet.image + '" alt="' + sparkName + '" onError="' + fb + '" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
+        // 主图
+        creatureSvg.innerHTML = '<img src="' + shared.image + '" alt="' + sparkName +
+          '" style="width:160px;height:180px;object-fit:contain;display:block;cursor:pointer;filter:brightness(1.12) saturate(1.15) contrast(1.05);">';
         creatureWrap.className = "creature-svg-wrap" + (state === "sleeping" ? " sleeping" : "");
         creatureName.textContent = sparkName;
-        var stateText = info.text.replace(/小火人/g, sparkName);
+
+        // 页面标题和 HTML title 也同步
+        document.title = sparkName + " · 梦角传讯";
+
+        // 状态文案里也嵌上名字，避免任何残留"小火人"
+        var stateText = info.text.replace(/它/g, sparkName);
         creatureStatusText.textContent = stateText;
         statusBadge.className = "status-badge " + info.class;
         statusBadge.textContent = info.label;
@@ -1664,8 +1574,9 @@
 
         /* 更新光环颜色 */
         var aura = document.getElementById("creatureAura");
-        if (aura) aura.style.background = 'radial-gradient(circle, ' + pet.auraColor + ' 0%, transparent 70%)';
+        if (aura) aura.style.background = 'radial-gradient(circle, ' + shared.auraColor + ' 0%, transparent 70%)';
 
+        /* 等级经验 */
         var lv = LEVELS[Math.min(pd.level - 1, LEVELS.length - 1)];
         levelLabel.textContent = "Lv." + pd.level;
         levelTitle.textContent = lv.title;
@@ -1699,7 +1610,7 @@
       }
 
       function renderMilestones() {
-        var pd = data.pets[data.activePet];
+        var pd = data.pet;
         milestoneList.innerHTML = "";
         MILESTONES.forEach(function (m) {
           var unlocked = pd.milestones.indexOf(m.days) !== -1;
@@ -1712,22 +1623,15 @@
 
       /* Feeder */
       function openFeeder() {
-        var pet = PETS[data.activePet];
+        var shared = SparkShared.readPet('page');
+        var name = shared.name;
         feederSelectedFood = null;
-        feederHint.textContent = "选择食物喂给" + pet.name + "吧～";
-        document.querySelectorAll('#feedModal .modal-title').forEach(function(el){ el.textContent = '喂食' + pet.name; });
+        feederHint.textContent = "选择食物喂给" + name + "吧～";
+        document.querySelectorAll('#feedModal .modal-title').forEach(function(el){ el.textContent = '喂食' + name; });
         feederDetail.style.display = "none";
         feedConfirm.disabled = true;
-        /* 动态更新预览图（加载失败自动 fallback 到备用图） */
         var previewImg = feederPreview.querySelector('img');
-        if (previewImg) {
-          if (pet.fallbackImage) {
-            previewImg.onerror = function() { this.onerror = null; this.src = pet.fallbackImage; };
-          } else {
-            previewImg.onerror = null;
-          }
-          previewImg.src = pet.image;
-        }
+        if (previewImg) previewImg.src = shared.image;
         renderFoodGrid();
         feedModal.classList.add("show");
         feedModal.style.cssText = "display:block;opacity:1;pointer-events:auto;";
@@ -1740,7 +1644,7 @@
       function renderFoodGrid() {
         foodGrid.innerHTML = "";
         data = SparkTracker.load();
-        var pd = data.pets[data.activePet];
+        var pd = data.pet;
         FOODS.forEach(function (food) {
           var locked = pd.level < food.unlock;
           var stock = pd.foods[food.id] || 0;
@@ -1770,9 +1674,9 @@
       function doFeed() {
         if (!feederSelectedFood) return;
         var result = SparkTracker.feed(feederSelectedFood);
-        var pet = PETS[data.activePet];
+        var name = SparkShared.readPet('page').name;
         if (!result.ok) {
-          if (result.reason === "full") toast(pet.name + "已经吃饱啦，等消化一下再喂吧～");
+          if (result.reason === "full") toast(name + "已经吃饱啦，等消化一下再喂吧～");
           else if (result.reason === "no_stock") toast("今天这个食物没有库存了哦");
           else if (result.reason === "locked") toast("等级不够，还不能吃这个");
           else toast("喂食失败");
@@ -1782,7 +1686,7 @@
         var food = result.food;
         feederPreview.classList.add("eating");
         setTimeout(function(){ feederPreview.classList.remove("eating"); }, 550);
-        toast(pet.name + "吃掉了 " + food.name + "，心情变好了 ✨");
+        toast(name + "吃掉了 " + food.name + "，心情变好了 ✨");
         if (result.leveledUp) {
           setTimeout(function(){ showLevelUp(result.level); }, 400);
         }
@@ -1815,25 +1719,26 @@
       feedModal.addEventListener("click", function (e) { if (e.target === feedModal) closeFeeder(); });
       makeupBtn.addEventListener("click", useMakeup);
 
-      /* 点击名字 → 自定义取名 */
+      /* 点击名字 → 自定义取名（改完：SparkTracker.setName → SparkShared.setName → 其它页面刷新就同步） */
       creatureName.addEventListener("click", function () {
-        var pet = PETS[data.activePet];
-        var current = (SparkTracker.current(data).name || pet.name);
-        var input = prompt("给" + pet.name + "取个名字吧～（最多12字）", current);
+        var shared = SparkShared.readPet('page');
+        var current = shared.name;
+        var input = prompt("给它取个名字吧～（最多12字）", current);
         if (input === null) return;
         var trimmed = input.trim();
         if (!trimmed) { toast("名字不能为空哦"); return; }
         if (trimmed.length > 12) { toast("名字太长啦，最多12字"); trimmed = trimmed.slice(0, 12); }
         var finalName = SparkTracker.setName(trimmed);
+        data = SparkTracker.load();
+        renderFormSelector();
         render();
         toast("改名成功！现在叫「" + finalName + "」啦 ♡");
       });
 
       /* Tap creature to pet */
       creatureSvg.addEventListener("click", function (e) {
-        var pet = PETS[data.activePet];
+        var n = SparkShared.readPet('page').name;
         var state = SparkTracker.getState();
-        var n = (SparkTracker.current(data).name || pet.name);
         if (state === "sleeping") { toast(n + "沉睡中，快唤醒它吧 💤"); return; }
         var result = SparkTracker.pet();
         if (!result.ok) { toast("心情已经满啦，" + n + "很开心 ♡"); return; }

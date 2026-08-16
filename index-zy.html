@@ -207,6 +207,7 @@
         }
 
     </style>
+    <script src="js/spark-shared.js"></script>
 </head>
 <body>
 <div id="splash-declaration">
@@ -464,11 +465,11 @@
                         </div>
                         <span class="app-name">萌宠屋</span>
                     </div>
-                    <div class="app-item" onclick="openApp('spark-new')">
-                        <div class="app-icon" style="background: linear-gradient(145deg, #ffb86b, #ff8a56);">
-                            <i class="fas fa-fire"></i>
+                    <div class="app-item" onclick="openApp('spark-new')" data-spark-app>
+                        <div class="app-icon" data-spark-app-icon style="background: linear-gradient(145deg, #ffb86b, #ff8a56);">
+                            <i class="fas fa-fire" data-spark-app-icon-inner></i>
                         </div>
-                        <span class="app-label">小火人</span>
+                        <span class="app-label" data-spark-app-label>伙伴</span>
                     </div>
                     <div class="app-item" onclick="openApp('rps')">
                         <div class="app-icon" style="background: linear-gradient(145deg, #a8d8ea, #7fc7d9);">
@@ -2053,7 +2054,7 @@
     <div class="extapp-container" id="extapp-spark" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
         <div class="extapp-unified-nav">
             <button class="extapp-back-btn" onclick="window.hideExtApp('spark')"><i class="fas fa-arrow-left"></i><span>返回</span></button>
-            <h2 class="extapp-title">小火人</h2>
+            <h2 class="extapp-title" data-spark-ext-title>伙伴</h2>
             <div class="extapp-right-placeholder"></div>
         </div>
         <iframe id="extapp-spark-iframe" data-src="pages/spark-new.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
@@ -4667,7 +4668,44 @@
     }
     </style>
 
-    <!-- 小火人拖拽伴侣脚本 -->
+    <!-- 宠物名字/形态同步：主页图标、内嵌iframe标题、伴侣图、alt -->
+    <script>
+    (function syncSparkBranding() {
+      var appLabel  = document.querySelector('[data-spark-app-label]');
+      var extTitle  = document.querySelector('[data-spark-ext-title]');
+      var appIcon   = document.querySelector('[data-spark-app-icon]');
+      var iconInner = document.querySelector('[data-spark-app-icon-inner]');
+
+      function updateBranding() {
+        var shared = SparkShared.readPet('root');
+        if (appLabel) appLabel.textContent = shared.name;
+        if (extTitle) extTitle.textContent = shared.name;
+        // 图标：用 emoji 替代原来的 fire 图标，文字大小调整更适配
+        if (appIcon) appIcon.style.background = shared.frameGradient;
+        if (iconInner) {
+          iconInner.className = '';
+          iconInner.style.fontStyle = 'normal';
+          iconInner.style.fontSize = '22px';
+          iconInner.style.lineHeight = '1';
+          iconInner.textContent = shared.emoji;
+        }
+        document.title = shared.name + ' · 梦角传讯';
+      }
+
+      updateBranding();
+      try {
+        window.addEventListener('storage', function (e) {
+          if (e.key === SparkShared.SPARK_KEY) updateBranding();
+        });
+        window.addEventListener('message', function (ev) {
+          var d = ev.data || {};
+          if (d.type === 'spark:update') updateBranding();
+        });
+      } catch (e) {}
+    })();
+    </script>
+
+    <!-- 宠物拖拽伴侣脚本 -->
     <script>
     (function initCompanion() {
       var companion = document.getElementById("spark-companion");
@@ -4676,7 +4714,8 @@
       var POS_KEY = "mengjiao_companion_pos";
 
       function updateCompanion() {
-        companion.innerHTML = '<img src="assets/character.png" alt="小火人" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px;pointer-events:none;filter:brightness(1.12) saturate(1.15) contrast(1.05);">' + '<div class="companion-hint">拖拽我</div>';
+        var shared = SparkShared.readPet('root');
+        companion.innerHTML = '<img src="' + shared.image + '" alt="' + shared.name + '" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px;pointer-events:none;filter:brightness(1.12) saturate(1.15) contrast(1.05);">' + '<div class="companion-hint">拖拽我</div>';
       }
 
       try {
@@ -4694,6 +4733,17 @@
       }
 
       updateCompanion();
+
+      // 名字/形态变化 → 重新渲染伴侣图
+      try {
+        window.addEventListener('storage', function (e) {
+          if (e.key === SPARK_KEY) updateCompanion();
+        });
+        window.addEventListener('message', function (ev) {
+          var d = ev.data || {};
+          if (d.type === 'spark:update') updateCompanion();
+        });
+      } catch (e) {}
 
       var dragging = false;
       var startX = 0, startY = 0, origLeft = 0, origTop = 0;

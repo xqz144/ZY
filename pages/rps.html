@@ -415,6 +415,7 @@
         100% { transform: scale(1); opacity: 1; }
     }
     </style>
+    <script src="../js/spark-shared.js"></script>
 </head>
 <body>
 <div class="app-bg">
@@ -423,8 +424,8 @@
         <!-- 对战区域 -->
         <div class="battle-arena">
             <div class="spark-info">
-                <div class="spark-avatar">🔥</div>
-                <span class="spark-name-text" id="sparkName">小火人</span>
+                <div class="spark-avatar" id="sparkAvatar">🔥</div>
+                <span class="spark-name-text" id="sparkName">伙伴</span>
                 <span class="spark-level-badge" id="sparkLevel">Lv.1</span>
             </div>
 
@@ -435,13 +436,13 @@
                 </div>
                 <div class="vs-text">VS</div>
                 <div class="spark-side">
-                    <div class="side-label" id="sparkSideLabel">小火人</div>
+                    <div class="side-label" id="sparkSideLabel">伙伴</div>
                     <div class="hand-display" id="sparkHand">✊</div>
                 </div>
             </div>
 
             <div class="result-text" id="resultText">出招吧！</div>
-            <div class="result-detail" id="resultDetail">三局两胜，赢了对小火人有奖励哦～</div>
+            <div class="result-detail" id="resultDetail">三局两胜，赢了会有成长奖励哦～</div>
         </div>
 
         <!-- 出招按钮 -->
@@ -513,7 +514,6 @@
 (function () {
     'use strict';
 
-    var SPARK_KEY = 'mengjiao_spark';
     var RPS_KEY = 'mengjiao_rps';
 
     var HANDS = {
@@ -523,17 +523,27 @@
     };
     var HAND_KEYS = ['rock', 'scissors', 'paper'];
 
-    /* 小火人数据（只读，用于显示名字和等级） */
+    /* 宠物数据（统一用 SparkShared，自动兼容旧格式） */
     function loadSpark() {
-        try {
-            var raw = localStorage.getItem(SPARK_KEY);
-            if (raw) return JSON.parse(raw);
-        } catch (e) {}
-        return { name: '小火人', level: 1, exp: 0, totalExp: 0, mood: 60, fullness: 60 };
+        var shared = SparkShared.load();
+        var pd = shared.pet;
+        // 让后面的 addExp / saveSpark 能直接读写
+        var o = {};
+        for (var k in pd) o[k] = pd[k];
+        o._shared = shared;
+        return o;
     }
 
     function saveSpark(d) {
-        try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) {}
+        // 把 flat 属性写回 _shared.pet 再保存
+        var shared = d._shared || SparkShared.load();
+        var pd = shared.pet || {};
+        for (var k in d) {
+            if (k === '_shared') continue;
+            pd[k] = d[k];
+        }
+        shared.pet = pd;
+        SparkShared.save(shared);
     }
 
     /* 猜拳比分数据 */
@@ -629,12 +639,18 @@
         }
     }
 
+    var sparkAvatar = document.getElementById('sparkAvatar');
+
     function renderSparkInfo() {
-        var spark = loadSpark();
-        var name = spark.name || '小火人';
-        sparkNameEl.textContent = name;
-        sparkSideLabel.textContent = name;
-        sparkLevelEl.textContent = 'Lv.' + spark.level;
+        var shared = SparkShared.readPet('page');
+        sparkNameEl.textContent = shared.name;
+        sparkSideLabel.textContent = shared.name;
+        sparkLevelEl.textContent = 'Lv.' + shared.level;
+        if (sparkAvatar) sparkAvatar.textContent = shared.emoji;
+        // 初始提示语
+        resultDetail.textContent = '三局两胜，赢了会让' + shared.name + '成长哦～';
+        // HTML 标题
+        document.title = shared.name + ' · 猜拳';
     }
 
     /* 判断胜负：返回 'win' / 'lose' / 'draw' */
@@ -682,64 +698,64 @@
         var sparkChoice = sparkChoose(rps.history.length > 20 ? rps.history.slice(-20) : rps.history);
 
         // 1秒后揭晓
-        setTimeout(function () {
-            playerHand.className = 'hand-display';
-            sparkHand.className = 'hand-display';
-            playerHand.textContent = HANDS[playerChoice].emoji;
-            sparkHand.textContent = HANDS[sparkChoice].emoji;
+            setTimeout(function () {
+                playerHand.className = 'hand-display';
+                sparkHand.className = 'hand-display';
+                playerHand.textContent = HANDS[playerChoice].emoji;
+                sparkHand.textContent = HANDS[sparkChoice].emoji;
 
-            var result = judge(playerChoice, sparkChoice);
-            var spark = loadSpark();
-            var rewardMsg = '';
+                var result = judge(playerChoice, sparkChoice);
+                var spark = loadSpark();
+                var petName = SparkShared.readPet('page').name;
+                var rewardMsg = '';
 
-            if (result === 'win') {
-                rps.win++;
-                rps.streak++;
-                if (rps.streak > rps.bestStreak) rps.bestStreak = rps.streak;
-                rps.history.push('W');
+                if (result === 'win') {
+                    rps.win++;
+                    rps.streak++;
+                    if (rps.streak > rps.bestStreak) rps.bestStreak = rps.streak;
+                    rps.history.push('W');
 
-                // 奖励
-                var leveledUp = addExp(spark, 10);
-                spark.mood = Math.min(MOOD_MAX, spark.mood + 5);
-                spark.fullness = Math.min(FULLNESS_MAX, spark.fullness + 3);
-                rewardMsg = '经验+10  心情+5  饱腹+3';
+                    var leveledUp = addExp(spark, 10);
+                    spark.mood = Math.min(MOOD_MAX, spark.mood + 5);
+                    spark.fullness = Math.min(FULLNESS_MAX, spark.fullness + 3);
+                    rewardMsg = '经验+10  心情+5  饱腹+3';
 
-                playerHand.classList.add('winner');
-                sparkHand.classList.add('loser');
-                resultText.textContent = '🎉 你赢了！';
-                resultText.className = 'result-text win';
+                    playerHand.classList.add('winner');
+                    sparkHand.classList.add('loser');
+                    resultText.textContent = '🎉 你赢了！';
+                    resultText.className = 'result-text win';
 
-                if (leveledUp) {
-                    setTimeout(function(){ showLevelUp(spark.level); }, 500);
+                    if (leveledUp) {
+                        setTimeout(function(){ showLevelUp(spark.level); }, 500);
+                    }
+                } else if (result === 'lose') {
+                    rps.lose++;
+                    rps.streak = 0;
+                    rps.history.push('L');
+
+                    spark.mood = Math.max(0, spark.mood - 1);
+                    rewardMsg = '心情-1（' + petName + '傲娇了一下）';
+
+                    sparkHand.classList.add('winner');
+                    playerHand.classList.add('loser');
+                    resultText.textContent = '😢 你输了';
+                    resultText.className = 'result-text lose';
+                } else {
+                    rps.draw++;
+                    rps.history.push('D');
+
+                    var leveledUp2 = addExp(spark, 2);
+                    rewardMsg = '经验+2';
+
+                    resultText.textContent = '🤝 平局！';
+                    resultText.className = 'result-text draw';
+
+                    if (leveledUp2) {
+                        setTimeout(function(){ showLevelUp(spark.level); }, 500);
+                    }
                 }
-            } else if (result === 'lose') {
-                rps.lose++;
-                rps.streak = 0;
-                rps.history.push('L');
 
-                spark.mood = Math.max(0, spark.mood - 1);
-                rewardMsg = '心情-1（小火人傲娇了一下）';
-
-                sparkHand.classList.add('winner');
-                playerHand.classList.add('loser');
-                resultText.textContent = '😢 你输了';
-                resultText.className = 'result-text lose';
-            } else {
-                rps.draw++;
-                rps.history.push('D');
-
-                var leveledUp2 = addExp(spark, 2);
-                rewardMsg = '经验+2';
-
-                resultText.textContent = '🤝 平局！';
-                resultText.className = 'result-text draw';
-
-                if (leveledUp2) {
-                    setTimeout(function(){ showLevelUp(spark.level); }, 500);
-                }
-            }
-
-            resultDetail.textContent = '你出了' + HANDS[playerChoice].name + '，' + (spark.name || '小火人') + '出了' + HANDS[sparkChoice].name + '　·　' + rewardMsg;
+                resultDetail.textContent = '你出了' + HANDS[playerChoice].name + '，' + petName + '出了' + HANDS[sparkChoice].name + '　·　' + rewardMsg;
 
             // 保存
             saveRps(rps);

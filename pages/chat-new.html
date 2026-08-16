@@ -203,6 +203,7 @@ body {
         background-color: currentColor;
       }
     </style>
+    <script src="../js/spark-shared.js"></script>
 </head>
 <body class="m-0 overflow-hidden bg-[var(--chat-bg)] text-[var(--text-primary)] antialiased" style="height:100vh;height:100dvh;">
   <div id="chat-app" class="relative flex w-full flex-col bg-[var(--chat-bg)]" style="height:100vh;height:100dvh;--composer-h:96px;">
@@ -3315,8 +3316,18 @@ body {
         var POS_KEY = "mengjiao_companion_pos";
 
         function updateCompanion() {
-          companion.innerHTML = '<img src="../assets/character.png" alt="小火人" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px;pointer-events:none;filter:brightness(1.12) saturate(1.15) contrast(1.05);">' + '<div class="companion-hint">拖拽我</div>';
+          var shared = SparkShared.readPet('page');
+          companion.innerHTML = '<img src="' + shared.image + '" alt="' + shared.name + '" style="width:100%;height:100%;object-fit:contain;display:block;border-radius:12px;pointer-events:none;filter:brightness(1.12) saturate(1.15) contrast(1.05);">' + '<div class="companion-hint">拖拽我</div>';
         }
+
+        // 形态/名字变化时，伴侣图也跟着换
+        window.addEventListener('storage', function (e) {
+          if (e.key === SPARK_KEY) updateCompanion();
+        });
+        window.addEventListener('message', function (ev) {
+          var d = ev.data || {};
+          if (d.type === 'spark:update') updateCompanion();
+        });
 
         /* Position restore */
         try {
