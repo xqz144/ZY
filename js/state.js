@@ -25,6 +25,7 @@
         let isBatchFavoriteMode = false;
         let selectedMessages = [];
         let customReplies = [];
+        let sparkReplies = [];
         let customPokes = [];
         let customStatuses = [];
         let customPokeGroups = [];

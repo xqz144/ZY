@@ -44,6 +44,10 @@ function _getGroupCtx(tab) {
         if (!window.customVoiceGroups) window.customVoiceGroups = [];
         return { groups: window.customVoiceGroups, items: customVoices, itemLabel: '语音' };
     }
+    if (tab === 'spark') {
+        if (!window.sparkReplyGroups) window.sparkReplyGroups = [];
+        return { groups: window.sparkReplyGroups, items: sparkReplies, itemLabel: '字卡' };
+    }
     // default: custom replies
     if (!window.customReplyGroups) window.customReplyGroups = [];
     return { groups: window.customReplyGroups, items: customReplies, itemLabel: '字卡' };
@@ -52,7 +56,7 @@ function _getGroupCtx(tab) {
 // 判断当前 tab 是否支持分组
 function _tabHasGroups(tab) {
     tab = tab || currentSubTab;
-    return tab === 'custom' || tab === 'pokes' || tab === 'statuses' || tab === 'kaomojis' || tab === 'stickers' || tab === 'moyu' || tab === 'moyuLocations' || tab === 'voices';
+    return tab === 'custom' || tab === 'spark' || tab === 'pokes' || tab === 'statuses' || tab === 'kaomojis' || tab === 'stickers' || tab === 'moyu' || tab === 'moyuLocations' || tab === 'voices';
 }
 
 let _batchSelectedIndices = new Set();
@@ -173,6 +177,8 @@ function _renderListContentOnly() {
     if (currentMajorTab === 'reply') {
         if (currentSubTab === 'custom') {
             itemsToRender = customReplies;
+        } else if (currentSubTab === 'spark') {
+            itemsToRender = sparkReplies;
         } else if (currentSubTab === 'kaomojis') {
             itemsToRender = kaomojiLibrary;
         } else if (currentSubTab === 'emojis') {
@@ -212,7 +218,7 @@ function _renderListContentOnly() {
         return;
     }
 
-    if (currentMajorTab === 'reply' && currentSubTab === 'custom') {
+    if (currentMajorTab === 'reply' && (currentSubTab === 'custom' || currentSubTab === 'spark')) {
         _renderCardViewWithGroups(list, filtered);
     } else {
         _renderAtmosphereList(list, filtered);
@@ -273,6 +279,8 @@ function renderReplyLibrary() {
     if (currentMajorTab === 'reply') {
         if (currentSubTab === 'custom') {
             itemsToRender = customReplies;
+        } else if (currentSubTab === 'spark') {
+            itemsToRender = sparkReplies;
         } else if (currentSubTab === 'kaomojis') {
             itemsToRender = kaomojiLibrary;
         } else if (currentSubTab === 'emojis') {
@@ -320,6 +328,7 @@ function renderReplyLibrary() {
 function _renderModernToolbar() {
     let toolbar = document.getElementById('batch-ops-toolbar');
     const isMainCustom = currentMajorTab === 'reply' && currentSubTab === 'custom';
+    const isSparkTab = currentMajorTab === 'reply' && currentSubTab === 'spark';
     const isStickersTab = currentMajorTab === 'reply' && currentSubTab === 'stickers';
     const isKaomojisTab = currentMajorTab === 'reply' && currentSubTab === 'kaomojis';
     const isEmojisTab = currentMajorTab === 'reply' && currentSubTab === 'emojis';
@@ -330,7 +339,7 @@ function _renderModernToolbar() {
     const isMoyuTab = currentMajorTab === 'moyu' && currentSubTab === 'moyu';
     const isMoyuLocTab = currentMajorTab === 'moyu' && currentSubTab === 'moyuLocations';
     const hasGroupSupport = _tabHasGroups();
-    const canBatch = isMainCustom || isStickersTab || isKaomojisTab || isEmojisTab || isIntrosTab || isMottosTab || isPokesTab || isStatusesTab || isMoyuTab || isMoyuLocTab;
+    const canBatch = isMainCustom || isSparkTab || isStickersTab || isKaomojisTab || isEmojisTab || isIntrosTab || isMottosTab || isPokesTab || isStatusesTab || isMoyuTab || isMoyuLocTab;
 
     if (!toolbar) {
         toolbar = document.createElement('div');
@@ -342,11 +351,11 @@ function _renderModernToolbar() {
 
     const disabledSet = _getDisabledItemsSet();
     const ctx = _getGroupCtx();
-    const totalItems = isMainCustom ? customReplies.length : (isStickersTab ? stickerLibrary.length : (isKaomojisTab ? kaomojiLibrary.length : (isEmojisTab ? customEmojis.length : (isIntrosTab ? customIntros.length : (isMottosTab ? customMottos.length : (isPokesTab ? customPokes.length : (isStatusesTab ? customStatuses.length : (isMoyuTab ? (window.moyuActivities || []).length : (isMoyuLocTab ? moyuLocations.length : 0)))))))));
+    const totalItems = (isMainCustom || isSparkTab) ? (isMainCustom ? customReplies.length : sparkReplies.length) : (isStickersTab ? stickerLibrary.length : (isKaomojisTab ? kaomojiLibrary.length : (isEmojisTab ? customEmojis.length : (isIntrosTab ? customIntros.length : (isMottosTab ? customMottos.length : (isPokesTab ? customPokes.length : (isStatusesTab ? customStatuses.length : (isMoyuTab ? (window.moyuActivities || []).length : (isMoyuLocTab ? moyuLocations.length : 0)))))))));
     const selectedCount = _batchSelectedIndices.size;
 
     const addBtnLabel = (() => {
-        if (isMainCustom) return '新增字卡';
+        if (isMainCustom || isSparkTab) return '新增字卡';
         if (isKaomojisTab) return '批量添加';
         if (isMoyuTab) return '批量添加';
         if (isMoyuLocTab) return '批量添加';
@@ -548,7 +557,7 @@ function _renderModernToolbar() {
         tbBatch.onclick = () => {
             if (!canBatch) return;
             _batchModeActive = !_batchModeActive;
-            _batchModeTarget = isStickersTab ? 'stickers' : (isKaomojisTab ? 'kaomojis' : (isEmojisTab ? 'emojis' : (isIntrosTab ? 'intros' : (isMottosTab ? 'mottos' : (isPokesTab ? 'pokes' : (isStatusesTab ? 'statuses' : (isMoyuTab ? 'moyu' : (isMoyuLocTab ? 'moyuLocations' : 'custom'))))))));
+            _batchModeTarget = isStickersTab ? 'stickers' : (isKaomojisTab ? 'kaomojis' : (isEmojisTab ? 'emojis' : (isIntrosTab ? 'intros' : (isMottosTab ? 'mottos' : (isPokesTab ? 'pokes' : (isStatusesTab ? 'statuses' : (isMoyuTab ? 'moyu' : (isMoyuLocTab ? 'moyuLocations' : (isSparkTab ? 'spark' : 'custom')))))))));
             _batchSelectedIndices.clear();
             renderReplyLibrary();
         };
@@ -570,7 +579,7 @@ function _renderModernToolbar() {
         toolbar.querySelector('#batch-select-all-btn')?.addEventListener('click', () => {
             if (_batchSelectedIndices.size === totalItems) _batchSelectedIndices.clear();
             else {
-                const pool = isMainCustom ? customReplies
+                const pool = (isMainCustom || isSparkTab) ? (isMainCustom ? customReplies : sparkReplies)
                     : (isKaomojisTab ? kaomojiLibrary
                     : (isEmojisTab ? customEmojis
                     : (isIntrosTab ? customIntros
@@ -584,7 +593,7 @@ function _renderModernToolbar() {
             renderReplyLibrary();
         });
         toolbar.querySelector('#batch-group-btn')?.addEventListener('click', () => {
-            if (!isMainCustom && !isKaomojisTab && !isMoyuTab && !isMoyuLocTab && !isStickersTab) {
+            if (!isMainCustom && !isSparkTab && !isKaomojisTab && !isMoyuTab && !isMoyuLocTab && !isStickersTab) {
                 showNotification('此标签不支持分组功能', 'info');
                 return;
             }
@@ -690,6 +699,18 @@ function _renderModernToolbar() {
                 throttledSaveData();
                 renderReplyLibrary();
                 showNotification(`已删除 ${indices.length} 条状态`, 'success');
+            } else if (isSparkTab) {
+                const deletedTexts = indices.map(i => sparkReplies[i]);
+                indices.forEach(i => sparkReplies.splice(i, 1));
+                if (window.sparkReplyGroups) {
+                    window.sparkReplyGroups.forEach(g => {
+                        if (g.items) g.items = g.items.filter(t => !deletedTexts.includes(t));
+                    });
+                }
+                _batchSelectedIndices.clear();
+                throttledSaveData();
+                renderReplyLibrary();
+                showNotification(`已删除 ${indices.length} 条`, 'success');
             } else {
                 const deletedTexts = indices.map(i => customReplies[i]);
                 indices.forEach(i => customReplies.splice(i, 1));
@@ -1597,6 +1618,10 @@ function _runDedup() {
     let totalRemoved = 0;
     const crDedup = deduplicateContentArray(customReplies, CONSTANTS.REPLY_MESSAGES);
     customReplies = crDedup.result; totalRemoved += crDedup.removedCount;
+    if (currentMajorTab === 'reply' && currentSubTab === 'spark') {
+        const srDedup = deduplicateContentArray(sparkReplies);
+        sparkReplies = srDedup.result; totalRemoved += srDedup.removedCount;
+    }
     const cpDedup = deduplicateContentArray(customPokes);
     customPokes = cpDedup.result; totalRemoved += cpDedup.removedCount;
     const csDedup = deduplicateContentArray(customStatuses);
@@ -1988,6 +2013,7 @@ function deleteItem(index) {
     const ctx = _getGroupCtx();
     const item = _tabHasGroups() ? ctx.items[index] : null;
     if (currentMajorTab === 'reply' && currentSubTab === 'custom') customReplies.splice(index, 1);
+    if (currentMajorTab === 'reply' && currentSubTab === 'spark') sparkReplies.splice(index, 1);
     else if (currentSubTab === 'kaomojis') kaomojiLibrary.splice(index, 1);
     else if (currentSubTab === 'pokes') customPokes.splice(index, 1);
     else if (currentSubTab === 'statuses') customStatuses.splice(index, 1);
@@ -2028,6 +2054,7 @@ function editItem(index, oldText) {
         }
     }
     if (currentMajorTab === 'reply' && currentSubTab === 'custom') customReplies[index] = newText.trim();
+    if (currentMajorTab === 'reply' && currentSubTab === 'spark') sparkReplies[index] = newText.trim();
     else if (currentSubTab === 'kaomojis') kaomojiLibrary[index] = newText.trim();
     else if (currentSubTab === 'pokes') customPokes[index] = newText.trim();
     else if (currentSubTab === 'statuses') customStatuses[index] = newText.trim();
@@ -2065,6 +2092,7 @@ function _showExportUI() {
 
     const modules = [
         { id: '_re_replies',  icon: ICONS.comment,   label: '主字卡',        count: customReplies.length,                     key: 'customReplies' },
+        { id: '_re_spark',  icon: ICONS.comment,   label: '小火人字卡',    count: sparkReplies.length,                     key: 'sparkReplies' },
         { id: '_re_kaomojis', icon: ICONS.smile,     label: '颜文字',        count: kaomojiLibrary.length,                     key: 'kaomojiLibrary' },
         { id: '_re_moyu',     icon: ICONS.fish,      label: '摸鱼活动',      count: (window.moyuActivities || []).length,                    key: 'moyuActivities' },
         { id: '_re_moyuLoc',  icon: ICONS.mapPin,    label: '工作地点',      count: moyuLocations.length,                     key: 'moyuLocations' },
@@ -2188,6 +2216,7 @@ function _doExport(selectedModules) {
     const libraryData = { exportDate: new Date().toISOString(), modules: [] };
     selectedModules.forEach(m => {
         if (m.key === 'customReplies')         { libraryData.customReplies      = customReplies;                  libraryData.modules.push('replies'); }
+        if (m.key === 'sparkReplies')          { libraryData.sparkReplies      = sparkReplies;                   libraryData.modules.push('spark'); }
         else if (m.key === 'kaomojiLibrary')    { libraryData.kaomojiLibrary     = kaomojiLibrary;                 libraryData.modules.push('kaomojis'); }
         else if (m.key === 'customPokes')      { libraryData.customPokes        = customPokes;                    libraryData.modules.push('pokes'); }
         else if (m.key === 'customStatuses')   { libraryData.customStatuses     = customStatuses;                 libraryData.modules.push('statuses'); }
@@ -2387,7 +2416,7 @@ function _parseFlexibleJSON(text) {
 
 function _normalizeImportData(data) {
     if (!data || typeof data !== 'object') return data;
-    const knownKeys = ['customReplies','kaomojiLibrary','customPokes','customStatuses','customMottos','customIntros','customEmojis','moyuActivities','moyuLocations',
+    const knownKeys = ['customReplies','sparkReplies','kaomojiLibrary','customPokes','customStatuses','customMottos','customIntros','customEmojis','moyuActivities','moyuLocations',
                        'customReplyGroups','customPokeGroups','customStatusGroups','kaomojiGroups','moyuActivityGroups','moyuLocationGroups','disabledDefaultReplies',
                        'announcementConfig','announcementText','announcementStatusPool'];
     const hasNewFormat = knownKeys.some(k => data[k] !== undefined && data[k] !== null);
@@ -2399,7 +2428,7 @@ function _normalizeImportData(data) {
 }
 
 function _showImportUI(data) {
-    const knownFields = ['customReplies','kaomojiLibrary','customPokes','customStatuses','customMottos','customIntros','customEmojis','moyuActivities','moyuLocations',
+    const knownFields = ['customReplies','sparkReplies','kaomojiLibrary','customPokes','customStatuses','customMottos','customIntros','customEmojis','moyuActivities','moyuLocations',
                          'customReplyGroups','customPokeGroups','customStatusGroups','kaomojiGroups','moyuActivityGroups','moyuLocationGroups',
                          'announcementConfig','announcementText','announcementStatusPool'];
     const hasValid = knownFields.some(f => data[f] !== undefined && data[f] !== null);
@@ -2417,6 +2446,7 @@ function _showImportUI(data) {
 
     const modules = [
         { id: '_ri_replies',  icon: ICONS.comment,   label: '主字卡',        data: data.customReplies,       key: 'customReplies' },
+        { id: '_ri_spark',  icon: ICONS.comment,   label: '小火人字卡',    data: data.sparkReplies,       key: 'sparkReplies' },
         { id: '_ri_kaomojis', icon: ICONS.smile,     label: '颜文字',        data: data.kaomojiLibrary,      key: 'kaomojiLibrary' },
         { id: '_ri_moyu',     icon: ICONS.fish,      label: '摸鱼活动',      data: data.moyuActivities,      key: 'moyuActivities' },
         { id: '_ri_moyuLoc',  icon: ICONS.mapPin,    label: '工作地点',      data: data.moyuLocations,       key: 'moyuLocations' },
@@ -2442,6 +2472,7 @@ function _showImportUI(data) {
             if (overwrite) {
                 selected.forEach(m => {
                     if (m.key === 'customReplies')         { customReplies               = data.customReplies;       totalAdded += data.customReplies.length; }
+                    if (m.key === 'sparkReplies')         { sparkReplies               = data.sparkReplies;       totalAdded += data.sparkReplies.length; }
                     else if (m.key === 'kaomojiLibrary')    { kaomojiLibrary              = data.kaomojiLibrary;      totalAdded += data.kaomojiLibrary.length; }
                     else if (m.key === 'customPokes')      { customPokes                 = data.customPokes;         totalAdded += data.customPokes.length; }
                     else if (m.key === 'customStatuses')   { customStatuses              = data.customStatuses;      totalAdded += data.customStatuses.length; }
@@ -2475,6 +2506,11 @@ function _showImportUI(data) {
                         const before = customReplies.length;
                         customReplies = deduplicateContentArray([...customReplies, ...data.customReplies], CONSTANTS.REPLY_MESSAGES).result;
                         totalAdded += customReplies.length - before;
+                    }
+                    if (m.key === 'sparkReplies') {
+                        const before = sparkReplies.length;
+                        sparkReplies = deduplicateContentArray([...sparkReplies, ...data.sparkReplies]).result;
+                        totalAdded += sparkReplies.length - before;
                     } else if (m.key === 'kaomojiLibrary') {
                         const before = kaomojiLibrary.length;
                         kaomojiLibrary = deduplicateContentArray([...kaomojiLibrary, ...data.kaomojiLibrary]).result;
@@ -2895,6 +2931,8 @@ function _showBatchAddDialog() {
             const norm = normalizeStringStrict(val);
             const isDup = currentSubTab === 'custom'
                 ? (customReplies.some(r => normalizeStringStrict(r) === norm) || CONSTANTS.REPLY_MESSAGES.some(r => normalizeStringStrict(r) === norm))
+                : currentSubTab === 'spark'
+                ? sparkReplies.some(r => normalizeStringStrict(r) === norm)
                 : currentSubTab === 'pokes'
                 ? customPokes.some(r => normalizeStringStrict(r) === norm)
                 : currentSubTab === 'statuses'
@@ -2914,6 +2952,7 @@ function _showBatchAddDialog() {
                 : false;
             if (isDup) { skipped++; return; }
             if (currentSubTab === 'custom') { customReplies.push(val); newItems.push(val); }
+            else if (currentSubTab === 'spark') { sparkReplies.push(val); newItems.push(val); }
             else if (currentSubTab === 'pokes') { customPokes.push(val); newItems.push(val); }
             else if (currentSubTab === 'statuses') { customStatuses.push(val); newItems.push(val); }
             else if (currentSubTab === 'kaomojis') { kaomojiLibrary.push(val); newItems.push(val); }

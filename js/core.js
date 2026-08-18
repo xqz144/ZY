@@ -147,6 +147,8 @@ function loadMoreHistory() {
                 typingIndicatorEnabled: true,
                 readReceiptsEnabled: true,
                 replyEnabled: true,
+                sparkReplyEnabled: true,
+                sparkReplyChance: 0.35,
                 lastStatusChange: Date.now(),
                 nextStatusChange: 1 + Math.random() * 7,
                 fontSize: 16,
@@ -330,6 +332,8 @@ const loadData = async () => {
             localforage.getItem(getStorageKey('chatMessages')),
             localforage.getItem(getStorageKey('backgroundGallery')),
             localforage.getItem(getStorageKey('customReplies')),
+            localforage.getItem(getStorageKey('sparkReplies')),
+            localforage.getItem(getStorageKey('sparkReplyGroups')),
             localforage.getItem(getStorageKey('customPokes')),
             localforage.getItem(getStorageKey('customStatuses')),
             localforage.getItem(getStorageKey('myPokes')),
@@ -366,17 +370,19 @@ const loadData = async () => {
         const savedMessages = getVal(1);
         const savedBgGallery = getVal(2);
         const savedCustomReplies = getVal(3);
-        const savedPokes = getVal(4);
-        const savedStatuses = getVal(5);
-        const savedMyPokes = getVal(6);
-        const savedMottos = getVal(7);
-        const savedIntros = getVal(8);
-        const savedStickers = getVal(9);
-        const savedCustomThemes = getVal(10);
-        const savedChatBg = getVal(11);
+        const savedSparkReplies = getVal(4);
+        const savedSparkReplyGroups = getVal(5);
+        const savedPokes = getVal(6);
+        const savedStatuses = getVal(7);
+        const savedMyPokes = getVal(8);
+        const savedMottos = getVal(9);
+        const savedIntros = getVal(10);
+        const savedStickers = getVal(11);
+        const savedCustomThemes = getVal(12);
+        const savedChatBg = getVal(13);
         // 头像优先从 localforage 读取，如果没有则从 localStorage 读取备份
-        let partnerAvatarSrc = getVal(12);
-        let myAvatarSrc = getVal(13);
+        let partnerAvatarSrc = getVal(14);
+        let myAvatarSrc = getVal(15);
         if (!partnerAvatarSrc && SESSION_ID) {
             try {
                 partnerAvatarSrc = localStorage.getItem(`${APP_PREFIX}${SESSION_ID}_partnerAvatar`);
@@ -387,25 +393,25 @@ const loadData = async () => {
                 myAvatarSrc = localStorage.getItem(`${APP_PREFIX}${SESSION_ID}_myAvatar`);
 } catch(e) { console.warn('empty catch at core.js:388', e); }
         }
-        const savedPartnerPersonas = getVal(14);
-        const savedShowNameConfig = getVal(15);
-        const savedThemeSchemes = getVal(16);
-        const savedMyStickers = getVal(17);
-        const savedReplyGroups = getVal(18);
-        const savedPokeGroups = getVal(19);
-        const savedStatusGroups = getVal(20);
-        const savedKaomojiLibrary = getVal(21);
-        const savedKaomojiGroups = getVal(22);
-        const savedStickerGroups = getVal(23);
-        const savedMoyuRecords = getVal(24);
-        const savedMoyuLocations = getVal(25);
-        const savedMoyuActivities = getVal(26);
-        const savedCurrentMoyuRecord = getVal(27);
-        const savedMoyuUnread = getVal(28);
-        const savedMoyuWorkSession = getVal(29);
-        const savedTransferData = getVal(30);
-        const savedVoices = getVal(31);
-        const savedVoiceGroups = getVal(32);
+        const savedPartnerPersonas = getVal(16);
+        const savedShowNameConfig = getVal(17);
+        const savedThemeSchemes = getVal(18);
+        const savedMyStickers = getVal(19);
+        const savedReplyGroups = getVal(20);
+        const savedPokeGroups = getVal(21);
+        const savedStatusGroups = getVal(22);
+        const savedKaomojiLibrary = getVal(23);
+        const savedKaomojiGroups = getVal(24);
+        const savedStickerGroups = getVal(25);
+        const savedMoyuRecords = getVal(26);
+        const savedMoyuLocations = getVal(27);
+        const savedMoyuActivities = getVal(28);
+        const savedCurrentMoyuRecord = getVal(29);
+        const savedMoyuUnread = getVal(30);
+        const savedMoyuWorkSession = getVal(31);
+        const savedTransferData = getVal(32);
+        const savedVoices = getVal(33);
+        const savedVoiceGroups = getVal(34);
 
         if (savedPartnerPersonas) partnerPersonas = savedPartnerPersonas;
 
@@ -487,6 +493,8 @@ const loadData = async () => {
         }
 
         if (savedCustomReplies) customReplies = savedCustomReplies;
+        if (savedSparkReplies) sparkReplies = savedSparkReplies;
+        if (savedSparkReplyGroups) window.sparkReplyGroups = savedSparkReplyGroups;
         if (savedReplyGroups) window.customReplyGroups = savedReplyGroups;
         if (savedPokeGroups) window.customPokeGroups = savedPokeGroups;
         if (savedStatusGroups) window.customStatusGroups = savedStatusGroups;
@@ -533,6 +541,7 @@ const loadData = async () => {
         try { const ce = await localforage.getItem(getStorageKey('customEmojis')); if (ce && Array.isArray(ce)) customEmojis = ce; } catch(e) {}
         if (savedTransferData) transferData = savedTransferData;
         window._customReplies = customReplies;
+        window._sparkReplies = sparkReplies;
         window._stickerLibrary = stickerLibrary;
         window._kaomojiLibrary = kaomojiLibrary;
         window._customEmojis = customEmojis;
@@ -595,6 +604,7 @@ const LIBRARY_CONFIG = {
         title: "回复库管理",
         tabs: [
             { id: 'custom', name: '主字卡', mode: 'list' },
+            { id: 'spark', name: '小火人字卡', mode: 'list' },
             { id: 'kaomojis', name: '颜文字', mode: 'list' },
             { id: 'emojis', name: 'Emoji', mode: 'grid' },
             { id: 'stickers', name: '表情库', mode: 'grid' },
@@ -693,6 +703,8 @@ const saveData = async () => {
     const promises = [
         { key: 'chatSettings',           val: () => localforage.setItem(getStorageKey('chatSettings'), settings) },
         { key: 'customReplies',          val: () => localforage.setItem(getStorageKey('customReplies'), customReplies) },
+        { key: 'sparkReplies',           val: () => localforage.setItem(getStorageKey('sparkReplies'), sparkReplies) },
+        { key: 'sparkReplyGroups',       val: () => localforage.setItem(getStorageKey('sparkReplyGroups'), window.sparkReplyGroups || []) },
         { key: 'customReplyGroups',      val: () => localforage.setItem(getStorageKey('customReplyGroups'), window.customReplyGroups || []) },
         { key: 'customPokeGroups',        val: () => localforage.setItem(getStorageKey('customPokeGroups'), window.customPokeGroups || []) },
         { key: 'customStatusGroups',      val: () => localforage.setItem(getStorageKey('customStatusGroups'), window.customStatusGroups || []) },
@@ -1483,6 +1495,7 @@ window.openMoyuFromNotification = function () {
 
             const _pillSyncMap = {
                 '#reply-toggle': 'replyEnabled',
+                '#spark-reply-toggle': 'sparkReplyEnabled',
                 '#sound-toggle': 'soundEnabled',
                 '#read-receipts-toggle': 'readReceiptsEnabled',
                 '#typing-indicator-toggle': 'typingIndicatorEnabled',
@@ -2810,7 +2823,7 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                     }
                     } catch (e) {
                         console.error('[simulateReply] 渲染/回填出错:', e);
-                        // 机制性兜底：出错时至少让“正在输入中”消失，避免假死
+                        // 机制性兜底：出错时至少让"正在输入中"消失，避免假死
                         try {
                             (function(){
                                 try { if (window._typingIndicatorAutoHideTimer) { clearTimeout(window._typingIndicatorAutoHideTimer); window._typingIndicatorAutoHideTimer = null; } } catch (e2) {}
@@ -2821,7 +2834,83 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                     }
                 }, delay);
             }
+
+            // 梦角回复完成后，概率触发小火人回复
+            setTimeout(function () {
+                if (typeof window.simulateSparkReply === 'function') window.simulateSparkReply();
+            }, 500);
         }
+
+        /* ===== 小火人回复 =====
+         * 在梦角回复完成后，概率触发小火人也发一条消息。
+         * 算法与梦角类似：从 sparkReplies 字卡池随机抽取，
+         * 可混入 emoji/颜文字，概率发图/语音。
+         */
+        window.simulateSparkReply = function () {
+            if (!settings.sparkReplyEnabled) return;
+            var pool = (typeof sparkReplies !== 'undefined' && Array.isArray(sparkReplies)) ? sparkReplies : [];
+            if (!pool.length) return;
+
+            // 概率控制：默认 35% 概率触发
+            var chance = typeof settings.sparkReplyChance === 'number' ? settings.sparkReplyChance : 0.35;
+            if (Math.random() >= chance) return;
+
+            // 屏蔽项过滤
+            var disabledItems;
+            try {
+                var raw = localStorage.getItem('disabledSparkReplyItems');
+                disabledItems = raw ? new Set(JSON.parse(raw)) : new Set();
+            } catch (e) { disabledItems = new Set(); }
+            var enabledPool = pool
+                .map(function (r) { return String(r || '').trim(); })
+                .filter(function (r) { return r && !disabledItems.has(r); });
+            if (!enabledPool.length) return;
+
+            // 读取小火人名称和头像
+            var sparkName = '小火人';
+            try {
+                if (typeof SparkShared !== 'undefined') {
+                    var shared = SparkShared.readPet('root');
+                    sparkName = shared.name || '小火人';
+                }
+            } catch (e) {}
+
+            var delayRange = settings.replyDelayMax - settings.replyDelayMin;
+            var delay = (settings.replyDelayMin || 800) + Math.random() * (delayRange || 1200) + 600;
+
+            setTimeout(function () {
+                var replyText = enabledPool[Math.floor(Math.random() * enabledPool.length)];
+
+                // Emoji 混入
+                var finalText = replyText;
+                if (customEmojis && customEmojis.length > 0 && Math.random() < 0.2) {
+                    var emoji = customEmojis[Math.floor(Math.random() * customEmojis.length)];
+                    finalText = Math.random() < 0.5 ? emoji + ' ' + finalText : finalText + ' ' + emoji;
+                }
+                // 颜文字混入
+                if (kaomojiLibrary && kaomojiLibrary.length > 0 && Math.random() < 0.25) {
+                    var kaomoji = kaomojiLibrary[Math.floor(Math.random() * kaomojiLibrary.length)];
+                    finalText = Math.random() < 0.5 ? kaomoji + ' ' + finalText : finalText + ' ' + kaomoji;
+                }
+
+                addMessage({
+                    id: Date.now() + 5000,
+                    sender: sparkName,
+                    text: finalText,
+                    timestamp: new Date(),
+                    status: 'received',
+                    favorited: false,
+                    note: null,
+                    replyTo: null,
+                    type: 'normal',
+                    isSpark: true
+                });
+                playSound('message');
+                if (typeof window._sendPartnerNotification === 'function') {
+                    window._sendPartnerNotification(sparkName, finalText);
+                }
+            }, delay);
+        };
 
 function showModal(modalElement, focusElement = null) {
             if (modalElement._hideTimeout) {
