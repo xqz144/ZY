@@ -147,47 +147,77 @@
         100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
     }
 
-    /* 宠物选择器 */
-    .pet-selector {
+    /* 形态卡片选择器 */
+    .form-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+        overflow-x: auto;
+        padding: 4px 2px 8px;
+        scrollbar-width: none;
+    }
+    .form-selector::-webkit-scrollbar { display: none; }
+    .form-card {
+        flex-shrink: 0;
+        width: 88px;
+        background: var(--card-background);
+        border-radius: 14px;
+        border: 2px solid var(--border-color);
+        padding: 8px 6px 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+        box-shadow: var(--shadow-2xs);
+    }
+    .form-card:active { transform: scale(0.94); }
+    .form-card.active {
+        border-color: var(--accent-color, #b8a9c9);
+        background: linear-gradient(145deg, rgba(var(--accent-color-rgb,184,169,201),0.18), rgba(var(--accent-color-rgb,184,169,201),0.06));
+        box-shadow: 0 4px 16px rgba(var(--accent-color-rgb,184,169,201),0.28);
+    }
+    .form-card.active .form-name { color: var(--accent-color, #b8a9c9); font-weight: 700; }
+    .form-card-img {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 4px;
+        border-radius: 50%;
+        background: rgba(var(--accent-color-rgb), 0.08);
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        margin-bottom: 14px;
-        flex-wrap: wrap;
+        overflow: hidden;
+        border: 2px solid rgba(var(--accent-color-rgb), 0.2);
+        transition: all 0.25s ease;
     }
-    .pet-selector-label {
+    .form-card.active .form-card-img {
+        border-color: var(--accent-color, #b8a9c9);
+        box-shadow: 0 0 12px rgba(var(--accent-color-rgb,184,169,201),0.3);
+    }
+    .form-card-img img {
+        width: 100%; height: 100%; object-fit: contain;
+    }
+    .form-card-img .form-emoji {
+        font-size: 30px;
+    }
+    .form-name {
         font-size: 12px;
         color: var(--text-secondary);
-        margin-right: 4px;
-    }
-    .pet-tab {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
-        border-radius: 20px;
-        background: var(--card-background);
-        border: 2px solid var(--border-color);
-        cursor: pointer;
-        transition: all 0.25s ease;
-        font-family: var(--font-family);
-        font-size: 13px;
-        color: var(--text-secondary);
-        box-shadow: var(--shadow-2xs);
-    }
-    .pet-tab .pet-emoji {
-        font-size: 16px;
-    }
-    .pet-tab.active {
-        border-color: var(--accent-color, #b8a9c9);
-        background: linear-gradient(145deg, rgba(var(--accent-color-rgb,184,169,201),0.15), rgba(var(--accent-color-rgb,184,169,201),0.05));
-        color: var(--accent-color, #b8a9c9);
         font-weight: 600;
-        box-shadow: 0 2px 12px rgba(var(--accent-color-rgb,184,169,0.25);
+        margin-top: 2px;
     }
-    .pet-tab + .pet-tab {
-        margin-left: 2px;
+    .form-badge {
+        position: absolute;
+        top: -4px;
+        right: -2px;
+        background: var(--accent-color, #b8a9c9);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 8px;
+        line-height: 1;
+        white-space: nowrap;
     }
     .creature-name {
         font-family: var(--font-serif);
@@ -729,8 +759,8 @@
 <body>
   <div class="app-bg">
     <main class="scroll-area" id="scrollArea">
-        <!-- 宠物选择器 -->
-        <div class="pet-selector" id="petSelector"></div>
+        <!-- 形态卡片选择器 -->
+        <div class="form-selector" id="petSelector"></div>
 
         <!-- 小火人舞台 -->
         <section class="creature-stage">
@@ -1465,7 +1495,7 @@
 
       var petSelector = document.getElementById("petSelector");
 
-      /* 渲染「形态切换器」（同一个体，两种外观） */
+      /* 渲染「形态卡片选择器」（同一个体，多形态切换） */
       function renderFormSelector() {
         var shared = SparkShared.readPet('page');
         var html = '';
@@ -1473,19 +1503,26 @@
           var fid = FORM_ORDER[i];
           var fd = FORMS[fid];
           var active = data.form === fid ? ' active' : '';
-          html += '<div class="pet-tab form-tab' + active + '" data-form="' + fid + '">' +
-            '<span class="pet-emoji">' + fd.emoji + '</span>' +
-            '<span>' + fd.label + '</span>' +
+          var badge = data.form === fid ? '<span class="form-badge">使用中</span>' : '';
+          var imgSrc = '';
+          if (fd.image) {
+            imgSrc = typeof fd.image === 'string' ? fd.image : (fd.image.page || fd.image.root || '');
+          }
+          var imgHtml = imgSrc
+            ? '<div class="form-card-img"><img src="' + imgSrc + '" alt="' + fd.label + '" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'<span class=form-emoji>' + fd.emoji + '</span>\'"></div>'
+            : '<div class="form-card-img"><span class="form-emoji">' + fd.emoji + '</span></div>';
+          html += '<div class="form-card' + active + '" data-form="' + fid + '">' +
+            badge +
+            imgHtml +
+            '<div class="form-name">' + fd.label + '</div>' +
             '</div>';
         }
-        // 加一个标签说明（仅视觉）
-        html = '<span class="pet-selector-label">形态：</span>' + html;
         petSelector.innerHTML = html;
-        var tabs = petSelector.querySelectorAll('.form-tab');
-        for (var j = 0; j < tabs.length; j++) {
-          tabs[j].addEventListener('click', function () {
+        var cards = petSelector.querySelectorAll('.form-card');
+        for (var j = 0; j < cards.length; j++) {
+          cards[j].addEventListener('click', function () {
             var fid = this.dataset.form;
-            if (SparkTracker.switchForm(fid)) {
+            if (SparkShared.setForm(fid)) {
               data = SparkTracker.load();
               renderFormSelector();
               render();

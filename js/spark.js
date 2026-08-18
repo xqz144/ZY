@@ -239,17 +239,23 @@
 })();
 
 /* ==================================================================
- * 小火人 SparkTracker —— 共享数据层（父窗口与 spark iframe 共用）
+ * SparkTracker —— 数据读写层（父窗口与 spark iframe 共用）
  * 通过 localStorage (key = "mengjiao_spark") 同步数据
- * 支持多宠物扩展，通过 activePet 切换（目前仅 fire 一只，随时可加）
+ *
+ * v3 结构（单宠物 + 多形态）:
+ *   { version: 3, form: "original"|"alternate", pet: { ... } }
+ *
+ * v2 结构（旧版多宠物）:
+ *   { activePet: "fire", pets: { fire: { ... } } }
+ *
+ * 本文件兼容两种结构，遇到 v3 时不做转换，直接在 pet 字段上操作。
  * ================================================================== */
 (function () {
   'use strict';
 
-  if (window.SparkTracker && window.SparkTracker._multiPetReady) return;
+  if (window.SparkTracker && window.SparkTracker._ready) return;
 
   var SPARK_KEY = "mengjiao_spark";
-  var ACTIVE_PET_KEY = 'mengjiao_active_pet';
 
   var LEVELS = [
     { lv: 1, title: "小火苗", need: 50 },
@@ -270,21 +276,11 @@
     { days: 100, label: "100天", icon: "👑" }
   ];
 
-  var PETS = {
-    fire: {
-      id: 'fire',
-      name: '小火人',
-      emoji: '🔥',
-      image: 'assets/character.png',
-      color: '#ff8a56'
-    }
-  };
-  var PET_ORDER = ['fire'];
-
   var DAILY_LIMITS = { chat: 10, moments: 2 };
   var EXP_PER = { chat: 3, moments: 8 };
   var FULLNESS_MAX = 100;
   var MOOD_MAX = 100;
+  var DEFAULT_NAME = '小火人';
 
   function todayStr() {
     var d = new Date();
@@ -321,129 +317,136 @@
     };
   }
 
-  function defaultData() {
+  function isV3(d) {
+    return d && d.version === 3 && d.pet && typeof d.pet === 'object';
+  }
+
+  function defaultV3Data() {
     return {
-      activePet: 'fire',
-      pets: {
-        fire: petData('小火人')
-      }
+      version: 3,
+      form: 'original',
+      pet: petData(DEFAULT_NAME)
     };
   }
 
-  var SparkTracker = {
-    _multiPetReady: true,
+  function migrateToV3(raw) {
+    if (!raw) return defaultV3Data();
+    if (isV3(raw)) return raw;
+    var pet = petData(DEFAULT_NAME);
+    if (raw.pets && typeof raw.pets === 'object') {
+      var activeKey = raw.activePet && raw.pets[raw.activePet] ? raw.activePet : 'fire';
+      var src = raw.pets[activeKey] || raw.pets.fire || {};
+      for (var k in pet) {
+        if (k in src && src[k] !== null && src[k] !== undefined) pet[k] = src[k];
+      }
+      pet.name = src.name || pet.name;
+    } else {
+      for (var k in pet) {
+        if (k in raw && raw[k] !== null && raw[k] !== undefined) pet[k] = raw[k];
+      }
+    }
+    if (!pet.name) pet.name = DEFAULT_NAME;
+    if (!pet.avatar) pet.avatar = petData().avatar;
+    return { version: 3, form: 'original', pet: pet };
+  }
 
-    /* 宠物注册表（允许外部读取） */
-    PETS: PETS,
-    PET_ORDER: PET_ORDER,
+  function mergeObj(base, extra) {
+    if (!extra) return base;
+    for (var k in extra) {
+      if (!Object.prototype.hasOwnProperty.call(extra, k)) continue;
+      var v = extra[k];
+      if (v === null || v === undefined) continue;
+      if (typeof base[k] === 'object' && base[k] !== null && !Array.isArray(base[k]) &&
+          typeof v === 'object' && !Array.isArray(v)) {
+        base[k] = mergeObj(base[k], v);
+      } else {
+        base[k] = v;
+      }
+    }
+    return base;
+  }
+
+  var SparkTracker = {
+    _ready: true,
 
     load: function () {
       try {
         var raw = localStorage.getItem(SPARK_KEY);
-        if (raw) {
-          var d = JSON.parse(raw);
-          /* 旧格式迁移：单宠物数据 → 多宠物结构 */
-          if (!d.pets) {
-            var oldData = {};
-            for (var k in d) { if (k !== 'activePet') oldData[k] = d[k]; }
-            d = {
-              activePet: 'fire',
-              pets: { fire: oldData }
-            };
-          }
-          /* 确保所有宠物数据完整 */
-          for (var pid in PETS) {
-            if (!d.pets[pid]) d.pets[pid] = petData(PETS[pid].name);
-            var pd = d.pets[pid];
-            var def = petData(PETS[pid].name);
-            for (var dk in def) { if (!(dk in pd)) pd[dk] = def[dk]; }
-            if (!pd.avatar) pd.avatar = def.avatar;
-            if (typeof pd.fullness !== "number") pd.fullness = def.fullness;
-            if (typeof pd.mood !== "number") pd.mood = def.mood;
-            if (!pd.foods) pd.foods = {};
-            this.updateVitals(pd);
-          }
-          if (!d.activePet || !PETS[d.activePet]) d.activePet = 'fire';
-          this.save(d);
+        var d = raw ? JSON.parse(raw) : null;
+        if (isV3(d)) {
+          var pd = d.pet;
+          if (!pd.avatar) pd.avatar = petData().avatar;
+          if (typeof pd.fullness !== 'number') pd.fullness = 60;
+          if (typeof pd.mood !== 'number') pd.mood = 60;
+          if (!pd.foods) pd.foods = {};
+          if (!pd.name) pd.name = DEFAULT_NAME;
+          this._updateVitals(pd, false);
           return d;
         }
+        d = migrateToV3(d);
+        this._updateVitals(d.pet, false);
+        this.save(d);
+        return d;
       } catch (e) { /* ignore */ }
-      var fresh = defaultData();
-      for (var pid2 in fresh.pets) {
-        fresh.pets[pid2].lastVitalUpdate = new Date().toISOString();
-      }
+      var fresh = defaultV3Data();
+      fresh.pet.lastVitalUpdate = new Date().toISOString();
       return fresh;
     },
 
-    /* 兼容老代码：直接返回当前宠物数据 */
-    _legacyWrap: function (d) {
-      var pd = d.pets[d.activePet];
-      var wrapped = {};
-      for (var k in pd) wrapped[k] = pd[k];
-      wrapped._root = d;
-      return wrapped;
-    },
-
-    updateVitals: function (petData) {
-      if (!petData) return;
+    _updateVitals: function (pd, autoSave) {
+      if (!pd) return;
       var now = new Date();
-      var last = petData.lastVitalUpdate ? new Date(petData.lastVitalUpdate) : now;
+      var last = pd.lastVitalUpdate ? new Date(pd.lastVitalUpdate) : now;
       if (isNaN(last.getTime())) last = now;
       var hours = Math.max(0, (now - last) / 3600000);
-      var fullnessDrop = hours * 2;
-      var moodDrop = hours * 1;
-      petData.fullness = Math.max(0, petData.fullness - fullnessDrop);
-      petData.mood = Math.max(0, petData.mood - moodDrop);
-      petData.lastVitalUpdate = now.toISOString();
+      pd.fullness = Math.max(0, pd.fullness - hours * 2);
+      pd.mood = Math.max(0, pd.mood - hours * 1);
+      pd.lastVitalUpdate = now.toISOString();
+      if (autoSave !== false) {
+        var d = this.load();
+        d.pet = pd;
+        this.save(d);
+      }
     },
 
     save: function (d) {
+      if (!isV3(d)) d = migrateToV3(d);
       try { localStorage.setItem(SPARK_KEY, JSON.stringify(d)); } catch (e) { /* ignore */ }
     },
 
-    /* 获取当前活跃宠物数据 */
     current: function (d) {
       if (!d) d = this.load();
-      return d.pets[d.activePet];
+      return d.pet;
     },
 
-    /* 获取/设置当前活跃宠物（供父窗口调用） */
     getActivePet: function () {
-      try {
-        var saved = localStorage.getItem(ACTIVE_PET_KEY);
-        if (saved && PETS[saved]) return saved;
-      } catch (e) {}
-      var d = this.load();
-      return d.activePet || 'fire';
+      return 'fire';
     },
-    switchPet: function (petId) {
-      var d = this.load();
-      if (!PETS[petId] || !d.pets[petId]) return false;
-      d.activePet = petId;
-      this.save(d);
-      try { localStorage.setItem(ACTIVE_PET_KEY, petId); } catch (e) {}
-      return true;
+    switchPet: function () {
+      return false;
     },
 
     setName: function (name) {
       var d = this.load();
-      var pd = d.pets[d.activePet];
-      pd.name = String(name || "").trim().slice(0, 12) || PETS[d.activePet].name;
+      d.pet.name = String(name || '').trim().slice(0, 12) || DEFAULT_NAME;
       this.save(d);
-      return pd.name;
+      return d.pet.name;
     },
 
-    /*
-     * recordInteraction：父窗口（聊天页）每次发消息时调用
-     * 操作当前活跃宠物的数据
-     */
+    setForm: function (formId) {
+      var d = this.load();
+      d.form = formId;
+      this.save(d);
+      return true;
+    },
+
     recordInteraction: function (type) {
       var d = this.load();
-      var pd = d.pets[d.activePet];
+      var pd = d.pet;
       var t = todayStr();
       if (!pd.daily[t]) pd.daily[t] = { chat: 0, moments: 0 };
       if (pd.daily[t][type] >= DAILY_LIMITS[type]) {
-        return { gained: 0, leveledUp: false, level: pd.level, petId: d.activePet };
+        return { gained: 0, leveledUp: false, level: pd.level };
       }
       pd.daily[t][type]++;
       pd.totalInteractions++;
@@ -454,33 +457,42 @@
       pd.mood = Math.min(MOOD_MAX, pd.mood + 0.5);
       if (t !== pd.lastActiveDate) {
         if (pd.lastActiveDate === yesterdayStr()) pd.streak++;
-        else pd.streak = 1;
+        else if (pd.lastActiveDate !== t) pd.streak = 1;
         pd.lastActiveDate = t;
       } else if (pd.streak === 0) {
         pd.streak = 1;
       }
+      var leveledUp = this._levelUpIfNeeded(pd);
+      this._checkMilestones(pd);
+      if (pd.makeupMonth !== monthKey()) {
+        pd.makeupMonth = monthKey();
+        pd.makeupCards = 1;
+      }
+      this.save(d);
+      try { window.parent && window.parent.postMessage({ type: 'spark:update', leveledUp: leveledUp }, '*'); } catch (e) {}
+      return { gained: gained, leveledUp: leveledUp, level: pd.level };
+    },
+
+    _levelUpIfNeeded: function (pd) {
       var leveledUp = false;
       while (pd.level < LEVELS.length && pd.exp >= LEVELS[pd.level - 1].need) {
         pd.exp -= LEVELS[pd.level - 1].need;
         pd.level++;
         leveledUp = true;
       }
+      return leveledUp;
+    },
+
+    _checkMilestones: function (pd) {
       MILESTONES.forEach(function (m) {
         if (pd.streak >= m.days && pd.milestones.indexOf(m.days) === -1) {
           pd.milestones.push(m.days);
         }
       });
-      if (pd.makeupMonth !== monthKey()) {
-        pd.makeupMonth = monthKey();
-        pd.makeupCards = 1;
-      }
-      this.save(d);
-      return { gained: gained, leveledUp: leveledUp, level: pd.level, petId: d.activePet };
     },
 
     getState: function (petData) {
-      var d = this.load();
-      var pd = petData || d.pets[d.activePet];
+      var pd = petData || this.load().pet;
       var t = todayStr();
       var today = pd.daily[t] || { chat: 0, moments: 0 };
       var lastActive = pd.lastActiveDate;

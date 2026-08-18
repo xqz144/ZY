@@ -322,8 +322,7 @@ var FURNITURE = [
   { id: 'corner-cabinet-midcentury', name: '中世纪角柜', img: '../assets/furniture/corner-cabinet-midcentury.jpg', price: 190, w: 1, h: 1, cat: 'storage', displayScale: 0.90 },
   /* —— 装饰 —— */
   { id: 'rug',                  name: '大地毯',         img: '../assets/furniture/rug.jpg',                  price: 100, w: 3, h: 2, cat: 'decor',   displayScale: 1.00 },
-  { id: 'plant',                name: '盆栽',           img: '../assets/furniture/plant.jpg',                price: 50,  w: 1, h: 1, cat: 'decor',   displayScale: 0.80 },
-  { id: 'lamp',                 name: '台灯',           img: '../assets/furniture/lamp.jpg',                 price: 80,  w: 1, h: 1, cat: 'decor',   displayScale: 0.85 }
+  { id: 'plant',                name: '盆栽',           img: '../assets/furniture/plant.jpg',                price: 50,  w: 1, h: 1, cat: 'decor',   displayScale: 0.80 }
 ];
 
 var CATEGORIES = [
@@ -645,9 +644,6 @@ function renderHouse() {
   /* --- 单层地板 + 三面墙 --- */
   g = g.concat(drawPlatform(FLOORS[0], 'floor0Tile', FLOORS[0].border, true, true));
   g = g.concat(drawWalls(FLOORS[0], WALL_COLOR));
-
-  /* --- 装饰：外围草坪 + 灯柱（美化） --- */
-  g = g.concat(drawFenceAndLamp());
 
   svg.innerHTML = defs + g.join('');
 
@@ -996,24 +992,6 @@ function drawFlags(fl) {
     );
     out.push('<line x1="' + p.x + '" y1="' + (p.y - 24) + '" x2="' + p.x + '" y2="' + (p.y + 22) + '" stroke="#7a5820" stroke-width="1.2"/>');
   });
-  return out;
-}
-
-/* 右侧灯柱（美化） */
-function drawFenceAndLamp() {
-  var out = [];
-  /* 右下灯柱 */
-  var lp = worldToScreen(FLOORS[0].x1 + 2.2, FLOORS[0].y1 + 1.1, -0.1);
-  out.push(
-    '<rect x="' + (lp.x - 2.5) + '" y="' + (lp.y - 26) + '" width="5" height="26" fill="#c7a06a" stroke="#8a6633" stroke-width="0.8"/>'
-  );
-  out.push(
-    '<path d="M' + (lp.x - 8) + ',' + (lp.y - 26) +
-    ' L' + (lp.x + 8) + ',' + (lp.y - 26) +
-    ' L' + (lp.x + 5) + ',' + (lp.y - 42) +
-    ' L' + (lp.x - 5) + ',' + (lp.y - 42) + ' Z" ' +
-    'fill="#ffe794" stroke="#b38d2a" stroke-width="1"/>'
-  );
   return out;
 }
 
