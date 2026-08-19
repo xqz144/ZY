@@ -3105,7 +3105,7 @@ function initReplyLibraryListeners() {
                 _showVoiceUploadDialog(); return;
             }
             if (currentSubTab === 'kaomojis' ||
-                currentSubTab === 'custom' || currentSubTab === 'pokes' || currentSubTab === 'statuses' ||
+                currentSubTab === 'custom' || currentSubTab === 'spark' || currentSubTab === 'pokes' || currentSubTab === 'statuses' ||
                 currentSubTab === 'emojis' || currentSubTab === 'mottos' || currentSubTab === 'intros' ||
                 (currentMajorTab === 'moyu' && (currentSubTab === 'moyu' || currentSubTab === 'moyuLocations'))) {
                 _showBatchAddDialog(); return;
@@ -3168,7 +3168,7 @@ function initReplyLibraryListeners() {
 function getCategoryName(tabId) {
     if (currentMajorTab === 'moyu' && currentSubTab === 'moyu') return '摸鱼活动';
     if (currentMajorTab === 'moyu' && currentSubTab === 'moyuLocations') return '工作地点';
-    return { custom: '回复', kaomojis: '颜文字', pokes: '拍一拍', statuses: '状态', mottos: '格言', intros: '开场语' }[tabId] || '内容';
+    return { custom: '回复', spark: '字卡', kaomojis: '颜文字', pokes: '拍一拍', statuses: '状态', mottos: '格言', intros: '开场语' }[tabId] || '内容';
 }
 
 function updateTabUI() {
