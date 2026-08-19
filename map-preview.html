@@ -263,24 +263,29 @@
   </div>
 
 <script>
-  // ===== 标记数据（V4 底图 + 宽间距）=====
+  // ===== 标记数据（严格按 V3 底图实际像素位置对齐，宽间距）=====
+  // 底图：assets/map_qiyu_v3.jpg  2560×1440  浅色手绘风 / 松散布局
+  // 坐标均按底图实际地标摆放，确保与底图上的文字/图标完全重合
   const PINS_QIYU = [
-    // 蓝色：城市与机构（5个）
-    { id: 'qingkong',  name: '晴空广场',    x: 58, y: 36, cat: 'blue', desc: '临空市中心广场' },
-    { id: 'hunter',    name: '猎人协会总部', x: 82, y: 40, cat: 'blue', desc: '深空猎人协会总部' },
-    { id: 'ever',      name: 'EVER集团大楼', x: 80, y: 10, cat: 'blue', desc: '跨国集团总部' },
-    { id: 'akso',      name: 'AKSO医院',    x: 52, y: 48, cat: 'blue', desc: '世界著名综合医院' },
-    { id: 'flux',      name: 'Flux画廊',    x: 46, y: 62, cat: 'blue', desc: '唐知理的画廊' },
-    // 珊瑚红：祁煜剧情点（4个）
-    { id: 'moart',     name: 'Mo Art Studio', x: 10, y: 38, cat: 'red', desc: '白沙湾人工岛，祁煜画廊兼住所' },
-    { id: 'maoe',      name: '帽儿岛',      x: 35, y: 16, cat: 'red', desc: '祁煜幼时搁浅之地' },
-    { id: 'xiwai',     name: '西郊别墅区',  x: 44, y: 26, cat: 'red', desc: '西郊豪华别墅区' },
-    { id: 'lanxian',   name: '晴空环路·蓝洞', x: 56, y: 78, cat: 'red', desc: '海滨环形公路' },
-    // 紫色：主线战斗与遗迹（4个）
-    { id: 'chaoxiqu',  name: '潮汐区',      x: 18, y: 58, cat: 'purple', desc: '帽儿岛潮汐区' },
-    { id: 'n109',      name: 'N-109禁区',   x: 94, y: 48, cat: 'purple', desc: '危险禁区' },
-    { id: 'limori',    name: '利莫里亚遗迹', x: 93, y: 82, cat: 'purple', desc: '古文明遗迹' },
-    { id: 'deep',      name: '深空隧道',    x: 66, y: 92, cat: 'purple', desc: '2034年时空隧道' },
+    // 蓝色：城市与机构（7个）—— 临空市主要设施
+    { id: 'hongwan', name: '晴空中央湾区',   x: 47, y: 34, cat: 'blue', desc: '临空市核心湾区' },
+    { id: 'hunter',  name: '猎人协会总部',   x: 55, y: 67, cat: 'blue', desc: '深空猎人协会总部' },
+    { id: 'ever',    name: 'EVER集团大楼',   x: 68, y: 14, cat: 'blue', desc: '跨国集团总部' },
+    { id: 'naokong', name: '脑机研究中心',   x: 21, y: 83, cat: 'blue', desc: '科研机构' },
+    { id: 'chaoxi',  name: '潮汐屿',         x: 25, y: 80, cat: 'blue', desc: '小岛' },
+    { id: 'akso',    name: 'AKSO医院',       x: 64, y: 18, cat: 'blue', desc: '私立医院' },
+    { id: 'moart',   name: 'Mo Art Studio',  x: 19, y: 65, cat: 'blue', desc: '祁煜的海边画室' },
+    // 珊瑚红：祁煜剧情点（4个）—— 祁煜相关场景
+    { id: 'maoer',   name: '帽儿岛',         x: 10, y: 19, cat: 'red', desc: '祁煜幼时搁浅之地' },
+    { id: 'baisha',  name: '白沙湾海区',     x: 62, y: 72, cat: 'red', desc: '临空市海湾' },
+    { id: 'xiwai',   name: '西郊别墅区',     x: 38, y: 40, cat: 'red', desc: '西郊豪华别墅区' },
+    { id: 'landong', name: '宝空大岛·蓝洞',  x: 16, y: 53, cat: 'red', desc: '大岛蓝洞景观' },
+    // 紫色：主线战斗与遗迹（5个）—— 深空/遗迹
+    { id: 'chaoxiqu',name: '潮汐区',         x: 18, y: 27, cat: 'purple', desc: '帽儿岛潮汐区' },
+    { id: 'n109',    name: 'N-109禁区',      x: 88, y: 22, cat: 'purple', desc: '危险禁区' },
+    { id: 'limori',  name: '利莫里亚遗迹',   x: 85, y: 72, cat: 'purple', desc: '古文明遗迹' },
+    { id: 'deep',    name: '深空隧道',       x: 58, y: 68, cat: 'purple', desc: '2034年时空隧道' },
+    { id: 'lingkong',name: '临空塔',         x: 54, y: 44, cat: 'purple', desc: '临空市地标' },
   ];
 
   const PINS_MINE = [
@@ -426,9 +431,9 @@
       currentWorld = btn.dataset.world;
       const img = document.getElementById('mapBg');
       if (currentWorld === 'qiyu') {
-        img.src = 'assets/map_qiyu_v4.jpg';
+        img.src = 'assets/map_qiyu_v3.jpg';
       } else {
-        img.src = 'assets/map_qiyu_v4.jpg';
+        img.src = 'assets/map_qiyu_v3.jpg';
       }
       renderPins(currentWorld);
     });
@@ -458,7 +463,7 @@
   });
 
   // ===== 初始化 =====
-  document.getElementById('mapBg').src = 'assets/map_qiyu_v4.jpg';
+  document.getElementById('mapBg').src = 'assets/map_qiyu_v3.jpg';
   renderPins('qiyu');
   renderTrips();
 
