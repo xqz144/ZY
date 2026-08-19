@@ -998,6 +998,9 @@ body.always-show-avatar .message-avatar.hidden {
 .message-wrapper.received .message-content-wrapper {
     align-items: flex-start;
 }
+.message-wrapper.message-spark .message {
+    border-left: 2.5px solid #ff8a56;
+}
 
 .message {
     padding: 12px 18px;

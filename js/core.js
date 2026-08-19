@@ -1646,7 +1646,7 @@ function createMessageFragment(msg, prevMsg, nextMsg, lastSenderRef) {
     }
 
     const wrapper = document.createElement('div');
-    wrapper.className = `message-wrapper ${msg.sender === 'user' ? 'sent' : 'received'}`;
+    wrapper.className = `message-wrapper ${msg.sender === 'user' ? 'sent' : 'received'}${msg.isSpark ? ' message-spark' : ''}`;
     wrapper.dataset.id = msg.id;
     wrapper.dataset.msgId = msg.id;
 
@@ -1674,6 +1674,22 @@ function createMessageFragment(msg, prevMsg, nextMsg, lastSenderRef) {
                 const initials = (groupMember.name || '?').charAt(0).toUpperCase();
                 avatarDiv.innerHTML = `<div style="width:100%;height:100%;background:var(--accent-color);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;">${initials}</div>`;
             }
+        } else if (msg.isSpark) {
+            // 小火人消息：使用小火人头像
+            const sparkShape = settings.partnerAvatarShape || 'circle';
+            ['circle', 'square', 'pentagon', 'heart'].forEach(s => avatarDiv.classList.remove('shape-' + s));
+            if (sparkShape !== 'none') avatarDiv.classList.add('shape-' + sparkShape);
+            try {
+                const spark = (typeof SparkShared !== 'undefined') ? SparkShared.readPet('root') : null;
+                const sparkAvatar = spark && spark.avatar;
+                if (sparkAvatar) {
+                    avatarDiv.innerHTML = `<img src="${sparkAvatar}" style="width:100%;height:100%;object-fit:cover;">`;
+                } else {
+                    avatarDiv.innerHTML = `<div style="width:100%;height:100%;background:#ff8a56;display:flex;align-items:center;justify-content:center;font-size:16px;">🔥</div>`;
+                }
+            } catch (e) {
+                avatarDiv.innerHTML = `<div style="width:100%;height:100%;background:#ff8a56;display:flex;align-items:center;justify-content:center;font-size:16px;">🔥</div>`;
+            }
         } else {
             const isUser = msg.sender === 'user';
             const avatarElement = isUser ? DOMElements.me.avatar : DOMElements.partner.avatar;
@@ -1694,8 +1710,8 @@ function createMessageFragment(msg, prevMsg, nextMsg, lastSenderRef) {
             var lpTimer = null;
             avt.addEventListener('pointerdown', function(e) {
                 lpTimer = setTimeout(function() {
-                    // 群聊模式下使用群成员角色名，否则使用全局 partner 昵称
-                    var name = grpMem ? (grpMem.name || '对方').trim() : (settings.partnerName || '对方').trim();
+                    // 群聊模式下使用群成员角色名，小火人消息用其名字，否则使用全局 partner 昵称
+                    var name = grpMem ? (grpMem.name || '对方').trim() : (msg.isSpark ? (msg.sender || '小火人').trim() : (settings.partnerName || '对方').trim());
                     var input = DOMElements.messageInput;
                     if (input) {
                         var start = input.selectionStart;
@@ -1732,7 +1748,12 @@ function createMessageFragment(msg, prevMsg, nextMsg, lastSenderRef) {
         if (!isSameSenderForName) {
             const nameLabel = document.createElement('div');
             nameLabel.className = 'group-sender-name';
-            nameLabel.textContent = settings.partnerName || msg.sender || '对方';
+            if (msg.isSpark) {
+                nameLabel.textContent = msg.sender || '小火人';
+                nameLabel.style.color = '#ff8a56';
+            } else {
+                nameLabel.textContent = settings.partnerName || msg.sender || '对方';
+            }
             contentWrapper.appendChild(nameLabel);
         }
     }

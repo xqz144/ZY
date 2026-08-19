@@ -3038,6 +3038,13 @@
                             <span class="setting-pill-label">小火人也会回复</span>
                             <div class="setting-pill-switch"><div class="setting-pill-knob"></div></div>
                         </div>
+                        <div id="spark-reply-control" style="display:none;border-top:1px solid var(--border-color);margin-top:8px;padding-top:8px;">
+                            <div class="cs-slider-row">
+                                <span class="cs-slider-label">触发概率</span>
+                                <input type="range" min="0" max="100" step="5" value="35" class="font-size-slider" id="spark-reply-chance-slider">
+                                <span class="cs-slider-val" id="spark-reply-chance-value">35%</span>
+                            </div>
+                        </div>
                         <div class="setting-pill-row" id="read-receipts-toggle">
                             <span class="setting-pill-icon"><i class="fas fa-check-double"></i></span>
                             <span class="setting-pill-label">已读回执</span>

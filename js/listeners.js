@@ -501,6 +501,8 @@ if (_chatSettingsEl) _chatSettingsEl.addEventListener('click', () => {
         const val = (prop === 'emojiMixEnabled' || prop === 'kaomojiMixEnabled') ? (settings[prop] !== false) : !!settings[prop];
         if (el) el.classList.toggle('active', val);
     }
+    // 同步小火人回复开关和概率滑块
+    if (typeof updateSparkReplyUI === 'function') updateSparkReplyUI();
     const svSlider = document.getElementById('sound-volume-slider');
     const svVal = document.getElementById('sound-volume-value');
     if (svSlider) { svSlider.value = Math.round((settings.soundVolume || 0.15) * 100); if (svVal) svVal.textContent = svSlider.value + '%'; }
@@ -1434,6 +1436,40 @@ if (pinyinCardMaxSlider) {
         pinyinCardMaxValue.textContent = val + '句';
     });
     pinyinCardMaxSlider.addEventListener('change', () => { throttledSaveData(); });
+}
+
+// 小火人回复设置
+const sparkReplyToggle = document.getElementById('spark-reply-toggle');
+const sparkReplyControl = document.getElementById('spark-reply-control');
+const sparkReplyChanceSlider = document.getElementById('spark-reply-chance-slider');
+const sparkReplyChanceValue = document.getElementById('spark-reply-chance-value');
+
+const updateSparkReplyUI = () => {
+    if (sparkReplyToggle) sparkReplyToggle.classList.toggle('active', !!settings.sparkReplyEnabled);
+    if (sparkReplyControl) sparkReplyControl.style.display = settings.sparkReplyEnabled ? 'block' : 'none';
+    if (sparkReplyChanceSlider) {
+        const chance = Math.round((settings.sparkReplyChance ?? 0.35) * 100);
+        sparkReplyChanceSlider.value = chance;
+        if (sparkReplyChanceValue) sparkReplyChanceValue.textContent = chance + '%';
+    }
+};
+updateSparkReplyUI();
+
+if (sparkReplyToggle) {
+    sparkReplyToggle.addEventListener('click', () => {
+        settings.sparkReplyEnabled = !settings.sparkReplyEnabled;
+        updateSparkReplyUI();
+        throttledSaveData();
+        showNotification(`小火人回复已${settings.sparkReplyEnabled ? '开启' : '关闭'}`, 'success');
+    });
+}
+if (sparkReplyChanceSlider) {
+    sparkReplyChanceSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        settings.sparkReplyChance = val / 100;
+        if (sparkReplyChanceValue) sparkReplyChanceValue.textContent = val + '%';
+    });
+    sparkReplyChanceSlider.addEventListener('change', () => { throttledSaveData(); });
 }
 
 // 摸鱼自动生成设置
