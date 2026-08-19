@@ -1289,36 +1289,30 @@ html[data-theme="dark"] .mood-write-btn {
     margin: 8px 0;
 }
 
-/* 底部日期 */
-.trailmap-bottom {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 12px;
-}
-.trailmap-date {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--accent-color);
-    cursor: pointer;
-    padding: 4px 12px;
-    border-radius: 12px;
-    transition: all 0.2s;
-}
-.trailmap-date:hover {
-    background: rgba(var(--accent-color-rgb), 0.1);
-}
-.trailmap-date-hint {
-    font-size: 11px;
-    color: var(--text-secondary);
-}
-
 /* 行程列表 */
 .trailmap-trip-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
+}
+
+/* 日期分组标题 */
+.trailmap-day-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 4px 4px;
+    color: var(--accent-color);
+    font-size: 14px;
+    font-weight: 700;
+}
+.trailmap-today-tag {
+    background: var(--accent-color);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: 600;
 }
 .trailmap-trip-item {
     display: flex;

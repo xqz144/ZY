@@ -31,7 +31,6 @@
   // 状态
   var state = {
     world: 'qiyu',
-    currentDay: '',   // 自动取今天
   };
 
   var data = null;
@@ -83,19 +82,34 @@
     return data.dailyTrips[day] || [];
   }
 
-  // 获取最新一个地点（祁煜当前在哪）
-  function getCurrentLocation(day) {
-    var trips = getTrips(day);
-    if (trips.length === 0) return null;
-    return trips[trips.length - 1].to;
+  // 获取所有行程（跨日期合并，按日期+时间排序）
+  function getAllTrips() {
+    var all = [];
+    Object.keys(data.dailyTrips).forEach(function(day) {
+      data.dailyTrips[day].forEach(function(t) {
+        all.push({ day: day, from: t.from, to: t.to, time: t.time, mode: t.mode });
+      });
+    });
+    // 按日期+时间排序
+    all.sort(function(a, b) {
+      if (a.day !== b.day) return a.day.localeCompare(b.day);
+      return a.time.localeCompare(b.time);
+    });
+    return all;
+  }
+
+  // 获取最新位置（所有行程中最后一条的终点）
+  function getCurrentLocation() {
+    var all = getAllTrips();
+    if (all.length === 0) return null;
+    return all[all.length - 1].to;
   }
 
   // ===== DOM 元素 =====
-  var container, bgImg, avatarWrap, tripList, dateLabel, emptyHint;
+  var container, bgImg, avatarWrap, tripList, emptyHint;
 
   function init() {
     load();
-    state.currentDay = todayKey();
     cacheElements();
     bindEvents();
     render();
@@ -106,7 +120,6 @@
     bgImg = document.getElementById('trailmapBg');
     avatarWrap = document.getElementById('trailmapAvatarWrap');
     tripList = document.getElementById('trailmapTripList');
-    dateLabel = document.getElementById('trailmapDate');
     emptyHint = document.getElementById('trailmapEmpty');
   }
 
@@ -117,7 +130,6 @@
         document.querySelectorAll('.trailmap-w-btn').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         state.world = btn.dataset.world;
-        state.currentDay = todayKey();
         render();
       });
     });
@@ -131,12 +143,6 @@
 
     // 记录行程
     document.getElementById('addTrip').addEventListener('click', addTripFlow);
-
-    // 日期：回到今天
-    dateLabel.addEventListener('click', function() {
-      state.currentDay = todayKey();
-      render();
-    });
 
     // 隐藏的文件选择器
     var fileInput = document.createElement('input');
@@ -223,6 +229,10 @@
     if (!toIdx || toIdx < 1 || toIdx > locations.length) return;
     if (fromIdx === toIdx) { alert('起点和终点不能相同'); return; }
 
+    // 日期默认今天，可以修改
+    var dayInput = prompt('日期 (如 2026年8月19日):', todayKey());
+    if (!dayInput) return;
+
     var now = new Date();
     var timeStr = pad(now.getHours()) + ':' + pad(now.getMinutes());
     var timeRange = prompt('时间段 (如 ' + timeStr + '-' + pad(now.getHours() + 1) + '30):', timeStr + '-' + pad(now.getHours() + 1) + pad(now.getMinutes()));
@@ -231,15 +241,15 @@
     var mode = prompt('交通方式:', '🚶 步行');
     if (mode === null) return;
 
-    if (!data.dailyTrips[state.currentDay]) data.dailyTrips[state.currentDay] = [];
-    data.dailyTrips[state.currentDay].push({
+    if (!data.dailyTrips[dayInput]) data.dailyTrips[dayInput] = [];
+    data.dailyTrips[dayInput].push({
       from: locations[fromIdx - 1].name,
       to: locations[toIdx - 1].name,
       time: timeRange,
       mode: mode
     });
     // 按时间排序
-    data.dailyTrips[state.currentDay].sort(function(a, b) {
+    data.dailyTrips[dayInput].sort(function(a, b) {
       return a.time.localeCompare(b.time);
     });
     save();
@@ -253,7 +263,6 @@
     renderBg();
     renderAvatar();
     renderTripList();
-    dateLabel.textContent = state.currentDay;
     updateHint();
     lucideRefresh();
   }
@@ -274,17 +283,15 @@
   }
 
   function renderAvatar() {
-    // 清除旧头像
     avatarWrap.innerHTML = '';
 
-    var trips = getTrips(state.currentDay);
-    if (trips.length === 0) {
+    var currentLocName = getCurrentLocation();
+    if (!currentLocName) {
       avatarWrap.style.display = 'none';
       return;
     }
 
-    var current = trips[trips.length - 1];
-    var loc = findLocation(current.to);
+    var loc = findLocation(currentLocName);
     if (!loc) {
       avatarWrap.style.display = 'none';
       return;
@@ -308,16 +315,28 @@
   }
 
   function renderTripList() {
-    var trips = getTrips(state.currentDay);
-    if (trips.length === 0) {
-      tripList.innerHTML = '<div class="trailmap-empty-trip">今天还没有行程记录<br>点击上方"记录行程"开始</div>';
+    var allTrips = getAllTrips();
+    if (allTrips.length === 0) {
+      tripList.innerHTML = '<div class="trailmap-empty-trip">还没有行程记录<br>点击上方"记录行程"开始</div>';
       return;
     }
 
+    // 按日期分组渲染
     var html = '';
-    for (var i = 0; i < trips.length; i++) {
-      var t = trips[i];
-      html += '<div class="trailmap-trip-item">' +
+    var currentDay = '';
+    for (var i = 0; i < allTrips.length; i++) {
+      var t = allTrips[i];
+      // 日期分组标题
+      if (t.day !== currentDay) {
+        currentDay = t.day;
+        var isToday = (t.day === todayKey());
+        html += '<div class="trailmap-day-header">' +
+          '<i data-lucide="calendar" style="width:14px;height:14px;"></i>' +
+          '<span>' + escapeHtml(t.day) + '</span>' +
+          (isToday ? '<span class="trailmap-today-tag">今天</span>' : '') +
+        '</div>';
+      }
+      html += '<div class="trailmap-trip-item" data-day="' + escapeHtml(t.day) + '" data-time="' + escapeHtml(t.time) + '">' +
         '<div class="trailmap-trip-time">' + escapeHtml(t.time) + '</div>' +
         '<div class="trailmap-trip-body">' +
           '<div class="trailmap-trip-route">' +
@@ -327,19 +346,28 @@
           '</div>' +
           '<div class="trailmap-trip-mode">' + escapeHtml(t.mode) + '</div>' +
         '</div>' +
-        '<button class="trailmap-trip-del" data-idx="' + i + '" title="删除">✕</button>' +
+        '<button class="trailmap-trip-del" data-day="' + escapeHtml(t.day) + '" data-time="' + escapeHtml(t.time) + '" title="删除">✕</button>' +
       '</div>';
     }
     tripList.innerHTML = html;
 
     tripList.querySelectorAll('.trailmap-trip-del').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        var idx = parseInt(btn.dataset.idx);
-        data.dailyTrips[state.currentDay].splice(idx, 1);
-        save();
-        render();
+        var day = btn.dataset.day;
+        var time = btn.dataset.time;
+        var trips = data.dailyTrips[day];
+        if (!trips) return;
+        var idx = trips.findIndex(function(t) { return t.time === time; });
+        if (idx >= 0) {
+          trips.splice(idx, 1);
+          if (trips.length === 0) delete data.dailyTrips[day];
+          save();
+          render();
+        }
       });
     });
+
+    lucideRefresh();
   }
 
   function updateHint() {
