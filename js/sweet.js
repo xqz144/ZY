@@ -33,6 +33,7 @@
         { id: uid(), name: '我们在一起', date: todayStr(), emoji: 'heart', type: 'anniversary' }
       ],
       diaries: [],
+      moodCalendar: {},        // { 'YYYY-MM-DD': 'happy'|'love'|'x'|'leaf'|'coffee'|'sad'|'angry'|'search' }
       wishes: [
         { id: uid(), title: '一起看一场电影', category: '一起去', done: false, ts: Date.now() },
         { id: uid(), title: '一起去海边', category: '一起去', done: false, ts: Date.now() },
@@ -62,6 +63,7 @@
     if (!d.checkinRecords || typeof d.checkinRecords !== 'object') d.checkinRecords = {};
     if (!Array.isArray(d.anniversaries)) d.anniversaries = [];
     if (!Array.isArray(d.diaries)) d.diaries = [];
+    if (!d.moodCalendar || typeof d.moodCalendar !== 'object') d.moodCalendar = {};
     if (!Array.isArray(d.wishes)) d.wishes = [];
     return d;
   }
@@ -604,6 +606,167 @@
   }
 
   /* ================================================================
+     心情 · 涂鸦风日历
+     ================================================================ */
+  // 心情定义：key -> { label, Lucide icon, CSS color class }
+  var MOODS = [
+    { key: 'happy',  label: '开心', icon: 'smile' },
+    { key: 'love',   label: '幸福', icon: 'heart' },
+    { key: 'x',      label: '心动', icon: 'zap' },
+    { key: 'leaf',   label: '平静', icon: 'leaf' },
+    { key: 'coffee', label: '疲惫', icon: 'coffee' },
+    { key: 'sad',    label: '难过', icon: 'frown' },
+    { key: 'angry',  label: '生气', icon: 'angry' },
+    { key: 'search', label: '思考', icon: 'search' }
+  ];
+  var moodState = {
+    viewYear: null,
+    viewMonth: null   // 0-11
+  };
+  function getMood(key) {
+    var m = MOODS.filter(function (x) { return x.key === key; })[0];
+    return m || MOODS[0];
+  }
+  function ensureMoodDate() {
+    if (moodState.viewYear == null || moodState.viewMonth == null) {
+      var t = new Date();
+      moodState.viewYear = t.getFullYear();
+      moodState.viewMonth = t.getMonth();
+    }
+  }
+  function renderMoodCalTitle() {
+    ensureMoodDate();
+    var y = document.getElementById('mood-year');
+    var m = document.getElementById('mood-month');
+    if (y) y.textContent = moodState.viewYear + '年';
+    if (m) m.textContent = (moodState.viewMonth + 1) + '月';
+  }
+  function weekdayOffset(y, month) {
+    // 返回该月 1 号是周几（周一首列，返回 0..6）
+    var first = new Date(y, month, 1);
+    var js = first.getDay(); // 0=Sun..6=Sat
+    return (js + 6) % 7;   // 转成周一为 0
+  }
+  function renderMoodCalendar() {
+    ensureMoodDate();
+    var d = getData();
+    var y = moodState.viewYear, m = moodState.viewMonth;
+    renderMoodCalTitle();
+    var grid = document.getElementById('mood-cal-grid');
+    if (!grid) return;
+
+    var firstDay = weekdayOffset(y, m);
+    var daysInMonth = new Date(y, m + 1, 0).getDate();
+    var today = todayStr();
+    var total = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+    var html = '';
+    for (var i = 0; i < total; i++) {
+      var cellDay = i - firstDay + 1;
+      var empty = (cellDay < 1 || cellDay > daysInMonth);
+      if (empty) {
+        html += '<div class="mood-cell empty"></div>';
+        continue;
+      }
+      var dateStr = y + '-' + pad(m + 1) + '-' + pad(cellDay);
+      var moodKey = d.moodCalendar[dateStr] || '';
+      var classes = ['mood-cell'];
+      if (moodKey) classes.push('hasmood mood-mood-' + moodKey);
+      if (dateStr === today) classes.push('today');
+      var mood = moodKey ? getMood(moodKey) : null;
+      html += '<div class="' + classes.join(' ') + '" data-date="' + dateStr + '">' +
+        (mood ? '<span class="mood-cell-icon"><i data-lucide="' + mood.icon + '"></i></span>' : '') +
+        '<span class="mood-cell-num">' + cellDay + '</span>' +
+        '</div>';
+    }
+    grid.innerHTML = html;
+    refreshIcons();
+    // 绑定点击
+    grid.querySelectorAll('.mood-cell:not(.empty)').forEach(function (el) {
+      el.addEventListener('click', function () {
+        openMoodPicker(el.getAttribute('data-date'));
+      });
+    });
+
+    // 写日记按钮：今天有日记的话，改文案
+    var todayHasDiary = (d.diaries || []).some(function (dia) { return dia.date === today; });
+    var text = document.getElementById('mood-write-text');
+    if (text) text.textContent = todayHasDiary ? '今天已经写过日记啦' : '今天还没写日记';
+  }
+  function moveMonth(delta) {
+    ensureMoodDate();
+    var d = new Date(moodState.viewYear, moodState.viewMonth + delta, 1);
+    moodState.viewYear = d.getFullYear();
+    moodState.viewMonth = d.getMonth();
+    renderMoodCalendar();
+  }
+  function openMoodPicker(dateStr) {
+    var d = getData();
+    var current = d.moodCalendar[dateStr] || '';
+    var picked = current || MOODS[0].key;
+    openOverlay(
+      '<div class="sweet-sheet">' +
+        '<div class="sweet-sheet-head"><div class="sweet-sheet-title" style="text-align:center;flex:1;">选择当天心情</div><button class="sweet-sheet-close" id="mp-close">×</button></div>' +
+        '<div class="mood-pick-date">' + esc(formatDateCN(dateStr)) + '</div>' +
+        '<div class="mood-pick-grid" id="mp-grid">' +
+          MOODS.map(function (m) {
+            return '<div class="mood-pick-cell' + (m.key === picked ? ' active mood-mood-' + m.key : '') + '" data-k="' + m.key + '">' +
+              '<div class="mood-pick-cell-icon mood-mood-' + m.key + '"><i data-lucide="' + m.icon + '"></i></div>' +
+              '<div class="mood-pick-cell-label">' + m.label + '</div>' +
+              '</div>';
+          }).join('') +
+        '</div>' +
+        '<div class="sweet-sheet-actions">' +
+          '<button class="sweet-btn sweet-btn-danger" id="mp-del" style="flex:0 0 30%;padding:11px 10px;">清除</button>' +
+          '<button class="sweet-btn sweet-btn-ghost" id="mp-cancel">取消</button>' +
+          '<button class="sweet-btn sweet-btn-primary" id="mp-save">确定</button>' +
+        '</div>' +
+      '</div>');
+    document.getElementById('mp-close').addEventListener('click', closeOverlay);
+    document.getElementById('mp-cancel').addEventListener('click', closeOverlay);
+    document.querySelectorAll('#mp-grid .mood-pick-cell').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var k = el.getAttribute('data-k');
+        picked = k;
+        document.querySelectorAll('#mp-grid .mood-pick-cell').forEach(function (x) {
+          x.classList.remove('active');
+          x.classList.remove('mood-mood-happy', 'mood-mood-love', 'mood-mood-x', 'mood-mood-leaf', 'mood-mood-coffee', 'mood-mood-sad', 'mood-mood-angry', 'mood-mood-search');
+        });
+        el.classList.add('active', 'mood-mood-' + k);
+        refreshIcons();
+      });
+    });
+    document.getElementById('mp-del').addEventListener('click', function () {
+      if (d.moodCalendar[dateStr]) {
+        delete d.moodCalendar[dateStr];
+        save();
+        renderMoodCalendar();
+        toast('已清除心情');
+      }
+      closeOverlay();
+    });
+    document.getElementById('mp-save').addEventListener('click', function () {
+      d.moodCalendar[dateStr] = picked;
+      save();
+      renderMoodCalendar();
+      closeOverlay();
+      toast('心情已记录');
+    });
+    refreshIcons();
+  }
+  /* ================================================================
+     甜蜜日记 · 子标签切换
+     ================================================================ */
+  function switchSubTab(name) {
+    var tabs = document.querySelectorAll('.sweet-subtab');
+    var panels = document.querySelectorAll('.sweet-subpanel');
+    tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-subtab') === name); });
+    panels.forEach(function (p) { p.classList.toggle('active', p.getAttribute('data-subpanel') === name); });
+    refreshIcons();
+    if (name === 'diary-calendar') renderMoodCalendar();
+    else renderDiary();
+  }
+
+  /* ================================================================
      标签切换
      ================================================================ */
   function switchTab(tab) {
@@ -623,6 +786,19 @@
     document.querySelectorAll('.sweet-tab').forEach(function (t) {
       t.addEventListener('click', function () { switchTab(t.getAttribute('data-tab')); });
     });
+    // 子标签（日记列表 / 心情日历）
+    document.querySelectorAll('.sweet-subtab').forEach(function (t) {
+      t.addEventListener('click', function () { switchSubTab(t.getAttribute('data-subtab')); });
+    });
+    // 心情日历月份切换
+    var mPrev = document.getElementById('mood-prev-month');
+    if (mPrev) mPrev.addEventListener('click', function () { moveMonth(-1); });
+    var mNext = document.getElementById('mood-next-month');
+    if (mNext) mNext.addEventListener('click', function () { moveMonth(1); });
+    // 心情日历底部写日记按钮
+    var mWrite = document.getElementById('mood-write-btn');
+    if (mWrite) mWrite.addEventListener('click', function () { openDiaryForm(null); });
+
     var heroEdit = document.getElementById('edit-together-date');
     if (heroEdit) heroEdit.addEventListener('click', openTogetherForm);
 

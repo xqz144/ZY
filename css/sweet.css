@@ -703,3 +703,384 @@ html[data-theme="dark"]               { --accent-color: #d0d0d0; --accent-color-
 @keyframes sweetToastOut {
     to { opacity: 0; transform: translate(-50%, 12px); }
 }
+
+/* ================================================================
+   甜蜜日记 · 子标签（列表/心情日历）
+   ================================================================ */
+.sweet-subtabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 4px;
+    background: var(--secondary-bg);
+    border: 1px dashed rgba(var(--accent-color-rgb), 0.35);
+    border-radius: var(--radius-md, 18px);
+    position: relative;
+}
+/* 涂鸦边角装饰 */
+.sweet-subtabs::before {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    top: -8px; left: -4px;
+    background: radial-gradient(circle at 30% 30%, rgba(var(--accent-color-rgb), 0.6), rgba(var(--accent-color-rgb), 0.15) 60%, transparent 72%);
+    border-radius: 50%;
+    filter: blur(0.4px);
+}
+.sweet-subtab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm, 14px);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all .2s ease;
+}
+.sweet-subtab svg { width: 16px; height: 16px; }
+.sweet-subtab.active {
+    background: var(--primary-bg);
+    color: var(--accent-color);
+    box-shadow:
+        0 2px 6px -1px rgba(0,0,0,0.08),
+        inset 0 0 0 2px rgba(var(--accent-color-rgb), 0.22);
+}
+.sweet-subpanel { display: none; animation: sweetFade .25s ease; }
+.sweet-subpanel.active { display: block; }
+
+/* ================================================================
+   涂鸦风 · 心情日历
+   ================================================================ */
+.mood-wrap {
+    background: var(--secondary-bg);
+    border: 2px solid var(--text-primary);
+    border-radius: 28px 32px 30px 26px / 24px 28px 22px 26px;
+    padding: 18px 14px 16px;
+    position: relative;
+    box-shadow:
+        4px 5px 0 var(--text-primary),
+        inset 0 -14px 40px rgba(var(--accent-color-rgb), 0.07),
+        0 10px 24px -6px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+/* 纸张底纹：格子线（淡）+ 四角涂鸦小装饰 */
+.mood-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 14px 16px 58px 16px;
+    border-radius: 20px;
+    background-image:
+        linear-gradient(to right, rgba(var(--accent-color-rgb), 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(var(--accent-color-rgb), 0.06) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+    opacity: 0.9;
+}
+html[data-theme="dark"] .mood-wrap::before {
+    background-image:
+        linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px);
+}
+/* 边框涂鸦：手绘小波动用外 border-radius 即可，补两个角 */
+.mood-wrap::after {
+    content: '';
+    position: absolute;
+    width: 70px; height: 30px;
+    right: -10px; bottom: -8px;
+    background: radial-gradient(ellipse 30px 12px at 20% 40%, rgba(var(--accent-color-rgb), 0.25), transparent 60%),
+                radial-gradient(ellipse 20px 8px at 70% 70%, rgba(var(--accent-color-rgb), 0.2), transparent 60%);
+    pointer-events: none;
+}
+/* 头部年月切换 */
+.mood-cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 2;
+}
+.mood-head-doodle {
+    flex: 0 0 28px;
+    height: 28px;
+    position: relative;
+}
+.doodle-leaf {
+    background: radial-gradient(ellipse 14px 16px at 50% 50%, rgba(var(--accent-color-rgb), 0.4), transparent 70%);
+    transform: rotate(-18deg);
+    border-radius: 0 100% 0 100% / 0 100% 0 100%;
+    background-color: rgba(var(--accent-color-rgb), 0.55);
+}
+.doodle-star {
+    background: radial-gradient(circle at 30% 30%, #ffd45e 0%, #ffd45e 28%, transparent 30%),
+                radial-gradient(circle at 60% 60%, rgba(var(--accent-color-rgb), 0.35), transparent 65%);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    background-color: #ffd45e;
+    opacity: 0.9;
+}
+.mood-head-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--text-primary);
+    background: var(--primary-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 2px 0 var(--text-primary);
+    transition: transform .12s ease;
+    flex-shrink: 0;
+}
+.mood-head-btn svg { width: 18px; height: 18px; }
+.mood-head-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--text-primary); }
+.mood-head-title {
+    flex: 1;
+    text-align: center;
+    line-height: 1.1;
+}
+.mood-year {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+}
+.mood-month {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+}
+/* 星期栏 */
+.mood-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 2;
+}
+.mood-weekdays span {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding: 4px 0;
+    letter-spacing: 0.5px;
+}
+/* 日历格子 */
+.mood-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    padding: 4px 2px;
+    position: relative;
+    z-index: 2;
+}
+.mood-cell {
+    aspect-ratio: 1 / 1.1;
+    border-radius: 12px 14px 10px 12px / 10px 12px 14px 10px;
+    border: 1.5px dashed rgba(var(--accent-color-rgb), 0.25);
+    background: var(--primary-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    position: relative;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .15s ease;
+    color: var(--text-secondary);
+    min-height: 44px;
+}
+.mood-cell.empty {
+    border: none;
+    background: transparent;
+    cursor: default;
+    box-shadow: none;
+}
+.mood-cell:not(.empty):hover {
+    transform: translateY(-2px) rotate(-0.8deg);
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.12);
+}
+.mood-cell-num {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+.mood-cell-icon {
+    width: 20px; height: 20px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+.mood-cell.hasmood {
+    border: 2px solid var(--text-primary);
+    box-shadow: 1.5px 2px 0 var(--text-primary);
+}
+.mood-cell.hasmood .mood-cell-icon { display: flex; }
+.mood-cell.hasmood .mood-cell-num {
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.12);
+    font-size: 11px;
+}
+/* 心情配色（8 种，对应心情） */
+.mood-mood-happy    { background: #fde468 !important; }
+.mood-mood-happy .mood-cell-icon,
+.mood-mood-happy .mood-cell-num { color: #7a5d00; }
+.mood-mood-happy .mood-cell-num { text-shadow: 0 1px 0 rgba(255,255,255,0.3); }
+
+.mood-mood-love     { background: #f8a8c1 !important; }
+.mood-mood-love .mood-cell-icon,
+.mood-mood-love .mood-cell-num { color: #8c3753; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+
+.mood-mood-x        { background: #9ad8ef !important; }
+.mood-mood-x .mood-cell-icon,
+.mood-mood-x .mood-cell-num { color: #2a5d78; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+
+.mood-mood-leaf     { background: #c8e7b3 !important; }
+.mood-mood-leaf .mood-cell-icon,
+.mood-mood-leaf .mood-cell-num { color: #3f6824; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+
+.mood-mood-coffee   { background: #cfc4fa !important; }
+.mood-mood-coffee .mood-cell-icon,
+.mood-mood-coffee .mood-cell-num { color: #5546a0; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+
+.mood-mood-sad      { background: #9fc5ff !important; }
+.mood-mood-sad .mood-cell-icon,
+.mood-mood-sad .mood-cell-num { color: #314c89; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+
+.mood-mood-angry    { background: #f49680 !important; }
+.mood-mood-angry .mood-cell-icon,
+.mood-mood-angry .mood-cell-num { color: #7c2f1d; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+
+.mood-mood-search   { background: #f5c29a !important; }
+.mood-mood-search .mood-cell-icon,
+.mood-mood-search .mood-cell-num { color: #784517; text-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+
+.mood-cell.today {
+    outline: 2.5px solid var(--accent-color);
+    outline-offset: 2px;
+    border-radius: 10px 16px 12px 14px / 14px 10px 16px 12px;
+    transform: rotate(-0.5deg);
+}
+.mood-cell.otherMonth { opacity: 0.35; }
+
+/* 底部写日记按钮 */
+.mood-write-zone {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 14px;
+    position: relative;
+    z-index: 2;
+}
+.mood-write-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: #ffd37a;
+    color: #6b4a12;
+    border: 2px solid var(--text-primary);
+    border-radius: 22px 28px 24px 20px / 20px 26px 22px 28px;
+    font-weight: 800;
+    font-size: 13px;
+    font-family: var(--font-family);
+    box-shadow: 3px 3px 0 var(--text-primary);
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+.mood-write-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--text-primary);
+}
+html[data-theme="dark"] .mood-write-btn {
+    background: #e9b662;
+}
+.mood-write-bubble.doodle-bubble {
+    flex: 0 0 46px;
+    height: 32px;
+    background: var(--secondary-bg);
+    border: 2px solid var(--text-primary);
+    border-radius: 18px 20px 22px 6px / 16px 20px 18px 10px;
+    position: relative;
+    box-shadow: 2px 2px 0 var(--text-primary);
+    margin-bottom: 10px;
+}
+.mood-write-bubble.doodle-bubble::after {
+    content: '';
+    position: absolute;
+    left: -12px; bottom: 4px;
+    width: 16px; height: 12px;
+    border-left: 2px solid var(--text-primary);
+    border-bottom: 2px solid var(--text-primary);
+    border-bottom-left-radius: 100%;
+    transform: rotate(-24deg);
+}
+
+/* 心情选择器 sheet */
+.mood-pick-title {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 14px;
+}
+.mood-pick-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: -10px;
+    margin-bottom: 14px;
+}
+.mood-pick-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.mood-pick-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 12px 4px;
+    border-radius: 14px 18px 16px 12px / 12px 14px 18px 14px;
+    border: 2px solid var(--text-primary);
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .15s ease;
+    background: var(--primary-bg);
+    position: relative;
+}
+.mood-pick-cell:active { transform: scale(0.95); }
+.mood-pick-cell.active {
+    box-shadow: 3px 3px 0 var(--text-primary);
+}
+.mood-pick-cell-icon {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+.mood-pick-cell-icon svg { width: 20px; height: 20px; }
+.mood-pick-cell-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
