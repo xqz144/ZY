@@ -88,6 +88,9 @@
                 <button class="sweet-tab" data-tab="wish">
                     <i data-lucide="gift"></i><span>愿望清单</span>
                 </button>
+                <button class="sweet-tab" data-tab="trail-map">
+                    <i data-lucide="map"></i><span>轨迹地图</span>
+                </button>
             </div>
 
             <!-- 恋爱打卡 -->
@@ -174,9 +177,60 @@
                 </div>
                 <div class="sweet-wish-list" id="wish-list"></div>
             </div>
+
+            <!-- 轨迹地图 -->
+            <div class="sweet-panel" data-panel="trail-map">
+                <div class="trailmap-wrap">
+                    <!-- 顶栏：世界切换 + 操作 -->
+                    <div class="trailmap-toolbar">
+                        <div class="trailmap-world-switch">
+                            <button class="trailmap-w-btn active" data-world="qiyu"><i data-lucide="sparkles" style="width:14px;height:14px;"></i> 祁煜的世界</button>
+                            <button class="trailmap-w-btn" data-world="mine"><i data-lucide="home" style="width:14px;height:14px;"></i> 我的世界</button>
+                        </div>
+                        <div class="trailmap-actions">
+                            <button class="trailmap-act-btn" id="uploadMineMap" title="上传自定义底图"><i data-lucide="upload" style="width:14px;height:14px;"></i><span>上传底图</span></button>
+                            <button class="trailmap-act-btn" id="addPinMode" title="添加地点"><i data-lucide="map-pin-plus" style="width:14px;height:14px;"></i><span>添加地点</span></button>
+                            <button class="trailmap-act-btn" id="addTrip" title="记录行程"><i data-lucide="route" style="width:14px;height:14px;"></i><span>记录行程</span></button>
+                        </div>
+                    </div>
+
+                    <!-- 地图容器 -->
+                    <div class="trailmap-container" id="trailmapContainer">
+                        <img id="trailmapBg" class="trailmap-bg" alt="地图">
+                        <svg class="trailmap-svg" id="trailmapSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+                        <div class="trailmap-pin-layer" id="trailmapPinLayer"></div>
+                        <!-- 我的世界空状态 -->
+                        <div class="trailmap-empty" id="trailmapEmpty" style="display:none;">
+                            <i data-lucide="image-plus" style="width:40px;height:40px;"></i>
+                            <p>上传你真实世界的地图底图</p>
+                            <p class="trailmap-empty-sub">支持高德/百度截图、手绘地图等</p>
+                            <button class="trailmap-upload-big" id="trailmapUploadBig"><i data-lucide="upload" style="width:18px;height:18px;"></i>选择图片</button>
+                        </div>
+                    </div>
+
+                    <!-- 底图切换提示 -->
+                    <div class="trailmap-hint" id="trailmapHint">点击地图任意位置添加地点标记 · 点击已有标记编辑</div>
+
+                    <!-- 日期 & 行程 -->
+                    <div class="trailmap-bottom">
+                        <button class="trailmap-nav-btn" id="prevDay"><i data-lucide="chevron-left" style="width:16px;height:16px;"></i></button>
+                        <span class="trailmap-date" id="trailmapDate">5月23日</span>
+                        <button class="trailmap-nav-btn" id="nextDay"><i data-lucide="chevron-right" style="width:16px;height:16px;"></i></button>
+                        <span class="trailmap-legend">
+                            <span><span class="trailmap-dot" style="background:#5ba8f5"></span>城市机构</span>
+                            <span><span class="trailmap-dot" style="background:#ff6b6b"></span>剧情地点</span>
+                            <span><span class="trailmap-dot" style="background:#c388ff"></span>主线遗迹</span>
+                            <span><span class="trailmap-dot" style="background:#ffd93d"></span>我的地点</span>
+                        </span>
+                    </div>
+
+                    <div class="trailmap-trip-list" id="trailmapTripList"></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="../js/sweet.js"></script>
+    <script src="../js/sweet-trailmap.js"></script>
 </body>
 </html>

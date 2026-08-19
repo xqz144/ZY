@@ -776,6 +776,13 @@
     document.querySelectorAll('.sweet-panel').forEach(function (p) {
       p.classList.toggle('active', p.getAttribute('data-panel') === tab);
     });
+    // 轨迹地图：首次切换时初始化
+    if (tab === 'trail-map' && window.SweetTrailMap && !window._trailMapInited) {
+      window._trailMapInited = true;
+      window.SweetTrailMap.init();
+    } else if (tab === 'trail-map' && window.SweetTrailMap) {
+      window.SweetTrailMap.refresh();
+    }
     refreshIcons();
   }
 

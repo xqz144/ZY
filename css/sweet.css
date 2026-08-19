@@ -1084,3 +1084,374 @@ html[data-theme="dark"] .mood-write-btn {
     font-weight: 700;
     color: var(--text-primary);
 }
+
+/* ================================================================
+   轨迹地图 Trail Map
+   ================================================================ */
+.trailmap-wrap {
+    padding: 0 2px;
+}
+
+.trailmap-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.trailmap-world-switch {
+    display: flex;
+    gap: 6px;
+}
+
+.trailmap-w-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 14px;
+    border: 1.5px solid rgba(var(--accent-color-rgb), 0.4);
+    border-radius: 18px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.trailmap-w-btn.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 3px 8px -2px rgba(var(--accent-color-rgb), 0.4);
+}
+.trailmap-w-btn:not(.active):hover {
+    background: rgba(var(--accent-color-rgb), 0.1);
+}
+
+.trailmap-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.trailmap-act-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 12px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 14px;
+    background: var(--secondary-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.trailmap-act-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+.trailmap-act-btn.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+/* 地图容器 */
+.trailmap-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #0f2644;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    cursor: crosshair;
+}
+
+.trailmap-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.3s;
+}
+
+.trailmap-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.trailmap-pin-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+}
+
+/* PIN 标记 */
+.trailmap-pin {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.2s;
+}
+.trailmap-pin:hover {
+    transform: translate(-50%, -100%) scale(1.15);
+    z-index: 20;
+}
+.trailmap-pin-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2.5px solid #fff;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.2), 0 4px 10px rgba(0,0,0,0.3);
+    transition: box-shadow 0.3s;
+}
+.trailmap-pin.cat-blue .trailmap-pin-dot   { background: #5ba8f5; }
+.trailmap-pin.cat-red .trailmap-pin-dot    { background: #ff6b6b; }
+.trailmap-pin.cat-purple .trailmap-pin-dot { background: #c388ff; }
+.trailmap-pin.cat-mine .trailmap-pin-dot   { background: #ffd93d; }
+
+.trailmap-pin.active .trailmap-pin-dot {
+    animation: trailPulse 1.2s infinite;
+}
+@keyframes trailPulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(0,0,0,0.2), 0 4px 10px rgba(0,0,0,0.3), 0 0 0 0 rgba(255,255,255,0.7); }
+    50% { box-shadow: 0 0 0 2px rgba(0,0,0,0.2), 0 4px 10px rgba(0,0,0,0.3), 0 0 0 8px rgba(255,255,255,0); }
+}
+
+.trailmap-pin-label {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 25, 50, 0.92);
+    color: #e8f0ff;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+.trailmap-pin:hover .trailmap-pin-label { opacity: 1; }
+
+/* 轨迹线 */
+.trailmap-line {
+    stroke: #ffffff;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-dasharray: 5 5;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px rgba(255,255,255,0.8)) drop-shadow(0 0 8px rgba(100,180,255,0.6));
+    animation: trailDash 1.5s linear infinite;
+}
+@keyframes trailDash {
+    to { stroke-dashoffset: -24; }
+}
+
+/* PIN 弹窗 */
+.trailmap-popup {
+    position: absolute;
+    background: #0f2644;
+    color: #e8f0ff;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    z-index: 50;
+    min-width: 160px;
+    font-size: 13px;
+    transform: translate(-50%, -110%);
+    pointer-events: auto;
+}
+.trailmap-popup h4 { margin: 0 0 6px; font-size: 14px; color: #fff; }
+.trailmap-popup p { margin: 0; font-size: 12px; color: #8fa8d0; }
+.trailmap-popup .cat-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.trailmap-popup .cat-blue   { background: rgba(91,168,245,0.2); color: #5ba8f5; }
+.trailmap-popup .cat-red    { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+.trailmap-popup .cat-purple { background: rgba(195,136,255,0.2); color: #c388ff; }
+.trailmap-popup .cat-mine   { background: rgba(255,217,61,0.2); color: #ffd93d; }
+.trailmap-popup .popup-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+.trailmap-popup .popup-actions button {
+    flex: 1;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--font-family);
+}
+.trailmap-popup .popup-edit { background: rgba(91,168,245,0.3); color: #5ba8f5; }
+.trailmap-popup .popup-del  { background: rgba(255,107,107,0.3); color: #ff6b6b; }
+
+/* 空状态 */
+.trailmap-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 38, 68, 0.85);
+    color: #8fa8d0;
+    text-align: center;
+    z-index: 20;
+}
+.trailmap-empty svg { color: #5ba8f5; margin-bottom: 12px; }
+.trailmap-empty p { margin: 4px 0; font-size: 14px; }
+.trailmap-empty .trailmap-empty-sub { font-size: 12px; color: #6b8bb5; }
+
+.trailmap-upload-big {
+    margin-top: 16px;
+    padding: 12px 24px;
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: var(--font-family);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.2s;
+}
+.trailmap-upload-big:hover { transform: translateY(-2px); }
+
+.trailmap-hint {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin: 8px 0;
+}
+
+/* 底部 */
+.trailmap-bottom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.trailmap-nav-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--secondary-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.trailmap-nav-btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+.trailmap-date {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 80px;
+    text-align: center;
+}
+.trailmap-legend {
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+.trailmap-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.trailmap-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+/* 行程列表 */
+.trailmap-trip-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.trailmap-trip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+.trailmap-trip-time {
+    color: var(--accent-color);
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 100px;
+}
+.trailmap-trip-route {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+.trailmap-trip-route strong { color: var(--accent-color); }
+.trailmap-trip-mode {
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin-top: 3px;
+}
+.trailmap-trip-del {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+.trailmap-trip-del:hover { color: #e74c3c; background: rgba(231,76,60,0.1); }
+
+.trailmap-empty-trip {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 20px;
+    opacity: 0.6;
+}
