@@ -4,7 +4,7 @@
  * 设计意图：
  *   1. 宠物只有 1 只，但支持「形态切换」（original / alternate），
  *      两种形态共享同一份名字、等级、经验、心情、饱腹度数据；
- *   2. 所有页面（spark-new.html / rps.html / chat-new.html / index-zy.html ……）
+ *   2. 所有页面（spark-new.html / chat-new.html / index-zy.html ……）
  *      在渲染时统一通过 SparkShared.readPet() 取 { name, form, image, avatar, color, emoji }，
  *      这样一旦在火花页改了名字 / 切了形态，其它页面刷新就能同步。
  *
