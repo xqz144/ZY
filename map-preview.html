@@ -119,12 +119,12 @@
   }
   .trail-line {
     stroke: #e74c3c;
-    stroke-width: 2.5;
+    stroke-width: 1.5;
     fill: none;
-    stroke-dasharray: 6 5;
+    stroke-dasharray: 4 4;
     stroke-linecap: round;
-    filter: drop-shadow(0 2px 3px rgba(231,76,60,0.4));
-    animation: dash 1.8s linear infinite;
+    filter: drop-shadow(0 1px 2px rgba(231,76,60,0.3));
+    animation: dash 1.5s linear infinite;
   }
   @keyframes dash {
     to { stroke-dashoffset: -22; }
@@ -263,23 +263,27 @@
   </div>
 
 <script>
-  // ===== 标记数据（位置基于 V3 底图的大致百分比坐标）=====
+  // ===== 标记数据（位置基于 V4 底图布局）=====
   const PINS_QIYU = [
     // 蓝色：城市与机构
-    { id: 'hongwan',  name: '晴空中央湾区', x: 50, y: 30, cat: 'blue', desc: '临空市核心湾区' },
-    { id: 'lanhole',  name: '蓝洞',         x: 20, y: 60, cat: 'blue', desc: '宝空大岛蓝洞景观' },
-    { id: 'naokong',  name: '脑机研究中心', x: 25, y: 75, cat: 'blue', desc: '科研机构' },
-    { id: 'chaoxi',   name: '潮汐屿',       x: 42, y: 88, cat: 'blue', desc: '小岛' },
-    { id: 'hunter',   name: '猎人协会总部', x: 62, y: 62, cat: 'blue', desc: '猎人组织总部' },
+    { id: 'qingkong',  name: '晴空广场',    x: 60, y: 38, cat: 'blue', desc: '临空市中心广场，纪念14年前灾难' },
+    { id: 'hunter',    name: '猎人协会总部', x: 78, y: 42, cat: 'blue', desc: '猎人协会总部，20层大楼' },
+    { id: 'ever',      name: 'EVER集团大楼', x: 70, y: 12, cat: 'blue', desc: '跨国集团总部' },
+    { id: 'akso',      name: 'AKSO医院',    x: 56, y: 44, cat: 'blue', desc: '世界著名综合医院' },
+    { id: 'flux',      name: 'Flux画廊',    x: 52, y: 60, cat: 'blue', desc: '唐知理的画廊' },
     // 珊瑚红：祁煜剧情点
-    { id: 'maoer',    name: '帽儿岛',       x: 17, y: 22, cat: 'red', desc: '祁煜幼时搁浅之地' },
-    { id: 'ever',     name: 'EVER集团大楼', x: 70, y: 15, cat: 'red', desc: '跨国集团总部' },
-    { id: 'xiwai',    name: '西郊别墅区',   x: 45, y: 45, cat: 'red', desc: '富人别墅区' },
-    { id: 'baisha',   name: '白沙滨海区',   x: 68, y: 82, cat: 'red', desc: '海滨风景区' },
+    { id: 'moart',     name: 'Mo Art Studio', x: 13, y: 34, cat: 'red', desc: '白沙湾人工岛，祁煜画廊兼住所' },
+    { id: 'momei',     name: '莫美术馆',    x: 16, y: 50, cat: 'red', desc: '白沙湾人工岛，展出祁煜作品' },
+    { id: 'maoe',      name: '帽儿岛',      x: 38, y: 18, cat: 'red', desc: '祁煜幼时搁浅之地' },
+    { id: 'xiwai',     name: '西郊别墅区',  x: 50, y: 22, cat: 'red', desc: '临空市西郊豪华别墅区' },
+    { id: 'lanxian',   name: '晴空环路·蓝洞', x: 62, y: 75, cat: 'red', desc: '海滨环形公路蓝洞' },
     // 紫色：主线战斗与遗迹
-    { id: 'chaoxiqu', name: '潮汐区',       x: 28, y: 26, cat: 'purple', desc: '帽儿岛区域' },
-    { id: 'n109',     name: 'N-109禁区',    x: 88, y: 25, cat: 'purple', desc: '危险禁区' },
-    { id: 'limori',   name: '利莫里亚遗迹', x: 85, y: 68, cat: 'purple', desc: '古文明遗迹' },
+    { id: 'chaoxiqu',  name: '潮汐区',      x: 22, y: 52, cat: 'purple', desc: '帽儿岛潮汐区' },
+    { id: 'n109',      name: 'N-109禁区',   x: 92, y: 50, cat: 'purple', desc: '危险禁区' },
+    { id: 'limori',    name: '利莫里亚遗迹', x: 90, y: 78, cat: 'purple', desc: '古文明遗迹' },
+    { id: 'baodaol',   name: '宝空大岛·蓝洞', x: 28, y: 85, cat: 'purple', desc: '大岛蓝洞景观' },
+    { id: 'chaoxiyu',  name: '潮汐屿',      x: 48, y: 92, cat: 'purple', desc: '小岛' },
+    { id: 'deep',      name: '深空隧道',    x: 68, y: 88, cat: 'purple', desc: '2034年出现的时空隧道' },
   ];
 
   const PINS_MINE = [
@@ -291,21 +295,26 @@
     { id: 'gym',    name: '健身房',   x: 55, y: 75, cat: 'mine', desc: '健身的地方' },
   ];
 
-  // ===== 行程数据 =====
+  // ===== 行程数据（基于游戏地点的示例行程）=====
   const TRIPS = {
     '5月23日': [
       { time: '18:01-18:28', from: '帽儿岛', to: 'EVER集团大楼', mode: '🚗 乘车 17.57km · 27分钟' },
-      { time: '16:01-16:28', from: '猎人协会总部', to: '西郊别墅区', mode: '🚶 步行 · 停留 5h24min' },
-      { time: '14:01-14:28', from: '晴空中央湾区', to: '猎人协会总部', mode: '🚗 乘车 · 3km · 5分钟' },
-      { time: '12:01-12:28', from: '蓝洞', to: '晴空中央湾区', mode: '⛴️ 乘船 · 跨海' },
+      { time: '16:01-16:28', from: '猎人协会总部', to: '晴空环路·蓝洞', mode: '🚶 步行 · 海边散步 5h24min' },
+      { time: '14:01-14:28', from: '晴空广场', to: '猎人协会总部', mode: '🚗 乘车 · 3km · 5分钟' },
+      { time: '12:01-12:28', from: 'Mo Art Studio', to: '晴空广场', mode: '🚶 步行 · 经 Flux画廊' },
     ],
     '5月24日': [
-      { time: '10:00-12:00', from: '帽儿岛', to: '蓝洞', mode: '⛴️ 乘船 · 环岛采风' },
-      { time: '14:00-16:00', from: '蓝洞', to: '脑机研究中心', mode: '🚶 步行 · 探访' },
-      { time: '18:00-20:00', from: '脑机研究中心', to: '利莫里亚遗迹', mode: '🚗 乘车 · 研究考察' },
+      { time: '10:00-12:00', from: 'Mo Art Studio', to: '帽儿岛', mode: '⛴️ 乘船 · 环岛采风' },
+      { time: '14:00-16:00', from: '帽儿岛', to: '潮汐区', mode: '🚶 步行 · 探访潮汐区' },
+      { time: '18:00-20:00', from: '潮汐区', to: '莫美术馆', mode: '⛴️ 乘船 · 返回白沙湾' },
     ],
     '5月25日': [
-      { time: '09:00-11:00', from: '猎人协会总部', to: '白沙滨海区', mode: '🚗 乘车 · 海边散步' },
+      { time: '09:00-11:00', from: '猎人协会总部', to: 'AKSO医院', mode: '🚗 乘车 · 探望' },
+      { time: '14:00-16:00', from: 'AKSO医院', to: '西郊别墅区', mode: '🚗 乘车 · 拜访收藏家' },
+    ],
+    '5月26日': [
+      { time: '10:00-12:00', from: 'Flux画廊', to: 'Mo Art Studio', mode: '🚶 步行 · 取画作' },
+      { time: '15:00-17:00', from: 'Mo Art Studio', to: '利莫里亚遗迹', mode: '🚗 乘车 · 研究考察' },
     ],
   };
 
@@ -422,9 +431,9 @@
       currentWorld = btn.dataset.world;
       const img = document.getElementById('mapBg');
       if (currentWorld === 'qiyu') {
-        img.src = 'assets/map_qiyu_v3.jpg';
+        img.src = 'assets/map_qiyu_v4.jpg';
       } else {
-        img.src = 'assets/map_qiyu_v3.jpg'; // 后续换你的世界底图
+        img.src = 'assets/map_qiyu_v4.jpg'; // 后续换你的世界底图
       }
       renderPins(currentWorld);
     });
@@ -454,7 +463,7 @@
   });
 
   // ===== 初始化 =====
-  document.getElementById('mapBg').src = 'assets/map_qiyu_v3.jpg';
+  document.getElementById('mapBg').src = 'assets/map_qiyu_v4.jpg';
   renderPins('qiyu');
   renderTrips();
 
