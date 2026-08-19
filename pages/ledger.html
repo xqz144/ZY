@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>喵喵账本 · 梦角传讯</title>
+    <link rel="stylesheet" href="../css/extapp-unified.css">
+    <script>
+    /* 从父窗口同步主题色/字体 */
+    (function () {
+        try {
+            var inIframe = false;
+            try { inIframe = (window.top !== window.self); } catch (e) { inIframe = true; }
+            function applyThemeFromParent() {
+                try {
+                    var parentRoot = null;
+                    var parentDoc = null;
+                    try { parentDoc = window.parent.document; parentRoot = parentDoc.documentElement; } catch (e) { parentRoot = null; }
+                    if (parentRoot) {
+                        var t = parentRoot.getAttribute('data-color-theme');
+                        if (t) document.documentElement.setAttribute('data-color-theme', t);
+                        var dt = parentRoot.getAttribute('data-theme');
+                        if (dt) {
+                            document.documentElement.setAttribute('data-theme', dt);
+                            if (dt === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+                        }
+                        var fv = parentRoot.style.getPropertyValue('--font-family');
+                        if (fv) document.documentElement.style.setProperty('--font-family', fv);
+                        var mfv = parentRoot.style.getPropertyValue('--message-font-family');
+                        if (mfv) document.documentElement.style.setProperty('--message-font-family', mfv);
+                        var fs = parentRoot.style.getPropertyValue('--font-size');
+                        if (fs) document.documentElement.style.setProperty('--font-size', fs);
+                        var pcs = null;
+                        try { pcs = parentDoc.defaultView ? parentDoc.defaultView.getComputedStyle(parentRoot) : null; } catch (e) { pcs = null; }
+                        var accent = (pcs && pcs.getPropertyValue('--accent-color')) || parentRoot.style.getPropertyValue('--accent-color') || '';
+                        if (accent) document.documentElement.style.setProperty('--accent-color', accent.trim());
+                        var accentRgb = (pcs && pcs.getPropertyValue('--accent-color-rgb')) || parentRoot.style.getPropertyValue('--accent-color-rgb') || '';
+                        if (accentRgb) document.documentElement.style.setProperty('--accent-color-rgb', accentRgb.trim());
+                    }
+                } catch (e) { console.warn('ledger theme sync error', e); }
+            }
+            applyThemeFromParent();
+            if (inIframe) {
+                window.addEventListener('message', function (ev) {
+                    var d = ev.data || {};
+                    if (d.type === 'theme:sync' || d.colorTheme || d.theme) {
+                        if (d.colorTheme) document.documentElement.setAttribute('data-color-theme', d.colorTheme);
+                        if (d.theme) {
+                            document.documentElement.setAttribute('data-theme', d.theme);
+                            if (d.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+                        }
+                        if (d.fontFamily) document.documentElement.style.setProperty('--font-family', d.fontFamily);
+                        applyThemeFromParent();
+                    }
+                });
+                setInterval(applyThemeFromParent, 2500);
+            }
+        } catch (e) { console.warn('ledger init error', e); }
+    })();
+    </script>
+    <link rel="stylesheet" href="../css/ledger.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="ledger-app">
+        <div class="ledger-scroll">
+            <!-- Hero 汇总卡（涂鸦风） -->
+            <div class="ledger-hero">
+                <div class="ledger-hero-tag">喵喵记账本</div>
+                <div class="ledger-hero-rows">
+                    <div class="ledger-hero-cell">
+                        <span class="ledger-hero-label">本月支出</span>
+                        <span class="ledger-hero-num" id="month-out">¥0.00</span>
+                    </div>
+                    <div class="ledger-hero-divider"></div>
+                    <div class="ledger-hero-cell">
+                        <span class="ledger-hero-label">本月收入</span>
+                        <span class="ledger-hero-num in" id="month-in">¥0.00</span>
+                    </div>
+                </div>
+                <div class="ledger-hero-doodle doodle-leaf"></div>
+                <div class="ledger-hero-doodle doodle-star"></div>
+                <div class="ledger-hero-doodle doodle-dot"></div>
+                <button class="ledger-add-btn" id="ledger-add-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                    <span>记一笔</span>
+                </button>
+            </div>
+
+            <!-- 双子标签：明细 / 小票 -->
+            <div class="ledger-subtabs">
+                <button class="ledger-subtab active" data-subtab="calendar">
+                    <i data-lucide="calendar-days"></i><span>明细</span>
+                </button>
+                <button class="ledger-subtab" data-subtab="ticket">
+                    <i data-lucide="receipt"></i><span>小票</span>
+                </button>
+            </div>
+
+            <!-- 明细视图（日历 + 当日流水） -->
+            <div class="ledger-subpanel active" data-subpanel="calendar">
+                <!-- 月历涂鸦卡 -->
+                <div class="ledger-cal-wrap">
+                    <div class="ledger-cal-head">
+                        <button class="ledger-cal-btn" id="cal-prev" aria-label="上一个月"><i data-lucide="chevron-left"></i></button>
+                        <div class="ledger-cal-title">
+                            <div class="ledger-cal-year" id="cal-year">2025年</div>
+                            <div class="ledger-cal-month" id="cal-month">1月</div>
+                        </div>
+                        <button class="ledger-cal-btn" id="cal-next" aria-label="下一个月"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                    <div class="ledger-weekdays">
+                        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                    </div>
+                    <div class="ledger-cal-grid" id="ledger-cal-grid"></div>
+                </div>
+
+                <!-- 当日流水（涂鸦风） -->
+                <div class="ledger-day-block">
+                    <div class="ledger-day-head">
+                        <div class="ledger-day-title" id="ledger-day-title">今天</div>
+                        <div class="ledger-day-sum">
+                            <span class="ledger-day-label">总计</span>
+                            <span class="ledger-day-num" id="ledger-day-num">¥0.00</span>
+                        </div>
+                    </div>
+                    <div class="ledger-day-list" id="ledger-day-list"></div>
+                </div>
+            </div>
+
+            <!-- 小票视图 -->
+            <div class="ledger-subpanel" data-subpanel="ticket">
+                <!-- 日期选择 -->
+                <div class="ledger-ticket-day-row">
+                    <button class="ledger-day-btn" id="ticket-prev-day"><i data-lucide="chevron-left"></i></button>
+                    <div class="ledger-ticket-day" id="ticket-day-label">今天</div>
+                    <button class="ledger-day-btn" id="ticket-next-day"><i data-lucide="chevron-right"></i></button>
+                </div>
+
+                <div class="ledger-ticket-wrap" id="ledger-ticket-wrap">
+                    <!-- 打印小票 -->
+                    <div class="ledger-ticket" id="ledger-ticket">
+                        <div class="ledger-ticket-top">
+                            <div class="ledger-ticket-cafe"></div>
+                            <div class="ledger-ticket-top-text">今日明细</div>
+                        </div>
+                        <div class="ledger-ticket-paper">
+                            <div class="ledger-ticket-title" id="ticket-shop">喵喵之家</div>
+                            <div class="ledger-ticket-sub" id="ticket-sub">消费单</div>
+                            <div class="ledger-ticket-dash"></div>
+                            <div class="ledger-ticket-row2">
+                                <span>桌号：<b id="ticket-table">520</b></span>
+                                <span>服务员：<b id="ticket-staff">梦角</b></span>
+                            </div>
+                            <div class="ledger-ticket-dash"></div>
+                            <div class="ledger-ticket-row2">
+                                <span>消费日期：<b id="ticket-date"></b></span>
+                                <span>时段：<b>全天</b></span>
+                            </div>
+                            <div class="ledger-ticket-row2">
+                                <span>单号：<b id="ticket-no"></b></span>
+                                <span>人数：<b>2</b></span>
+                            </div>
+                            <div class="ledger-ticket-dash"></div>
+                            <div class="ledger-ticket-h">
+                                <span>消费类别</span>
+                                <span style="text-align:right;">单价</span>
+                                <span style="text-align:center;">次数</span>
+                                <span style="text-align:right;">小计</span>
+                            </div>
+                            <div class="ledger-ticket-list" id="ticket-list"></div>
+                            <div class="ledger-ticket-dash"></div>
+                            <div class="ledger-ticket-total-row">
+                                <span>消费合计：</span>
+                                <b id="ticket-total">¥0.00</b>
+                            </div>
+                            <div class="ledger-ticket-total-row">
+                                <span>今日收入：</span>
+                                <b class="in" id="ticket-income">¥0.00</b>
+                            </div>
+                            <div class="ledger-ticket-total-row big">
+                                <span>今日结余：</span>
+                                <b id="ticket-balance" class="neg">¥0.00</b>
+                            </div>
+                            <div class="ledger-ticket-doodle"></div>
+                        </div>
+                        <!-- 锯齿底部 -->
+                        <div class="ledger-ticket-zigzag"></div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮：保存为图片 -->
+                <div class="ledger-ticket-actions">
+                    <button class="ledger-ticket-action" id="ticket-copy">
+                        <i data-lucide="copy"></i><span>复制小票文本</span>
+                    </button>
+                    <button class="ledger-ticket-action" id="ticket-share" style="flex:1.4;">
+                        <i data-lucide="printer"></i><span>打印/保存小票</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/ledger.js"></script>
+</body>
+</html>

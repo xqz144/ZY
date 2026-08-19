@@ -491,6 +491,15 @@
                         </div>
                         <span class="app-name">甜蜜轨迹</span>
                     </div>
+                    <div class="app-item" onclick="openApp('ledger-new')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #fdd86f, #f3a845);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
+                                <path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 2V4l-4 2-4-2-4 2-4-2-2 2z"/>
+                                <path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/>
+                            </svg>
+                        </div>
+                        <span class="app-name">喵喵账本</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2075,6 +2084,15 @@
             <div class="extapp-right-placeholder"></div>
         </div>
         <iframe id="extapp-sweet-iframe" data-src="pages/sweet.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+    <!-- 喵喵账本 -->
+    <div class="extapp-container" id="extapp-ledger" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-unified-nav">
+            <button class="extapp-back-btn" onclick="window.hideExtApp('ledger')"><i class="fas fa-arrow-left"></i><span>返回</span></button>
+            <h2 class="extapp-title">喵喵账本</h2>
+            <div class="extapp-right-placeholder"></div>
+        </div>
+        <iframe id="extapp-ledger-iframe" data-src="pages/ledger.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
     </div>
     <!-- ========== 用户扩展功能模块结束 ========== -->
 
