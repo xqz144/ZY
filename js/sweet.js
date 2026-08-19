@@ -21,16 +21,16 @@
       version: 1,
       togetherDate: todayStr(),
       checkins: [
-        { id: uid(), name: '说"我爱你"', emoji: '💕', custom: false },
-        { id: uid(), name: '拥抱一下', emoji: '🤗', custom: false },
-        { id: uid(), name: '说晚安', emoji: '🌙', custom: false },
-        { id: uid(), name: '亲一下', emoji: '😘', custom: false },
-        { id: uid(), name: '聊聊今天', emoji: '💬', custom: false },
-        { id: uid(), name: '一起喝水', emoji: '☕', custom: false }
+        { id: uid(), name: '说"我爱你"', emoji: 'heart', custom: false },
+        { id: uid(), name: '拥抱一下', emoji: 'users', custom: false },
+        { id: uid(), name: '说晚安', emoji: 'moon', custom: false },
+        { id: uid(), name: '亲一下', emoji: 'sparkles', custom: false },
+        { id: uid(), name: '聊聊今天', emoji: 'message-circle', custom: false },
+        { id: uid(), name: '一起喝水', emoji: 'coffee', custom: false }
       ],
       checkinRecords: {},     // { 'YYYY-MM-DD': { checkinId: true } }
       anniversaries: [
-        { id: uid(), name: '我们在一起', date: todayStr(), emoji: '❤️', type: 'anniversary' }
+        { id: uid(), name: '我们在一起', date: todayStr(), emoji: 'heart', type: 'anniversary' }
       ],
       diaries: [],
       wishes: [
@@ -156,14 +156,15 @@
     var listEl = document.getElementById('checkin-list');
     if (!listEl) return;
     if (!d.checkins.length) {
-      listEl.innerHTML = emptyState('🌷', '还没有打卡项目，点右上角添加吧');
+      listEl.innerHTML = emptyState('flower', '还没有打卡项目，点右上角添加吧');
       return;
     }
     var html = '';
     d.checkins.forEach(function (c) {
       var done = !!todayRec[c.id];
+      var icon = c.emoji || 'star';
       html += '<div class="sweet-checkin-item' + (done ? ' done' : '') + (c.custom ? ' custom' : '') + '" data-id="' + esc(c.id) + '">' +
-        '<span class="sweet-checkin-emoji">' + esc(c.emoji || '⭐') + '</span>' +
+        '<span class="sweet-checkin-emoji"><i data-lucide="' + esc(icon) + '"></i></span>' +
         '<span class="sweet-checkin-name">' + esc(c.name) + '</span>' +
         '<span class="sweet-checkin-tick"><i data-lucide="check"></i></span>' +
         (c.custom ? '<button class="sweet-checkin-del" data-del="' + esc(c.id) + '" title="删除">×</button>' : '') +
@@ -238,7 +239,7 @@
     var listEl = document.getElementById('anni-list');
     if (!listEl) return;
     if (!d.anniversaries.length) {
-      listEl.innerHTML = emptyState('🎂', '还没有纪念日，添加一个吧');
+      listEl.innerHTML = emptyState('cake', '还没有纪念日，添加一个吧');
       return;
     }
     // 排序：倒计时类（未来日期升序）在前，纪念类按日期
@@ -261,7 +262,7 @@
         num = diff; unit = '天';
       }
       html += '<div class="sweet-anni-card" data-id="' + esc(a.id) + '">' +
-        '<div class="sweet-anni-emoji">' + esc(a.emoji || '🎊') + '</div>' +
+        '<div class="sweet-anni-emoji"><i data-lucide="' + esc(a.emoji || 'gift') + '"></i></div>' +
         '<div class="sweet-anni-info">' +
           '<div class="sweet-anni-name">' + esc(a.name) + '</div>' +
           '<div class="sweet-anni-date">' + formatDateCN(a.date) + '</div>' +
@@ -296,23 +297,23 @@
      甜蜜日记
      ================================================================ */
   var DIARY_MOODS = [
-    { e: '😊', t: '开心' }, { e: '🥰', t: '幸福' }, { e: '💖', t: '心动' },
-    { e: '😌', t: '平静' }, { e: '😴', t: '疲惫' }, { e: '😢', t: '难过' },
-    { e: '😡', t: '生气' }, { e: '🤔', t: '思考' }
+    { e: 'smile', t: '开心' }, { e: 'heart', t: '幸福' }, { e: 'zap', t: '心动' },
+    { e: 'leaf', t: '平静' }, { e: 'coffee', t: '疲惫' }, { e: 'frown', t: '难过' },
+    { e: 'angry', t: '生气' }, { e: 'search', t: '思考' }
   ];
   function renderDiary() {
     var d = getData();
     var listEl = document.getElementById('diary-list');
     if (!listEl) return;
     if (!d.diaries.length) {
-      listEl.innerHTML = emptyState('📔', '写下你们今天的甜蜜瞬间吧');
+      listEl.innerHTML = emptyState('book-open', '写下你们今天的甜蜜瞬间吧');
       return;
     }
     var html = '';
     d.diaries.slice().sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); }).forEach(function (dia) {
       html += '<div class="sweet-diary-card" data-id="' + esc(dia.id) + '">' +
         '<div class="sweet-diary-top">' +
-          '<span class="sweet-diary-mood">' + esc(dia.mood || '😊') + '</span>' +
+          '<span class="sweet-diary-mood"><i data-lucide="' + esc(dia.mood || 'smile') + '"></i></span>' +
           '<span class="sweet-diary-title">' + esc(dia.title || '无题') + '</span>' +
           '<span class="sweet-diary-date">' + relativeDay(dia.date) + '</span>' +
         '</div>' +
@@ -334,7 +335,7 @@
     var listEl = document.getElementById('wish-list');
     if (!listEl) return;
     if (!d.wishes.length) {
-      listEl.innerHTML = emptyState('🎁', '添加你们的小愿望吧');
+      listEl.innerHTML = emptyState('gift', '添加你们的小愿望吧');
       return;
     }
     var html = '';
@@ -376,12 +377,12 @@
     w.done = !w.done;
     save();
     renderWish();
-    toast(w.done ? '完成一个愿望！🎉' : '已取消完成');
+    toast(w.done ? '完成一个愿望！' : '已取消完成');
   }
 
   /* ========== 通用空状态 ========== */
-  function emptyState(emoji, text) {
-    return '<div class="sweet-empty"><span class="sweet-empty-emoji">' + emoji + '</span>' + esc(text) + '</div>';
+  function emptyState(icon, text) {
+    return '<div class="sweet-empty"><span class="sweet-empty-emoji"><i data-lucide="' + esc(icon) + '"></i></span>' + esc(text) + '</div>';
   }
 
   /* ================================================================
@@ -437,15 +438,15 @@
   }
 
   /* ---------- 恋爱打卡 · 新增项目 ---------- */
-  var CHECKIN_EMOJIS = ['💕', '🤗', '😘', '🌙', '☕', '💬', '🌷', '🍓', '🎵', '⭐', '🌸', '🍬'];
+  var CHECKIN_EMOJIS = ['heart', 'users', 'sparkles', 'moon', 'coffee', 'message-circle', 'star', 'gift', 'music', 'sun', 'cloud', 'camera'];
   function openCheckinForm() {
-    var picked = '💕';
+    var picked = 'heart';
     openOverlay(
       '<div class="sweet-sheet">' +
         '<div class="sweet-sheet-head"><div class="sweet-sheet-title">新增打卡项</div><button class="sweet-sheet-close" id="ck-close">×</button></div>' +
         '<div class="sweet-field"><label class="sweet-field-label">名称</label><input type="text" id="ck-name" placeholder="例如：一起散步" maxlength="20"></div>' +
         '<div class="sweet-field"><label class="sweet-field-label">图标</label><div class="sweet-emoji-row" id="ck-emoji">' +
-          CHECKIN_EMOJIS.map(function (e, i) { return '<button class="sweet-emoji-pick' + (i === 0 ? ' active' : '') + '" data-e="' + e + '">' + e + '</button>'; }).join('') +
+          CHECKIN_EMOJIS.map(function (e, i) { return '<button class="sweet-emoji-pick' + (i === 0 ? ' active' : '') + '" data-e="' + e + '"><i data-lucide="' + e + '"></i></button>'; }).join('') +
         '</div></div>' +
         '<div class="sweet-sheet-actions"><button class="sweet-btn sweet-btn-ghost" id="ck-cancel">取消</button><button class="sweet-btn sweet-btn-primary" id="ck-save">添加</button></div>' +
       '</div>');
@@ -468,11 +469,11 @@
   }
 
   /* ---------- 纪念日 · 表单 ---------- */
-  var ANNI_EMOJIS = ['❤️', '💖', '🎂', '🎉', '🎊', '🌹', '💍', '🏝️', '✈️', '🏡', '🎄', '⭐'];
+  var ANNI_EMOJIS = ['heart', 'sparkles', 'cake', 'gift', 'star', 'music', 'plane', 'home', 'coffee', 'sun', 'moon', 'camera'];
   function openAnniForm(id) {
     var d = getData();
     var a = id ? d.anniversaries.find(function (x) { return x.id === id; }) : null;
-    var picked = a ? (a.emoji || '❤️') : '❤️';
+    var picked = a ? (a.emoji || 'heart') : 'heart';
     var type = a ? (a.type || 'anniversary') : 'anniversary';
     openOverlay(
       '<div class="sweet-sheet">' +
@@ -484,7 +485,7 @@
           '<button class="' + (type === 'countdown' ? 'active' : '') + '" data-t="countdown">倒计时（还有几天）</button>' +
         '</div></div>' +
         '<div class="sweet-field"><label class="sweet-field-label">图标</label><div class="sweet-emoji-row" id="an-emoji">' +
-          ANNI_EMOJIS.map(function (e) { return '<button class="sweet-emoji-pick' + (e === picked ? ' active' : '') + '" data-e="' + e + '">' + e + '</button>'; }).join('') +
+          ANNI_EMOJIS.map(function (e) { return '<button class="sweet-emoji-pick' + (e === picked ? ' active' : '') + '" data-e="' + e + '"><i data-lucide="' + e + '"></i></button>'; }).join('') +
         '</div></div>' +
         '<div class="sweet-sheet-actions"><button class="sweet-btn sweet-btn-ghost" id="an-cancel">取消</button><button class="sweet-btn sweet-btn-primary" id="an-save">' + (a ? '保存' : '添加') + '</button></div>' +
       '</div>');
@@ -522,13 +523,13 @@
   function openDiaryForm(id) {
     var d = getData();
     var dia = id ? d.diaries.find(function (x) { return x.id === id; }) : null;
-    var picked = dia ? (dia.mood || '😊') : '😊';
+    var picked = dia ? (dia.mood || 'smile') : 'smile';
     openOverlay(
       '<div class="sweet-sheet">' +
         '<div class="sweet-sheet-head"><div class="sweet-sheet-title">' + (dia ? '编辑日记' : '写一篇甜蜜日记') + '</div><button class="sweet-sheet-close" id="di-close">×</button></div>' +
         '<div class="sweet-field"><label class="sweet-field-label">日期</label><input type="date" id="di-date" value="' + esc(dia ? dia.date : todayStr()) + '"></div>' +
         '<div class="sweet-field"><label class="sweet-field-label">心情</label><div class="sweet-emoji-row" id="di-mood">' +
-          DIARY_MOODS.map(function (m) { return '<button class="sweet-emoji-pick' + (m.e === picked ? ' active' : '') + '" data-e="' + m.e + '" title="' + m.t + '">' + m.e + '</button>'; }).join('') +
+          DIARY_MOODS.map(function (m) { return '<button class="sweet-emoji-pick' + (m.e === picked ? ' active' : '') + '" data-e="' + m.e + '" title="' + m.t + '"><i data-lucide="' + m.e + '"></i></button>'; }).join('') +
         '</div></div>' +
         '<div class="sweet-field"><label class="sweet-field-label">标题</label><input type="text" id="di-title" value="' + esc(dia ? dia.title : '') + '" placeholder="给这一天起个名字" maxlength="30"></div>' +
         '<div class="sweet-field"><label class="sweet-field-label">内容</label><textarea id="di-content" placeholder="记录今天发生的小事……" maxlength="2000">' + esc(dia ? dia.content : '') + '</textarea></div>' +

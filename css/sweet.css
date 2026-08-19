@@ -230,11 +230,14 @@ html[data-theme="dark"]               { --accent-color: #d0d0d0; --accent-color-
     font-size: 13px;
 }
 .sweet-empty .sweet-empty-emoji {
-    font-size: 34px;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 8px;
-    opacity: 0.6;
+    opacity: 0.55;
+    color: var(--text-secondary);
 }
+.sweet-empty .sweet-empty-emoji svg { width: 34px; height: 34px; }
 
 /* ================================================================
    恋爱打卡
@@ -288,11 +291,15 @@ html[data-theme="dark"]               { --accent-color: #d0d0d0; --accent-color-
     border-color: rgba(var(--accent-color-rgb), 0.4);
 }
 .sweet-checkin-emoji {
-    font-size: 20px;
     flex-shrink: 0;
-    width: 28px;
-    text-align: center;
+    width: 26px; height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-color);
 }
+.sweet-checkin-emoji svg { width: 22px; height: 22px; }
+.sweet-checkin-item.done .sweet-checkin-emoji { color: var(--accent-color); }
 .sweet-checkin-name {
     flex: 1;
     min-width: 0;
@@ -362,8 +369,9 @@ html[data-theme="dark"]               { --accent-color: #d0d0d0; --accent-color-
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    color: var(--accent-color);
 }
+.sweet-anni-emoji svg { width: 24px; height: 24px; }
 .sweet-anni-info { flex: 1; min-width: 0; }
 .sweet-anni-name {
     font-size: 14px;
@@ -420,7 +428,13 @@ html[data-theme="dark"]               { --accent-color: #d0d0d0; --accent-color-
     gap: 8px;
     margin-bottom: 6px;
 }
-.sweet-diary-mood { font-size: 18px; }
+.sweet-diary-mood {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-color);
+}
+.sweet-diary-mood svg { width: 20px; height: 20px; }
 .sweet-diary-title {
     flex: 1;
     min-width: 0;
@@ -584,17 +598,20 @@ html[data-theme="dark"]               { --accent-color: #d0d0d0; --accent-color-
     border-radius: 10px;
     border: 1px solid var(--border-color);
     background: var(--primary-bg);
-    font-size: 18px;
+    color: var(--text-secondary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all .15s ease;
 }
+.sweet-emoji-pick svg { width: 20px; height: 20px; }
 .sweet-emoji-pick:active { transform: scale(0.92); }
+.sweet-emoji-pick:hover { color: var(--text-primary); }
 .sweet-emoji-pick.active {
     border-color: var(--accent-color);
     background: rgba(var(--accent-color-rgb), 0.14);
+    color: var(--accent-color);
     box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
 }
 
