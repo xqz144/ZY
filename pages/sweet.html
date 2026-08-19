@@ -197,8 +197,17 @@
                     <!-- 地图容器 -->
                     <div class="trailmap-container" id="trailmapContainer">
                         <img id="trailmapBg" class="trailmap-bg" alt="地图">
-                        <svg class="trailmap-svg" id="trailmapSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
-                        <div class="trailmap-pin-layer" id="trailmapPinLayer"></div>
+                        <!-- 祁煜头像（显示当前位置） -->
+                        <div class="trailmap-avatar-wrap" id="trailmapAvatarWrap" style="display:none;">
+                            <div class="trailmap-avatar-ring">
+                                <img class="trailmap-avatar-img" src="../assets/character.png" alt="祁煜">
+                            </div>
+                            <div class="trailmap-loc-pin">
+                                <i data-lucide="map-pin" style="width:12px;height:12px;"></i>
+                            </div>
+                            <div class="trailmap-avatar-name">当前位置</div>
+                            <div class="trailmap-avatar-pulse"></div>
+                        </div>
                         <!-- 我的世界空状态 -->
                         <div class="trailmap-empty" id="trailmapEmpty" style="display:none;">
                             <i data-lucide="image-plus" style="width:40px;height:40px;"></i>
@@ -208,22 +217,16 @@
                         </div>
                     </div>
 
-                    <!-- 底图切换提示 -->
-                    <div class="trailmap-hint" id="trailmapHint">点击地图任意位置添加地点标记 · 点击已有标记编辑</div>
+                    <!-- 提示 -->
+                    <div class="trailmap-hint" id="trailmapHint">💡 点击"记录行程"添加祁煜的移动轨迹</div>
 
-                    <!-- 日期 & 行程 -->
+                    <!-- 日期（点击回到今天） -->
                     <div class="trailmap-bottom">
-                        <button class="trailmap-nav-btn" id="prevDay"><i data-lucide="chevron-left" style="width:16px;height:16px;"></i></button>
-                        <span class="trailmap-date" id="trailmapDate">5月23日</span>
-                        <button class="trailmap-nav-btn" id="nextDay"><i data-lucide="chevron-right" style="width:16px;height:16px;"></i></button>
-                        <span class="trailmap-legend">
-                            <span><span class="trailmap-dot" style="background:#5ba8f5"></span>城市机构</span>
-                            <span><span class="trailmap-dot" style="background:#ff6b6b"></span>剧情地点</span>
-                            <span><span class="trailmap-dot" style="background:#c388ff"></span>主线遗迹</span>
-                            <span><span class="trailmap-dot" style="background:#ffd93d"></span>我的地点</span>
-                        </span>
+                        <span class="trailmap-date" id="trailmapDate">今天</span>
+                        <span class="trailmap-date-hint">（点击日期回到今天）</span>
                     </div>
 
+                    <!-- 行程文字列表 -->
                     <div class="trailmap-trip-list" id="trailmapTripList"></div>
                 </div>
             </div>
