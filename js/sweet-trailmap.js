@@ -35,12 +35,107 @@
 
   var data = null;
 
-  // ===== 数据层 =====
+  // ===== 日期工具 =====
   function todayKey() {
     var d = new Date();
     return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
   }
 
+  function dateKey(date) {
+    return date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日';
+  }
+
+  function daysAgoKey(n) {
+    var d = new Date();
+    d.setDate(d.getDate() - n);
+    return dateKey(d);
+  }
+
+  // ===== 随机行程生成器 =====
+  // 模拟祁煜一天的合理行程：早晨从住所出发 → 上午办事 → 中午吃饭 → 下午活动 → 晚上回家
+  var TRANSPORT_MODES = ['🚗 乘车', '🚶 步行', '⛴️ 乘船', '🚇 地铁', '🚲 骑行'];
+
+  // 时段模板：[时间段范围, 描述]
+  var TIME_SLOTS = [
+    { hour: 8,  min: 30, dur: 60,  label: '早晨出发' },
+    { hour: 10, min: 0,  dur: 90,  label: '上午活动' },
+    { hour: 12, min: 0,  dur: 60,  label: '午餐时间' },
+    { hour: 14, min: 0,  dur: 120, label: '下午活动' },
+    { hour: 17, min: 30, dur: 60,  label: '傍晚行程' },
+    { hour: 19, min: 0,  dur: 90,  label: '晚间活动' },
+  ];
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function pickRandomLocation(locations, exclude) {
+    var pool = locations.filter(function(l) { return l.name !== exclude; });
+    return pool.length > 0 ? pickRandom(pool) : locations[0];
+  }
+
+  function genTimeStr(slot) {
+    var startH = slot.hour;
+    var startM = slot.min + Math.floor(Math.random() * 20) - 10;
+    if (startM < 0) { startM += 60; startH--; }
+    if (startM >= 60) { startM -= 60; startH++; }
+    var endTotal = startH * 60 + startM + slot.dur + Math.floor(Math.random() * 30);
+    var endH = Math.floor(endTotal / 60);
+    var endM = endTotal % 60;
+    return pad(startH) + ':' + pad(startM) + '-' + pad(endH) + ':' + pad(endM);
+  }
+
+  // 生成一天的行程
+  function genDayTrips(day, locations) {
+    if (locations.length < 2) return [];
+
+    // 祁煜可能的起点（住所/画室/别墅）
+    var homeCandidates = locations.filter(function(l) {
+      return l.name.includes('Studio') || l.name.includes('别墅') || l.name.includes('帽儿');
+    });
+    var home = homeCandidates.length > 0 ? pickRandom(homeCandidates) : locations[0];
+
+    // 随机选 3-5 个时段
+    var slotCount = 3 + Math.floor(Math.random() * 3);
+    var slots = TIME_SLOTS.slice(0, slotCount);
+
+    var trips = [];
+    var currentLoc = home;
+
+    for (var i = 0; i < slots.length; i++) {
+      var slot = slots[i];
+      var nextLoc;
+
+      // 最后一段：回家
+      if (i === slots.length - 1) {
+        nextLoc = home;
+      } else {
+        nextLoc = pickRandomLocation(locations, currentLoc.name);
+      }
+
+      trips.push({
+        from: currentLoc.name,
+        to: nextLoc.name,
+        time: genTimeStr(slot),
+        mode: pickRandom(TRANSPORT_MODES)
+      });
+      currentLoc = nextLoc;
+    }
+
+    return trips;
+  }
+
+  // 生成最近 N 天的行程
+  function genRecentTrips(days, locations) {
+    var trips = {};
+    for (var i = days - 1; i >= 0; i--) {
+      var key = daysAgoKey(i);
+      trips[key] = genDayTrips(key, locations);
+    }
+    return trips;
+  }
+
+  // ===== 数据层 =====
   function load() {
     if (data) return data;
     try {
@@ -50,24 +145,48 @@
     } catch (e) {
       data = defaultData();
     }
+    // 每次打开时，自动生成今天的行程（如果还没有）
+    ensureTodayTrips();
     return data;
   }
 
   function defaultData() {
     return {
-      version: 1,
+      version: 2,
       mineMapDataUrl: null,
       minePins: [],
-      // 每天的轨迹记录：{ '日期': [{ from, to, time, mode }] }
-      dailyTrips: {},
+      autoTrips: {},        // 自动生成的祁煜世界行程
+      mineAutoTrips: {},    // 自动生成的我的世界行程
     };
   }
 
   function migrate() {
-    if (!data.version) data.version = 1;
+    if (!data.version) data.version = 2;
     if (!data.minePins) data.minePins = [];
-    if (!data.dailyTrips) data.dailyTrips = {};
+    if (!data.autoTrips) data.autoTrips = {};
+    if (!data.mineAutoTrips) data.mineAutoTrips = {};
     if (!data.mineMapDataUrl) data.mineMapDataUrl = null;
+  }
+
+  // 确保今天有行程数据（每次打开自动生成）
+  function ensureTodayTrips() {
+    var today = todayKey();
+    var trips = getAutoTrips();
+    if (!trips[today]) {
+      // 生成最近 3 天的行程
+      var locations = getLocations();
+      if (locations.length >= 2) {
+        var recent = genRecentTrips(3, locations);
+        Object.keys(recent).forEach(function(day) {
+          if (!trips[day]) trips[day] = recent[day];
+        });
+        save();
+      }
+    }
+  }
+
+  function getAutoTrips() {
+    return state.world === 'qiyu' ? data.autoTrips : data.mineAutoTrips;
   }
 
   function save() {
@@ -84,13 +203,13 @@
 
   // 获取所有行程（跨日期合并，按日期+时间排序）
   function getAllTrips() {
+    var trips = getAutoTrips();
     var all = [];
-    Object.keys(data.dailyTrips).forEach(function(day) {
-      data.dailyTrips[day].forEach(function(t) {
+    Object.keys(trips).forEach(function(day) {
+      trips[day].forEach(function(t) {
         all.push({ day: day, from: t.from, to: t.to, time: t.time, mode: t.mode });
       });
     });
-    // 按日期+时间排序
     all.sort(function(a, b) {
       if (a.day !== b.day) return a.day.localeCompare(b.day);
       return a.time.localeCompare(b.time);
