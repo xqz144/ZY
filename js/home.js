@@ -1618,7 +1618,8 @@
 
     // ========== 扩展功能（小火人功能页）：内嵌iframe方式，SPA内导航 ==========
     const EXT_APPS = {
-        'spark-new':      { key: 'spark',       page: 'pages/spark-new.html' }
+        'spark-new':      { key: 'spark',       page: 'pages/spark-new.html' },
+        'sweet-new':      { key: 'sweet',       page: 'pages/sweet.html' }
     };
 
     window.showExtApp = function(appKeyOrId) {
@@ -1970,7 +1971,8 @@
                 }
             },
             // ========== 用户扩展功能：内嵌iframe，和参考站原有行为一致 ==========
-            'spark-new':       () => window.showExtApp('spark-new')
+            'spark-new':       () => window.showExtApp('spark-new'),
+            'sweet-new':       () => window.showExtApp('sweet-new')
         };
 
         if (appActions[app]) {

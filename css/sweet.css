@@ -1,0 +1,688 @@
+/**
+ * 甜蜜轨迹 - sweet.css
+ * 一款情侣日常记录应用（恋爱打卡 / 纪念日 / 甜蜜日记 / 愿望清单）
+ * 复用主站 CSS 变量：--accent-color, --accent-color-rgb, --primary-bg, --secondary-bg,
+ * --text-primary, --text-secondary, --border-color, --radius, --font-family, --font-serif
+ */
+
+/* ================================================================
+   主题色变量（与主站 styles.css 各主题保持一致）
+   - 当父窗口同步的 inline 变量存在时，inline 优先；此处仅作兜底，
+     让 iframe 在拿到父窗口计算值前也能正确显示主题色。
+   ================================================================ */
+:root {
+    --accent-color: #F4A6B3;
+    --accent-color-rgb: 244, 166, 179;
+}
+:root[data-color-theme="gold"]        { --accent-color: #c5a47e; --accent-color-rgb: 197, 164, 126; }
+:root[data-color-theme="blue"]        { --accent-color: #7FA6CD; --accent-color-rgb: 127, 166, 205; }
+:root[data-color-theme="purple"]      { --accent-color: #BB9EC7; --accent-color-rgb: 187, 158, 199; }
+:root[data-color-theme="green"]       { --accent-color: #7BC8A4; --accent-color-rgb: 123, 200, 164; }
+:root[data-color-theme="pink"]        { --accent-color: #F4A6B3; --accent-color-rgb: 244, 166, 179; }
+:root[data-color-theme="black-white"] { --accent-color: #333333; --accent-color-rgb: 51, 51, 51; }
+:root[data-color-theme="pastel"]      { --accent-color: #A8D8EA; --accent-color-rgb: 168, 216, 234; }
+:root[data-color-theme="sunset"]      { --accent-color: #FF9A8B; --accent-color-rgb: 255, 154, 139; }
+:root[data-color-theme="forest"]      { --accent-color: #7BA05B; --accent-color-rgb: 123, 160, 91; }
+:root[data-color-theme="ocean"]       { --accent-color: #4A90E2; --accent-color-rgb: 74, 144, 226; }
+html[data-theme="dark"]               { --accent-color: #d0d0d0; --accent-color-rgb: 208, 208, 208; }
+
+/* ================================================================
+   基础容器
+   ================================================================ */
+.sweet-app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(ellipse 520px 320px at 18% 0%, rgba(var(--accent-color-rgb), 0.12), transparent 60%),
+        radial-gradient(ellipse 420px 260px at 92% 8%, rgba(var(--accent-color-rgb), 0.08), transparent 55%),
+        var(--primary-bg);
+    font-family: var(--font-family);
+    color: var(--text-primary);
+}
+
+.sweet-scroll {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px 16px 40px;
+    max-width: 560px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ================================================================
+   Hero · 在一起 X 天
+   ================================================================ */
+.sweet-hero {
+    position: relative;
+    border-radius: var(--radius-lg, 22px);
+    padding: 22px 20px 18px;
+    margin-bottom: 16px;
+    text-align: center;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse 240px 160px at 50% 0%, rgba(var(--accent-color-rgb), 0.22), transparent 70%),
+        linear-gradient(145deg, rgba(var(--accent-color-rgb), 0.10), rgba(var(--accent-color-rgb), 0.03));
+    border: 1px solid rgba(var(--accent-color-rgb), 0.18);
+    box-shadow: 0 8px 22px -8px rgba(var(--accent-color-rgb), 0.25);
+}
+.sweet-hero::before,
+.sweet-hero::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.5;
+}
+.sweet-hero::before {
+    width: 90px; height: 90px;
+    top: -30px; left: -20px;
+    background: radial-gradient(circle, rgba(var(--accent-color-rgb), 0.25), transparent 70%);
+}
+.sweet-hero::after {
+    width: 120px; height: 120px;
+    bottom: -50px; right: -30px;
+    background: radial-gradient(circle, rgba(var(--accent-color-rgb), 0.18), transparent 70%);
+}
+.sweet-hero-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 1;
+}
+.sweet-hero-days {
+    font-family: var(--font-serif);
+    font-size: 46px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 4px 0 6px;
+    color: var(--accent-color);
+    position: relative;
+    z-index: 1;
+}
+.sweet-hero-days small {
+    font-size: 16px;
+    font-weight: 600;
+    margin-left: 4px;
+    color: var(--text-secondary);
+}
+.sweet-hero-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    position: relative;
+    z-index: 1;
+}
+.sweet-hero-edit {
+    margin-top: 10px;
+    background: rgba(var(--accent-color-rgb), 0.12);
+    color: var(--accent-color);
+    border: 1px solid rgba(var(--accent-color-rgb), 0.22);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    transition: background .15s ease, transform .12s ease;
+}
+.sweet-hero-edit:active { transform: scale(0.96); }
+.sweet-hero-edit:hover { background: rgba(var(--accent-color-rgb), 0.2); }
+
+/* ================================================================
+   标签栏
+   ================================================================ */
+.sweet-tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 18px);
+    padding: 5px;
+    margin-bottom: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: var(--shadow-sm, 0 3px 8px -1px rgba(0,0,0,0.06));
+}
+.sweet-tab {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 2px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm, 14px);
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-size: 11px;
+    font-weight: 600;
+    transition: all .18s ease;
+}
+.sweet-tab svg,
+.sweet-tab i {
+    width: 20px;
+    height: 20px;
+}
+.sweet-tab.active {
+    background: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 3px 10px -2px rgba(var(--accent-color-rgb), 0.45);
+}
+.sweet-tab:not(.active):hover { background: rgba(var(--accent-color-rgb), 0.08); color: var(--text-primary); }
+
+/* ================================================================
+   面板通用
+   ================================================================ */
+.sweet-panel { display: none; animation: sweetFade .25s ease; }
+.sweet-panel.active { display: block; }
+@keyframes sweetFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.sweet-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 2px 10px;
+}
+.sweet-section-title {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.sweet-section-hint {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.sweet-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(var(--accent-color-rgb), 0.1);
+    color: var(--accent-color);
+    border: 1px dashed rgba(var(--accent-color-rgb), 0.4);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+.sweet-add-btn:active { transform: scale(0.96); }
+.sweet-add-btn:hover { background: rgba(var(--accent-color-rgb), 0.18); }
+.sweet-add-btn svg { width: 14px; height: 14px; }
+
+/* 空状态 */
+.sweet-empty {
+    text-align: center;
+    padding: 36px 16px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+.sweet-empty .sweet-empty-emoji {
+    font-size: 34px;
+    display: block;
+    margin-bottom: 8px;
+    opacity: 0.6;
+}
+
+/* ================================================================
+   恋爱打卡
+   ================================================================ */
+.sweet-checkin-stats {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.sweet-stat-card {
+    flex: 1;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm, 14px);
+    padding: 10px 8px;
+    text-align: center;
+}
+.sweet-stat-num {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent-color);
+    line-height: 1.1;
+}
+.sweet-stat-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.sweet-checkin-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+.sweet-checkin-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 10px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm, 14px);
+    cursor: pointer;
+    transition: all .18s ease;
+    position: relative;
+}
+.sweet-checkin-item:active { transform: scale(0.97); }
+.sweet-checkin-item.done {
+    background: rgba(var(--accent-color-rgb), 0.12);
+    border-color: rgba(var(--accent-color-rgb), 0.4);
+}
+.sweet-checkin-emoji {
+    font-size: 20px;
+    flex-shrink: 0;
+    width: 28px;
+    text-align: center;
+}
+.sweet-checkin-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sweet-checkin-item.done .sweet-checkin-name { color: var(--accent-color); }
+.sweet-checkin-tick {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s ease;
+}
+.sweet-checkin-item.done .sweet-checkin-tick {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+.sweet-checkin-tick svg { width: 12px; height: 12px; opacity: 0; transition: opacity .15s; }
+.sweet-checkin-item.done .sweet-checkin-tick svg { opacity: 1; }
+
+.sweet-checkin-del {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    color: #fff;
+    border: none;
+    font-size: 11px;
+    line-height: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.sweet-checkin-item.custom:hover .sweet-checkin-del { display: flex; }
+
+/* ================================================================
+   纪念日
+   ================================================================ */
+.sweet-anni-list { display: flex; flex-direction: column; gap: 10px; }
+.sweet-anni-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 18px);
+    transition: transform .12s ease;
+}
+.sweet-anni-card:active { transform: scale(0.98); }
+.sweet-anni-emoji {
+    width: 46px; height: 46px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: rgba(var(--accent-color-rgb), 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+.sweet-anni-info { flex: 1; min-width: 0; }
+.sweet-anni-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sweet-anni-date { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.sweet-anni-count {
+    text-align: right;
+    flex-shrink: 0;
+}
+.sweet-anni-count-num {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-color);
+    line-height: 1;
+}
+.sweet-anni-count-unit { font-size: 10px; color: var(--text-secondary); }
+.sweet-anni-count.soon .sweet-anni-count-num { color: #ff7a59; }
+
+.sweet-row-del {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.sweet-row-del:hover { color: #e5655b; background: rgba(229,101,91,0.08); }
+.sweet-row-del svg { width: 16px; height: 16px; }
+
+/* ================================================================
+   甜蜜日记
+   ================================================================ */
+.sweet-diary-list { display: flex; flex-direction: column; gap: 10px; }
+.sweet-diary-card {
+    padding: 14px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 18px);
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .18s ease;
+}
+.sweet-diary-card:active { transform: scale(0.99); }
+.sweet-diary-card:hover { box-shadow: var(--shadow-sm, 0 3px 8px -1px rgba(0,0,0,0.06)); }
+.sweet-diary-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.sweet-diary-mood { font-size: 18px; }
+.sweet-diary-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sweet-diary-date { font-size: 11px; color: var(--text-secondary); flex-shrink: 0; }
+.sweet-diary-content {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ================================================================
+   愿望清单
+   ================================================================ */
+.sweet-wish-group { margin-bottom: 14px; }
+.sweet-wish-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 0 2px 8px;
+    letter-spacing: 0.5px;
+}
+.sweet-wish-list { display: flex; flex-direction: column; gap: 8px; }
+.sweet-wish-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm, 14px);
+    transition: opacity .2s ease;
+}
+.sweet-wish-item.done { opacity: 0.55; }
+.sweet-wish-check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .18s ease;
+}
+.sweet-wish-item.done .sweet-wish-check {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+.sweet-wish-check svg { width: 13px; height: 13px; opacity: 0; transition: opacity .15s; }
+.sweet-wish-item.done .sweet-wish-check svg { opacity: 1; }
+.sweet-wish-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sweet-wish-item.done .sweet-wish-text { text-decoration: line-through; color: var(--text-secondary); }
+
+/* ================================================================
+   通用弹窗（modal/sheet）
+   ================================================================ */
+.sweet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 4000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: sweetFade .2s ease;
+}
+@media (min-width: 600px) {
+    .sweet-overlay { align-items: center; }
+}
+.sweet-sheet {
+    background: var(--secondary-bg);
+    width: 100%;
+    max-width: 460px;
+    border-radius: 22px 22px 0 0;
+    padding: 18px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+    animation: sweetSlideUp .28s cubic-bezier(0.22, 1, 0.36, 1);
+    max-height: 88vh;
+    overflow-y: auto;
+}
+@media (min-width: 600px) {
+    .sweet-sheet { border-radius: 22px; animation: sweetPop .25s cubic-bezier(0.22,1,0.36,1); }
+}
+@keyframes sweetSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+@keyframes sweetPop {
+    from { transform: scale(0.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.sweet-sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.sweet-sheet-title {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.sweet-sheet-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sweet-sheet-close:hover { background: rgba(0,0,0,0.06); }
+
+.sweet-field { margin-bottom: 12px; }
+.sweet-field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+.sweet-field input,
+.sweet-field textarea,
+.sweet-field select {
+    width: 100%;
+}
+.sweet-field textarea { min-height: 90px; resize: vertical; line-height: 1.6; }
+
+.sweet-emoji-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.sweet-emoji-pick {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: var(--primary-bg);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+}
+.sweet-emoji-pick:active { transform: scale(0.92); }
+.sweet-emoji-pick.active {
+    border-color: var(--accent-color);
+    background: rgba(var(--accent-color-rgb), 0.14);
+    box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.sweet-seg {
+    display: flex;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm, 14px);
+    padding: 3px;
+    gap: 3px;
+}
+.sweet-seg button {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 7px 0;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease;
+    font-family: var(--font-family);
+}
+.sweet-seg button.active {
+    background: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 2px 6px -1px rgba(var(--accent-color-rgb), 0.4);
+}
+
+.sweet-sheet-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+}
+.sweet-btn {
+    flex: 1;
+    border: none;
+    border-radius: var(--radius-sm, 14px);
+    padding: 11px 0;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-family);
+    transition: all .15s ease;
+}
+.sweet-btn:active { transform: scale(0.97); }
+.sweet-btn-primary {
+    background: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 4px 12px -2px rgba(var(--accent-color-rgb), 0.4);
+}
+.sweet-btn-primary:hover { opacity: 0.92; }
+.sweet-btn-ghost {
+    background: rgba(var(--accent-color-rgb), 0.08);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+.sweet-btn-danger {
+    background: rgba(229,101,91,0.1);
+    color: #e5655b;
+    border: 1px solid rgba(229,101,91,0.3);
+}
+
+/* ================================================================
+   Toast
+   ================================================================ */
+.sweet-toast {
+    position: fixed;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30,30,30,0.92);
+    color: #fff;
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 5000;
+    animation: sweetToastIn .25s ease, sweetToastOut .25s ease 1.6s forwards;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    max-width: 80vw;
+    text-align: center;
+}
+@keyframes sweetToastIn {
+    from { opacity: 0; transform: translate(-50%, 12px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes sweetToastOut {
+    to { opacity: 0; transform: translate(-50%, 12px); }
+}

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>甜蜜轨迹 · 梦角传讯</title>
+    <link rel="stylesheet" href="../css/extapp-unified.css">
+    <script>
+    /* 从父窗口同步主题色/字体到 iframe 内（配合主站外观设置） */
+    (function () {
+        try {
+            var inIframe = false;
+            try { inIframe = (window.top !== window.self); } catch (e) { inIframe = true; }
+            function applyColorThemeFromParent() {
+                try {
+                    var parentRoot = null;
+                    var parentDoc = null;
+                    try { parentDoc = window.parent.document; parentRoot = parentDoc.documentElement; } catch (e) { parentRoot = null; }
+                    if (parentRoot) {
+                        var t = parentRoot.getAttribute('data-color-theme');
+                        if (t) document.documentElement.setAttribute('data-color-theme', t);
+                        var dt = parentRoot.getAttribute('data-theme');
+                        if (dt) document.documentElement.setAttribute('data-theme', dt);
+                        if (dt === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+                        var fv = parentRoot.style.getPropertyValue('--font-family');
+                        if (fv) document.documentElement.style.setProperty('--font-family', fv);
+                        var mfv = parentRoot.style.getPropertyValue('--message-font-family');
+                        if (mfv) document.documentElement.style.setProperty('--message-font-family', mfv);
+                        var fs = parentRoot.style.getPropertyValue('--font-size');
+                        if (fs) document.documentElement.style.setProperty('--font-size', fs);
+                        // accent 色变量：优先读父窗口“计算后”的值（覆盖自定义主题色），确保 iframe 内 CSS 变量可用
+                        var pcs = null;
+                        try { pcs = parentDoc.defaultView ? parentDoc.defaultView.getComputedStyle(parentRoot) : null; } catch (e) { pcs = null; }
+                        var accent = (pcs && pcs.getPropertyValue('--accent-color')) || parentRoot.style.getPropertyValue('--accent-color') || '';
+                        if (accent) document.documentElement.style.setProperty('--accent-color', accent.trim());
+                        var accentRgb = (pcs && pcs.getPropertyValue('--accent-color-rgb')) || parentRoot.style.getPropertyValue('--accent-color-rgb') || '';
+                        if (accentRgb) document.documentElement.style.setProperty('--accent-color-rgb', accentRgb.trim());
+                    }
+                } catch (e) { console.warn('sweet theme sync error', e); }
+            }
+            applyColorThemeFromParent();
+            if (inIframe) {
+                window.addEventListener('message', function (ev) {
+                    var d = ev.data || {};
+                    if (d.type === 'theme:sync' || d.colorTheme || d.theme) {
+                        if (d.colorTheme) document.documentElement.setAttribute('data-color-theme', d.colorTheme);
+                        if (d.theme) {
+                            document.documentElement.setAttribute('data-theme', d.theme);
+                            if (d.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+                        }
+                        if (d.fontFamily) document.documentElement.style.setProperty('--font-family', d.fontFamily);
+                        if (d.messageFontFamily) document.documentElement.style.setProperty('--message-font-family', d.messageFontFamily);
+                        if (d.fontSize) document.documentElement.style.setProperty('--font-size', d.fontSize);
+                        applyColorThemeFromParent();
+                    }
+                    if (d.type === 'extapp:closed') { /* 关闭时可做清理 */ }
+                });
+                setInterval(applyColorThemeFromParent, 2500);
+            }
+        } catch (e) { console.warn('sweet init error', e); }
+    })();
+    </script>
+    <link rel="stylesheet" href="../css/sweet.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="sweet-app">
+        <div class="sweet-scroll">
+            <!-- Hero · 在一起 X 天 -->
+            <div class="sweet-hero">
+                <div class="sweet-hero-label">我们已经在一起</div>
+                <div class="sweet-hero-days"><span id="together-days">0</span><small>天</small></div>
+                <div class="sweet-hero-sub" id="together-sub">从今天开始</div>
+                <button class="sweet-hero-edit" id="edit-together-date"><i data-lucide="calendar-heart" style="width:13px;height:13px;display:inline;vertical-align:-2px;margin-right:3px;"></i>设置在一起的日子</button>
+            </div>
+
+            <!-- 标签栏 -->
+            <div class="sweet-tabs">
+                <button class="sweet-tab active" data-tab="love-checkin">
+                    <i data-lucide="heart"></i><span>恋爱打卡</span>
+                </button>
+                <button class="sweet-tab" data-tab="anniversary">
+                    <i data-lucide="cake"></i><span>纪念日</span>
+                </button>
+                <button class="sweet-tab" data-tab="diary">
+                    <i data-lucide="book-open"></i><span>甜蜜日记</span>
+                </button>
+                <button class="sweet-tab" data-tab="wish">
+                    <i data-lucide="gift"></i><span>愿望清单</span>
+                </button>
+            </div>
+
+            <!-- 恋爱打卡 -->
+            <div class="sweet-panel active" data-panel="love-checkin">
+                <div class="sweet-section-head">
+                    <span class="sweet-section-title">今日甜蜜打卡</span>
+                    <button class="sweet-add-btn" id="checkin-add"><i data-lucide="plus"></i>新增</button>
+                </div>
+                <div class="sweet-checkin-stats" id="checkin-stats"></div>
+                <div class="sweet-checkin-list" id="checkin-list"></div>
+            </div>
+
+            <!-- 纪念日 -->
+            <div class="sweet-panel" data-panel="anniversary">
+                <div class="sweet-section-head">
+                    <span class="sweet-section-title">我们的纪念日</span>
+                    <button class="sweet-add-btn" id="anni-add"><i data-lucide="plus"></i>新增</button>
+                </div>
+                <div class="sweet-anni-list" id="anni-list"></div>
+            </div>
+
+            <!-- 甜蜜日记 -->
+            <div class="sweet-panel" data-panel="diary">
+                <div class="sweet-section-head">
+                    <span class="sweet-section-title">甜蜜日记</span>
+                    <button class="sweet-add-btn" id="diary-add"><i data-lucide="plus"></i>写一篇</button>
+                </div>
+                <div class="sweet-diary-list" id="diary-list"></div>
+            </div>
+
+            <!-- 愿望清单 -->
+            <div class="sweet-panel" data-panel="wish">
+                <div class="sweet-section-head">
+                    <span class="sweet-section-title">愿望清单</span>
+                    <button class="sweet-add-btn" id="wish-add"><i data-lucide="plus"></i>新增</button>
+                </div>
+                <div class="sweet-wish-list" id="wish-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/sweet.js"></script>
+</body>
+</html>

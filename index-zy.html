@@ -483,6 +483,14 @@
                         </div>
                         <span class="app-label" data-spark-app-label>伙伴</span>
                     </div>
+                    <div class="app-item" onclick="openApp('sweet-new')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #f7a8c4, #e8759f);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                            </svg>
+                        </div>
+                        <span class="app-name">甜蜜轨迹</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2058,6 +2066,15 @@
             <div class="extapp-right-placeholder"></div>
         </div>
         <iframe id="extapp-spark-iframe" data-src="pages/spark-new.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+    <!-- 甜蜜轨迹 -->
+    <div class="extapp-container" id="extapp-sweet" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-unified-nav">
+            <button class="extapp-back-btn" onclick="window.hideExtApp('sweet')"><i class="fas fa-arrow-left"></i><span>返回</span></button>
+            <h2 class="extapp-title">甜蜜轨迹</h2>
+            <div class="extapp-right-placeholder"></div>
+        </div>
+        <iframe id="extapp-sweet-iframe" data-src="pages/sweet.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
     </div>
     <!-- ========== 用户扩展功能模块结束 ========== -->
 
