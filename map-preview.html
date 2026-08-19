@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>轨迹回忆 · 原型 V3</title>
+<title>轨迹回忆 · 原型 V3/V6 对比</title>
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -21,7 +21,7 @@
   .sub { color: #888; font-size: 13px; }
 
   /* 世界切换按钮 */
-  .world-switch { display: flex; gap: 8px; }
+  .world-switch { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
   .world-btn {
     padding: 8px 16px;
     border: 2px solid #fff3;
@@ -40,6 +40,10 @@
     border-color: #e8a4b8;
     color: #fff;
   }
+  .world-btn.map-btn.active {
+    background: #5ba8f5;
+    border-color: #5ba8f5;
+  }
 
   /* 地图容器 */
   .map-container {
@@ -52,6 +56,7 @@
     box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     background: #FFF8F0;
   }
+  .map-container.v6 { background: #0f2644; }
   .map-bg {
     position: absolute;
     inset: 0;
@@ -100,6 +105,13 @@
   .pin.cat-purple .pin-dot { background: #9b59b6; }   /* 主线战斗与遗迹 */
   .pin.cat-mine .pin-dot { background: #f39c12; }     /* 你的世界 */
 
+  /* V6 深蓝底图适配 —— 更亮的颜色 + 白色外圈 */
+  .map-container.v6 .pin.cat-blue .pin-dot   { background: #5ba8f5; box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(91,168,245,0.6); }
+  .map-container.v6 .pin.cat-red .pin-dot    { background: #ff6b6b; box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(255,107,107,0.6); }
+  .map-container.v6 .pin.cat-purple .pin-dot { background: #c388ff; box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(195,136,255,0.6); }
+  .map-container.v6 .pin.cat-mine .pin-dot   { background: #ffd93d; box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(255,217,61,0.6); }
+  .map-container.v6 .pin-label { background: rgba(10,25,50,0.92); border: 1px solid rgba(255,255,255,0.2); color: #e8f0ff; }
+
   .pin.active .pin-dot {
     animation: pulse 1.2s infinite;
   }
@@ -125,6 +137,13 @@
     stroke-linecap: round;
     filter: drop-shadow(0 1px 2px rgba(231,76,60,0.3));
     animation: dash 1.5s linear infinite;
+  }
+  /* V6 深蓝底图轨迹线 —— 白色发光 */
+  .map-container.v6 .trail-line {
+    stroke: #ffffff;
+    stroke-width: 1.8;
+    stroke-dasharray: 5 5;
+    filter: drop-shadow(0 0 4px rgba(255,255,255,0.8)) drop-shadow(0 0 8px rgba(100,180,255,0.6));
   }
   @keyframes dash {
     to { stroke-dashoffset: -22; }
@@ -195,7 +214,20 @@
   .trip-item .route { flex: 1; font-size: 13px; }
   .trip-item .route .mode { color: #888; font-size: 11px; margin-top: 2px; }
 
-  /* Popup */
+  /* V6 深蓝底图 —— 底部控件 & 行程列表 适配 */
+  body.v6-mode .bottom-bar { background: #0f2644; }
+  body.v6-mode .bottom-bar button { background: #1a365e; }
+  body.v6-mode .bottom-bar button:hover { background: #2a466e; }
+  body.v6-mode .trip-list { background: #0f2644; }
+  body.v6-mode .trip-item { background: #1a365e; }
+  body.v6-mode .trip-list h3 { color: #8fa8d0; }
+  body.v6-mode .legend { color: #6b8bb5; }
+  body.v6-mode .popup { background: #0f2644; }
+  body.v6-mode .popup h4 { color: #e8f0ff; }
+  body.v6-mode .popup p { color: #8fa8d0; }
+  body.v6-mode .popup .cat-blue { background: rgba(91,168,245,0.15); color: #5ba8f5; }
+  body.v6-mode .popup .cat-red { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+  body.v6-mode .popup .cat-purple { background: rgba(195,136,255,0.15); color: #c388ff; }
   .popup {
     position: absolute;
     background: #fff;
@@ -233,12 +265,14 @@
 </style>
 </head>
 <body>
-  <h1>🗺️ 轨迹回忆 · V3 原型</h1>
-  <p class="sub">参考恋与深空游戏地图 — 三色分类 · 松散布局 · 清晰分区</p>
+  <h1>🗺️ 轨迹回忆 · V3 vs V6 对比</h1>
+  <p class="sub">参考恋与深空游戏地图 — 三色分类 · 宽间距 · 跨底图版本切换</p>
 
   <div class="world-switch">
     <button class="world-btn active" data-world="qiyu"><i data-lucide="sparkles" style="width:14px;height:14px;"></i> 祁煜的世界</button>
     <button class="world-btn" data-world="mine"><i data-lucide="home" style="width:14px;height:14px;"></i> 我的世界</button>
+    <button class="world-btn map-btn active" data-map="v3" title="浅色手绘风"><i data-lucide="map" style="width:14px;height:14px;"></i> V3 手绘风</button>
+    <button class="world-btn map-btn" data-map="v6" title="深蓝3D建筑群"><i data-lucide="globe" style="width:14px;height:14px;"></i> V6 深蓝3D</button>
   </div>
 
   <div class="map-container" id="mapContainer">
@@ -263,11 +297,8 @@
   </div>
 
 <script>
-  // ===== 标记数据（严格按 V3 底图实际像素位置对齐，宽间距）=====
-  // 底图：assets/map_qiyu_v3.jpg  2560×1440  浅色手绘风 / 松散布局
-  // 坐标均按底图实际地标摆放，确保与底图上的文字/图标完全重合
-  const PINS_QIYU = [
-    // 蓝色：城市与机构（7个）—— 临空市主要设施
+  // ===== 标记数据（V3 底图 —— 浅色手绘风，2560×1440）=====
+  const PINS_QIYU_V3 = [
     { id: 'hongwan', name: '晴空中央湾区',   x: 47, y: 34, cat: 'blue', desc: '临空市核心湾区' },
     { id: 'hunter',  name: '猎人协会总部',   x: 55, y: 67, cat: 'blue', desc: '深空猎人协会总部' },
     { id: 'ever',    name: 'EVER集团大楼',   x: 68, y: 14, cat: 'blue', desc: '跨国集团总部' },
@@ -275,18 +306,43 @@
     { id: 'chaoxi',  name: '潮汐屿',         x: 25, y: 80, cat: 'blue', desc: '小岛' },
     { id: 'akso',    name: 'AKSO医院',       x: 64, y: 18, cat: 'blue', desc: '私立医院' },
     { id: 'moart',   name: 'Mo Art Studio',  x: 19, y: 65, cat: 'blue', desc: '祁煜的海边画室' },
-    // 珊瑚红：祁煜剧情点（4个）—— 祁煜相关场景
     { id: 'maoer',   name: '帽儿岛',         x: 10, y: 19, cat: 'red', desc: '祁煜幼时搁浅之地' },
     { id: 'baisha',  name: '白沙湾海区',     x: 62, y: 72, cat: 'red', desc: '临空市海湾' },
     { id: 'xiwai',   name: '西郊别墅区',     x: 38, y: 40, cat: 'red', desc: '西郊豪华别墅区' },
     { id: 'landong', name: '宝空大岛·蓝洞',  x: 16, y: 53, cat: 'red', desc: '大岛蓝洞景观' },
-    // 紫色：主线战斗与遗迹（5个）—— 深空/遗迹
     { id: 'chaoxiqu',name: '潮汐区',         x: 18, y: 27, cat: 'purple', desc: '帽儿岛潮汐区' },
     { id: 'n109',    name: 'N-109禁区',      x: 88, y: 22, cat: 'purple', desc: '危险禁区' },
     { id: 'limori',  name: '利莫里亚遗迹',   x: 85, y: 72, cat: 'purple', desc: '古文明遗迹' },
     { id: 'deep',    name: '深空隧道',       x: 58, y: 68, cat: 'purple', desc: '2034年时空隧道' },
     { id: 'lingkong',name: '临空塔',         x: 54, y: 44, cat: 'purple', desc: '临空市地标' },
   ];
+
+  // ===== 标记数据（V6 底图 —— 深蓝3D建筑群，2278×1280）=====
+  // 坐标严格对齐 V6 底图实际地标位置
+  const PINS_QIYU_V6 = [
+    // 蓝色：城市与机构
+    { id: 'hongwan', name: '晴空中央湾区',   x: 60, y: 13, cat: 'blue', desc: '临空市核心湾区' },
+    { id: 'hunter',  name: '猎人协会总部',   x: 46, y: 25, cat: 'blue', desc: '深空猎人协会总部' },
+    { id: 'ever',    name: 'EVER集团大楼',   x: 62, y: 30, cat: 'blue', desc: '跨国集团总部' },
+    { id: 'naokong', name: '脑机研究中心',   x: 35, y: 43, cat: 'blue', desc: '科研机构' },
+    { id: 'chaoxi',  name: '潮汐屿',         x: 59, y: 57, cat: 'blue', desc: '小岛' },
+    { id: 'akso',    name: 'AKSO医院',       x: 64, y: 10, cat: 'blue', desc: '私立医院' },
+    { id: 'moart',   name: 'Mo Art Studio',  x: 31, y: 35, cat: 'blue', desc: '祁煜的海边画室' },
+    // 珊瑚红：祁煜剧情点
+    { id: 'maoer',   name: '帽儿岛',         x: 16, y: 28, cat: 'red', desc: '祁煜幼时搁浅之地' },
+    { id: 'baisha',  name: '白沙湾海区',     x: 42, y: 55, cat: 'red', desc: '临空市海湾' },
+    { id: 'xiwai',   name: '西郊别墅区',     x: 71, y: 37, cat: 'red', desc: '西郊豪华别墅区' },
+    { id: 'landong', name: '宝空大岛·蓝洞',  x: 24, y: 65, cat: 'red', desc: '大岛蓝洞景观' },
+    // 紫色：主线战斗与遗迹
+    { id: 'chaoxiqu',name: '潮汐区',         x: 21, y: 34, cat: 'purple', desc: '帽儿岛潮汐区' },
+    { id: 'n109',    name: 'N-109禁区',      x: 77, y: 44, cat: 'purple', desc: '危险禁区' },
+    { id: 'limori',  name: '利莫里亚遗迹',   x: 69, y: 71, cat: 'purple', desc: '古文明遗迹' },
+    { id: 'deep',    name: '深空隧道',       x: 63, y: 68, cat: 'purple', desc: '2034年时空隧道' },
+    { id: 'lingkong',name: '临空塔',         x: 37, y: 22, cat: 'purple', desc: '临空市地标' },
+  ];
+
+  // 当前激活的 PIN 数据
+  let PINS_QIYU = PINS_QIYU_V3;
 
   const PINS_MINE = [
     { id: 'home',   name: '家',       x: 30, y: 45, cat: 'mine', desc: '我的家' },
@@ -297,12 +353,12 @@
     { id: 'gym',    name: '健身房',   x: 55, y: 75, cat: 'mine', desc: '健身的地方' },
   ];
 
-  // ===== 行程数据（精简版，匹配 V5 地点）=====
+  // ===== 行程数据（匹配 PIN 名称）=====
   const TRIPS = {
     '5月23日': [
       { time: '18:01-18:28', from: '帽儿岛', to: 'EVER集团大楼', mode: '🚗 乘车 17.57km · 27分钟' },
       { time: '14:01-14:28', from: 'AKSO医院', to: '猎人协会总部', mode: '🚗 乘车 · 3km · 5分钟' },
-      { time: '12:01-12:28', from: 'Mo Art Studio', to: '白沙湾', mode: '🚶 步行 · 海边散步' },
+      { time: '12:01-12:28', from: 'Mo Art Studio', to: '白沙湾海区', mode: '🚶 步行 · 海边散步' },
     ],
     '5月24日': [
       { time: '10:00-12:00', from: 'Mo Art Studio', to: '帽儿岛', mode: '⛴️ 乘船 · 环岛采风' },
@@ -313,7 +369,7 @@
       { time: '14:00-16:00', from: 'N-109禁区', to: '利莫里亚遗迹', mode: '🚗 乘车 · 探索遗迹' },
     ],
     '5月26日': [
-      { time: '10:00-12:00', from: '白沙湾', to: 'Mo Art Studio', mode: '🚶 步行 · 回画室' },
+      { time: '10:00-12:00', from: '白沙湾海区', to: 'Mo Art Studio', mode: '🚶 步行 · 回画室' },
       { time: '15:00-17:00', from: 'Mo Art Studio', to: '深空隧道', mode: '🚗 乘车 · 调查异常' },
     ],
   };
@@ -423,19 +479,41 @@
     container.appendChild(popup);
   }
 
-  // ===== 世界切换 =====
-  document.querySelectorAll('.world-btn').forEach(btn => {
+  // ===== 世界/底图切换 =====
+  let currentMap = 'v3';
+
+  function applyMapVersion(mapVer) {
+    currentMap = mapVer;
+    const container = document.getElementById('mapContainer');
+    const img = document.getElementById('mapBg');
+    if (mapVer === 'v3') {
+      img.src = 'assets/map_qiyu_v3.jpg';
+      container.classList.remove('v6');
+      document.body.classList.remove('v6-mode');
+      PINS_QIYU = PINS_QIYU_V3;
+    } else {
+      img.src = 'assets/map_qiyu_v6.jpg';
+      container.classList.add('v6');
+      document.body.classList.add('v6-mode');
+      PINS_QIYU = PINS_QIYU_V6;
+    }
+    renderPins(currentWorld);
+  }
+
+  document.querySelectorAll('.world-btn[data-world]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.world-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.world-btn[data-world]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentWorld = btn.dataset.world;
-      const img = document.getElementById('mapBg');
-      if (currentWorld === 'qiyu') {
-        img.src = 'assets/map_qiyu_v3.jpg';
-      } else {
-        img.src = 'assets/map_qiyu_v3.jpg';
-      }
       renderPins(currentWorld);
+    });
+  });
+
+  document.querySelectorAll('.world-btn[data-map]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.world-btn[data-map]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyMapVersion(btn.dataset.map);
     });
   });
 
@@ -463,8 +541,7 @@
   });
 
   // ===== 初始化 =====
-  document.getElementById('mapBg').src = 'assets/map_qiyu_v3.jpg';
-  renderPins('qiyu');
+  applyMapVersion('v3');
   renderTrips();
 
   function initLucideIcons() {
