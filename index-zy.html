@@ -500,8 +500,8 @@
                         </div>
                         <span class="app-name">喵喵账本</span>
                     </div>
-                    <div class="app-item" onclick="openApp('diary')">
-                        <div class="app-icon" style="background: linear-gradient(145deg, #a8edea, #5eb3d4);">
+                    <div class="app-item" onclick="openApp('plan-new')">
+                        <div class="app-icon" style="background: linear-gradient(145deg, #ffb199, #ff8a5c);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <rect x="3" y="4" width="18" height="16" rx="2" ry="2"/>
                                 <line x1="3" y1="10" x2="21" y2="10"/>
@@ -510,7 +510,7 @@
                                 <line x1="12" y1="18" x2="14" y2="18"/>
                             </svg>
                         </div>
-                        <span class="app-name">朝夕心记</span>
+                        <span class="app-name">朝夕计划</span>
                     </div>
                 </div>
             </div>
@@ -2105,6 +2105,15 @@
             <div class="extapp-right-placeholder"></div>
         </div>
         <iframe id="extapp-ledger-iframe" data-src="pages/ledger.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
+    </div>
+    <!-- 朝夕计划 -->
+    <div class="extapp-container" id="extapp-plan" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--home-bg,#f9f7f4);flex-direction:column;">
+        <div class="extapp-unified-nav">
+            <button class="extapp-back-btn" onclick="window.hideExtApp('plan')"><i class="fas fa-arrow-left"></i><span>返回</span></button>
+            <h2 class="extapp-title">朝夕计划</h2>
+            <div class="extapp-right-placeholder"></div>
+        </div>
+        <iframe id="extapp-plan-iframe" data-src="pages/plan.html" style="flex:1;width:100%;border:none;background:transparent;"></iframe>
     </div>
     <!-- ========== 用户扩展功能模块结束 ========== -->
 
