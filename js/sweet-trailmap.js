@@ -106,8 +106,12 @@
       var slot = slots[i];
       var nextLoc;
 
-      // 最后一段：回家
+      // 最后一段：回家（如果不在家）
       if (i === slots.length - 1) {
+        if (currentLoc.name === home.name) {
+          // 已经在家了，随便去个地方再回来太怪，跳过这趟
+          break;
+        }
         nextLoc = home;
       } else {
         nextLoc = pickRandomLocation(locations, currentLoc.name);
@@ -196,11 +200,6 @@
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
-  // 获取某天的行程
-  function getTrips(day) {
-    return data.dailyTrips[day] || [];
-  }
-
   // 获取所有行程（跨日期合并，按日期+时间排序）
   function getAllTrips() {
     var trips = getAutoTrips();
@@ -260,8 +259,8 @@
     // 添加地点
     document.getElementById('addPinMode').addEventListener('click', addLocationFlow);
 
-    // 记录行程
-    document.getElementById('addTrip').addEventListener('click', addTripFlow);
+    // 重新生成行程
+    document.getElementById('regenTrips').addEventListener('click', regenerateTrips);
 
     // 隐藏的文件选择器
     var fileInput = document.createElement('input');
@@ -332,50 +331,22 @@
     container.addEventListener('click', handler);
   }
 
-  // ===== 添加行程流程 =====
-  function addTripFlow() {
+  // ===== 重新生成行程 =====
+  function regenerateTrips() {
     var locations = getLocations();
-    if (locations.length === 0) {
-      alert('还没有地点，请先添加地点');
+    if (locations.length < 2) {
+      alert('至少需要 2 个地点才能生成行程');
       return;
     }
-    var names = locations.map(function(l, i) { return (i + 1) + '. ' + l.name; }).join('\n');
-
-    var fromIdx = parseInt(prompt('起点 (输入编号):\n' + names));
-    if (!fromIdx || fromIdx < 1 || fromIdx > locations.length) return;
-
-    var toIdx = parseInt(prompt('终点 (输入编号):\n' + names));
-    if (!toIdx || toIdx < 1 || toIdx > locations.length) return;
-    if (fromIdx === toIdx) { alert('起点和终点不能相同'); return; }
-
-    // 日期默认今天，可以修改
-    var dayInput = prompt('日期 (如 2026年8月19日):', todayKey());
-    if (!dayInput) return;
-
-    var now = new Date();
-    var timeStr = pad(now.getHours()) + ':' + pad(now.getMinutes());
-    var timeRange = prompt('时间段 (如 ' + timeStr + '-' + pad(now.getHours() + 1) + '30):', timeStr + '-' + pad(now.getHours() + 1) + pad(now.getMinutes()));
-    if (!timeRange) return;
-
-    var mode = prompt('交通方式:', '🚶 步行');
-    if (mode === null) return;
-
-    if (!data.dailyTrips[dayInput]) data.dailyTrips[dayInput] = [];
-    data.dailyTrips[dayInput].push({
-      from: locations[fromIdx - 1].name,
-      to: locations[toIdx - 1].name,
-      time: timeRange,
-      mode: mode
-    });
-    // 按时间排序
-    data.dailyTrips[dayInput].sort(function(a, b) {
-      return a.time.localeCompare(b.time);
+    // 清除当前世界的旧行程，重新生成最近 3 天
+    var trips = getAutoTrips();
+    var recent = genRecentTrips(3, locations);
+    Object.keys(recent).forEach(function(day) {
+      trips[day] = recent[day];
     });
     save();
     render();
   }
-
-  function pad(n) { return String(n).padStart(2, '0'); }
 
   // ===== 主渲染 =====
   function render() {
@@ -436,7 +407,7 @@
   function renderTripList() {
     var allTrips = getAllTrips();
     if (allTrips.length === 0) {
-      tripList.innerHTML = '<div class="trailmap-empty-trip">还没有行程记录<br>点击上方"记录行程"开始</div>';
+      tripList.innerHTML = '<div class="trailmap-empty-trip">还没有行程记录<br>点击上方"刷新行程"生成</div>';
       return;
     }
 
@@ -455,7 +426,7 @@
           (isToday ? '<span class="trailmap-today-tag">今天</span>' : '') +
         '</div>';
       }
-      html += '<div class="trailmap-trip-item" data-day="' + escapeHtml(t.day) + '" data-time="' + escapeHtml(t.time) + '">' +
+      html += '<div class="trailmap-trip-item">' +
         '<div class="trailmap-trip-time">' + escapeHtml(t.time) + '</div>' +
         '<div class="trailmap-trip-body">' +
           '<div class="trailmap-trip-route">' +
@@ -465,27 +436,9 @@
           '</div>' +
           '<div class="trailmap-trip-mode">' + escapeHtml(t.mode) + '</div>' +
         '</div>' +
-        '<button class="trailmap-trip-del" data-day="' + escapeHtml(t.day) + '" data-time="' + escapeHtml(t.time) + '" title="删除">✕</button>' +
       '</div>';
     }
     tripList.innerHTML = html;
-
-    tripList.querySelectorAll('.trailmap-trip-del').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var day = btn.dataset.day;
-        var time = btn.dataset.time;
-        var trips = data.dailyTrips[day];
-        if (!trips) return;
-        var idx = trips.findIndex(function(t) { return t.time === time; });
-        if (idx >= 0) {
-          trips.splice(idx, 1);
-          if (trips.length === 0) delete data.dailyTrips[day];
-          save();
-          render();
-        }
-      });
-    });
-
     lucideRefresh();
   }
 
@@ -494,9 +447,9 @@
     if (state.world === 'mine' && !data.mineMapDataUrl) {
       hint.textContent = '💡 先上传你的真实地图底图';
     } else if (state.world === 'mine') {
-      hint.textContent = '💡 点击"添加地点"然后在地图上点击位置';
+      hint.textContent = '💡 点击"添加地点"在地图上标记位置 · 点击"刷新行程"重新生成';
     } else {
-      hint.textContent = '💡 点击"记录行程"添加祁煜的移动轨迹';
+      hint.textContent = '💡 行程自动生成 · 点击"刷新行程"重新随机';
     }
   }
 
