@@ -1,1075 +1,808 @@
 /**
  * 朝夕计划 - plan.js
- * 科学四象限 · 多视图日历 · 专注计时 · 数据统计
- * 数据存储：localStorage（独立存储，不影响朝夕心记）
+ * 对齐新 plan.html 结构（涂鸦风 / lucide icons / 新类名）
  */
 
-/* ========== 全局状态 ========== */
-const PLAN_STORAGE_KEY = 'plan_app_data_v1';
+const PLAN_KEY = 'plan_app_v2';
 
 let planData = {
-    tasks: [],          // [{id, text, category, urgent, important, dueDate, dueTime, note, done, createdAt, completedAt}]
-    focusRecords: [],   // [{id, taskId, duration, startTime, endTime, completed}]
+    tasks: [],
+    focusRecords: [],
     settings: {
         categories: [
-            {id:'work', name:'工作', icon:'💼', color:'#4d96ff'},
-            {id:'life', name:'生活', icon:'🏠', color:'#6bcb77'},
-            {id:'study', name:'学习', icon:'📚', color:'#a29bfe'},
-            {id:'health', name:'健康', icon:'💪', color:'#fd79a8'},
-            {id:'other', name:'其他', icon:'📌', color:'#95a5a6'}
+            {id:'work', name:'工作', icon:'💼', color:'#7BB3D9'},
+            {id:'life', name:'生活', icon:'🏠', color:'#6BCB77'},
+            {id:'study', name:'学习', icon:'📚', color:'#B4A5E8'},
+            {id:'health', name:'健康', icon:'💪', color:'#FF9EC4'},
+            {id:'other', name:'其他', icon:'📌', color:'#C4B8AB'}
         ],
-        defaultFocusMin: 25,
-        focusSound: 'bell'
+        focusMin: 25
     }
 };
 
-// UI 状态
-let planState = {
-    currentPage: 'list',
-    currentVTab: 'month',
-    currentFTab: 'timer',
-    currentSTab: 'list',
-    currentRange: 'month',
-    currentCategory: 'all',
-    calYear: 0,
-    calMonth: 0,
+let S = {
+    panel: 'list',
+    vtab: 'month',
+    range: 'month',
+    category: 'all',
+    calY: 0, calM: 0,
     focusTaskId: null,
     focusMin: 25,
-    focusRemaining: 25 * 60,
-    focusTimer: null,
+    focusRemain: 25 * 60,
     focusRunning: false,
-    focusInterval: null,
-    editingTaskId: null,
-    selectedDate: null
+    focusTimer: null,
+    editingId: null
 };
 
-/* ========== 工具函数 ========== */
+/* ============ 工具 ============ */
 function $(id) { return document.getElementById(id); }
 function todayStr() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-function nowTs() { return Date.now(); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+function isU(t) { return t.urgent===true || t.urgent==='true'; }
+function isI(t) { return t.important===true || t.important==='true'; }
+function catOf(id) { return planData.settings.categories.find(c=>c.id===id) || planData.settings.categories[4]; }
 
-function loadPlanData() {
-    try {
-        const raw = localStorage.getItem(PLAN_STORAGE_KEY);
-        if (raw) {
-            const saved = JSON.parse(raw);
-            if (saved.tasks) planData.tasks = saved.tasks;
-            if (saved.focusRecords) planData.focusRecords = saved.focusRecords;
-            if (saved.settings) planData.settings = {...planData.settings, ...saved.settings};
-        }
-    } catch(e) { console.warn('加载计划数据失败', e); }
+function load() {
+    try { const r = localStorage.getItem(PLAN_KEY); if (r) {
+        const d = JSON.parse(r);
+        if (d.tasks) planData.tasks = d.tasks;
+        if (d.focusRecords) planData.focusRecords = d.focusRecords;
+        if (d.settings) planData.settings = {...planData.settings, ...d.settings};
+    }} catch(e){}
+}
+function save() { localStorage.setItem(PLAN_KEY, JSON.stringify(planData)); }
+
+/* ============ 主 Tab 切换 ============ */
+function switchPanel(panel) {
+    S.panel = panel;
+    document.querySelectorAll('.plan-subtab').forEach(b => {
+        b.classList.toggle('active', b.dataset.subtab === panel);
+    });
+    document.querySelectorAll('.plan-subpanel').forEach(el => {
+        el.classList.toggle('active', el.dataset.subpanel === panel);
+    });
+    if (panel === 'list') renderList();
+    if (panel === 'view') renderView();
+    if (panel === 'focus') renderFocus();
+    if (panel === 'stats') renderStats();
+    if (panel === 'profile') renderProfile();
 }
 
-function savePlanData() {
-    try {
-        localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(planData));
-    } catch(e) {}
-}
-
-function uid() { return Date.now() + '_' + Math.random().toString(36).slice(2,8); }
-
-function getCategory(id) {
-    return planData.settings.categories.find(c => c.id === id) || planData.settings.categories[4];
-}
-
-function isUrgent(t) { return t.urgent === true || t.urgent === 'true'; }
-function isImportant(t) { return t.important === true || t.important === 'true'; }
-
-/* ========== 导航 ========== */
-function switchPage(page) {
-    planState.currentPage = page;
-    document.querySelectorAll('.plan-page').forEach(p => p.classList.toggle('active', p.dataset.page === page));
-    document.querySelectorAll('.plan-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === page));
-
-    // 懒加载
-    if (page === 'list') renderListPage();
-    if (page === 'view') renderViewPage();
-    if (page === 'focus') renderFocusPage();
-    if (page === 'stats') renderStatsPage();
-    if (page === 'profile') renderProfilePage();
-}
-
-/* ========== 清单页（四象限） ========== */
-function renderListPage() {
-    if (planState.calYear === 0) {
-        const d = new Date();
-        planState.calYear = d.getFullYear();
-        planState.calMonth = d.getMonth();
-    }
-    $('listCalMonth').textContent = `${planState.calYear}年${planState.calMonth + 1}月`;
+/* ============ 清单页 ============ */
+function renderList() {
+    if (!S.calY) { const d=new Date(); S.calY=d.getFullYear(); S.calM=d.getMonth(); }
+    $('listYear').textContent = S.calY + '年';
+    $('listMonth').textContent = (S.calM+1) + '月';
     renderMiniCal();
-    renderQuadrants();
-    renderFilter();
+    renderQuads();
+    renderFilterText();
 }
 
 function renderMiniCal() {
-    const container = $('listMiniCal');
-    if (!container) return;
-
-    const y = planState.calYear, m = planState.calMonth;
-    const firstDay = new Date(y, m, 1);
-    const lastDay = new Date(y, m + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    let startDow = firstDay.getDay(); // 0=周日
-    startDow = startDow === 0 ? 6 : startDow - 1; // 转换为周一=0
+    const c = $('listMiniCal'); if (!c) return;
+    const y=S.calY, m=S.calM;
+    const fd=new Date(y,m,1), ld=new Date(y,m+1,0);
+    const dim=ld.getDate();
+    let sd=fd.getDay(); sd = sd===0?6:sd-1;
 
     const today = todayStr();
     const tasksByDate = {};
-    planData.tasks.filter(t => !t.done).forEach(t => {
-        if (t.dueDate) {
-            const d = t.dueDate.slice(0,10);
-            if (!tasksByDate[d]) tasksByDate[d] = 0;
-            tasksByDate[d]++;
+    planData.tasks.filter(t=>!t.done).forEach(t=>{
+        if (t.dueDate) { const d=t.dueDate.slice(0,10); if(!tasksByDate[d])tasksByDate[d]=[]; tasksByDate[d].push(t); }
+    });
+
+    let h = '';
+    for (let i=0;i<sd;i++) h += '<div class="plan-cal-cell empty"></div>';
+    for (let d=1; d<=dim; d++) {
+        const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const cls = ['plan-cal-cell'];
+        if (ds===today) cls.push('today');
+        const dayTasks = tasksByDate[ds] || [];
+        const dots = dayTasks.slice(0,4).map(t=>{
+            const c = catOf(t.category);
+            return `<span style="background:${c.color}"></span>`;
+        }).join('');
+        h += `<div class="${cls.join(' ')}" data-date="${ds}">
+            <div class="plan-cal-cell-num">${d}</div>
+            ${dots?`<div class="plan-cal-cell-dots">${dots}</div>`:''}
+        </div>`;
+    }
+    c.innerHTML = h;
+    if (window.lucide) lucide.createIcons();
+    c.querySelectorAll('.plan-cal-cell:not(.empty)').forEach(el => {
+        el.addEventListener('click', () => showDayModal(el.dataset.date));
+    });
+}
+
+function renderFilterText() {
+    const el = $('listFilterText');
+    if (!el) return;
+    el.textContent = S.category==='all' ? '全部分类' : catOf(S.category).name;
+}
+
+function getFiltered() {
+    return planData.tasks.filter(t => S.category==='all' || (t.category||'other')===S.category);
+}
+
+function renderQuads() {
+    const tasks = getFiltered();
+    const p = tasks.filter(t=>!t.done);
+    const d = tasks.filter(t=>t.done);
+    const q1 = p.filter(t=>isU(t)&&isI(t));
+    const q2 = p.filter(t=>!isU(t)&&isI(t));
+    const q3 = p.filter(t=>isU(t)&&!isI(t));
+    const q4 = p.filter(t=>!isU(t)&&!isI(t));
+
+    const qMap = {q1,q2,q3,q4};
+    ['q1','q2','q3','q4'].forEach(q => {
+        const el = $('list'+q.toUpperCase()); if (!el) return;
+        const arr = qMap[q];
+        if (arr.length===0) {
+            el.innerHTML = `<div class="plan-qempty">暂无任务</div>`;
+        } else {
+            el.innerHTML = arr.map(renderQItem).join('');
         }
     });
 
-    let html = '<div class="plan-mini-cal-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><div class="plan-mini-cal-days">';
-
-    for (let i = 0; i < startDow; i++) html += '<div class="plan-mini-day" style="visibility:hidden;"></div>';
-
-    for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const cls = ['plan-mini-day'];
-        if (dateStr === today) cls.push('today');
-        if (dateStr === planState.selectedDate) cls.push('selected');
-        if (tasksByDate[dateStr]) cls.push('has-tasks');
-        html += `<div class="${cls.join(' ')}" data-date="${dateStr}">${d}</div>`;
-    }
-
-    html += '</div>';
-    container.innerHTML = html;
-
-    container.querySelectorAll('.plan-mini-day[data-date]').forEach(el => {
-        el.addEventListener('click', () => {
-            planState.selectedDate = el.dataset.date;
-            renderMiniCal();
-        });
-    });
-}
-
-function renderFilter() {
-    const el = $('listCalFilter');
-    if (!el) return;
-    const cat = planState.currentCategory;
-    el.querySelector('span').textContent = cat === 'all' ? '全部分类' : getCategory(cat).name;
-}
-
-function renderQuadrants() {
-    const tasks = planData.tasks.filter(t => {
-        if (planState.currentCategory !== 'all' && (t.category || 'other') !== planState.currentCategory) return false;
-        if (planState.selectedDate && t.dueDate && t.dueDate.slice(0,10) !== planState.selectedDate) return false;
-        return true;
-    });
-
-    const pending = tasks.filter(t => !t.done);
-    const done = tasks.filter(t => t.done);
-
-    const q1 = pending.filter(t => isUrgent(t) && isImportant(t));
-    const q2 = pending.filter(t => !isUrgent(t) && isImportant(t));
-    const q3 = pending.filter(t => isUrgent(t) && !isImportant(t));
-    const q4 = pending.filter(t => !isUrgent(t) && !isImportant(t));
-
-    const qEls = {q1, q2, q3, q4};
-    Object.keys(qEls).forEach(q => {
-        const el = $('list' + q.toUpperCase());
-        if (!el) return;
-        el.innerHTML = qEls[q].length === 0 ? '<div class="plan-quad-empty">暂无任务</div>' :
-            qEls[q].map(t => renderQuadItem(t)).join('');
-    });
-
-    // 为已完成项追加到 q4
-    if (done.length > 0) {
+    // 已完成追加到 q4
+    if (d.length>0) {
         const el = $('listQ4');
-        el.innerHTML += '<div style="font-size:11px;color:#999;margin-top:10px;font-weight:600;">已完成</div>';
-        el.innerHTML += done.map(t => renderQuadItem(t)).join('');
+        el.innerHTML += `<div style="font-size:11px;color:var(--text-secondary);margin-top:8px;font-weight:700;border-top:1px dashed rgba(var(--accent-color-rgb),0.4);padding-top:6px;">已完成 ${d.length}</div>`;
+        el.innerHTML += d.map(renderQItem).join('');
     }
 
-    // 绑定事件
-    bindQuadrantEvents();
+    bindQuadEvents();
 }
 
-function renderQuadItem(task) {
-    const cat = getCategory(task.category);
-    const time = task.dueTime ? ` ${task.dueTime}` : '';
-    let dueLabel = '';
-    if (task.dueDate) {
-        const overdue = !task.done && new Date(task.dueDate + 'T' + (task.dueTime || '23:59')) < new Date();
-        const date = new Date(task.dueDate);
-        dueLabel = `<span class="${overdue ? 'plan-quad-overdue' : ''}">${overdue ? '逾期 ' : ''}${date.getMonth()+1}/${date.getDate()}${time}</span>`;
+function renderQItem(t) {
+    const c = catOf(t.category);
+    let meta = '';
+    if (t.dueDate) {
+        const d=new Date(t.dueDate+(t.dueTime||'23:59'));
+        const ov = !t.done && d<new Date();
+        const md = `${d.getMonth()+1}/${d.getDate()}${t.dueTime?' '+t.dueTime:''}`;
+        meta = `<div class="plan-qmeta ${ov?'overdue':''}">${ov?'逾期':'·'} ${c.name} · ${md}</div>`;
     }
-    return `
-        <div class="plan-quad-item ${task.done ? 'done' : ''}" data-id="${task.id}">
-            <div class="plan-quad-check" data-check="${task.id}">${task.done ? '<i class="fas fa-check"></i>' : ''}</div>
-            <div class="plan-quad-content">
-                <div class="plan-quad-text">${cat.icon} ${escapeHtml(task.text)}</div>
-                <div class="plan-quad-meta">
-                    <span>${cat.name}</span>
-                    ${dueLabel}
-                </div>
-            </div>
+    return `<div class="plan-qitem ${t.done?'done':''}" data-id="${t.id}">
+        <div class="plan-qcheck" data-check="${t.id}">${t.done?'<i data-lucide="check"></i>':''}</div>
+        <div class="plan-qcontent">
+            <div class="plan-qtext">${c.icon} ${esc(t.text)}</div>
+            ${meta}
         </div>
-    `;
+    </div>`;
 }
 
-function bindQuadrantEvents() {
-    document.querySelectorAll('.plan-quad-item').forEach(item => {
-        const id = item.dataset.id;
-        item.querySelectorAll('[data-check]').forEach(cb => {
-            cb.addEventListener('click', e => { e.stopPropagation(); toggleTask(Number(cb.dataset.check)); });
+function bindQuadEvents() {
+    if (window.lucide) lucide.createIcons();
+    document.querySelectorAll('.plan-qitem').forEach(it => {
+        const check = it.querySelector('[data-check]');
+        if (check) check.addEventListener('click', e => {
+            e.stopPropagation();
+            toggleTask(it.dataset.id);
         });
-        item.addEventListener('click', () => openTaskModal(id));
+        it.addEventListener('dblclick', () => openTaskModal(it.dataset.id));
     });
 }
 
-/* ========== 多视图日历 ========== */
-function renderViewPage() {
-    if (planState.calYear === 0) {
-        const d = new Date();
-        planState.calYear = d.getFullYear();
-        planState.calMonth = d.getMonth();
-    }
-    $('viewCalMonth').textContent = `${planState.calYear}年${planState.calMonth + 1}月`;
-    renderViewFilter();
-    renderMonthView();
-}
-
-function renderViewFilter() {
-    const el = $('viewCalFilter');
-    if (!el) return;
-    const cat = planState.currentCategory;
-    el.querySelector('span').textContent = cat === 'all' ? '全部分类' : getCategory(cat).name;
+/* ============ 视图页 ============ */
+function renderView() {
+    if (!S.calY) { const d=new Date(); S.calY=d.getFullYear(); S.calM=d.getMonth(); }
+    $('viewYear').textContent = S.calY + '年';
+    $('viewMonth').textContent = (S.calM+1) + '月';
+    if (S.vtab === 'month') renderMonthView();
+    if (S.vtab === 'week') renderWeekView();
+    if (S.vtab === 'day') renderDayView();
 }
 
 function renderMonthView() {
-    const grid = $('viewMonthGrid');
-    if (!grid) return;
-
-    const y = planState.calYear, m = planState.calMonth;
-    const firstDay = new Date(y, m, 1);
-    const lastDay = new Date(y, m + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    let startDow = firstDay.getDay();
-    startDow = startDow === 0 ? 6 : startDow - 1;
-
+    const g = $('viewMonthGrid'); if (!g) return;
+    const y=S.calY, m=S.calM;
+    const fd=new Date(y,m,1), ld=new Date(y,m+1,0);
+    const dim=ld.getDate();
+    let sd=fd.getDay(); sd = sd===0?6:sd-1;
     const today = todayStr();
-    const tasksByDate = {};
-    getFilteredTasks().forEach(t => {
-        if (t.dueDate) {
-            const d = t.dueDate.slice(0,10);
-            if (!tasksByDate[d]) tasksByDate[d] = [];
-            tasksByDate[d].push(t);
-        }
+
+    const tbd = {};
+    getFiltered().forEach(t => {
+        if (t.dueDate) { const d=t.dueDate.slice(0,10); if(!tbd[d])tbd[d]=[]; tbd[d].push(t); }
     });
 
-    let html = '<div class="plan-month-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div><div class="plan-month-days">';
-
-    for (let i = 0; i < startDow; i++) html += '<div class="plan-month-cell other-month" style="visibility:hidden;"></div>';
-
-    for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let h = '';
+    for (let i=0;i<sd;i++) h += '<div class="plan-month-cell plan-month-cell-empty"></div>';
+    for (let d=1; d<=dim; d++) {
+        const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const cls = ['plan-month-cell'];
-        if (dateStr === today) cls.push('today');
-        const dayTasks = tasksByDate[dateStr] || [];
-        let content = '';
-        dayTasks.slice(0, 3).forEach(t => {
-            const cat = getCategory(t.category);
-            content += `<div class="plan-month-bar ${cat.id}">${escapeHtml(t.text)}</div>`;
+        if (ds===today) cls.push('today');
+        const dayTs = tbd[ds] || [];
+        let bars = '';
+        dayTs.slice(0,3).forEach(t => {
+            bars += `<div class="plan-month-bar cat-${catOf(t.category).id}">${esc(t.text)}</div>`;
         });
-        if (dayTasks.length > 3) content += `<div style="font-size:9px;color:#999;">+${dayTasks.length - 3}</div>`;
-
-        html += `<div class="${cls.join(' ')}" data-date="${dateStr}"><div class="plan-month-cell-num">${d}</div><div class="plan-month-cell-content">${content}</div></div>`;
+        if (dayTs.length>3) bars += `<div style="font-size:9px;color:var(--text-secondary);font-weight:700;">+${dayTs.length-3}</div>`;
+        h += `<div class="${cls.join(' ')}" data-date="${ds}"><div class="plan-month-num">${d}</div><div class="plan-month-bars" style="display:flex;flex-direction:column;gap:1px;">${bars}</div></div>`;
     }
-
-    html += '</div>';
-    grid.innerHTML = html;
-
-    grid.querySelectorAll('.plan-month-cell[data-date]').forEach(cell => {
-        cell.addEventListener('click', () => showDayDetail(cell.dataset.date));
+    g.innerHTML = h;
+    g.querySelectorAll('.plan-month-cell[data-date]').forEach(c => {
+        c.addEventListener('click', () => showDayModal(c.dataset.date));
     });
 }
 
 function renderWeekView() {
-    const grid = $('viewWeekGrid');
-    if (!grid) return;
-
-    const today = new Date();
-    const dayOfWeek = today.getDay() || 7;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - dayOfWeek + 1);
-    if (dayOfWeek === 7) monday.setDate(today.getDate() - 6);
-
-    const weekDays = ['一','二','三','四','五','六','日'];
-    const tasksByDate = {};
-    getFilteredTasks().forEach(t => {
-        if (t.dueDate) {
-            const d = t.dueDate.slice(0,10);
-            if (!tasksByDate[d]) tasksByDate[d] = [];
-            tasksByDate[d].push(t);
-        }
+    const g = $('viewWeekGrid'); if (!g) return;
+    const now = new Date();
+    const dow = now.getDay() || 7;
+    const mon = new Date(now);
+    mon.setDate(now.getDate() - dow + (dow===7?-6:1));
+    const wkds = ['一','二','三','四','五','六','日'];
+    const tbd = {};
+    getFiltered().forEach(t => {
+        if (t.dueDate) { const d=t.dueDate.slice(0,10); if(!tbd[d])tbd[d]=[]; tbd[d].push(t); }
     });
-
-    let html = '<div class="plan-week-days">';
-    for (let i = 0; i < 7; i++) {
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + i);
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-        const isToday = dateStr === todayStr();
-        const dayTasks = tasksByDate[dateStr] || [];
-        html += `<div class="plan-week-col ${isToday ? 'plan-week-col-today' : ''}">
-            <div class="plan-week-col-head">周${weekDays[i]}</div>
-            <div class="plan-week-num">${date.getDate()}</div>
-            ${dayTasks.map(t => {
-                const cat = getCategory(t.category);
-                return `<div class="plan-week-bar ${cat.id}" data-id="${t.id}">${escapeHtml(t.text)}</div>`;
-            }).join('')}
+    let h = '<div class="plan-week-row">';
+    for (let i=0;i<7;i++) {
+        const dt = new Date(mon); dt.setDate(mon.getDate()+i);
+        const ds = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+        const isToday = ds===todayStr();
+        const ts = tbd[ds] || [];
+        h += `<div class="plan-week-cell ${isToday?'today':''}">
+            <div class="plan-week-cell-head">周${wkds[i]}</div>
+            <div class="plan-week-cell-num">${dt.getDate()}</div>
+            ${ts.map(t=>`<div class="plan-week-bar cat-${catOf(t.category).id}" data-id="${t.id}">${esc(t.text)}</div>`).join('')}
         </div>`;
     }
-    html += '</div>';
-    grid.innerHTML = html;
-
-    grid.querySelectorAll('.plan-week-bar').forEach(bar => {
-        bar.addEventListener('click', () => openTaskModal(bar.dataset.id));
+    h += '</div>';
+    g.innerHTML = h;
+    g.querySelectorAll('.plan-week-bar').forEach(b => {
+        b.addEventListener('click', () => openTaskModal(b.dataset.id));
     });
 }
 
 function renderDayView() {
-    const container = $('viewDayView');
-    if (!container) return;
-
-    const date = new Date(planState.calYear, planState.calMonth, 1);
+    const c = $('viewDayView'); if (!c) return;
     const today = todayStr();
-    const weekDays = ['周日','周一','周二','周三','周四','周五','周六'];
-
-    const tasks = getFilteredTasks()
-        .filter(t => t.dueDate && t.dueDate.slice(0,10) === today)
-        .sort((a,b) => (a.dueTime || '99:99').localeCompare(b.dueTime || '99:99'));
-
-    let html = `<div class="plan-day-header">
+    const wkds = ['周日','周一','周二','周三','周四','周五','周六'];
+    const tasks = getFiltered().filter(t => t.dueDate && t.dueDate.slice(0,10)===today).sort((a,b)=>(a.dueTime||'99').localeCompare(b.dueTime||'99'));
+    const now = new Date();
+    let h = `<div class="plan-day-head">
         <div class="plan-day-date">${today}</div>
-        <div class="plan-day-week">${weekDays[date.getDay()]}</div>
+        <div class="plan-day-week">${wkds[now.getDay()]}</div>
     </div>`;
-
-    if (tasks.length === 0) {
-        html += '<div style="text-align:center;padding:40px 20px;color:#bbb;">今天还没有安排哦~</div>';
+    if (tasks.length===0) {
+        h += '<div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-weight:700;">今天还没有安排哦~</div>';
     } else {
-        html += '<div class="plan-day-timeline">';
+        h += '<div class="plan-day-list">';
         tasks.forEach(t => {
-            const cat = getCategory(t.category);
-            html += `<div class="plan-day-item ${t.done ? 'done' : ''}" data-id="${t.id}">
-                <div class="plan-day-time">${t.dueTime || '--:--'}</div>
+            const cat = catOf(t.category);
+            h += `<div class="plan-day-item" data-id="${t.id}">
+                <div class="plan-day-time">${t.dueTime||'--:--'}</div>
                 <div class="plan-day-dot" style="background:${cat.color};"></div>
-                <div class="plan-day-content">${cat.icon} ${escapeHtml(t.text)}${t.done ? ' ✓' : ''}</div>
+                <div class="plan-day-text">${cat.icon} ${esc(t.text)}${t.done?' ✓':''}</div>
             </div>`;
         });
-        html += '</div>';
+        h += '</div>';
     }
-
-    container.innerHTML = html;
-    container.querySelectorAll('.plan-day-item').forEach(item => {
-        item.addEventListener('click', () => openTaskModal(item.dataset.id));
+    c.innerHTML = h;
+    c.querySelectorAll('.plan-day-item').forEach(it => {
+        it.addEventListener('click', () => openTaskModal(it.dataset.id));
     });
 }
 
-function getFilteredTasks() {
-    return planData.tasks.filter(t => {
-        if (planState.currentCategory !== 'all' && (t.category || 'other') !== planState.currentCategory) return false;
-        return true;
-    });
+/* ============ 专注页 ============ */
+function renderFocus() {
+    const task = planData.tasks.find(t => t.id===S.focusTaskId);
+    const nameEl = $('focusTaskName');
+    if (nameEl) nameEl.textContent = task ? `📌 ${task.text}` : '关联任务';
+    updateTimer();
 }
 
-/* ========== 专注计时 ========== */
-function renderFocusPage() {
-    updateFocusTimerUI();
-    renderFocusPresets();
-    const task = planData.tasks.find(t => t.id === planState.focusTaskId);
-    const taskPicker = $('focusTaskPicker');
-    if (taskPicker) {
-        taskPicker.querySelector('span').textContent = task ? `📌 ${task.text}` : '关联任务';
-    }
-}
-
-function renderFocusPresets() {
-    document.querySelectorAll('.plan-preset-btn').forEach(btn => {
-        btn.classList.toggle('active', Number(btn.dataset.min) === planState.focusMin);
-    });
-}
-
-function updateFocusTimerUI() {
-    const m = Math.floor(planState.focusRemaining / 60);
-    const s = planState.focusRemaining % 60;
+function updateTimer() {
+    const m = Math.floor(S.focusRemain/60), s = S.focusRemain%60;
     $('timerMin').textContent = String(m).padStart(2,'0');
     $('timerSec').textContent = String(s).padStart(2,'0');
-
-    // SVG 圆环进度
-    const progress = $('timerProgress');
-    if (progress) {
-        const total = planState.focusMin * 60;
-        const ratio = planState.focusRemaining / total;
-        const circumference = 534; // 2π * 85
-        progress.style.strokeDashoffset = circumference * (1 - ratio);
+    const p = $('timerProgress');
+    if (p) {
+        const total = S.focusMin*60;
+        const ratio = S.focusRemain/total;
+        const circ = 597;
+        p.style.strokeDashoffset = circ * (1-ratio);
     }
-
-    // 按钮状态
-    const startBtn = $('focusStart');
-    const startText = $('focusStartText');
-    if (planState.focusRunning) {
-        startBtn.classList.add('running');
-        startBtn.innerHTML = '<i class="fas fa-pause"></i> 暂停';
+    const btn = $('focusStart');
+    const txt = $('focusStartText');
+    if (!btn || !txt) return;
+    if (S.focusRunning) {
+        btn.classList.add('running');
+        btn.innerHTML = '<i data-lucide="pause"></i><span>暂停</span>';
     } else {
-        startBtn.classList.remove('running');
-        startBtn.innerHTML = '<i class="fas fa-play"></i> 开始专注';
+        btn.classList.remove('running');
+        btn.innerHTML = '<i data-lucide="play"></i><span>开始专注</span>';
     }
+    if (window.lucide) lucide.createIcons();
 }
 
-function startFocusTimer() {
-    if (planState.focusRunning) return;
-    planState.focusRunning = true;
-    planState.focusInterval = setInterval(() => {
-        planState.focusRemaining--;
-        if (planState.focusRemaining <= 0) {
-            planState.focusRemaining = 0;
-            stopFocusTimer(true);
-        }
-        updateFocusTimerUI();
+function startFocus() {
+    if (S.focusRunning) return;
+    S.focusRunning = true;
+    S.focusTimer = setInterval(() => {
+        S.focusRemain--;
+        if (S.focusRemain<=0) { S.focusRemain=0; stopFocus(true); }
+        updateTimer();
     }, 1000);
-    updateFocusTimerUI();
+    updateTimer();
 }
-
-function pauseFocusTimer() {
-    planState.focusRunning = false;
-    if (planState.focusInterval) { clearInterval(planState.focusInterval); planState.focusInterval = null; }
-    updateFocusTimerUI();
+function pauseFocus() {
+    S.focusRunning = false;
+    if (S.focusTimer) { clearInterval(S.focusTimer); S.focusTimer=null; }
+    updateTimer();
 }
-
-function stopFocusTimer(completed) {
-    planState.focusRunning = false;
-    if (planState.focusInterval) { clearInterval(planState.focusInterval); planState.focusInterval = null; }
-
-    if (completed) {
-        // 记录专注
-        planData.focusRecords.push({
-            id: uid(),
-            taskId: planState.focusTaskId,
-            duration: planState.focusMin,
-            completed: true,
-            timestamp: nowTs()
-        });
-        savePlanData();
-        // 提示
-        if (typeof window.showNotification === 'function') {
-            window.showNotification('专注完成！太棒了 🎉', 'success');
-        } else {
-            alert('专注完成！太棒了 🎉');
-        }
-        planState.focusRemaining = planState.focusMin * 60;
+function stopFocus(done) {
+    S.focusRunning = false;
+    if (S.focusTimer) { clearInterval(S.focusTimer); S.focusTimer=null; }
+    if (done) {
+        planData.focusRecords.push({id:uid(), taskId:S.focusTaskId, duration:S.focusMin, completed:true, ts:Date.now()});
+        save();
+        alert('专注完成！太棒了 🎉');
+        S.focusRemain = S.focusMin*60;
     }
-    updateFocusTimerUI();
+    updateTimer();
+}
+function resetFocus() {
+    pauseFocus();
+    S.focusRemain = S.focusMin*60;
+    updateTimer();
 }
 
-function resetFocusTimer() {
-    pauseFocusTimer();
-    planState.focusRemaining = planState.focusMin * 60;
-    updateFocusTimerUI();
-}
-
-/* ========== 数据统计 ========== */
-function renderStatsPage() {
-    const range = planState.currentRange;
-    let dateRangeText = '';
+/* ============ 统计页 ============ */
+function renderStats() {
     const now = new Date();
-    let startDate;
-
-    if (range === 'week') {
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 6);
-        dateRangeText = `${startDate.getFullYear()}年${startDate.getMonth()+1}月${startDate.getDate()}日 ~ ${now.getMonth()+1}月${now.getDate()}日`;
-    } else if (range === 'month') {
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        dateRangeText = `${now.getFullYear()}年${now.getMonth()+1}月1日 ~ ${now.getMonth()+1}月${now.getDate()}日`;
-    } else if (range === 'year') {
-        startDate = new Date(now.getFullYear(), 0, 1);
-        dateRangeText = `${now.getFullYear()}年1月1日 ~ ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+    let start, dateRange;
+    if (S.range==='week') {
+        start = new Date(now); start.setDate(now.getDate()-6);
+        dateRange = `${start.getMonth()+1}月${start.getDate()}日 ~ ${now.getMonth()+1}月${now.getDate()}日`;
+    } else if (S.range==='month') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        dateRange = `${now.getFullYear()}年${now.getMonth()+1}月1日 ~ ${now.getMonth()+1}月${now.getDate()}日`;
+    } else if (S.range==='year') {
+        start = new Date(now.getFullYear(), 0, 1);
+        dateRange = `${now.getFullYear()}年全年`;
     } else {
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 29);
-        dateRangeText = `${startDate.getMonth()+1}月${startDate.getDate()}日 ~ ${now.getMonth()+1}月${now.getDate()}日`;
+        start = new Date(now); start.setDate(now.getDate()-29);
+        dateRange = `${start.getMonth()+1}月${start.getDate()}日 ~ ${now.getMonth()+1}月${now.getDate()}日`;
     }
+    const d = $('statsDate'); if (d) d.textContent = dateRange;
 
-    $('statsDateRange').textContent = dateRangeText;
-
-    // 计算统计
-    const totalTasks = planData.tasks.filter(t => {
-        if (!t.createdAt) return true;
-        return t.createdAt >= startDate.getTime();
-    });
-
-    const success = totalTasks.filter(t => t.done).length;
-    const fail = totalTasks.filter(t => !t.done && t.dueDate && new Date(t.dueDate) < now).length;
-    const miss = totalTasks.filter(t => !t.done && !t.dueDate).length;
-    const rate = totalTasks.length > 0 ? Math.round(success / totalTasks.length * 100) : 0;
+    const inRange = planData.tasks.filter(t => !t.createdAt || t.createdAt >= start.getTime());
+    const total = inRange.length;
+    const success = inRange.filter(t=>t.done).length;
+    const fail = inRange.filter(t=>!t.done && t.dueDate && new Date(t.dueDate+'T23:59')<now).length;
+    const miss = inRange.filter(t=>!t.done && !t.dueDate).length;
+    const rate = total>0 ? Math.round(success/total*100) : 0;
 
     $('statSuccess').textContent = success;
     $('statFail').textContent = fail;
     $('statMiss').textContent = miss;
     $('statRate').textContent = rate + '%';
 
-    renderPieChart(totalTasks);
-    renderTrendChart(startDate, now);
+    drawPie(inRange);
+    drawTrend(start, now);
 }
 
-function renderPieChart(tasks) {
-    const canvas = $('planPieChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const cx = 100, cy = 100, r = 75;
+function drawPie(tasks) {
+    const cvs = $('pieChart'); if (!cvs) return;
+    const ctx = cvs.getContext('2d');
+    const cx=100, cy=100, r=80;
 
-    // 分类统计
-    const stats = {q1:0, q2:0, q3:0, q4:0};
-    tasks.filter(t => t.done).forEach(t => {
-        if (isUrgent(t) && isImportant(t)) stats.q1++;
-        else if (!isUrgent(t) && isImportant(t)) stats.q2++;
-        else if (isUrgent(t) && !isImportant(t)) stats.q3++;
+    const stats = {q1:0,q2:0,q3:0,q4:0};
+    tasks.filter(t=>t.done).forEach(t => {
+        if (isU(t)&&isI(t)) stats.q1++;
+        else if (!isU(t)&&isI(t)) stats.q2++;
+        else if (isU(t)&&!isI(t)) stats.q3++;
         else stats.q4++;
     });
-
-    const total = Object.values(stats).reduce((a,b) => a+b, 0);
+    const total = Object.values(stats).reduce((a,b)=>a+b,0);
     const items = [
-        {key:'q1', label:'重要且紧急', value:stats.q1, color:'#ff6b6b'},
-        {key:'q2', label:'重要不紧急', value:stats.q2, color:'#fdd86f'},
-        {key:'q3', label:'紧急不重要', value:stats.q3, color:'#ff8a4c'},
-        {key:'q4', label:'不重要不紧急', value:stats.q4, color:'#4d96ff'}
+        {k:'q1',l:'重要且紧急',v:stats.q1,c:'#e5655b'},
+        {k:'q2',l:'重要不紧急',v:stats.q2,c:'#5a9d6f'},
+        {k:'q3',l:'紧急不重要',v:stats.q3,c:'#c58a3e'},
+        {k:'q4',l:'不重要不紧急',v:stats.q4,c:'#7a7a7a'}
     ];
 
-    ctx.clearRect(0, 0, 200, 200);
-
-    if (total === 0) {
-        ctx.fillStyle = '#eee';
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#999';
-        ctx.font = '12px sans-serif';
-        ctx.textAlign = 'center';
+    ctx.clearRect(0,0,200,200);
+    if (total===0) {
+        ctx.fillStyle='#f0f0f0';
+        ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=2; ctx.stroke();
+        ctx.fillStyle='#7a7a7a';
+        ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
         ctx.fillText('暂无打卡数据', cx, cy);
     } else {
-        let startAngle = -Math.PI / 2;
-        items.forEach(item => {
-            if (item.value === 0) return;
-            const angle = (item.value / total) * Math.PI * 2;
+        let sa = -Math.PI/2;
+        items.forEach(it => {
+            if (it.v===0) return;
+            const a = (it.v/total)*Math.PI*2;
             ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.arc(cx, cy, r, startAngle, startAngle + angle);
-            ctx.closePath();
-            ctx.fillStyle = item.color;
-            ctx.fill();
-            startAngle += angle;
+            ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,sa,sa+a); ctx.closePath();
+            ctx.fillStyle=it.c; ctx.fill();
+            sa+=a;
         });
-        // 中心白圆
-        ctx.beginPath();
-        ctx.arc(cx, cy, 40, 0, Math.PI * 2);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-        ctx.fillStyle = '#333';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(total + '次', cx, cy - 5);
-        ctx.font = '10px sans-serif';
-        ctx.fillStyle = '#999';
-        ctx.fillText('完成打卡', cx, cy + 12);
+        ctx.beginPath(); ctx.arc(cx,cy,45,0,Math.PI*2);
+        ctx.fillStyle='#fff'; ctx.fill();
+        ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=2; ctx.stroke();
+        ctx.fillStyle='#1a1a1a';
+        ctx.font='bold 18px sans-serif'; ctx.textAlign='center';
+        ctx.fillText(total, cx, cy-5);
+        ctx.fillStyle='#7a7a7a';
+        ctx.font='10px sans-serif';
+        ctx.fillText('完成打卡', cx, cy+12);
     }
 
-    // 图例
-    const legend = $('planPieLegend');
+    const legend = $('pieLegend');
     if (legend) {
         legend.innerHTML = items.map(it => {
-            const pct = total > 0 ? Math.round(it.value / total * 100) : 0;
-            return `<div class="plan-legend-item">
-                <div class="plan-legend-dot" style="background:${it.color};"></div>
-                <span>${it.label}</span>
-                <span class="plan-legend-val">${it.value}次 ${pct}%</span>
-            </div>`;
+            const pct = total>0?Math.round(it.v/total*100):0;
+            return `<div class="plan-legend-item"><div class="plan-legend-dot" style="background:${it.c};"></div><span>${it.l}</span><span class="plan-legend-val">${it.v}次 ${pct}%</span></div>`;
         }).join('');
     }
 }
 
-function renderTrendChart(startDate, endDate) {
-    const canvas = $('planTrendChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const w = 320, h = 120;
-    ctx.clearRect(0, 0, w, h);
+function drawTrend(start, end) {
+    const cvs = $('trendChart'); if (!cvs) return;
+    const ctx = cvs.getContext('2d');
+    const w=340, h=130;
+    ctx.clearRect(0,0,w,h);
 
-    // 生成最近7天数据
-    const days = [];
-    const data = [];
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date(endDate);
-        d.setDate(endDate.getDate() - i);
-        const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        days.push(d.getMonth() + 1 + '/' + d.getDate());
-        const count = planData.tasks.filter(t => {
-            return t.done && t.dueDate && t.dueDate.slice(0,10) === ds;
-        }).length;
-        data.push(count);
+    const days=[], data=[];
+    for (let i=6;i>=0;i--) {
+        const d=new Date(end); d.setDate(end.getDate()-i);
+        const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        days.push(`${d.getMonth()+1}/${d.getDate()}`);
+        const c = planData.tasks.filter(t=>t.done && t.dueDate && t.dueDate.slice(0,10)===ds).length;
+        data.push(c);
+    }
+    const mv = Math.max(...data, 3);
+    const bw = 30, gap = (w-bw*7)/8;
+    const by = h-24;
+
+    // 网格
+    ctx.strokeStyle='#e0e0e0'; ctx.lineWidth=1;
+    for (let i=0;i<4;i++) {
+        const y = 12+(h-40)*i/3;
+        ctx.beginPath(); ctx.moveTo(gap,y); ctx.lineTo(w-gap,y); ctx.stroke();
     }
 
-    const maxVal = Math.max(...data, 3);
-    const barW = 32;
-    const gap = (w - barW * 7) / 8;
-    const baseY = h - 20;
-
-    // 画网格线
-    ctx.strokeStyle = '#f0f0f0';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 4; i++) {
-        const y = 15 + (h - 35) * i / 3;
+    data.forEach((v,i) => {
+        const x = gap + i*(bw+gap);
+        const bh = v>0 ? (h-40)*v/mv : 2;
+        const y = by-bh;
+        const g = ctx.createLinearGradient(x,y,x,by);
+        g.addColorStop(0,'#F4A6B3'); g.addColorStop(1,'#e5655b');
+        ctx.fillStyle=g;
+        const r = 5;
         ctx.beginPath();
-        ctx.moveTo(gap, y);
-        ctx.lineTo(w - gap, y);
-        ctx.stroke();
-    }
-
-    // 画柱
-    data.forEach((val, i) => {
-        const x = gap + i * (barW + gap);
-        const barH = val > 0 ? ((h - 40) * val / maxVal) : 2;
-        const y = baseY - barH;
-
-        const gradient = ctx.createLinearGradient(x, y, x, baseY);
-        gradient.addColorStop(0, '#ff8a5c');
-        gradient.addColorStop(1, '#ffb199');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        const r = 6;
-        ctx.moveTo(x + r, y);
-        ctx.lineTo(x + barW - r, y);
-        ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
-        ctx.lineTo(x + barW, baseY);
-        ctx.lineTo(x, baseY);
-        ctx.lineTo(x, y + r);
-        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.moveTo(x+r,y);
+        ctx.lineTo(x+bw-r,y);
+        ctx.quadraticCurveTo(x+bw,y,x+bw,y+r);
+        ctx.lineTo(x+bw,by);
+        ctx.lineTo(x,by);
+        ctx.lineTo(x,y+r);
+        ctx.quadraticCurveTo(x,y,x+r,y);
         ctx.fill();
 
-        // 日期标签
-        ctx.fillStyle = '#999';
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(days[i], x + barW / 2, h - 5);
+        ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=1.5;
+        ctx.strokeRect(x+0.5, y+0.5, bw-1, by-y-1);
 
-        // 数值
-        if (val > 0) {
-            ctx.fillStyle = '#333';
-            ctx.font = 'bold 11px sans-serif';
-            ctx.fillText(val, x + barW / 2, y - 4);
+        ctx.fillStyle='#7a7a7a'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+        ctx.fillText(days[i], x+bw/2, h-8);
+        if (v>0) {
+            ctx.fillStyle='#1a1a1a'; ctx.font='bold 11px sans-serif';
+            ctx.fillText(v, x+bw/2, y-4);
         }
     });
 
-    // 轴线
-    ctx.strokeStyle = '#ddd';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(gap, baseY);
-    ctx.lineTo(w - gap, baseY);
-    ctx.stroke();
+    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(gap,by); ctx.lineTo(w-gap,by); ctx.stroke();
 }
 
-/* ========== 我的页 ========== */
-function renderProfilePage() {
-    // 头像
-    const avatarImg = $('planProfileAvatarImg');
-    if (avatarImg) {
+/* ============ 我的页 ============ */
+function renderProfile() {
+    const img = $('profileAvatarImg');
+    if (img) {
         try {
-            if (typeof window.getPartnerAvatar === 'function') {
+            if (window.getPartnerAvatar) {
                 const a = window.getPartnerAvatar();
-                if (a && a.startsWith('http')) avatarImg.src = a;
+                if (a && a.startsWith('http')) img.src = a;
             }
-        } catch(e) {}
+        } catch(e){}
     }
-
-    const total = planData.tasks.length;
-    const done = planData.tasks.filter(t => t.done).length;
-    const focusMin = planData.focusRecords.reduce((s, r) => s + r.duration, 0);
-
-    $('profileTotalTasks').textContent = total;
-    $('profileDoneTasks').textContent = done;
-    $('profileFocusMin').textContent = focusMin;
+    $('profileTotal').textContent = planData.tasks.length;
+    $('profileDone').textContent = planData.tasks.filter(t=>t.done).length;
+    $('profileFocus').textContent = planData.focusRecords.reduce((s,r)=>s+r.duration,0);
 }
 
-/* ========== 任务 CRUD ========== */
+/* ============ 任务 CRUD ============ */
 function openTaskModal(id) {
-    const task = id ? planData.tasks.find(t => t.id === id) : null;
-    planState.editingTaskId = id || null;
-
-    $('taskModalTitle').textContent = task ? '编辑任务' : '新建任务';
-    $('taskInput').value = task ? task.text : '';
-    $('taskCategory').value = task ? (task.category || 'other') : 'work';
-    $('taskUrgent').value = task ? String(isUrgent(task)) : 'false';
-    $('taskImportant').value = task ? String(isImportant(task)) : 'true';
-    $('taskDate').value = task && task.dueDate ? task.dueDate.slice(0,10) : '';
-    $('taskTime').value = task && task.dueTime ? task.dueTime : '';
-    $('taskNote').value = task ? (task.note || '') : '';
-
-    fillCategorySelect('taskCategory');
-    showModal('planTaskModal');
+    const t = id ? planData.tasks.find(x=>x.id===id) : null;
+    S.editingId = id || null;
+    $('taskModalTitle').textContent = t ? '编辑任务' : '新建任务';
+    $('taskText').value = t ? t.text : '';
+    fillCatSel('taskCategory');
+    $('taskCategory').value = t?(t.category||'other'):'work';
+    $('taskUrgent').value = t?String(isU(t)):'false';
+    $('taskImportant').value = t?String(isI(t)):'true';
+    $('taskDate').value = t&&t.dueDate?t.dueDate.slice(0,10):'';
+    $('taskTime').value = t&&t.dueTime?t.dueTime:'';
+    $('taskNote').value = t?(t.note||''):'';
+    showModal('taskModal');
 }
 
 function saveTask() {
-    const text = $('taskInput').value.trim();
+    const text = $('taskText').value.trim();
     if (!text) { alert('请输入任务内容'); return; }
-
-    const task = {
-        id: planState.editingTaskId || uid(),
-        text: text,
+    const obj = {
+        id: S.editingId || uid(),
+        text,
         category: $('taskCategory').value,
-        urgent: $('taskUrgent').value === 'true',
-        important: $('taskImportant').value === 'true',
+        urgent: $('taskUrgent').value==='true',
+        important: $('taskImportant').value==='true',
         dueDate: $('taskDate').value || null,
         dueTime: $('taskTime').value || null,
         note: $('taskNote').value.trim(),
         done: false,
-        createdAt: nowTs()
+        createdAt: Date.now()
     };
-
-    if (planState.editingTaskId) {
-        const idx = planData.tasks.findIndex(t => t.id === planState.editingTaskId);
-        if (idx >= 0) {
-            task.done = planData.tasks[idx].done;
-            task.createdAt = planData.tasks[idx].createdAt;
-            planData.tasks[idx] = task;
-        }
+    if (S.editingId) {
+        const i = planData.tasks.findIndex(x=>x.id===S.editingId);
+        if (i>=0) { obj.done=planData.tasks[i].done; obj.createdAt=planData.tasks[i].createdAt; planData.tasks[i]=obj; }
     } else {
-        planData.tasks.push(task);
+        planData.tasks.push(obj);
     }
-
-    savePlanData();
-    hideModal('planTaskModal');
-    renderListPage();
+    save();
+    hideModal('taskModal');
+    renderList();
 }
 
 function toggleTask(id) {
-    const t = planData.tasks.find(t => t.id === id);
+    const t = planData.tasks.find(x=>x.id===id);
     if (!t) return;
     t.done = !t.done;
-    if (t.done) t.completedAt = nowTs();
+    if (t.done) t.completedAt = Date.now();
     else delete t.completedAt;
-    savePlanData();
-    renderListPage();
-    // 如果在视图页也需要刷新
-    if (planState.currentPage === 'view') renderViewPage();
+    save();
+    renderList();
+    if (S.panel==='view') {
+        if (S.vtab==='day') renderDayView();
+        if (S.vtab==='month') renderMonthView();
+        if (S.vtab==='week') renderWeekView();
+    }
 }
 
-function deleteTask(id) {
-    if (!confirm('确定删除这个任务吗？')) return;
-    planData.tasks = planData.tasks.filter(t => t.id !== id);
-    savePlanData();
-    renderListPage();
-    hideModal('planDayModal');
+function fillCatSel(id) {
+    const sel = $(id); if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = planData.settings.categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    sel.value = cur;
 }
 
-function fillCategorySelect(selectId) {
-    const sel = $(selectId);
-    if (!sel) return;
-    const current = sel.value;
-    sel.innerHTML = planData.settings.categories.map(c =>
-        `<option value="${c.id}">${c.icon} ${c.name}</option>`
-    ).join('');
-    sel.value = current;
-}
-
-/* ========== 分类筛选弹窗 ========== */
-function showFilterModal() {
+/* ============ 筛选弹窗 ============ */
+function showFilter() {
     const body = $('filterModalBody');
-    const items = [{id:'all', name:'全部分类', icon:'📋', color:'#333'}, ...planData.settings.categories];
+    const items = [{id:'all',name:'全部分类',icon:'📋'}, ...planData.settings.categories];
     body.innerHTML = items.map(c => `
-        <div class="plan-filter-item ${planState.currentCategory === c.id ? 'active' : ''}" data-cat="${c.id}">
-            <div class="plan-filter-icon">${c.icon}</div>
-            <div class="plan-filter-name">${c.name}</div>
-            ${planState.currentCategory === c.id ? '<div class="plan-filter-check"><i class="fas fa-check"></i></div>' : ''}
-        </div>
-    `).join('');
-
-    body.querySelectorAll('.plan-filter-item').forEach(item => {
-        item.addEventListener('click', () => {
-            planState.currentCategory = item.dataset.cat;
-            hideModal('planFilterModal');
-            // 刷新当前页面
-            if (planState.currentPage === 'list') renderListPage();
-            if (planState.currentPage === 'view') renderViewPage();
+        <div class="plan-filter-item ${S.category===c.id?'active':''}" data-cat="${c.id}">
+            <div class="plan-filter-ic">${c.icon}</div>
+            <div class="plan-filter-txt">${c.name}</div>
+            ${S.category===c.id?'<div style="color:var(--accent-color);font-size:14px;font-weight:800;">✓</div>':''}
+        </div>`).join('');
+    body.querySelectorAll('.plan-filter-item').forEach(it => {
+        it.addEventListener('click', () => {
+            S.category = it.dataset.cat;
+            hideModal('filterModal');
+            if (S.panel==='list') renderList();
+            if (S.panel==='view') renderView();
         });
     });
-
-    showModal('planFilterModal');
+    showModal('filterModal');
 }
 
-/* ========== 关联任务弹窗 ========== */
+/* ============ 关联任务 ============ */
 function showTaskPicker() {
     const body = $('taskPickerBody');
-    const available = planData.tasks.filter(t => !t.done);
-    if (available.length === 0) {
-        body.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;">暂无待完成任务</div>';
-    } else {
-        body.innerHTML = available.map(t => {
-            const cat = getCategory(t.category);
-            return `<div class="plan-filter-item ${planState.focusTaskId === t.id ? 'active' : ''}" data-id="${t.id}">
-                <div class="plan-filter-icon">${cat.icon}</div>
-                <div class="plan-filter-name">${escapeHtml(t.text)}</div>
-                ${planState.focusTaskId === t.id ? '<div class="plan-filter-check"><i class="fas fa-check"></i></div>' : ''}
-            </div>`;
-        }).join('');
-    }
-
-    body.querySelectorAll('.plan-filter-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const id = item.dataset.id;
-            planState.focusTaskId = planState.focusTaskId === id ? null : id;
-            hideModal('planTaskPickerModal');
-            renderFocusPage();
+    const av = planData.tasks.filter(t=>!t.done);
+    if (av.length===0) { body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-secondary);font-weight:700;">暂无待完成任务</div>'; showModal('taskPickerModal'); return; }
+    body.innerHTML = av.map(t => {
+        const c = catOf(t.category);
+        return `<div class="plan-filter-item ${S.focusTaskId===t.id?'active':''}" data-id="${t.id}">
+            <div class="plan-filter-ic">${c.icon}</div>
+            <div class="plan-filter-txt">${esc(t.text)}</div>
+            ${S.focusTaskId===t.id?'<div style="color:var(--accent-color);font-weight:800;">✓</div>':''}
+        </div>`;
+    }).join('');
+    body.querySelectorAll('.plan-filter-item').forEach(it => {
+        it.addEventListener('click', () => {
+            S.focusTaskId = S.focusTaskId===it.dataset.id ? null : it.dataset.id;
+            hideModal('taskPickerModal');
+            renderFocus();
         });
     });
-
-    showModal('planTaskPickerModal');
+    showModal('taskPickerModal');
 }
 
-/* ========== 日期详情 ========== */
-function showDayDetail(dateStr) {
-    const tasks = planData.tasks.filter(t => t.dueDate && t.dueDate.slice(0,10) === dateStr);
-    const pending = tasks.filter(t => !t.done);
-    const done = tasks.filter(t => t.done);
-    const date = new Date(dateStr);
-    const weekDays = ['周日','周一','周二','周三','周四','周五','周六'];
+/* ============ 日期详情 ============ */
+function showDayModal(ds) {
+    const tasks = planData.tasks.filter(t=>t.dueDate && t.dueDate.slice(0,10)===ds);
+    const p = tasks.filter(t=>!t.done), d = tasks.filter(t=>t.done);
+    const dt = new Date(ds);
+    const wkds = ['周日','周一','周二','周三','周四','周五','周六'];
+    $('dayModalTitle').textContent = `${dt.getMonth()+1}月${dt.getDate()}日 ${wkds[dt.getDay()]}`;
 
-    $('dayModalTitle').textContent = `${date.getMonth()+1}月${date.getDate()}日 ${weekDays[date.getDay()]}`;
-
-    let html = '';
-    if (pending.length === 0 && done.length === 0) {
-        html = '<div style="text-align:center;padding:30px;color:#bbb;">这一天没有任务</div>';
+    let h = '';
+    if (p.length===0 && d.length===0) {
+        h = '<div style="text-align:center;padding:30px;color:var(--text-secondary);font-weight:700;">这一天没有任务</div>';
     } else {
-        if (pending.length > 0) {
-            html += '<div style="font-size:12px;font-weight:600;color:#666;margin-bottom:10px;">待完成</div>';
-            pending.forEach(t => {
-                const cat = getCategory(t.category);
-                html += renderDayTaskItem(t);
-            });
+        if (p.length>0) {
+            h += '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">待完成</div>';
+            p.forEach(t => h += renderDayTask(t));
         }
-        if (done.length > 0) {
-            html += '<div style="font-size:12px;font-weight:600;color:#666;margin:14px 0 10px;">已完成</div>';
-            done.forEach(t => {
-                html += renderDayTaskItem(t);
-            });
+        if (d.length>0) {
+            h += '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin:12px 0 8px;">已完成</div>';
+            d.forEach(t => h += renderDayTask(t));
         }
     }
-
-    $('dayModalBody').innerHTML = html;
-
-    // 绑定事件
+    $('dayModalBody').innerHTML = h;
+    if (window.lucide) lucide.createIcons();
     $('dayModalBody').querySelectorAll('.plan-day-task-check').forEach(cb => {
         cb.addEventListener('click', e => {
             e.stopPropagation();
             toggleTask(cb.dataset.check);
-            showDayDetail(dateStr); // 刷新
-            if (planState.currentPage === 'list') renderListPage();
-            if (planState.currentPage === 'view') renderViewPage();
+            showDayModal(ds);
         });
     });
-    $('dayModalBody').querySelectorAll('.plan-day-task-item').forEach(item => {
-        item.addEventListener('dblclick', () => deleteTask(item.dataset.id));
-    });
-
-    showModal('planDayModal');
+    showModal('dayModal');
 }
 
-function renderDayTaskItem(t) {
-    const cat = getCategory(t.category);
-    const time = t.dueTime || '';
-    return `<div class="plan-day-task-item ${t.done ? 'done' : ''}" data-id="${t.id}">
-        <div class="plan-day-task-check" data-check="${t.id}">${t.done ? '<i class="fas fa-check"></i>' : ''}</div>
+function renderDayTask(t) {
+    const c = catOf(t.category);
+    const tm = t.dueTime||'';
+    return `<div class="plan-day-task ${t.done?'done':''}" data-id="${t.id}">
+        <div class="plan-day-task-check" data-check="${t.id}">${t.done?'<i data-lucide="check"></i>':''}</div>
         <div class="plan-day-task-content">
-            <div class="plan-day-task-text">${cat.icon} ${escapeHtml(t.text)}</div>
-            <div class="plan-day-task-meta">${cat.name} ${time}</div>
+            <div class="plan-day-task-text">${c.icon} ${esc(t.text)}</div>
+            <div class="plan-day-task-meta">${c.name} ${tm}</div>
         </div>
     </div>`;
 }
 
-/* ========== 弹窗工具 ========== */
-function showModal(id) {
-    const el = $(id);
-    if (el) el.classList.add('active');
-}
+/* ============ 弹窗工具 ============ */
+function showModal(id) { $(id)?.classList.add('active'); if (window.lucide) setTimeout(()=>lucide.createIcons(),0); }
+function hideModal(id) { $(id)?.classList.remove('active'); }
 
-function hideModal(id) {
-    const el = $(id);
-    if (el) el.classList.remove('active');
-}
-
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
-}
-
-/* ========== 事件绑定 ========== */
-function bindEvents() {
-    // 底部导航
-    document.querySelectorAll('.plan-nav-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchPage(btn.dataset.nav));
+/* ============ 事件绑定 ============ */
+function bind() {
+    // 主 Tab
+    document.querySelectorAll('.plan-subtab').forEach(b => {
+        b.addEventListener('click', () => switchPanel(b.dataset.subtab));
     });
 
-    // 视图切换标签
+    // 视图子 Tab
     document.querySelectorAll('.plan-view-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             document.querySelectorAll('.plan-view-tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            planState.currentVTab = tab.dataset.vtab;
+            S.vtab = tab.dataset.vtab;
             document.querySelectorAll('.plan-view-content').forEach(c => {
-                c.classList.toggle('active', c.dataset.vcontent === tab.dataset.vtab);
+                c.classList.toggle('active', c.dataset.vtab===S.vtab);
             });
-            if (tab.dataset.vtab === 'week') renderWeekView();
-            if (tab.dataset.vtab === 'day') renderDayView();
-            if (tab.dataset.vtab === 'month') renderMonthView();
-        });
-    });
-
-    // 专注标签
-    document.querySelectorAll('.plan-focus-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.plan-focus-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            planState.currentFTab = tab.dataset.ftab;
-        });
-    });
-
-    // 统计标签
-    document.querySelectorAll('.plan-stats-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.plan-stats-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            planState.currentSTab = tab.dataset.stab;
-        });
-    });
-
-    // 时间范围
-    document.querySelectorAll('.plan-range-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.plan-range-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            planState.currentRange = btn.dataset.range;
-            renderStatsPage();
+            if (S.vtab==='week') renderWeekView();
+            if (S.vtab==='day') renderDayView();
+            if (S.vtab==='month') renderMonthView();
         });
     });
 
     // 日历导航
-    $('listCalPrev').addEventListener('click', () => { planState.calMonth--; if (planState.calMonth < 0) {planState.calMonth=11;planState.calYear--;} renderListPage(); });
-    $('listCalNext').addEventListener('click', () => { planState.calMonth++; if (planState.calMonth > 11) {planState.calMonth=0;planState.calYear++;} renderListPage(); });
-    $('listCalToday').addEventListener('click', () => { const d=new Date(); planState.calYear=d.getFullYear(); planState.calMonth=d.getMonth(); planState.selectedDate=null; renderListPage(); });
-    $('listCalFilter').addEventListener('click', showFilterModal);
+    $('listPrev')?.addEventListener('click', () => {S.calM--;if(S.calM<0){S.calM=11;S.calY--;}renderList();});
+    $('listNext')?.addEventListener('click', () => {S.calM++;if(S.calM>11){S.calM=0;S.calY++;}renderList();});
+    $('listToday')?.addEventListener('click', () => {const d=new Date();S.calY=d.getFullYear();S.calM=d.getMonth();renderList();});
+    $('listFilter')?.addEventListener('click', showFilter);
 
-    $('viewCalPrev').addEventListener('click', () => { planState.calMonth--; if (planState.calMonth < 0) {planState.calMonth=11;planState.calYear--;} renderViewPage(); });
-    $('viewCalNext').addEventListener('click', () => { planState.calMonth++; if (planState.calMonth > 11) {planState.calMonth=0;planState.calYear++;} renderViewPage(); });
-    $('viewCalFilter').addEventListener('click', showFilterModal);
+    $('viewPrev')?.addEventListener('click', () => {S.calM--;if(S.calM<0){S.calM=11;S.calY--;}renderView();});
+    $('viewNext')?.addEventListener('click', () => {S.calM++;if(S.calM>11){S.calM=0;S.calY++;}renderView();});
 
-    // FAB
-    $('listFab').addEventListener('click', () => openTaskModal(null));
+    // 新建任务
+    $('listFab')?.addEventListener('click', () => openTaskModal(null));
 
     // 任务弹窗
-    $('taskModalClose').addEventListener('click', () => hideModal('planTaskModal'));
-    $('taskModalCancel').addEventListener('click', () => hideModal('planTaskModal'));
-    $('taskModalSave').addEventListener('click', saveTask);
+    $('taskModalClose')?.addEventListener('click', () => hideModal('taskModal'));
+    $('taskModalCancel')?.addEventListener('click', () => hideModal('taskModal'));
+    $('taskModalSave')?.addEventListener('click', saveTask);
 
     // 筛选弹窗
-    $('filterModalClose').addEventListener('click', () => hideModal('planFilterModal'));
+    $('filterModalClose')?.addEventListener('click', () => hideModal('filterModal'));
 
-    // 关联任务弹窗
-    $('focusTaskPicker').addEventListener('click', showTaskPicker);
-    $('taskPickerClose').addEventListener('click', () => hideModal('planTaskPickerModal'));
+    // 关联任务
+    $('focusTaskPicker')?.addEventListener('click', showTaskPicker);
+    $('taskPickerClose')?.addEventListener('click', () => hideModal('taskPickerModal'));
 
     // 日期弹窗
-    $('dayModalClose').addEventListener('click', () => hideModal('planDayModal'));
+    $('dayModalClose')?.addEventListener('click', () => hideModal('dayModal'));
 
-    // 专注预设
-    document.querySelectorAll('.plan-preset-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            planState.focusMin = Number(btn.dataset.min);
-            planState.focusRemaining = planState.focusMin * 60;
-            resetFocusTimer();
+    // 预设时长
+    document.querySelectorAll('.plan-preset').forEach(b => {
+        b.addEventListener('click', () => {
+            S.focusMin = Number(b.dataset.min);
+            S.focusRemain = S.focusMin*60;
+            document.querySelectorAll('.plan-preset').forEach(x => {
+                x.classList.toggle('active', Number(x.dataset.min)===S.focusMin);
+            });
+            resetFocus();
         });
     });
 
     // 专注控制
-    $('focusStart').addEventListener('click', () => {
-        if (planState.focusRunning) pauseFocusTimer();
-        else startFocusTimer();
+    $('focusStart')?.addEventListener('click', () => {
+        S.focusRunning ? pauseFocus() : startFocus();
     });
-    $('focusReset').addEventListener('click', resetFocusTimer);
+    $('focusReset')?.addEventListener('click', resetFocus);
 
-    // 我的页菜单
-    document.querySelectorAll('.plan-menu-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const action = item.dataset.action;
-            if (action === 'about') {
-                alert('朝夕计划 v1.0\n科学四象限 · 多视图日历 · 专注计时 · 数据统计');
-            } else if (action === 'data-export') {
-                const data = JSON.stringify(planData, null, 2);
-                const blob = new Blob([data], {type:'application/json'});
+    // 统计范围
+    document.querySelectorAll('.plan-range-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            document.querySelectorAll('.plan-range-btn').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            S.range = b.dataset.range;
+            renderStats();
+        });
+    });
+
+    // 我的菜单
+    document.querySelectorAll('.plan-menu-item').forEach(it => {
+        it.addEventListener('click', () => {
+            const a = it.dataset.action;
+            if (a==='about') alert('朝夕计划 v1.0\n科学四象限 · 多视图日历 · 专注计时 · 数据统计');
+            else if (a==='data-export') {
+                const blob = new Blob([JSON.stringify(planData,null,2)],{type:'application/json'});
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `plan-backup-${todayStr()}.json`;
-                a.click();
+                const el = document.createElement('a');
+                el.href = url; el.download = `plan-backup-${todayStr()}.json`;
+                el.click();
                 URL.revokeObjectURL(url);
-            } else if (action === 'data-import') {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'application/json';
-                input.onchange = e => {
-                    const file = e.target.files[0];
-                    const reader = new FileReader();
-                    reader.onload = ev => {
+            } else if (a==='data-import') {
+                const inp = document.createElement('input');
+                inp.type='file'; inp.accept='application/json';
+                inp.onchange = e => {
+                    const f=e.target.files[0]; if(!f)return;
+                    const r=new FileReader();
+                    r.onload = ev => {
                         try {
-                            const imported = JSON.parse(ev.target.result);
-                            if (imported.tasks) planData.tasks = imported.tasks;
-                            if (imported.focusRecords) planData.focusRecords = imported.focusRecords;
-                            savePlanData();
-                            renderProfilePage();
+                            const d=JSON.parse(ev.target.result);
+                            if (d.tasks) planData.tasks=d.tasks;
+                            if (d.focusRecords) planData.focusRecords=d.focusRecords;
+                            save(); renderProfile();
                             alert('导入成功！');
-                        } catch(err) { alert('导入失败：' + err.message); }
+                        } catch(err){ alert('导入失败'); }
                     };
-                    reader.readAsText(file);
+                    r.readAsText(f);
                 };
-                input.click();
-            } else {
-                alert('功能开发中...');
-            }
+                inp.click();
+            } else { alert('功能开发中...'); }
         });
     });
 
-    // ESC 关闭弹窗
-    document.querySelectorAll('.plan-modal').forEach(modal => {
-        modal.addEventListener('click', e => {
-            if (e.target === modal) modal.classList.remove('active');
-        });
+    // ESC / 点击外部关闭
+    document.querySelectorAll('.plan-overlay').forEach(m => {
+        m.addEventListener('click', e => { if (e.target===m) m.classList.remove('active'); });
     });
-
-    // 状态栏时间
-    function updateTime() {
-        const d = new Date();
-        $('planStatusTime').textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    }
-    updateTime();
-    setInterval(updateTime, 30000);
 }
 
-/* ========== 初始化 ========== */
+/* ============ 初始化 ============ */
 document.addEventListener('DOMContentLoaded', () => {
-    loadPlanData();
-    bindEvents();
-    renderListPage();
-    // 如果从主页跳转过来，自动打开对应页面
-    const params = new URLSearchParams(window.location.search);
-    const page = params.get('page');
-    if (page && ['list','view','focus','stats','profile'].includes(page)) {
-        switchPage(page);
-    }
+    load();
+    bind();
+    renderList();
+    // 初始化 lucide
+    if (window.lucide) lucide.createIcons();
+    const p = new URLSearchParams(location.search).get('page');
+    if (p && ['list','view','focus','stats','profile'].includes(p)) switchPanel(p);
 });

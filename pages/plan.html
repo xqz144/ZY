@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>朝夕计划 · 科学四象限</title>
     <link rel="stylesheet" href="../css/extapp-unified.css">
-    <link rel="stylesheet" href="../css/plan.css">
     <script>
+    /* 从父窗口同步主题色/字体 */
     (function () {
         try {
             var inIframe = false;
@@ -26,444 +26,441 @@
                         }
                         var fv = parentRoot.style.getPropertyValue('--font-family');
                         if (fv) document.documentElement.style.setProperty('--font-family', fv);
+                        var mfv = parentRoot.style.getPropertyValue('--message-font-family');
+                        if (mfv) document.documentElement.style.setProperty('--message-font-family', mfv);
+                        var fs = parentRoot.style.getPropertyValue('--font-size');
+                        if (fs) document.documentElement.style.setProperty('--font-size', fs);
                         var pcs = null;
                         try { pcs = parentDoc.defaultView ? parentDoc.defaultView.getComputedStyle(parentRoot) : null; } catch (e) { pcs = null; }
                         var accent = (pcs && pcs.getPropertyValue('--accent-color')) || parentRoot.style.getPropertyValue('--accent-color') || '';
                         if (accent) document.documentElement.style.setProperty('--accent-color', accent.trim());
+                        var accentRgb = (pcs && pcs.getPropertyValue('--accent-color-rgb')) || parentRoot.style.getPropertyValue('--accent-color-rgb') || '';
+                        if (accentRgb) document.documentElement.style.setProperty('--accent-color-rgb', accentRgb.trim());
                     }
-                } catch (e) {}
+                } catch (e) { console.warn('plan theme sync error', e); }
             }
             applyThemeFromParent();
             if (inIframe) {
                 window.addEventListener('message', function (ev) {
                     var d = ev.data || {};
                     if (d.type === 'theme:sync' || d.colorTheme || d.theme) {
+                        if (d.colorTheme) document.documentElement.setAttribute('data-color-theme', d.colorTheme);
+                        if (d.theme) {
+                            document.documentElement.setAttribute('data-theme', d.theme);
+                            if (d.theme === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+                        }
+                        if (d.fontFamily) document.documentElement.style.setProperty('--font-family', d.fontFamily);
                         applyThemeFromParent();
                     }
                 });
+                setInterval(applyThemeFromParent, 2500);
             }
-        } catch (e) {}
+        } catch (e) { console.warn('plan init error', e); }
     })();
     </script>
+    <link rel="stylesheet" href="../css/plan.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="plan-body">
+<body>
+    <div class="plan-app">
+        <div class="plan-scroll">
 
-<!-- 手机外壳 -->
-<div class="plan-phone">
-    <div class="plan-screen">
-
-        <!-- 顶部状态栏 -->
-        <div class="plan-status-bar">
-            <span class="plan-status-time" id="planStatusTime">9:41</span>
-            <span class="plan-status-icons">
-                <i class="fas fa-signal"></i>
-                <i class="fas fa-wifi"></i>
-                <i class="fas fa-battery-full"></i>
-            </span>
-        </div>
-
-        <!-- 主内容区 -->
-        <div class="plan-main" id="planMain">
-
-            <!-- ============ 清单页（四象限） ============ -->
-            <div class="plan-page active" data-page="list">
-                <div class="plan-page-title">
-                    <span>科学四象限</span>
-                    <span class="plan-page-subtitle">按重要/紧急分类管理任务</span>
+            <!-- Hero 头卡 -->
+            <div class="plan-hero">
+                <div class="plan-hero-tag">朝夕计划</div>
+                <div class="plan-hero-inner">
+                    <div class="plan-hero-title">科学四象限</div>
+                    <div class="plan-hero-sub">让每一件事都井井有条</div>
                 </div>
+                <div class="plan-hero-doodle doodle-leaf"></div>
+                <div class="plan-hero-doodle doodle-star"></div>
+                <div class="plan-hero-doodle doodle-dot"></div>
+                <button class="plan-add-btn" id="listFab">
+                    <i data-lucide="plus"></i>
+                    <span>新建任务</span>
+                </button>
+            </div>
 
-                <!-- 日历头 + 分类筛选 -->
-                <div class="plan-calendar-header">
-                    <div class="plan-cal-nav">
-                        <button class="plan-cal-arrow" id="listCalPrev">‹</button>
-                        <span class="plan-cal-month" id="listCalMonth">2026年8月</span>
-                        <button class="plan-cal-arrow" id="listCalNext">›</button>
+            <!-- 底部 Tab 切换 -->
+            <div class="plan-subtabs">
+                <button class="plan-subtab active" data-subtab="list">
+                    <i data-lucide="list-todo"></i><span>清单</span>
+                </button>
+                <button class="plan-subtab" data-subtab="view">
+                    <i data-lucide="calendar"></i><span>视图</span>
+                </button>
+                <button class="plan-subtab" data-subtab="focus">
+                    <i data-lucide="timer"></i><span>专注</span>
+                </button>
+                <button class="plan-subtab" data-subtab="stats">
+                    <i data-lucide="bar-chart-3"></i><span>统计</span>
+                </button>
+                <button class="plan-subtab" data-subtab="profile">
+                    <i data-lucide="user"></i><span>我的</span>
+                </button>
+            </div>
+
+            <!-- ============ 清单页 ============ -->
+            <div class="plan-subpanel active" data-subpanel="list">
+
+                <!-- 月历涂鸦卡 -->
+                <div class="plan-cal-wrap">
+                    <div class="plan-cal-head">
+                        <button class="plan-cal-btn" id="listPrev"><i data-lucide="chevron-left"></i></button>
+                        <div class="plan-cal-title">
+                            <div class="plan-cal-year" id="listYear">2026年</div>
+                            <div class="plan-cal-month" id="listMonth">8月</div>
+                        </div>
+                        <button class="plan-cal-btn" id="listNext"><i data-lucide="chevron-right"></i></button>
                     </div>
-                    <div class="plan-cal-today" id="listCalToday">今</div>
-                    <div class="plan-cal-filter" id="listCalFilter">
-                        <span>全部分类</span>
-                        <i class="fas fa-chevron-down"></i>
+                    <div class="plan-weekdays">
+                        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                    </div>
+                    <div class="plan-cal-grid" id="listMiniCal"></div>
+                    <div class="plan-cal-foot">
+                        <button class="plan-today-btn" id="listToday">今</button>
+                        <button class="plan-filter-btn" id="listFilter">
+                            <span id="listFilterText">全部分类</span>
+                            <i data-lucide="chevron-down"></i>
+                        </button>
                     </div>
                 </div>
-
-                <!-- 迷你日历 -->
-                <div class="plan-mini-cal" id="listMiniCal"></div>
 
                 <!-- 四象限 -->
+                <div class="plan-quad-title">
+                    <span>四象限</span>
+                    <span class="plan-quad-sub">紧急 × 重要</span>
+                </div>
                 <div class="plan-quadrants">
-                    <div class="plan-quadrant plan-q1" data-quad="q1">
-                        <div class="plan-quad-head"><span class="plan-quad-dot"></span>重要且紧急</div>
+                    <div class="plan-quad plan-q1" data-quad="q1">
+                        <div class="plan-quad-head plan-q1-head">
+                            <span class="plan-quad-emoji">🔥</span>
+                            <span>重要且紧急</span>
+                        </div>
                         <div class="plan-quad-body" id="listQ1"></div>
                     </div>
-                    <div class="plan-quadrant plan-q2" data-quad="q2">
-                        <div class="plan-quad-head"><span class="plan-quad-dot"></span>重要不紧急</div>
+                    <div class="plan-quad plan-q2" data-quad="q2">
+                        <div class="plan-quad-head plan-q2-head">
+                            <span class="plan-quad-emoji">🌟</span>
+                            <span>重要不紧急</span>
+                        </div>
                         <div class="plan-quad-body" id="listQ2"></div>
                     </div>
-                    <div class="plan-quadrant plan-q3" data-quad="q3">
-                        <div class="plan-quad-head"><span class="plan-quad-dot"></span>紧急不重要</div>
+                    <div class="plan-quad plan-q3" data-quad="q3">
+                        <div class="plan-quad-head plan-q3-head">
+                            <span class="plan-quad-emoji">⚡</span>
+                            <span>紧急不重要</span>
+                        </div>
                         <div class="plan-quad-body" id="listQ3"></div>
                     </div>
-                    <div class="plan-quadrant plan-q4" data-quad="q4">
-                        <div class="plan-quad-head"><span class="plan-quad-dot"></span>不重要不紧急</div>
+                    <div class="plan-quad plan-q4" data-quad="q4">
+                        <div class="plan-quad-head plan-q4-head">
+                            <span class="plan-quad-emoji">☁️</span>
+                            <span>不重要不紧急</span>
+                        </div>
                         <div class="plan-quad-body" id="listQ4"></div>
                     </div>
                 </div>
 
-                <!-- 新建任务 FAB -->
-                <button class="plan-fab" id="listFab">
-                    <i class="fas fa-plus"></i>
-                </button>
             </div>
 
-            <!-- ============ 视图页（月/周/日） ============ -->
-            <div class="plan-page" data-page="view">
-                <div class="plan-page-title">
-                    <span>多种视图</span>
-                    <span class="plan-page-subtitle">时间可视化管理</span>
-                </div>
+            <!-- ============ 视图页 ============ -->
+            <div class="plan-subpanel" data-subpanel="view">
 
-                <!-- 视图切换 -->
-                <div class="plan-view-tabs">
-                    <button class="plan-view-tab active" data-vtab="month">月视图</button>
-                    <button class="plan-view-tab" data-vtab="week">周视图</button>
-                    <button class="plan-view-tab" data-vtab="day">日视图</button>
-                </div>
-
-                <!-- 工具栏 -->
-                <div class="plan-view-toolbar">
-                    <div class="plan-cal-nav">
-                        <button class="plan-cal-arrow" id="viewCalPrev">‹</button>
-                        <span class="plan-cal-month" id="viewCalMonth">2026年8月</span>
-                        <button class="plan-cal-arrow" id="viewCalNext">›</button>
+                <div class="plan-cal-wrap">
+                    <div class="plan-cal-head">
+                        <button class="plan-cal-btn" id="viewPrev"><i data-lucide="chevron-left"></i></button>
+                        <div class="plan-cal-title">
+                            <div class="plan-cal-year" id="viewYear">2026年</div>
+                            <div class="plan-cal-month" id="viewMonth">8月</div>
+                        </div>
+                        <button class="plan-cal-btn" id="viewNext"><i data-lucide="chevron-right"></i></button>
                     </div>
-                    <div class="plan-cal-filter" id="viewCalFilter">
-                        <span>全部分类</span>
-                        <i class="fas fa-chevron-down"></i>
+
+                    <div class="plan-view-tabs">
+                        <button class="plan-view-tab active" data-vtab="month">月视图</button>
+                        <button class="plan-view-tab" data-vtab="week">周视图</button>
+                        <button class="plan-view-tab" data-vtab="day">日视图</button>
+                    </div>
+
+                    <div class="plan-view-content active" data-vtab="month">
+                        <div class="plan-month-weekdays">
+                            <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                        </div>
+                        <div class="plan-month-days" id="viewMonthGrid"></div>
+                    </div>
+
+                    <div class="plan-view-content" data-vtab="week">
+                        <div class="plan-week-grid" id="viewWeekGrid"></div>
+                    </div>
+
+                    <div class="plan-view-content" data-vtab="day">
+                        <div class="plan-day-view" id="viewDayView"></div>
                     </div>
                 </div>
 
-                <!-- 月视图 -->
-                <div class="plan-view-content active" data-vcontent="month">
-                    <div class="plan-month-grid" id="viewMonthGrid"></div>
-                </div>
-
-                <!-- 周视图 -->
-                <div class="plan-view-content" data-vcontent="week">
-                    <div class="plan-week-grid" id="viewWeekGrid"></div>
-                </div>
-
-                <!-- 日视图 -->
-                <div class="plan-view-content" data-vcontent="day">
-                    <div class="plan-day-view" id="viewDayView"></div>
-                </div>
             </div>
 
             <!-- ============ 专注页 ============ -->
-            <div class="plan-page" data-page="focus">
-                <div class="plan-page-title">
-                    <span>专注计时</span>
-                    <span class="plan-page-subtitle">番茄钟 · 高效专注</span>
-                </div>
+            <div class="plan-subpanel" data-subpanel="focus">
 
-                <!-- 专注标签 -->
-                <div class="plan-focus-tabs">
-                    <button class="plan-focus-tab active" data-ftab="timer">专注</button>
-                    <button class="plan-focus-tab" data-ftab="preset">常用</button>
-                    <div class="plan-focus-tab-right">
-                        <i class="fas fa-user-plus" title="多人专注"></i>
-                        <i class="fas fa-list-alt" title="专注记录"></i>
+                <div class="plan-focus-card">
+                    <div class="plan-focus-title">
+                        <i data-lucide="timer"></i>
+                        <span>专注计时</span>
+                    </div>
+
+                    <div class="plan-focus-task" id="focusTaskPicker">
+                        <span id="focusTaskName">关联任务</span>
+                        <i data-lucide="chevron-right"></i>
+                    </div>
+
+                    <div class="plan-timer-area">
+                        <div class="plan-timer-ring">
+                            <svg viewBox="0 0 220 220" class="plan-timer-svg">
+                                <circle cx="110" cy="110" r="95" class="plan-timer-bg"/>
+                                <circle cx="110" cy="110" r="95" class="plan-timer-progress" id="timerProgress"/>
+                            </svg>
+                            <div class="plan-timer-display">
+                                <div class="plan-timer-nums">
+                                    <span id="timerMin">25</span>
+                                    <span class="plan-timer-sep">:</span>
+                                    <span id="timerSec">00</span>
+                                </div>
+                                <div class="plan-timer-label">分钟</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="plan-presets">
+                        <button class="plan-preset" data-min="15">15</button>
+                        <button class="plan-preset active" data-min="25">25</button>
+                        <button class="plan-preset" data-min="45">45</button>
+                        <button class="plan-preset" data-min="60">60</button>
+                    </div>
+
+                    <div class="plan-focus-controls">
+                        <button class="plan-fctrl" id="focusReset" title="重置"><i data-lucide="rotate-ccw"></i></button>
+                        <button class="plan-fctrl plan-fctrl-start" id="focusStart">
+                            <i data-lucide="play"></i>
+                            <span id="focusStartText">开始专注</span>
+                        </button>
+                        <button class="plan-fctrl" id="focusSound" title="音效"><i data-lucide="volume-2"></i></button>
                     </div>
                 </div>
 
-                <!-- 关联任务 -->
-                <div class="plan-focus-task" id="focusTaskPicker">
-                    <span>关联任务</span>
-                    <i class="fas fa-chevron-right"></i>
+            </div>
+
+            <!-- ============ 统计页 ============ -->
+            <div class="plan-subpanel" data-subpanel="stats">
+
+                <div class="plan-stats-card">
+                    <div class="plan-stats-title">
+                        <i data-lucide="bar-chart-3"></i>
+                        <span>数据统计</span>
+                    </div>
+
+                    <div class="plan-stats-range">
+                        <button class="plan-range-btn" data-range="week">周</button>
+                        <button class="plan-range-btn active" data-range="month">月</button>
+                        <button class="plan-range-btn" data-range="year">年</button>
+                        <button class="plan-range-btn" data-range="custom">自定义</button>
+                    </div>
+
+                    <div class="plan-stats-date" id="statsDate">2026年8月1日 ~ 2026年8月20日</div>
+
+                    <div class="plan-stats-cards">
+                        <div class="plan-stat-card">
+                            <div class="plan-stat-num" id="statSuccess">0</div>
+                            <div class="plan-stat-label">成功打卡</div>
+                        </div>
+                        <div class="plan-stat-card">
+                            <div class="plan-stat-num" id="statFail">0</div>
+                            <div class="plan-stat-label">失败打卡</div>
+                        </div>
+                        <div class="plan-stat-card">
+                            <div class="plan-stat-num" id="statMiss">0</div>
+                            <div class="plan-stat-label">未打卡</div>
+                        </div>
+                        <div class="plan-stat-card">
+                            <div class="plan-stat-num" id="statRate">0%</div>
+                            <div class="plan-stat-label">打卡率</div>
+                        </div>
+                    </div>
+
+                    <div class="plan-chart-card">
+                        <div class="plan-chart-title">优先级占比</div>
+                        <div class="plan-pie-area">
+                            <canvas id="pieChart" width="200" height="200"></canvas>
+                            <div class="plan-pie-legend" id="pieLegend"></div>
+                        </div>
+                    </div>
+
+                    <div class="plan-chart-card">
+                        <div class="plan-chart-title">打卡趋势</div>
+                        <canvas id="trendChart" width="340" height="130"></canvas>
+                    </div>
                 </div>
 
-                <!-- 番茄钟 -->
-                <div class="plan-timer-wrap">
-                    <div class="plan-timer-ring">
-                        <svg viewBox="0 0 200 200" class="plan-timer-svg">
-                            <circle cx="100" cy="100" r="85" class="plan-timer-bg"/>
-                            <circle cx="100" cy="100" r="85" class="plan-timer-progress" id="timerProgress"/>
-                        </svg>
-                        <div class="plan-timer-center">
-                            <div class="plan-timer-nums">
-                                <span id="timerMin">25</span>
-                                <span class="plan-timer-sep">:</span>
-                                <span id="timerSec">00</span>
-                            </div>
-                            <div class="plan-timer-label">分钟</div>
+            </div>
+
+            <!-- ============ 我的页 ============ -->
+            <div class="plan-subpanel" data-subpanel="profile">
+
+                <div class="plan-profile-card">
+                    <div class="plan-profile-header">
+                        <div class="plan-profile-avatar" id="profileAvatar">
+                            <img id="profileAvatarImg" src="" alt="">
+                        </div>
+                        <div class="plan-profile-info">
+                            <div class="plan-profile-name">梦角</div>
+                            <div class="plan-profile-desc">让每一天都更有规划 ✨</div>
+                        </div>
+                    </div>
+
+                    <div class="plan-profile-stats">
+                        <div class="plan-profile-stat">
+                            <div class="plan-profile-stat-num" id="profileTotal">0</div>
+                            <div class="plan-profile-stat-label">总任务</div>
+                        </div>
+                        <div class="plan-profile-stat">
+                            <div class="plan-profile-stat-num" id="profileDone">0</div>
+                            <div class="plan-profile-stat-label">已完成</div>
+                        </div>
+                        <div class="plan-profile-stat">
+                            <div class="plan-profile-stat-num" id="profileFocus">0</div>
+                            <div class="plan-profile-stat-label">专注分钟</div>
+                        </div>
+                    </div>
+
+                    <div class="plan-menu-list">
+                        <div class="plan-menu-item" data-action="categories">
+                            <span class="plan-menu-ic"><i data-lucide="tags"></i></span>
+                            <span class="plan-menu-txt">任务分类管理</span>
+                            <span class="plan-menu-arrow"><i data-lucide="chevron-right"></i></span>
+                        </div>
+                        <div class="plan-menu-item" data-action="focus-sound">
+                            <span class="plan-menu-ic"><i data-lucide="music"></i></span>
+                            <span class="plan-menu-txt">专注音效</span>
+                            <span class="plan-menu-arrow"><i data-lucide="chevron-right"></i></span>
+                        </div>
+                        <div class="plan-menu-item" data-action="data-export">
+                            <span class="plan-menu-ic"><i data-lucide="download"></i></span>
+                            <span class="plan-menu-txt">数据导出</span>
+                            <span class="plan-menu-arrow"><i data-lucide="chevron-right"></i></span>
+                        </div>
+                        <div class="plan-menu-item" data-action="data-import">
+                            <span class="plan-menu-ic"><i data-lucide="upload"></i></span>
+                            <span class="plan-menu-txt">数据导入</span>
+                            <span class="plan-menu-arrow"><i data-lucide="chevron-right"></i></span>
+                        </div>
+                        <div class="plan-menu-item" data-action="about">
+                            <span class="plan-menu-ic"><i data-lucide="info"></i></span>
+                            <span class="plan-menu-txt">关于朝夕计划</span>
+                            <span class="plan-menu-arrow"><i data-lucide="chevron-right"></i></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- 预设时长 -->
-                <div class="plan-focus-presets">
-                    <button class="plan-preset-btn" data-min="15">15</button>
-                    <button class="plan-preset-btn active" data-min="25">25</button>
-                    <button class="plan-preset-btn" data-min="45">45</button>
-                    <button class="plan-preset-btn" data-min="60">60</button>
-                </div>
-
-                <!-- 控制按钮 -->
-                <div class="plan-focus-controls">
-                    <button class="plan-focus-btn plan-focus-reset" id="focusReset">
-                        <i class="fas fa-redo"></i>
-                    </button>
-                    <button class="plan-focus-btn plan-focus-start" id="focusStart">
-                        <i class="fas fa-play"></i>
-                        <span id="focusStartText">开始专注</span>
-                    </button>
-                    <button class="plan-focus-btn plan-focus-settings" id="focusSound">
-                        <i class="fas fa-volume-up"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- ============ 统计页 ============ -->
-            <div class="plan-page" data-page="stats">
-                <div class="plan-page-title">
-                    <span>数据统计</span>
-                    <span class="plan-page-subtitle">打卡与效率分析</span>
-                </div>
-
-                <!-- 统计子标签 -->
-                <div class="plan-stats-tabs">
-                    <button class="plan-stats-tab active" data-stab="list">清单</button>
-                    <button class="plan-stats-tab" data-stab="focus">专注</button>
-                </div>
-
-                <!-- 时间范围 -->
-                <div class="plan-stats-range">
-                    <button class="plan-range-btn" data-range="week">周</button>
-                    <button class="plan-range-btn active" data-range="month">月</button>
-                    <button class="plan-range-btn" data-range="year">年</button>
-                    <button class="plan-range-btn" data-range="custom">自定义</button>
-                </div>
-
-                <div class="plan-stats-date" id="statsDateRange">2026年8月1日 ~ 2026年8月20日</div>
-
-                <!-- 统计卡片 -->
-                <div class="plan-stats-cards">
-                    <div class="plan-stat-card">
-                        <div class="plan-stat-num" id="statSuccess">0</div>
-                        <div class="plan-stat-label">成功打卡</div>
-                    </div>
-                    <div class="plan-stat-card">
-                        <div class="plan-stat-num" id="statFail">0</div>
-                        <div class="plan-stat-label">失败打卡</div>
-                    </div>
-                    <div class="plan-stat-card">
-                        <div class="plan-stat-num" id="statMiss">0</div>
-                        <div class="plan-stat-label">未打卡</div>
-                    </div>
-                    <div class="plan-stat-card">
-                        <div class="plan-stat-num" id="statRate">0%</div>
-                        <div class="plan-stat-label">打卡率</div>
-                    </div>
-                </div>
-
-                <!-- 优先级饼图 -->
-                <div class="plan-stats-chart-card">
-                    <div class="plan-chart-title">清单打卡优先级占比</div>
-                    <div class="plan-pie-wrap">
-                        <canvas id="planPieChart" width="200" height="200"></canvas>
-                        <div class="plan-pie-legend" id="planPieLegend"></div>
-                    </div>
-                </div>
-
-                <!-- 趋势图 -->
-                <div class="plan-stats-chart-card">
-                    <div class="plan-chart-title">清单打卡分布趋势</div>
-                    <canvas id="planTrendChart" width="320" height="120"></canvas>
-                </div>
-            </div>
-
-            <!-- ============ 我的页 ============ -->
-            <div class="plan-page" data-page="profile">
-                <div class="plan-page-title">
-                    <span>我的</span>
-                    <span class="plan-page-subtitle">个人设置与偏好</span>
-                </div>
-
-                <div class="plan-profile-header">
-                    <div class="plan-profile-avatar" id="planProfileAvatar">
-                        <img id="planProfileAvatarImg" src="" alt="头像">
-                    </div>
-                    <div class="plan-profile-info">
-                        <div class="plan-profile-name" id="planProfileName">梦角</div>
-                        <div class="plan-profile-desc">让每一天都更有规划 ✨</div>
-                    </div>
-                </div>
-
-                <div class="plan-profile-stats">
-                    <div class="plan-profile-stat">
-                        <div class="plan-profile-stat-num" id="profileTotalTasks">0</div>
-                        <div class="plan-profile-stat-label">总任务</div>
-                    </div>
-                    <div class="plan-profile-stat">
-                        <div class="plan-profile-stat-num" id="profileDoneTasks">0</div>
-                        <div class="plan-profile-stat-label">已完成</div>
-                    </div>
-                    <div class="plan-profile-stat">
-                        <div class="plan-profile-stat-num" id="profileFocusMin">0</div>
-                        <div class="plan-profile-stat-label">专注分钟</div>
-                    </div>
-                </div>
-
-                <div class="plan-profile-menu">
-                    <div class="plan-menu-item" data-action="categories">
-                        <i class="fas fa-tags"></i>
-                        <span>任务分类管理</span>
-                        <i class="fas fa-chevron-right plan-menu-arrow"></i>
-                    </div>
-                    <div class="plan-menu-item" data-action="habit">
-                        <i class="fas fa-fire"></i>
-                        <span>习惯打卡设置</span>
-                        <i class="fas fa-chevron-right plan-menu-arrow"></i>
-                    </div>
-                    <div class="plan-menu-item" data-action="focus-sound">
-                        <i class="fas fa-music"></i>
-                        <span>专注音效</span>
-                        <i class="fas fa-chevron-right plan-menu-arrow"></i>
-                    </div>
-                    <div class="plan-menu-item" data-action="data-export">
-                        <i class="fas fa-download"></i>
-                        <span>数据导出</span>
-                        <i class="fas fa-chevron-right plan-menu-arrow"></i>
-                    </div>
-                    <div class="plan-menu-item" data-action="data-import">
-                        <i class="fas fa-upload"></i>
-                        <span>数据导入</span>
-                        <i class="fas fa-chevron-right plan-menu-arrow"></i>
-                    </div>
-                    <div class="plan-menu-item" data-action="about">
-                        <i class="fas fa-circle-info"></i>
-                        <span>关于朝夕计划</span>
-                        <i class="fas fa-chevron-right plan-menu-arrow"></i>
-                    </div>
-                </div>
             </div>
 
         </div>
-
-        <!-- 底部导航栏 -->
-        <nav class="plan-bottom-nav">
-            <button class="plan-nav-btn active" data-nav="list">
-                <i class="fas fa-clipboard-list"></i>
-                <span>清单</span>
-            </button>
-            <button class="plan-nav-btn" data-nav="view">
-                <i class="fas fa-calendar-alt"></i>
-                <span>视图</span>
-            </button>
-            <button class="plan-nav-btn plan-nav-center" data-nav="focus">
-                <div class="plan-nav-center-icon">
-                    <i class="fas fa-stopwatch"></i>
-                </div>
-                <span>专注</span>
-            </button>
-            <button class="plan-nav-btn" data-nav="stats">
-                <i class="fas fa-chart-column"></i>
-                <span>统计</span>
-            </button>
-            <button class="plan-nav-btn" data-nav="profile">
-                <i class="fas fa-user"></i>
-                <span>我的</span>
-            </button>
-        </nav>
     </div>
-</div>
 
-<!-- 新建任务弹窗 -->
-<div class="plan-modal" id="planTaskModal">
-    <div class="plan-modal-card">
-        <div class="plan-modal-header">
-            <span class="plan-modal-title" id="taskModalTitle">新建任务</span>
-            <button class="plan-modal-close" id="taskModalClose"><i class="fas fa-times"></i></button>
+<!-- 新建/编辑任务弹窗 -->
+<div class="plan-overlay" id="taskModal">
+    <div class="plan-sheet">
+        <div class="plan-sheet-head">
+            <div class="plan-sheet-title" id="taskModalTitle">新建任务</div>
+            <button class="plan-sheet-close" id="taskModalClose"><i data-lucide="x"></i></button>
         </div>
-        <div class="plan-modal-body">
-            <input type="text" id="taskInput" class="plan-input" placeholder="输入任务内容..." maxlength="100">
+        <div class="plan-sheet-body">
+            <div class="plan-field">
+                <label>任务内容</label>
+                <input type="text" id="taskText" placeholder="输入任务内容..." maxlength="100">
+            </div>
 
-            <div class="plan-form-row">
-                <div class="plan-form-field">
+            <div class="plan-field-row">
+                <div class="plan-field">
                     <label>分类</label>
                     <select id="taskCategory"></select>
                 </div>
-                <div class="plan-form-field">
+                <div class="plan-field">
                     <label>紧急</label>
                     <select id="taskUrgent">
                         <option value="false">不紧急</option>
                         <option value="true">紧急</option>
                     </select>
                 </div>
-                <div class="plan-form-field">
+            </div>
+
+            <div class="plan-field-row">
+                <div class="plan-field">
                     <label>重要</label>
                     <select id="taskImportant">
                         <option value="false">不重要</option>
                         <option value="true">重要</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="plan-form-row">
-                <div class="plan-form-field">
+                <div class="plan-field">
                     <label>截止日期</label>
                     <input type="date" id="taskDate">
                 </div>
-                <div class="plan-form-field">
-                    <label>截止时间</label>
-                    <input type="time" id="taskTime">
-                </div>
             </div>
 
-            <div class="plan-form-field">
+            <div class="plan-field">
+                <label>截止时间</label>
+                <input type="time" id="taskTime">
+            </div>
+
+            <div class="plan-field">
                 <label>备注</label>
-                <textarea id="taskNote" class="plan-textarea" placeholder="添加备注..." maxlength="200"></textarea>
+                <textarea id="taskNote" placeholder="添加备注..." maxlength="200"></textarea>
             </div>
         </div>
-        <div class="plan-modal-footer">
-            <button class="plan-btn plan-btn-secondary" id="taskModalCancel">取消</button>
+        <div class="plan-sheet-actions">
+            <button class="plan-btn plan-btn-ghost" id="taskModalCancel">取消</button>
             <button class="plan-btn plan-btn-primary" id="taskModalSave">保存</button>
         </div>
     </div>
 </div>
 
 <!-- 分类筛选弹窗 -->
-<div class="plan-modal" id="planFilterModal">
-    <div class="plan-modal-card plan-modal-sm">
-        <div class="plan-modal-header">
-            <span class="plan-modal-title">选择分类</span>
-            <button class="plan-modal-close" id="filterModalClose"><i class="fas fa-times"></i></button>
+<div class="plan-overlay" id="filterModal">
+    <div class="plan-sheet plan-sheet-sm">
+        <div class="plan-sheet-head">
+            <div class="plan-sheet-title">选择分类</div>
+            <button class="plan-sheet-close" id="filterModalClose"><i data-lucide="x"></i></button>
         </div>
-        <div class="plan-modal-body" id="filterModalBody"></div>
+        <div class="plan-sheet-body" id="filterModalBody"></div>
     </div>
 </div>
 
 <!-- 关联任务弹窗 -->
-<div class="plan-modal" id="planTaskPickerModal">
-    <div class="plan-modal-card plan-modal-sm">
-        <div class="plan-modal-header">
-            <span class="plan-modal-title">关联任务</span>
-            <button class="plan-modal-close" id="taskPickerClose"><i class="fas fa-times"></i></button>
+<div class="plan-overlay" id="taskPickerModal">
+    <div class="plan-sheet plan-sheet-sm">
+        <div class="plan-sheet-head">
+            <div class="plan-sheet-title">关联任务</div>
+            <button class="plan-sheet-close" id="taskPickerClose"><i data-lucide="x"></i></button>
         </div>
-        <div class="plan-modal-body" id="taskPickerBody"></div>
+        <div class="plan-sheet-body" id="taskPickerBody"></div>
     </div>
 </div>
 
 <!-- 日期详情弹窗 -->
-<div class="plan-modal" id="planDayModal">
-    <div class="plan-modal-card">
-        <div class="plan-modal-header">
-            <span class="plan-modal-title" id="dayModalTitle">任务详情</span>
-            <button class="plan-modal-close" id="dayModalClose"><i class="fas fa-times"></i></button>
+<div class="plan-overlay" id="dayModal">
+    <div class="plan-sheet">
+        <div class="plan-sheet-head">
+            <div class="plan-sheet-title" id="dayModalTitle">任务详情</div>
+            <button class="plan-sheet-close" id="dayModalClose"><i data-lucide="x"></i></button>
         </div>
-        <div class="plan-modal-body" id="dayModalBody"></div>
+        <div class="plan-sheet-body" id="dayModalBody"></div>
     </div>
 </div>
 
 <script src="../js/plan.js"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
 </body>
 </html>
