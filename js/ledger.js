@@ -80,7 +80,6 @@
       version: VERSION,
       shopName: '喵喵之家',
       tableNo: '520',
-      staff: '梦角',
       entries: []
     };
   }
@@ -89,7 +88,6 @@
     if (!d.version) d.version = VERSION;
     if (!d.shopName) d.shopName = '喵喵之家';
     if (!d.tableNo) d.tableNo = '520';
-    if (!d.staff) d.staff = '梦角';
     if (!Array.isArray(d.entries)) d.entries = [];
     return d;
   }
@@ -449,7 +447,6 @@
 
     document.getElementById('ticket-shop').textContent = d.shopName || '喵喵之家';
     document.getElementById('ticket-table').textContent = d.tableNo || '520';
-    document.getElementById('ticket-staff').textContent = d.staff || '梦角';
     document.getElementById('ticket-date').textContent = day;
     document.getElementById('ticket-no').textContent = genTicketNo(day);
 
@@ -516,7 +513,7 @@
     rows.push('[' + (d.shopName || '喵喵之家') + '] 消费单');
     rows.push('日期：' + day);
     rows.push('单号：' + genTicketNo(day));
-    rows.push('桌号：' + (d.tableNo || '520') + '  服务员：' + (d.staff || '梦角'));
+    rows.push('桌号：' + (d.tableNo || '520'));
     rows.push('------------------------------------');
     rows.push('消费类别        单价   次  小计');
     var groups = {};

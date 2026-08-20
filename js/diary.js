@@ -23,6 +23,9 @@ let diaryTodoCategories = [   // 待办分类 [{ id, name, icon, color }]
 
 let diaryCurrentTab = 'todo'; // 当前子标签页
 let diaryTodoSubTab = 'all';  // 待办分类二级标签页
+let diaryTodoView = 'list';   // 待办视图: list/quadrant/calendar
+let diaryCalYear = 0;
+let diaryCalMonth = 0;
 
 /* ========== 数据初始化 ========== */
 async function initDiaryData() {
@@ -578,6 +581,44 @@ function addNewCategoryFromManager() {
    一、待办事项
    ================================================================ */
 function renderDiaryTodos() {
+    // 根据当前视图分发渲染
+    if (diaryTodoView === 'list') {
+        renderDiaryTodoListView();
+    } else if (diaryTodoView === 'quadrant') {
+        renderQuadrantView();
+    } else if (diaryTodoView === 'calendar') {
+        renderCalendarView();
+    }
+}
+
+/* ========== 视图切换 ========== */
+function switchTodoView(view) {
+    diaryTodoView = view;
+
+    // 更新标签按钮状态
+    const tabs = document.querySelectorAll('.diary-view-tab');
+    tabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.view === view);
+    });
+
+    // 切换视图容器显示
+    const views = document.querySelectorAll('.diary-view');
+    views.forEach(v => {
+        v.classList.toggle('active', v.id === 'diary-view-' + view);
+    });
+
+    // 分类标签（子标签）仅在列表视图显示
+    const subTabs = document.querySelector('.diary-sub-tabs');
+    if (subTabs) {
+        subTabs.style.display = view === 'list' ? 'flex' : 'none';
+    }
+
+    // 渲染对应视图
+    renderDiaryTodos();
+}
+
+/* ========== 列表视图渲染 ========== */
+function renderDiaryTodoListView() {
     const container = document.getElementById('diary-todo-list');
     if (!container) return;
 
@@ -639,6 +680,216 @@ function renderDiaryTodos() {
     });
 }
 
+/* ========== 四象限视图渲染 ========== */
+function renderQuadrantView() {
+    // 按分类过滤
+    let filteredTodos = diaryTodos;
+    if (diaryTodoSubTab !== 'all') {
+        filteredTodos = diaryTodos.filter(t => (t.category || 'other') === diaryTodoSubTab);
+    }
+
+    // 分类到四个象限
+    const q1 = filteredTodos.filter(t => !t.done && (t.urgent === 'true' || t.urgent === true) && (t.important === 'true' || t.important === true));
+    const q2 = filteredTodos.filter(t => !t.done && (t.urgent !== 'true' && t.urgent !== true) && (t.important === 'true' || t.important === true));
+    const q3 = filteredTodos.filter(t => !t.done && (t.urgent === 'true' || t.urgent === true) && (t.important !== 'true' && t.important !== true));
+    const q4 = filteredTodos.filter(t => !t.done && (t.urgent !== 'true' && t.urgent !== true) && (t.important !== 'true' && t.important !== true));
+
+    // 已完成的待办单独显示在第四象限底部
+    const done = filteredTodos.filter(t => t.done);
+
+    // 渲染每个象限
+    renderQuadrantList('q1', q1);
+    renderQuadrantList('q2', q2);
+    renderQuadrantList('q3', q3);
+    renderQuadrantList('q4', [...q4, ...done]);
+}
+
+function renderQuadrantList(quad, todos) {
+    const listEl = document.querySelector(`[data-quad-list="${quad}"]`);
+    if (!listEl) return;
+
+    if (!todos || todos.length === 0) {
+        listEl.innerHTML = `<div style="font-size:11px;color:var(--text-secondary);opacity:0.5;text-align:center;padding:8px;">暂无待办</div>`;
+        return;
+    }
+
+    let html = '';
+    todos.forEach(todo => {
+        const catObj = diaryTodoCategories.find(c => c.id === (todo.category || 'other'));
+        const catIcon = catObj ? catObj.icon : '📌';
+
+        let dueText = '';
+        if (todo.dueDate) {
+            const d = new Date(todo.dueDate);
+            dueText = `${d.getMonth() + 1}/${d.getDate()}`;
+        }
+
+        html += `
+            <div class="quad-item ${todo.done ? 'done' : ''}" data-id="${todo.id}" onclick="showEditTodoModal(${todo.id})">
+                <div class="quad-item-check" data-id="${todo.id}" onclick="event.stopPropagation();toggleDiaryTodo(${todo.id})">
+                    ${todo.done ? '<i class="fas fa-check"></i>' : ''}
+                </div>
+                <span class="quad-item-text" title="${diaryEscHtml(todo.text)}">${catIcon} ${diaryEscHtml(todo.text)}</span>
+                ${dueText ? `<span class="quad-item-due">${dueText}</span>` : ''}
+            </div>`;
+    });
+
+    listEl.innerHTML = html;
+
+    // 绑定完成事件
+    listEl.querySelectorAll('.quad-item-check').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = Number(btn.dataset.id);
+            toggleDiaryTodo(id);
+        });
+    });
+}
+
+/* ========== 日历视图渲染 ========== */
+function renderCalendarView() {
+    const calGrid = document.getElementById('cal-grid');
+    const calTitle = document.getElementById('cal-title');
+    if (!calGrid) return;
+
+    // 初始化年月
+    if (diaryCalYear === 0) {
+        const today = new Date();
+        diaryCalYear = today.getFullYear();
+        diaryCalMonth = today.getMonth();
+    }
+
+    // 更新标题
+    calTitle.textContent = `${diaryCalYear}年${diaryCalMonth + 1}月`;
+
+    // 计算日期网格
+    const firstDay = new Date(diaryCalYear, diaryCalMonth, 1);
+    const lastDay = new Date(diaryCalYear, diaryCalMonth + 1, 0);
+    const daysInMonth = lastDay.getDate();
+
+    // 周一为一周开始（0=周日, 1=周一, ...6=周六 → 转换为 周一=0, ... 周日=6）
+    let startDow = firstDay.getDay(); // 0=周日
+    startDow = startDow === 0 ? 6 : startDow - 1; // 转换为周一=0
+
+    const todayStr = diaryTodayStr();
+
+    // 按日期分组待办
+    const todosByDate = {};
+    let filteredTodos = diaryTodos;
+    if (diaryTodoSubTab !== 'all') {
+        filteredTodos = diaryTodos.filter(t => (t.category || 'other') === diaryTodoSubTab);
+    }
+    filteredTodos.forEach(todo => {
+        if (todo.dueDate) {
+            const dateStr = todo.dueDate.slice(0, 10);
+            if (!todosByDate[dateStr]) todosByDate[dateStr] = [];
+            todosByDate[dateStr].push(todo);
+        }
+    });
+
+    let html = '';
+
+    // 前置空格
+    for (let i = 0; i < startDow; i++) {
+        html += '<div class="cal-cell other-month" style="visibility:hidden;"></div>';
+    }
+
+    // 日期单元格
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${diaryCalYear}-${String(diaryCalMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const isToday = dateStr === todayStr;
+        const dayTodos = todosByDate[dateStr] || [];
+        const pendingTodos = dayTodos.filter(t => !t.done);
+        const doneTodos = dayTodos.filter(t => t.done);
+
+        let cellClass = 'cal-cell';
+        if (isToday) cellClass += ' today';
+
+        let todoContent = '';
+        if (pendingTodos.length > 0) {
+            const urgentCount = pendingTodos.filter(t => t.urgent === 'true' || t.urgent === true).length;
+            const displayTodos = pendingTodos.slice(0, 2);
+            displayTodos.forEach(t => {
+                const urgent = t.urgent === 'true' || t.urgent === true;
+                todoContent += `<div class="cal-todo-bar ${urgent ? 'urgent' : ''}">${diaryEscHtml(t.text)}</div>`;
+            });
+            if (pendingTodos.length > 2) {
+                todoContent += `<div style="font-size:9px;color:var(--text-secondary);">+${pendingTodos.length - 2}</div>`;
+            }
+        }
+        if (doneTodos.length > 0) {
+            todoContent += `<div class="cal-todo-bar done">✓ ${doneTodos[0].text}</div>`;
+        }
+
+        html += `
+            <div class="${cellClass}" data-date="${dateStr}" onclick="showCalDayDetail('${dateStr}')">
+                <span class="cal-day-num">${d}</span>
+                ${pendingTodos.length > 0 ? '<span class="cal-todo-dot"></span>' : ''}
+                <div style="flex:1;display:flex;flex-direction:column;gap:1px;overflow:hidden;">
+                    ${todoContent}
+                </div>
+            </div>`;
+    }
+
+    calGrid.innerHTML = html;
+}
+
+// 显示日历某日详情（简单弹窗）
+function showCalDayDetail(dateStr) {
+    let filteredTodos = diaryTodos;
+    if (diaryTodoSubTab !== 'all') {
+        filteredTodos = diaryTodos.filter(t => (t.category || 'other') === diaryTodoSubTab);
+    }
+
+    const dayTodos = filteredTodos.filter(t => t.dueDate && t.dueDate.slice(0, 10) === dateStr);
+    const pending = dayTodos.filter(t => !t.done);
+    const done = dayTodos.filter(t => t.done);
+
+    const dateObj = new Date(dateStr);
+    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const displayDate = `${dateObj.getMonth() + 1}月${dateObj.getDate()}日 ${weekDays[dateObj.getDay()]}`;
+
+    let contentHtml = '';
+    if (pending.length > 0) {
+        contentHtml += '<div style="margin-bottom:14px;"><div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">📋 待完成</div>';
+        pending.forEach(t => {
+            const urgent = t.urgent === 'true' || t.urgent === true;
+            const catObj = diaryTodoCategories.find(c => c.id === (t.category || 'other'));
+            const catIcon = catObj ? catObj.icon : '📌';
+            contentHtml += `
+                <div style="display:flex;align-items:center;gap:10px;padding:6px 0;">
+                    <div style="width:22px;height:22px;border-radius:50%;border:2px solid ${urgent ? '#ff6b6b' : 'var(--border-color)'};display:flex;align-items:center;justify-content:center;cursor:pointer;" data-check="${t.id}"></div>
+                    <div style="flex:1;font-size:13px;">${catIcon} ${diaryEscHtml(t.text)}</div>
+                </div>`;
+        });
+        contentHtml += '</div>';
+    }
+    if (done.length > 0) {
+        contentHtml += '<div style="margin-bottom:14px;"><div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">✅ 已完成</div>';
+        done.forEach(t => {
+            contentHtml += `<div style="padding:4px 0;font-size:13px;text-decoration:line-through;opacity:0.6;">${diaryEscHtml(t.text)}</div>`;
+        });
+        contentHtml += '</div>';
+    }
+    if (!contentHtml) {
+        contentHtml = '<div style="text-align:center;padding:30px 0;color:var(--text-secondary);font-size:14px;">这一天没有待办哦~</div>';
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'mini-cal-detail-overlay';
+    overlay.innerHTML = `
+        <div class="mini-cal-detail-card">
+            <div class="mini-cal-detail-header">
+                <span class="mini-cal-detail-date">${displayDate}</span>
+                <button class="mini-cal-detail-close" onclick="this.closest('.mini-cal-detail-overlay').remove()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="mini-cal-detail-body">${contentHtml}</div>
+        </div>`;
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+}
+
 // 获取分类名称
 function getCategoryName(categoryId) {
     const cat = diaryTodoCategories.find(c => c.id === categoryId);
@@ -652,15 +903,21 @@ function getCategoryLabel(categoryId) {
 }
 
 function renderDiaryTodoItem(todo) {
-    const priorityColors = { high: '#ff6b6b', medium: '#ffa502', low: '#6bcb77' };
-    const priorityLabels = { high: '紧急', medium: '一般', low: '轻松' };
     const repeatLabels = { none: '仅一次', daily: '每天', weekly: '每周', monthly: '每月' };
-    const color = priorityColors[todo.priority] || priorityColors.medium;
     const doneClass = todo.done ? 'done' : '';
     const category = todo.category || 'other';
     const categoryObj = diaryTodoCategories.find(c => c.id === category);
     const categoryColor = categoryObj ? categoryObj.color : '#95a5a6';
-    const categoryBgColor = categoryColor + '26'; // 15% 透明度
+    const categoryBgColor = categoryColor + '26';
+
+    // 四象限标签
+    const urgent = todo.urgent === 'true' || todo.urgent === true;
+    const important = todo.important === 'true' || todo.important === true;
+    let quadLabel = '';
+    if (urgent && important) quadLabel = '<span class="diary-todo-priority" style="color:#ff6b6b;">🔴 重要且紧急</span>';
+    else if (!urgent && important) quadLabel = '<span class="diary-todo-priority" style="color:#ffa502;">🟡 重要</span>';
+    else if (urgent && !important) quadLabel = '<span class="diary-todo-priority" style="color:#ff8a4c;">🟠 紧急</span>';
+    else quadLabel = '<span class="diary-todo-priority" style="color:#95a5a6;">⚪ 一般</span>';
 
     // 格式化截止时间显示
     let dueDisplay = '';
@@ -689,7 +946,7 @@ function renderDiaryTodoItem(todo) {
                 <div class="diary-todo-text ${doneClass}">${diaryEscHtml(todo.text)}</div>
                 <div class="diary-todo-meta">
                     <span class="diary-todo-category" style="background:${categoryBgColor};color:${categoryColor};">${getCategoryLabel(category)}</span>
-                    <span class="diary-todo-priority" style="color:${color};">${priorityLabels[todo.priority] || '一般'}</span>
+                    ${quadLabel}
                     ${dueDisplay}
                     ${reminderDisplay}
                 </div>
@@ -707,7 +964,8 @@ function renderDiaryTodoItem(todo) {
 
 function addDiaryTodo() {
     const textInput = document.getElementById('diary-todo-input');
-    const prioritySelect = document.getElementById('diary-todo-priority');
+    const urgentSelect = document.getElementById('diary-todo-urgent');
+    const importantSelect = document.getElementById('diary-todo-important');
     const categorySelect = document.getElementById('diary-todo-category');
     const dueDateInput = document.getElementById('diary-todo-due');
     const reminderEnabled = document.getElementById('diary-todo-reminder-enabled');
@@ -730,7 +988,8 @@ function addDiaryTodo() {
         id: Date.now(),
         text: text,
         done: false,
-        priority: prioritySelect ? prioritySelect.value : 'medium',
+        urgent: urgentSelect ? urgentSelect.value : 'false',
+        important: importantSelect ? importantSelect.value : 'true',
         category: categorySelect ? categorySelect.value : 'other',
         dueDate: dueDateInput ? dueDateInput.value : '',
         createdAt: diaryTodayStr(),
@@ -762,15 +1021,17 @@ function expandDiaryTodoForm(defaultCategory = 'other') {
     const input = document.getElementById('diary-todo-input');
     const due = document.getElementById('diary-todo-due');
     const category = document.getElementById('diary-todo-category');
-    const priority = document.getElementById('diary-todo-priority');
+    const urgent = document.getElementById('diary-todo-urgent');
+    const important = document.getElementById('diary-todo-important');
     const reminderEnabled = document.getElementById('diary-todo-reminder-enabled');
     const reminderTime = document.getElementById('diary-todo-reminder-time');
     const reminderRepeat = document.getElementById('diary-todo-reminder-repeat');
     const reminderOptions = document.getElementById('diary-todo-reminder-options');
     if (input) input.value = '';
     if (due) due.value = '';
-    if (category) category.value = defaultCategory; // 使用传入的默认分类
-    if (priority) priority.value = 'medium';
+    if (category) category.value = defaultCategory;
+    if (urgent) urgent.value = 'false';
+    if (important) important.value = 'true';
     if (reminderEnabled) reminderEnabled.checked = false;
     if (reminderTime) reminderTime.value = '';
     if (reminderRepeat) reminderRepeat.value = 'none';
@@ -869,10 +1130,16 @@ function showEditTodoModal(todoId) {
                 </div>
                 <div>
                     <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px;">紧急程度</label>
-                    <select id="edit-todo-priority" class="diary-input" style="width:100%;box-sizing:border-box;">
-                        <option value="high" ${todo.priority === 'high' ? 'selected' : ''}>🔴 紧急</option>
-                        <option value="medium" ${todo.priority === 'medium' ? 'selected' : ''}>🟡 一般</option>
-                        <option value="low" ${todo.priority === 'low' ? 'selected' : ''}>🟢 轻松</option>
+                    <select id="edit-todo-urgent" class="diary-input" style="width:100%;box-sizing:border-box;">
+                        <option value="true" ${todo.urgent === 'true' ? 'selected' : ''}>⚡ 紧急</option>
+                        <option value="false" ${todo.urgent === 'false' || !todo.urgent ? 'selected' : ''}>⏱️ 不紧急</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px;">重要程度</label>
+                    <select id="edit-todo-important" class="diary-input" style="width:100%;box-sizing:border-box;">
+                        <option value="true" ${todo.important === 'true' || !todo.important ? 'selected' : ''}>⭐ 重要</option>
+                        <option value="false" ${todo.important === 'false' ? 'selected' : ''}>· 不重要</option>
                     </select>
                 </div>
             </div>
@@ -925,7 +1192,8 @@ function saveEditTodo(todoId) {
 
     const textInput = document.getElementById('edit-todo-text');
     const categorySelect = document.getElementById('edit-todo-category');
-    const prioritySelect = document.getElementById('edit-todo-priority');
+    const urgentSelect = document.getElementById('edit-todo-urgent');
+    const importantSelect = document.getElementById('edit-todo-important');
     const dueInput = document.getElementById('edit-todo-due');
     const reminderEnabled = document.getElementById('edit-todo-reminder-enabled');
     const reminderTime = document.getElementById('edit-todo-reminder-time');
@@ -939,7 +1207,8 @@ function saveEditTodo(todoId) {
 
     todo.text = text;
     todo.category = categorySelect ? categorySelect.value : 'other';
-    todo.priority = prioritySelect ? prioritySelect.value : 'medium';
+    todo.urgent = urgentSelect ? urgentSelect.value : 'false';
+    todo.important = importantSelect ? importantSelect.value : 'true';
     todo.dueDate = dueInput ? dueInput.value : null;
 
     if (reminderEnabled && reminderEnabled.checked && reminderTime && reminderTime.value) {
@@ -1773,6 +2042,34 @@ function initDiaryListeners() {
         habitInput.dataset.bound = 'true';
         habitInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') addDiaryHabit();
+        });
+    }
+
+    // 视图切换标签
+    document.querySelectorAll('.diary-view-tab').forEach(tab => {
+        if (!tab.dataset.bound) {
+            tab.dataset.bound = 'true';
+            tab.addEventListener('click', () => switchTodoView(tab.dataset.view));
+        }
+    });
+
+    // 日历导航按钮
+    const calPrev = document.getElementById('cal-prev');
+    if (calPrev && !calPrev.dataset.bound) {
+        calPrev.dataset.bound = 'true';
+        calPrev.addEventListener('click', () => {
+            diaryCalMonth--;
+            if (diaryCalMonth < 0) { diaryCalMonth = 11; diaryCalYear--; }
+            renderCalendarView();
+        });
+    }
+    const calNext = document.getElementById('cal-next');
+    if (calNext && !calNext.dataset.bound) {
+        calNext.dataset.bound = 'true';
+        calNext.addEventListener('click', () => {
+            diaryCalMonth++;
+            if (diaryCalMonth > 11) { diaryCalMonth = 0; diaryCalYear++; }
+            renderCalendarView();
         });
     }
 }

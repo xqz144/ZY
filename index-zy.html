@@ -3956,11 +3956,55 @@
 
             <!-- 待办事项面板 -->
             <div class="diary-panel diary-todo-panel" data-panel="todo">
-                <!-- 待办分类二级标签（动态渲染） -->
-                <div class="diary-sub-tabs"></div>
+                <!-- 视图切换 -->
+                <div class="diary-view-tabs">
+                    <button class="diary-view-tab active" data-view="list"><i class="fas fa-list"></i> 列表</button>
+                    <button class="diary-view-tab" data-view="quadrant"><i class="fas fa-th-large"></i> 四象限</button>
+                    <button class="diary-view-tab" data-view="calendar"><i class="fas fa-calendar-alt"></i> 日历</button>
+                </div>
 
-                <!-- 待办列表区域 -->
-                <div id="diary-todo-list" class="diary-todo-scroll-area"></div>
+                <!-- 待办分类二级标签（仅列表视图） -->
+                <div class="diary-sub-tabs" id="diary-sub-tabs-wrapper"></div>
+
+                <!-- 列表视图 -->
+                <div id="diary-view-list" class="diary-view active">
+                    <div id="diary-todo-list" class="diary-todo-scroll-area"></div>
+                </div>
+
+                <!-- 四象限视图 -->
+                <div id="diary-view-quadrant" class="diary-view">
+                    <div class="quadrant-grid">
+                        <div class="quadrant quad-q1" data-quad="q1">
+                            <div class="quadrant-head">🔴 重要且紧急</div>
+                            <div class="quadrant-list" data-quad-list="q1"></div>
+                        </div>
+                        <div class="quadrant quad-q2" data-quad="q2">
+                            <div class="quadrant-head">🟡 重要不紧急</div>
+                            <div class="quadrant-list" data-quad-list="q2"></div>
+                        </div>
+                        <div class="quadrant quad-q3" data-quad="q3">
+                            <div class="quadrant-head">🟠 紧急不重要</div>
+                            <div class="quadrant-list" data-quad-list="q3"></div>
+                        </div>
+                        <div class="quadrant quad-q4" data-quad="q4">
+                            <div class="quadrant-head">⚪ 不重要不紧急</div>
+                            <div class="quadrant-list" data-quad-list="q4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日历视图 -->
+                <div id="diary-view-calendar" class="diary-view">
+                    <div class="cal-header">
+                        <button class="cal-nav" id="cal-prev">‹</button>
+                        <span class="cal-title" id="cal-title"></span>
+                        <button class="cal-nav" id="cal-next">›</button>
+                    </div>
+                    <div class="cal-weekdays">
+                        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                    </div>
+                    <div class="cal-grid" id="cal-grid"></div>
+                </div>
 
                 <!-- 新建待办表单 -->
                 <div id="diary-todo-compose" style="display:none;">
@@ -3984,10 +4028,16 @@
                                 </div>
                                 <div class="diary-todo-form-field">
                                     <label>紧急程度</label>
-                                    <select id="diary-todo-priority">
-                                        <option value="high">🔴 紧急</option>
-                                        <option value="medium" selected>🟡 一般</option>
-                                        <option value="low">🟢 轻松</option>
+                                    <select id="diary-todo-urgent">
+                                        <option value="true">⚡ 紧急</option>
+                                        <option value="false" selected>⏱️ 不紧急</option>
+                                    </select>
+                                </div>
+                                <div class="diary-todo-form-field">
+                                    <label>重要程度</label>
+                                    <select id="diary-todo-important">
+                                        <option value="true" selected>⭐ 重要</option>
+                                        <option value="false">· 不重要</option>
                                     </select>
                                 </div>
                             </div>

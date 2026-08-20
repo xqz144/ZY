@@ -200,6 +200,27 @@
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
+  // 获取梦角头像（优先从缓存/ localStorage，回退到默认）
+  function getPartnerAvatarSrc() {
+    // 尝试全局 getPartnerAvatar
+    if (typeof window.getPartnerAvatar === 'function') {
+      try {
+        var a = window.getPartnerAvatar();
+        if (a && a.startsWith('http')) return a;
+      } catch (e) {}
+    }
+    // 尝试读取 localStorage
+    try {
+      var keys = ['home_avatar_partner', 'profile_partner', 'partner_avatar'];
+      for (var i = 0; i < keys.length; i++) {
+        var v = localStorage.getItem(keys[i]);
+        if (v && v.startsWith('http')) return v;
+      }
+    } catch (e) {}
+    // 默认：用 partner seed 生成
+    return 'https://api.dicebear.com/7.x/avataaars/svg?seed=partner';
+  }
+
   // 获取所有行程（跨日期合并，按日期+时间排序）
   function getAllTrips() {
     var trips = getAutoTrips();
@@ -391,9 +412,12 @@
     avatarWrap.style.left = loc.x + '%';
     avatarWrap.style.top = loc.y + '%';
 
+    // 尝试获取梦角头像，失败则用默认
+    var avatarSrc = getPartnerAvatarSrc();
+
     avatarWrap.innerHTML =
       '<div class="trailmap-avatar-ring">' +
-        '<img class="trailmap-avatar-img" src="../assets/character.png" alt="祁煜">' +
+        '<img class="trailmap-avatar-img" src="' + avatarSrc + '" alt="祁煜">' +
       '</div>' +
       '<div class="trailmap-loc-pin">' +
         '<i data-lucide="map-pin" style="width:12px;height:12px;"></i>' +

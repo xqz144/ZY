@@ -2605,3 +2605,191 @@ flex: 1;
 min-width: 80px;
     }
 }
+
+/* ========= 视图切换 ========= */
+.diary-view-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+.diary-view-tab {
+    flex: 1;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 10px;
+    background: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: var(--font-family);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+.diary-view-tab.active {
+    background: var(--accent-color);
+    color: #fff;
+}
+.diary-view {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    flex-direction: column;
+}
+.diary-view.active {
+    display: flex;
+}
+
+/* ========= 四象限视图 ========= */
+.quadrant-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+}
+.quadrant {
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    padding: 8px;
+    min-height: 0;
+    overflow: hidden;
+}
+.quadrant-head {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}
+.quadrant-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.quadrant-list::-webkit-scrollbar { display: none; }
+
+.quad-q1 { background: linear-gradient(135deg, rgba(255,107,107,0.15), rgba(255,107,107,0.05)); border: 1px solid rgba(255,107,107,0.3); }
+.quad-q1 .quadrant-head { color: #ff6b6b; }
+.quad-q2 { background: linear-gradient(135deg, rgba(255,165,2,0.15), rgba(255,165,2,0.05)); border: 1px solid rgba(255,165,2,0.3); }
+.quad-q2 .quadrant-head { color: #ffa502; }
+.quad-q3 { background: linear-gradient(135deg, rgba(255,138,76,0.15), rgba(255,138,76,0.05)); border: 1px solid rgba(255,138,76,0.3); }
+.quad-q3 .quadrant-head { color: #ff8a4c; }
+.quad-q4 { background: linear-gradient(135deg, rgba(149,165,166,0.15), rgba(149,165,166,0.05)); border: 1px solid rgba(149,165,166,0.3); }
+.quad-q4 .quadrant-head { color: #95a5a6; }
+
+.quad-item {
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: var(--primary-bg);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+}
+.quad-item:hover { border-color: var(--accent-color); }
+.quad-item.done { opacity: 0.5; text-decoration: line-through; }
+.quad-item-check {
+    width: 14px; height: 14px;
+    border: 1.5px solid var(--text-secondary);
+    border-radius: 4px;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+.quad-item.done .quad-item-check {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+.quad-item-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quad-item-due { font-size: 10px; color: var(--text-secondary); }
+
+/* ========= 日历视图 ========= */
+.cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 4px 0 8px;
+    flex-shrink: 0;
+}
+.cal-nav {
+    width: 28px; height: 28px;
+    border: none;
+    border-radius: 8px;
+    background: var(--border-color);
+    color: var(--text-primary);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cal-nav:hover { background: var(--accent-color); color: #fff; }
+.cal-title { font-size: 15px; font-weight: 700; }
+.cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding-bottom: 4px;
+    flex-shrink: 0;
+}
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    flex: 1;
+    min-height: 0;
+}
+.cal-cell {
+    border-radius: 8px;
+    padding: 4px;
+    background: var(--border-color);
+    font-size: 11px;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: all 0.15s;
+    min-height: 40px;
+}
+.cal-cell:hover { background: rgba(var(--accent-color-rgb), 0.1); }
+.cal-cell.other-month { opacity: 0.35; }
+.cal-cell.today { border: 2px solid var(--accent-color); font-weight: 700; }
+.cal-cell.selected { background: var(--accent-color); color: #fff; }
+.cal-cell.selected .cal-todo-dot { background: #fff; }
+.cal-day-num { font-size: 11px; font-weight: 600; }
+.cal-todo-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent-color);
+}
+.cal-todo-bar {
+    font-size: 9px;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 1px 3px;
+    border-radius: 3px;
+    background: rgba(var(--accent-color-rgb), 0.15);
+}
+.cal-todo-bar.urgent { background: rgba(255,107,107,0.2); }
+.cal-todo-bar.done { text-decoration: line-through; opacity: 0.5; }
