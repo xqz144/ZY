@@ -3,7 +3,7 @@
  * 对齐新 plan.html 结构（涂鸦风 / lucide icons / 新类名）
  */
 
-const PLAN_KEY = 'plan_app_v2';
+const PLAN_KEY = 'plan_app_v3';
 
 let planData = {
     tasks: [],
@@ -55,6 +55,63 @@ function load() {
     }} catch(e){}
 }
 function save() { localStorage.setItem(PLAN_KEY, JSON.stringify(planData)); }
+
+/* 若没有任务，注入示例任务（用于展示彩色 pill） */
+function seedDemoIfEmpty() {
+    if (planData.tasks.length > 0) return;
+    const d = new Date();
+    const Y = d.getFullYear(), M = d.getMonth();
+    const p = (day) => `${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const add = (text, category, day, urgent, important, dueTime, note) => {
+        planData.tasks.push({
+            id: uid(), text, category, dueDate: p(day), urgent, important,
+            done: false, dueTime: dueTime || null, note: note || '', createdAt: Date.now()
+        });
+    };
+    add('写日报', 'work', 1, false, false, '09:00');
+    add('晨会', 'work', 2, true, false, '10:00');
+    add('去美术馆', 'life', 2, false, true);
+    add('拿快递', 'life', 2, false, false);
+    add('拍 vlog', 'life', 1, false, true);
+    add('剪辑视频', 'work', 1, true, true, '15:00');
+    add('项目筹划', 'work', 2, true, true, '14:00');
+    add('买花花🌸', 'life', 3, false, false, null, '给梦角');
+    add('修改设计图', 'work', 3, true, false);
+    add('看电影', 'study', 4, false, true);
+    add('年中总结', 'work', 5, true, true);
+    add('约会', 'life', 5, false, true);
+    add('逛街', 'life', 5, false, false);
+    add('版本测试', 'work', 5, false, true);
+    add('项目规划', 'study', 10, true, true, '10:00');
+    add('视频剪辑+后期制作', 'work', 11, false, true);
+    add('去游乐场', 'life', 13, false, false);
+    add('逛街', 'life', 12, false, false);
+    add('买牛奶🥛', 'health', 13, false, false);
+    add('视频拍摄', 'work', 17, true, false);
+    add('视频剪辑+后期制作', 'work', 18, false, true);
+    add('去美容院', 'health', 19, false, true);
+    add('打扫卫生', 'life', 20, false, false);
+    add('去爬山🏔️', 'life', 18, false, true);
+    add('外刊精读', 'study', 19, true, false);
+    add('逛街', 'life', 20, false, false);
+    add('写日报', 'work', 21, false, false, '09:00');
+    add('晨会同步', 'work', 21, true, false, '10:30');
+    add('和梦角约会💖', 'life', 21, false, true, '19:00', '看电影');
+    add('健身房打卡', 'health', 21, false, false, '18:00');
+    add('整理报表', 'work', 21, true, true, '14:00');
+    add('做陶艺', 'study', 24, false, false);
+    add('去美术馆', 'life', 27, false, true);
+    add('体检', 'health', 28, false, true);
+    add('项目规划', 'work', 25, true, true);
+    add('修改策划', 'work', 28, true, false);
+    add('买牛奶🥛', 'life', 27, false, false);
+    add('爬山🧗', 'life', 31, false, true);
+    add('去海边', 'life', 1, false, false, null, '带相机');
+    add('按摩', 'health', 3, false, true);
+    add('瑜伽', 'health', 4, false, false);
+    add('剪辑 vlog', 'work', 3, false, true);
+    save();
+}
 
 /* ============ 主 Tab 切换 ============ */
 function switchPanel(panel) {
@@ -188,11 +245,42 @@ function bindQuadEvents() {
     });
 }
 
+/* ============ 农历/班休 工具 ============ */
+// 简化版农历（仅显示日序"初一~三十"，节气不展示）+ 法定班休占位
+const LUNAR_DAYS = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
+    '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+    '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+function getLunarDayStr(y, m, d) {
+    // 近似：按儒略日偏移（不精确但视觉够用，1900-01-31 对应农历 1900 正月初一）
+    const base = new Date(1900, 0, 31).getTime();
+    const diffDays = Math.floor((new Date(y, m, d).getTime() - base) / 86400000);
+    // 简化：每年354天（粗糙近似），但保证稳定输出
+    const lunarMonths = [29,30,29,30,29,30,29,30,29,30,29,30];
+    let rem = diffDays % 354;
+    if (rem < 0) rem += 354;
+    for (let i = 0; i < 12; i++) {
+        if (rem < lunarMonths[i]) {
+            return LUNAR_DAYS[rem];
+        }
+        rem -= lunarMonths[i];
+    }
+    return LUNAR_DAYS[rem % 30];
+}
+// 班休：简化 —— 周六=休 周日=休；1号若在月末附近作特殊（默认周末休，其他工作日"班"不展示，只有节假日再打休）
+function getWorkOffTag(y, m, d) {
+    const dow = new Date(y, m, d).getDay();
+    if (dow === 0 || dow === 6) return 'off';
+    return null;
+}
+// 被选中的日期（用户点击）
+if (!S.selectedDate) S.selectedDate = todayStr();
+
 /* ============ 视图页 ============ */
 function renderView() {
     if (!S.calY) { const d=new Date(); S.calY=d.getFullYear(); S.calM=d.getMonth(); }
-    $('viewYear').textContent = S.calY + '年';
-    $('viewMonth').textContent = (S.calM+1) + '月';
+    $('viewBigYear').textContent = S.calY;
+    $('viewBigMonth').textContent = String(S.calM+1).padStart(2,'0');
+    const ft = $('viewFilterText'); if (ft) ft.textContent = S.category==='all' ? '全部分类' : catOf(S.category).name;
     if (S.vtab === 'month') renderMonthView();
     if (S.vtab === 'week') renderWeekView();
     if (S.vtab === 'day') renderDayView();
@@ -205,6 +293,7 @@ function renderMonthView() {
     const dim=ld.getDate();
     let sd=fd.getDay(); sd = sd===0?6:sd-1;
     const today = todayStr();
+    const sel = S.selectedDate;
 
     const tbd = {};
     getFiltered().forEach(t => {
@@ -212,22 +301,40 @@ function renderMonthView() {
     });
 
     let h = '';
-    for (let i=0;i<sd;i++) h += '<div class="plan-month-cell plan-month-cell-empty"></div>';
+    for (let i=0;i<sd;i++) h += '<div class="plan-vcell empty"></div>';
     for (let d=1; d<=dim; d++) {
         const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const cls = ['plan-month-cell'];
+        const cls = ['plan-vcell'];
         if (ds===today) cls.push('today');
+        if (ds===sel) cls.push('selected');
         const dayTs = tbd[ds] || [];
-        let bars = '';
-        dayTs.slice(0,3).forEach(t => {
-            bars += `<div class="plan-month-bar cat-${catOf(t.category).id}">${esc(t.text)}</div>`;
+        const lun = getLunarDayStr(y,m,d);
+        const wt = getWorkOffTag(y,m,d);
+        const tag = wt ? `<div class="plan-vtag ${wt}">${wt==='off'?'休':'班'}</div>` : '';
+
+        let pills = '';
+        const max = 3;
+        dayTs.slice(0, max).forEach(t => {
+            pills += `<div class="plan-vpill ${catOf(t.category).id}">${catOf(t.category).icon}${esc(t.text)}</div>`;
         });
-        if (dayTs.length>3) bars += `<div style="font-size:9px;color:var(--text-secondary);font-weight:700;">+${dayTs.length-3}</div>`;
-        h += `<div class="${cls.join(' ')}" data-date="${ds}"><div class="plan-month-num">${d}</div><div class="plan-month-bars" style="display:flex;flex-direction:column;gap:1px;">${bars}</div></div>`;
+        if (dayTs.length > max) pills += `<div class="plan-vpill more">+${dayTs.length-max} 更多</div>`;
+
+        h += `<div class="${cls.join(' ')}" data-date="${ds}">
+            <div class="plan-vheadrow">
+                <div class="plan-vnum">${d}</div>
+                <div class="plan-vlunar">${lun}</div>
+            </div>
+            ${tag}
+            <div class="plan-vpills">${pills}</div>
+        </div>`;
     }
     g.innerHTML = h;
-    g.querySelectorAll('.plan-month-cell[data-date]').forEach(c => {
-        c.addEventListener('click', () => showDayModal(c.dataset.date));
+    g.querySelectorAll('.plan-vcell[data-date]').forEach(c => {
+        c.addEventListener('click', () => {
+            S.selectedDate = c.dataset.date;
+            renderMonthView();
+            showDayModal(c.dataset.date);
+        });
     });
 }
 
@@ -242,51 +349,63 @@ function renderWeekView() {
     getFiltered().forEach(t => {
         if (t.dueDate) { const d=t.dueDate.slice(0,10); if(!tbd[d])tbd[d]=[]; tbd[d].push(t); }
     });
-    let h = '<div class="plan-week-row">';
+    const today = todayStr();
+    const sel = S.selectedDate;
+    let h = '';
     for (let i=0;i<7;i++) {
         const dt = new Date(mon); dt.setDate(mon.getDate()+i);
         const ds = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-        const isToday = ds===todayStr();
+        const isToday = ds===today;
+        const isSel = ds===sel;
         const ts = tbd[ds] || [];
-        h += `<div class="plan-week-cell ${isToday?'today':''}">
-            <div class="plan-week-cell-head">周${wkds[i]}</div>
-            <div class="plan-week-cell-num">${dt.getDate()}</div>
-            ${ts.map(t=>`<div class="plan-week-bar cat-${catOf(t.category).id}" data-id="${t.id}">${esc(t.text)}</div>`).join('')}
+        const pills = ts.map(t=>`<div class="plan-vpill ${catOf(t.category).id}" data-id="${t.id}">${catOf(t.category).icon}${esc(t.text)}</div>`).join('');
+        h += `<div class="plan-vweek-cell ${isToday?'today':''} ${isSel?'selected':''}" data-date="${ds}">
+            <div class="plan-vweek-cell-head">周${wkds[i]}</div>
+            <div class="plan-vweek-cell-num">${dt.getDate()}</div>
+            <div class="plan-vweek-pills">${pills}</div>
         </div>`;
     }
-    h += '</div>';
     g.innerHTML = h;
-    g.querySelectorAll('.plan-week-bar').forEach(b => {
-        b.addEventListener('click', () => openTaskModal(b.dataset.id));
+    g.querySelectorAll('.plan-vweek-cell').forEach(c => {
+        c.addEventListener('click', (e) => {
+            const pill = e.target.closest('.plan-vpill');
+            if (pill && pill.dataset.id) { e.stopPropagation(); openTaskModal(pill.dataset.id); return; }
+            S.selectedDate = c.dataset.date;
+            renderWeekView();
+            showDayModal(c.dataset.date);
+        });
     });
 }
 
 function renderDayView() {
     const c = $('viewDayView'); if (!c) return;
-    const today = todayStr();
+    const tgt = S.selectedDate || todayStr();
     const wkds = ['周日','周一','周二','周三','周四','周五','周六'];
-    const tasks = getFiltered().filter(t => t.dueDate && t.dueDate.slice(0,10)===today).sort((a,b)=>(a.dueTime||'99').localeCompare(b.dueTime||'99'));
-    const now = new Date();
-    let h = `<div class="plan-day-head">
-        <div class="plan-day-date">${today}</div>
-        <div class="plan-day-week">${wkds[now.getDay()]}</div>
+    const tasks = getFiltered().filter(t => t.dueDate && t.dueDate.slice(0,10)===tgt).sort((a,b)=>(a.dueTime||'99').localeCompare(b.dueTime||'99'));
+    const dt = new Date(tgt + 'T00:00');
+    let h = `<div class="plan-vday-head">
+        <div class="plan-vday-date">${tgt}</div>
+        <div class="plan-vday-week">${wkds[dt.getDay()]}</div>
     </div>`;
     if (tasks.length===0) {
         h += '<div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-weight:700;">今天还没有安排哦~</div>';
     } else {
-        h += '<div class="plan-day-list">';
+        h += '<div class="plan-vday-list">';
         tasks.forEach(t => {
             const cat = catOf(t.category);
-            h += `<div class="plan-day-item" data-id="${t.id}">
-                <div class="plan-day-time">${t.dueTime||'--:--'}</div>
-                <div class="plan-day-dot" style="background:${cat.color};"></div>
-                <div class="plan-day-text">${cat.icon} ${esc(t.text)}${t.done?' ✓':''}</div>
+            h += `<div class="plan-vday-item" data-id="${t.id}">
+                <div class="plan-vday-time">${t.dueTime||'--:--'}</div>
+                <div class="plan-vday-dot" style="background:${cat.color};"></div>
+                <div style="flex:1;">
+                    <div class="plan-vday-text">${cat.icon} ${esc(t.text)}${t.done?' ✓':''}</div>
+                    <div class="plan-vday-extra">${cat.name}${t.note?' · '+t.note:''}</div>
+                </div>
             </div>`;
         });
         h += '</div>';
     }
     c.innerHTML = h;
-    c.querySelectorAll('.plan-day-item').forEach(it => {
+    c.querySelectorAll('.plan-vday-item').forEach(it => {
         it.addEventListener('click', () => openTaskModal(it.dataset.id));
     });
 }
@@ -686,10 +805,10 @@ function bind() {
         b.addEventListener('click', () => switchPanel(b.dataset.subtab));
     });
 
-    // 视图子 Tab
-    document.querySelectorAll('.plan-view-tab').forEach(tab => {
+    // 视图子 Tab（新版：plan-vtab）
+    document.querySelectorAll('.plan-vtab').forEach(tab => {
         tab.addEventListener('click', () => {
-            document.querySelectorAll('.plan-view-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.plan-vtab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             S.vtab = tab.dataset.vtab;
             document.querySelectorAll('.plan-view-content').forEach(c => {
@@ -700,6 +819,15 @@ function bind() {
             if (S.vtab==='month') renderMonthView();
         });
     });
+
+    // 今按钮（回到今日）
+    $('viewToday')?.addEventListener('click', () => {
+        const d = new Date(); S.calY = d.getFullYear(); S.calM = d.getMonth();
+        S.selectedDate = todayStr();
+        renderView();
+    });
+    // 分类按钮
+    $('viewFilter')?.addEventListener('click', showFilter);
 
     // 日历导航
     $('listPrev')?.addEventListener('click', () => {S.calM--;if(S.calM<0){S.calM=11;S.calY--;}renderList();});
@@ -799,6 +927,7 @@ function bind() {
 /* ============ 初始化 ============ */
 document.addEventListener('DOMContentLoaded', () => {
     load();
+    seedDemoIfEmpty();
     bind();
     renderList();
     // 初始化 lucide

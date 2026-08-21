@@ -169,36 +169,79 @@
             <!-- ============ 视图页 ============ -->
             <div class="plan-subpanel" data-subpanel="view">
 
-                <div class="plan-cal-wrap">
-                    <div class="plan-cal-head">
-                        <button class="plan-cal-btn" id="viewPrev"><i data-lucide="chevron-left"></i></button>
-                        <div class="plan-cal-title">
-                            <div class="plan-cal-year" id="viewYear">2026年</div>
-                            <div class="plan-cal-month" id="viewMonth">8月</div>
+                <!-- 下划线切换：月视图 / 周视图 / 日视图 -->
+                <div class="plan-vtabs">
+                    <button class="plan-vtab active" data-vtab="month">月视图</button>
+                    <button class="plan-vtab" data-vtab="week">周视图</button>
+                    <button class="plan-vtab" data-vtab="day">日视图</button>
+                    <div class="plan-vtabs-dots"><span></span><span></span><span></span></div>
+                </div>
+
+                <!-- 顶部栏：日期 / 今 / 分类 -->
+                <div class="plan-vtop">
+                    <div class="plan-vdate">
+                        <span id="viewBigYear">2026</span><span class="plan-vdot">.</span><span id="viewBigMonth">08</span>
+                    </div>
+                    <div class="plan-vtop-right">
+                        <button class="plan-vtoday" id="viewToday">今</button>
+                        <button class="plan-vfilter" id="viewFilter">
+                            <span id="viewFilterText">全部分类</span>
+                            <i data-lucide="play" style="width:8px;height:8px;"></i>
+                        </button>
+                        <span class="plan-vcats">
+                            <i data-lucide="chevron-left" id="viewPrev"></i>
+                            <i data-lucide="chevron-right" id="viewNext"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 月视图 -->
+                <div class="plan-view-content active" data-vtab="month">
+                    <div class="plan-vmonth">
+                        <div class="plan-vweek">
+                            <span>周一</span><span>周二</span><span>周三</span><span>周四</span>
+                            <span>周五</span><span>周六</span><span>周日</span>
                         </div>
-                        <button class="plan-cal-btn" id="viewNext"><i data-lucide="chevron-right"></i></button>
+                        <div class="plan-vgrid" id="viewMonthGrid"></div>
                     </div>
-
-                    <div class="plan-view-tabs">
-                        <button class="plan-view-tab active" data-vtab="month">月视图</button>
-                        <button class="plan-view-tab" data-vtab="week">周视图</button>
-                        <button class="plan-view-tab" data-vtab="day">日视图</button>
-                    </div>
-
-                    <div class="plan-view-content active" data-vtab="month">
-                        <div class="plan-month-weekdays">
-                            <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                    <!-- 底部手绘装饰 -->
+                    <div class="plan-vdecor">
+                        <div class="plan-vplant">
+                            <div class="plan-vpot"></div>
+                            <div class="plan-vnotebook">
+                                <div class="plan-vnb-line"></div>
+                                <div class="plan-vnb-line"></div>
+                            </div>
+                            <div class="plan-vleaf l1"></div>
+                            <div class="plan-vleaf l2"></div>
+                            <div class="plan-vsprout"></div>
                         </div>
-                        <div class="plan-month-days" id="viewMonthGrid"></div>
+                        <div class="plan-vgrass"></div>
+                        <div class="plan-vbun-small"></div>
+                        <div class="plan-vgirl"></div>
+                        <div class="plan-vflw f1"></div>
+                        <div class="plan-vflw f2"></div>
+                        <div class="plan-vflw f3"></div>
                     </div>
+                </div>
 
-                    <div class="plan-view-content" data-vtab="week">
-                        <div class="plan-week-grid" id="viewWeekGrid"></div>
+                <!-- 周视图 -->
+                <div class="plan-view-content" data-vtab="week">
+                    <div class="plan-vweek" style="margin-top:10px;">
+                        <span>周一</span><span>周二</span><span>周三</span><span>周四</span>
+                        <span>周五</span><span>周六</span><span>周日</span>
                     </div>
+                    <div class="plan-vweek-grid" id="viewWeekGrid"></div>
+                    <div class="plan-vdecor" style="opacity:0.6;">
+                        <div class="plan-vgrass"></div>
+                        <div class="plan-vflw f1"></div>
+                        <div class="plan-vflw f2"></div>
+                    </div>
+                </div>
 
-                    <div class="plan-view-content" data-vtab="day">
-                        <div class="plan-day-view" id="viewDayView"></div>
-                    </div>
+                <!-- 日视图 -->
+                <div class="plan-view-content" data-vtab="day">
+                    <div class="plan-vday-view" id="viewDayView"></div>
                 </div>
 
             </div>

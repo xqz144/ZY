@@ -388,150 +388,518 @@ html[data-theme="dark"] .plan-cal-wrap::before {
 .plan-filter-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--text-primary); }
 
 /* ================================================================
-   视图页：子 Tab
+   视图页：新设计（对应用户截图风格）
+   - 下划线切换：月/周/日
+   - 顶部大字 2023.08 + 今 + 全部分类 粉色药丸
+   - 高格子：日期 + 农历 + 班/休 + 彩色任务pill
+   - 底部装饰：花盆+小本+兔子+女孩+花草
    ================================================================ */
-.plan-view-tabs {
-    display: flex;
-    gap: 4px;
-    margin: 10px 0 8px;
-    padding: 3px;
-    background: var(--primary-bg);
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius-sm, 14px);
-    position: relative;
-    z-index: 2;
-}
-.plan-view-tab {
-    flex: 1;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    padding: 6px 0;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: var(--font-family);
-    transition: all .15s ease;
-}
-.plan-view-tab.active {
-    background: var(--secondary-bg);
-    color: var(--accent-color);
-    box-shadow: 2px 2px 0 var(--text-primary);
-    border: 1.5px solid var(--text-primary);
-    font-weight: 800;
-}
-.plan-view-content { display: none; position: relative; z-index: 2; }
+
+/* 下划线 Tab */
+.plan-view-content { display: none; position: relative; z-index: 2; overflow: visible; }
 .plan-view-content.active { display: block; }
 
-/* 月视图 */
-.plan-month-weekdays {
+.plan-vtabs {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 14px;
+    position: relative;
+    padding: 6px 4px 0;
+}
+.plan-vtab {
+    border: none;
+    background: transparent;
+    padding: 6px 2px 8px;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    position: relative;
+    letter-spacing: 0.5px;
+    transition: color .15s ease;
+}
+.plan-vtab.active {
+    color: var(--text-primary);
+    font-weight: 800;
+}
+.plan-vtab.active::after {
+    content: '';
+    position: absolute;
+    left: -4px;
+    right: -4px;
+    bottom: 0;
+    height: 6px;
+    background: var(--accent-color);
+    border-radius: 6px 2px 8px 4px / 4px 8px 2px 6px;
+    opacity: 0.95;
+    transform: skewX(-6deg);
+}
+.plan-vtabs-dots {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+}
+.plan-vtabs-dots span {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-primary);
+}
+
+/* 顶部栏 */
+.plan-vtop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 0 2px;
+}
+.plan-vdate {
+    font-family: var(--font-serif);
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+.plan-vdot {
+    font-family: var(--font-serif);
+    font-size: 30px;
+    color: var(--text-primary);
+    transform: translateY(-4px);
+}
+.plan-vtop-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.plan-vtoday {
+    border: none;
+    background: transparent;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 4px 6px;
+}
+.plan-vfilter {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: var(--accent-color);
+    color: #fff;
+    border: 2px solid var(--text-primary);
+    border-radius: 14px 18px 12px 16px / 12px 14px 18px 14px;
+    box-shadow: 3px 3px 0 var(--text-primary);
+    font-weight: 800;
+    font-size: 13px;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+.plan-vfilter svg { width: 10px; height: 10px; }
+.plan-vfilter:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--text-primary); }
+.plan-vcats {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.plan-vcats svg { width: 18px; height: 18px; }
+
+/* 月视图 weekday */
+.plan-vweek {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     text-align: center;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-secondary);
-    padding: 4px 0;
-    position: relative;
-    z-index: 2;
+    padding: 6px 0 8px;
 }
-.plan-month-days {
+
+/* 高格子月视图 */
+.plan-vmonth {
+    position: relative;
+}
+.plan-vgrid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
-    position: relative;
-    z-index: 2;
+    gap: 2px;
 }
-.plan-month-cell {
-    min-height: 52px;
-    padding: 3px;
-    border-radius: 10px 12px 8px 10px / 8px 10px 12px 8px;
-    border: 1.5px dashed rgba(var(--accent-color-rgb), 0.35);
-    background: var(--primary-bg);
-    cursor: pointer;
+.plan-vcell {
+    position: relative;
+    min-height: 88px;
+    padding: 4px 5px 6px 6px;
     display: flex;
     flex-direction: column;
-    gap: 1px;
-    transition: transform .12s ease, box-shadow .15s ease;
+    gap: 2px;
+    cursor: pointer;
+    border-top: 1px solid rgba(var(--accent-color-rgb), 0.12);
+    border-left: 1px solid rgba(var(--accent-color-rgb), 0.12);
+    transition: background .15s ease;
+    box-sizing: border-box;
 }
-.plan-month-cell:hover { transform: translateY(-1px); box-shadow: 2px 2px 0 rgba(0,0,0,0.1); }
-.plan-month-cell.today { outline: 2px solid var(--accent-color); outline-offset: 1px; }
-.plan-month-cell-empty { border: none; background: transparent; cursor: default; }
-.plan-month-num { font-size: 11px; font-weight: 800; color: var(--text-primary); }
-.plan-month-bar {
-    font-size: 9px;
-    padding: 1px 3px;
+.plan-vcell:hover { background: rgba(var(--accent-color-rgb), 0.05); }
+.plan-vcell.empty {
+    cursor: default;
+    border-top: 1px dashed rgba(var(--accent-color-rgb), 0.08);
+    border-left: 1px dashed rgba(var(--accent-color-rgb), 0.08);
+}
+/* 每列右边界 */
+.plan-vgrid > .plan-vcell:nth-child(7n) { border-right: 1px solid rgba(var(--accent-color-rgb), 0.12); }
+.plan-vgrid > .plan-vcell.empty:nth-child(7n) { border-right: 1px dashed rgba(var(--accent-color-rgb), 0.08); }
+/* 最后一行底边界 */
+.plan-vgrid::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 1px;
+    background: rgba(var(--accent-color-rgb), 0.12);
+    pointer-events: none;
+}
+
+.plan-vheadrow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+.plan-vnum {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+.plan-vlunar {
+    font-size: 10px;
+    color: #b8b0a6;
+    font-weight: 700;
+    white-space: nowrap;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.plan-vtag {
+    position: absolute;
+    right: 2px;
+    top: 4px;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 4px;
     border-radius: 4px;
+    z-index: 3;
+}
+.plan-vtag.work { color: #e5655b; background: #ffe2dc; }
+.plan-vtag.off  { color: #5a9d6f; background: #e0f5d9; }
+
+/* 今日实心粉色圆 */
+.plan-vcell.today .plan-vnum {
+    background: var(--accent-color);
     color: #fff;
+    font-weight: 800;
+    box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.25);
+}
+/* 选中粉色圈 */
+.plan-vcell.selected .plan-vnum {
+    box-shadow: 0 0 0 2px var(--accent-color);
+    color: var(--accent-color);
+    font-weight: 800;
+}
+.plan-vcell.today.selected .plan-vnum {
+    color: #fff;
+    box-shadow: 0 0 0 2px var(--accent-color);
+}
+
+/* 彩色任务 pill */
+.plan-vpills {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 1px;
+}
+.plan-vpill {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px 10px 6px 8px / 6px 8px 10px 6px;
+    color: #3a2a1f;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 1.4;
-    font-weight: 700;
 }
-.plan-month-bar.cat-work { background: #7BB3D9; }
-.plan-month-bar.cat-life { background: #6BCB77; }
-.plan-month-bar.cat-study { background: #B4A5E8; }
-.plan-month-bar.cat-health { background: #FF9EC4; }
-.plan-month-bar.cat-other { background: #C4B8AB; }
+.plan-vpill.work   { background: #d5e8f5; }
+.plan-vpill.life   { background: #e2f0df; }
+.plan-vpill.study  { background: #e8e1f6; }
+.plan-vpill.health { background: #fbdde8; }
+.plan-vpill.other  { background: #ebe4da; }
+.plan-vpill.more   { background: transparent; color: var(--text-secondary); font-size: 9px; padding: 0; }
 
-/* 周视图 */
-.plan-week-grid { padding: 6px 0; position: relative; z-index: 2; }
-.plan-week-row {
+/* 底部装饰 */
+.plan-vdecor {
+    position: relative;
+    margin-top: 10px;
+    height: 70px;
+    overflow: visible;
+}
+/* 花盆 */
+.plan-vplant {
+    position: absolute;
+    left: 6px;
+    bottom: 0;
+    width: 70px;
+    height: 80px;
+}
+.plan-vpot {
+    position: absolute;
+    left: 8px;
+    bottom: 0;
+    width: 54px;
+    height: 34px;
+    background: #b58863;
+    border: 2px solid var(--text-primary);
+    border-radius: 4px 4px 14px 14px / 4px 4px 8px 8px;
+    box-shadow: 2px 2px 0 var(--text-primary);
+}
+.plan-vpot::before {
+    content: '';
+    position: absolute;
+    top: -6px; left: -4px; right: -4px;
+    height: 8px;
+    background: #c79973;
+    border: 2px solid var(--text-primary);
+    border-radius: 4px;
+}
+.plan-vnotebook {
+    position: absolute;
+    right: 0;
+    bottom: 16px;
+    width: 30px;
+    height: 42px;
+    background: #fff;
+    border: 2px solid var(--text-primary);
+    border-radius: 3px;
+    transform: rotate(-18deg);
+    box-shadow: 2px 2px 0 var(--text-primary);
+    padding: 4px 3px;
+}
+.plan-vnb-line {
+    height: 3px;
+    background: #4a8fc7;
+    margin-top: 4px;
+    border-radius: 1px;
+}
+.plan-vnb-line:last-child { width: 70%; background: var(--accent-color); }
+.plan-vsprout {
+    position: absolute;
+    left: 26px;
+    top: 20px;
+    width: 10px;
+    height: 20px;
+    background: #5fa65c;
+    border: 2px solid var(--text-primary);
+    border-radius: 50% 50% 40% 40%;
+    transform: rotate(6deg);
+}
+.plan-vleaf {
+    position: absolute;
+    background: #7bc477;
+    border: 2px solid var(--text-primary);
+}
+.plan-vleaf.l1 {
+    left: 12px;
+    top: 30px;
+    width: 18px; height: 10px;
+    border-radius: 0 100% 0 100% / 0 100% 0 100%;
+    transform: rotate(-30deg);
+}
+.plan-vleaf.l2 {
+    left: 34px;
+    top: 24px;
+    width: 16px; height: 9px;
+    border-radius: 100% 0 100% 0 / 100% 0 100% 0;
+    transform: rotate(20deg);
+    background: #a8d58e;
+}
+
+/* 草地 */
+.plan-vgrass {
+    position: absolute;
+    left: 100px;
+    right: 14px;
+    bottom: 4px;
+    height: 20px;
+    background:
+        radial-gradient(circle at 10% 100%, #7bc477 0 4px, transparent 5px),
+        radial-gradient(circle at 25% 100%, #a8d58e 0 5px, transparent 6px),
+        radial-gradient(circle at 40% 100%, #7bc477 0 3px, transparent 4px),
+        radial-gradient(circle at 55% 100%, #a8d58e 0 5px, transparent 6px),
+        radial-gradient(circle at 70% 100%, #7bc477 0 4px, transparent 5px),
+        radial-gradient(circle at 85% 100%, #a8d58e 0 3px, transparent 4px);
+    border-bottom: 2px solid var(--text-primary);
+    opacity: 0.85;
+}
+
+/* 小花 */
+.plan-vflw {
+    position: absolute;
+    width: 14px; height: 14px;
+    background: #ffd868;
+    border: 1.5px solid var(--text-primary);
+    border-radius: 50%;
+}
+.plan-vflw::before, .plan-vflw::after {
+    content: '';
+    position: absolute;
+    width: 9px; height: 9px;
+    background: #ffb3c7;
+    border: 1.5px solid var(--text-primary);
+    border-radius: 50%;
+}
+.plan-vflw::before { top: -6px; left: 2px; }
+.plan-vflw::after  { top: 2px; left: -6px; }
+.plan-vflw.f1 { left: 40%; bottom: 16px; transform: scale(0.9); }
+.plan-vflw.f2 { left: 62%; bottom: 12px; transform: scale(0.7); background:#f7a8d0;}
+.plan-vflw.f3 { left: 78%; bottom: 20px; transform: scale(0.8);}
+
+/* 小兔子 */
+.plan-vbun-small {
+    position: absolute;
+    left: 30%;
+    bottom: 10px;
+    width: 54px;
+    height: 60px;
+}
+.plan-vbun-small::before, .plan-vbun-small::after {
+    content: '';
+    position: absolute;
+    background: #fff;
+    border: 2px solid var(--text-primary);
+    border-radius: 50%;
+}
+.plan-vbun-small::before { width: 14px; height: 22px; top: -2px; left: 12px; transform: rotate(-10deg);}
+.plan-vbun-small::after  { width: 14px; height: 22px; top: -2px; right: 12px; transform: rotate(10deg);}
+.plan-vbun-small {
+    background: #fff;
+    border: 2px solid var(--text-primary);
+    border-radius: 50% 50% 46% 46%;
+    box-shadow: 2px 2px 0 var(--text-primary);
+}
+.plan-vbun-small > .vb-face {
+    position: absolute;
+    inset: 0;
+}
+/* 小兔脸细节用额外 span — 通过背景色的 ::before 圆 + 腮红 */
+.plan-vbun-small { z-index: 2; }
+
+/* 小女孩（简约贴纸） */
+.plan-vgirl {
+    position: absolute;
+    right: 16%;
+    bottom: 10px;
+    width: 60px;
+    height: 62px;
+}
+.plan-vgirl::before {
+    content: '';
+    position: absolute;
+    left: 14px; top: 4px;
+    width: 32px; height: 30px;
+    background: #ffe2d3;
+    border: 2px solid var(--text-primary);
+    border-radius: 48% 52% 46% 54%;
+}
+.plan-vgirl::after {
+    content: '';
+    position: absolute;
+    left: 8px; top: 0;
+    width: 44px; height: 22px;
+    background: #f5c98c;
+    border: 2px solid var(--text-primary);
+    border-radius: 50% 50% 30% 30%;
+}
+
+/* 周视图：高格子版 */
+.plan-vweek-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 3px;
 }
-.plan-week-cell {
-    min-height: 220px;
-    background: var(--primary-bg);
-    border: 1.5px dashed rgba(var(--accent-color-rgb), 0.35);
-    border-radius: 10px 12px 8px 10px / 8px 10px 12px 8px;
-    padding: 4px 3px;
+.plan-vweek-cell {
+    min-height: 260px;
+    padding: 6px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-top: 1px solid rgba(var(--accent-color-rgb), 0.12);
+    border-left: 1px solid rgba(var(--accent-color-rgb), 0.12);
+    position: relative;
+    cursor: pointer;
+}
+.plan-vweek-cell-head {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.plan-vweek-cell-num {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+.plan-vweek-cell.today .plan-vweek-cell-num {
+    background: var(--accent-color);
+    color: #fff;
+}
+.plan-vweek-cell.selected .plan-vweek-cell-num {
+    box-shadow: 0 0 0 2px var(--accent-color);
+    color: var(--accent-color);
+}
+.plan-vweek-pills {
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
-.plan-week-cell-head {
-    text-align: center;
-    font-size: 10px;
-    color: var(--text-secondary);
-    font-weight: 700;
-}
-.plan-week-cell.today .plan-week-cell-head { color: var(--accent-color); }
-.plan-week-cell-num {
-    text-align: center;
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--text-primary);
-    font-family: var(--font-serif);
-}
-.plan-week-bar {
-    font-size: 9px;
-    padding: 2px 3px;
-    border-radius: 4px;
-    color: #fff;
-    line-height: 1.3;
-    cursor: pointer;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-weight: 700;
-}
-.plan-week-bar.cat-work { background: #7BB3D9; }
-.plan-week-bar.cat-life { background: #6BCB77; }
-.plan-week-bar.cat-study { background: #B4A5E8; }
-.plan-week-bar.cat-health { background: #FF9EC4; }
-.plan-week-bar.cat-other { background: #C4B8AB; }
 
-/* 日视图 */
-.plan-day-view { padding: 8px 0; position: relative; z-index: 2; }
-.plan-day-head { text-align: center; margin-bottom: 12px; }
-.plan-day-date { font-family: var(--font-serif); font-size: 22px; font-weight: 800; color: var(--text-primary); }
-.plan-day-week { font-size: 13px; color: var(--text-secondary); margin-top: 2px; font-weight: 700; }
-.plan-day-list { display: flex; flex-direction: column; gap: 8px; }
-.plan-day-item {
+/* 日视图（新版） */
+.plan-vday-view { padding: 10px 0; }
+.plan-vday-head {
+    text-align: center;
+    margin-bottom: 14px;
+    padding: 10px;
+    background: var(--primary-bg);
+    border: 2px dashed rgba(var(--accent-color-rgb), 0.35);
+    border-radius: 18px 22px 16px 20px / 16px 18px 22px 18px;
+}
+.plan-vday-date { font-family: var(--font-serif); font-size: 26px; font-weight: 800; color: var(--text-primary); }
+.plan-vday-week { font-size: 13px; color: var(--text-secondary); margin-top: 4px; font-weight: 700; }
+.plan-vday-list { display: flex; flex-direction: column; gap: 10px; }
+.plan-vday-item {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -539,12 +907,25 @@ html[data-theme="dark"] .plan-cal-wrap::before {
     background: var(--primary-bg);
     border: 2px solid var(--text-primary);
     border-radius: 14px 18px 16px 12px / 12px 14px 18px 14px;
-    box-shadow: 1.5px 2px 0 var(--text-primary);
+    box-shadow: 2px 2px 0 var(--text-primary);
     cursor: pointer;
 }
-.plan-day-time { font-size: 12px; font-weight: 800; color: var(--text-secondary); width: 50px; }
-.plan-day-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-.plan-day-text { flex: 1; font-size: 13px; color: var(--text-primary); font-weight: 700; }
+.plan-vday-time { font-size: 13px; font-weight: 800; color: var(--text-secondary); width: 56px; flex-shrink:0; }
+.plan-vday-dot { width: 10px; height: 22px; border-radius: 6px; flex-shrink: 0; }
+.plan-vday-text { flex: 1; font-size: 14px; color: var(--text-primary); font-weight: 700; }
+.plan-vday-extra {
+    font-size: 11px; color: var(--text-secondary);
+    margin-top: 2px; font-weight: 600;
+}
+
+/* 旧视图样式保留，暗色模式微调需要替换变量 */
+html[data-theme="dark"] .plan-vcell {
+    border-top-color: rgba(255,255,255,0.08);
+    border-left-color: rgba(255,255,255,0.08);
+}
+html[data-theme="dark"] .plan-vcell:nth-child(7n) {
+    border-right-color: rgba(255,255,255,0.08);
+}
 
 /* ================================================================
    四象限
