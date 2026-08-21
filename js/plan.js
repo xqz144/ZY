@@ -3,7 +3,7 @@
  * 对齐新 plan.html 结构（涂鸦风 / lucide icons / 新类名）
  */
 
-const PLAN_KEY = 'plan_app_v3';
+const PLAN_KEY = 'plan_app_v4';
 
 let planData = {
     tasks: [],
@@ -56,63 +56,6 @@ function load() {
 }
 function save() { localStorage.setItem(PLAN_KEY, JSON.stringify(planData)); }
 
-/* 若没有任务，注入示例任务（用于展示彩色 pill） */
-function seedDemoIfEmpty() {
-    if (planData.tasks.length > 0) return;
-    const d = new Date();
-    const Y = d.getFullYear(), M = d.getMonth();
-    const p = (day) => `${Y}-${String(M+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const add = (text, category, day, urgent, important, dueTime, note) => {
-        planData.tasks.push({
-            id: uid(), text, category, dueDate: p(day), urgent, important,
-            done: false, dueTime: dueTime || null, note: note || '', createdAt: Date.now()
-        });
-    };
-    add('写日报', 'work', 1, false, false, '09:00');
-    add('晨会', 'work', 2, true, false, '10:00');
-    add('去美术馆', 'life', 2, false, true);
-    add('拿快递', 'life', 2, false, false);
-    add('拍 vlog', 'life', 1, false, true);
-    add('剪辑视频', 'work', 1, true, true, '15:00');
-    add('项目筹划', 'work', 2, true, true, '14:00');
-    add('买花花🌸', 'life', 3, false, false, null, '给梦角');
-    add('修改设计图', 'work', 3, true, false);
-    add('看电影', 'study', 4, false, true);
-    add('年中总结', 'work', 5, true, true);
-    add('约会', 'life', 5, false, true);
-    add('逛街', 'life', 5, false, false);
-    add('版本测试', 'work', 5, false, true);
-    add('项目规划', 'study', 10, true, true, '10:00');
-    add('视频剪辑+后期制作', 'work', 11, false, true);
-    add('去游乐场', 'life', 13, false, false);
-    add('逛街', 'life', 12, false, false);
-    add('买牛奶🥛', 'health', 13, false, false);
-    add('视频拍摄', 'work', 17, true, false);
-    add('视频剪辑+后期制作', 'work', 18, false, true);
-    add('去美容院', 'health', 19, false, true);
-    add('打扫卫生', 'life', 20, false, false);
-    add('去爬山🏔️', 'life', 18, false, true);
-    add('外刊精读', 'study', 19, true, false);
-    add('逛街', 'life', 20, false, false);
-    add('写日报', 'work', 21, false, false, '09:00');
-    add('晨会同步', 'work', 21, true, false, '10:30');
-    add('和梦角约会💖', 'life', 21, false, true, '19:00', '看电影');
-    add('健身房打卡', 'health', 21, false, false, '18:00');
-    add('整理报表', 'work', 21, true, true, '14:00');
-    add('做陶艺', 'study', 24, false, false);
-    add('去美术馆', 'life', 27, false, true);
-    add('体检', 'health', 28, false, true);
-    add('项目规划', 'work', 25, true, true);
-    add('修改策划', 'work', 28, true, false);
-    add('买牛奶🥛', 'life', 27, false, false);
-    add('爬山🧗', 'life', 31, false, true);
-    add('去海边', 'life', 1, false, false, null, '带相机');
-    add('按摩', 'health', 3, false, true);
-    add('瑜伽', 'health', 4, false, false);
-    add('剪辑 vlog', 'work', 3, false, true);
-    save();
-}
-
 /* ============ 主 Tab 切换 ============ */
 function switchPanel(panel) {
     S.panel = panel;
@@ -142,9 +85,9 @@ function renderList() {
 function renderMiniCal() {
     const c = $('listMiniCal'); if (!c) return;
     const y=S.calY, m=S.calM;
-    const fd=new Date(y,m,1), ld=new Date(y,m+1,0);
-    const dim=ld.getDate();
-    let sd=fd.getDay(); sd = sd===0?6:sd-1;
+    const dim = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+    let sd = new Date(Date.UTC(y, m, 1)).getUTCDay();
+    sd = sd===0 ? 6 : sd-1; // 周一=0
 
     const today = todayStr();
     const tasksByDate = {};
@@ -268,7 +211,7 @@ function getLunarDayStr(y, m, d) {
 }
 // 班休：简化 —— 周六=休 周日=休；1号若在月末附近作特殊（默认周末休，其他工作日"班"不展示，只有节假日再打休）
 function getWorkOffTag(y, m, d) {
-    const dow = new Date(y, m, d).getDay();
+    const dow = new Date(Date.UTC(y, m, d)).getUTCDay();
     if (dow === 0 || dow === 6) return 'off';
     return null;
 }
@@ -289,9 +232,9 @@ function renderView() {
 function renderMonthView() {
     const g = $('viewMonthGrid'); if (!g) return;
     const y=S.calY, m=S.calM;
-    const fd=new Date(y,m,1), ld=new Date(y,m+1,0);
-    const dim=ld.getDate();
-    let sd=fd.getDay(); sd = sd===0?6:sd-1;
+    const dim = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+    let sd = new Date(Date.UTC(y, m, 1)).getUTCDay();
+    sd = sd===0 ? 6 : sd-1; // 周一=0
     const today = todayStr();
     const sel = S.selectedDate;
 
@@ -927,7 +870,6 @@ function bind() {
 /* ============ 初始化 ============ */
 document.addEventListener('DOMContentLoaded', () => {
     load();
-    seedDemoIfEmpty();
     bind();
     renderList();
     // 初始化 lucide

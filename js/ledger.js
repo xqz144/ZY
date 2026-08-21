@@ -161,8 +161,9 @@
     if (m) m.textContent = (calState.month + 1) + '月';
   }
   function weekdayOffset(y, month) {
-    var first = new Date(y, month, 1);
-    return (first.getDay() + 6) % 7; // 周一=0
+    // 强制用 UTC 计算，避免时区（UTC+8等）导致 1 号星期几算错
+    var firstUTC = new Date(Date.UTC(y, month, 1));
+    return (firstUTC.getUTCDay() + 6) % 7; // 周一=0
   }
   function getMonthStats(y, month) {
     var prefix = y + '-' + pad(month + 1) + '-';
