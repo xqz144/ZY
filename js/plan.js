@@ -569,16 +569,86 @@ function drawTrend(start, end) {
 }
 
 /* ============ 我的页 ============ */
+/* 读取主界面用户本人（我）的头像/昵称/签名，与主界面完全一致 */
+async function syncUserInfoFromHome() {
+    let avatarUrl = null;
+    let userName = null;
+    let userSignature = null;
+
+    // 1. 优先 localStorage（与主页 homeSetGlobal 同步写入，最可靠）
+    const lsAvatar = localStorage.getItem('home_avatar_me');
+    if (lsAvatar) avatarUrl = lsAvatar;
+    const lsProfile = localStorage.getItem('profile_me');
+    if (lsProfile) {
+        try {
+            const profile = JSON.parse(lsProfile);
+            if (!userName) userName = profile.name || null;
+            if (!userSignature) userSignature = profile.signature || null;
+        } catch(e) {}
+    }
+
+    // 2. 从 homeGetGlobal 读取（等价于 localStorage 但封装了全局 API）
+    if (typeof homeGetGlobal === 'function') {
+        if (!avatarUrl) avatarUrl = homeGetGlobal('home_avatar_me');
+        if (!userName || !userSignature) {
+            const profileStr = homeGetGlobal('profile_me');
+            if (profileStr) {
+                try {
+                    const profile = JSON.parse(profileStr);
+                    if (!userName) userName = profile.name || null;
+                    if (!userSignature) userSignature = profile.signature || null;
+                } catch(e) {}
+            }
+        }
+    }
+
+    // 3. 兼容 customize-profile.html 的旧键
+    if (!avatarUrl) {
+        const oldAvatar = localStorage.getItem('mengjiao_avatar_img');
+        if (oldAvatar) avatarUrl = oldAvatar;
+    }
+    if (!userName) {
+        const n = localStorage.getItem('mengjiao_profile_name') ||
+                    (typeof settings !== 'undefined' && settings.myName);
+        if (n) userName = n;
+    }
+
+    // 4. 最后从 localforage 兜底
+    if (typeof localforage !== 'undefined') {
+        try {
+            if (!avatarUrl) {
+                const lfAvatar = await localforage.getItem('home_avatar_me');
+                if (lfAvatar) avatarUrl = lfAvatar;
+            }
+            if (!userName || !userSignature) {
+                const lfProfile = await localforage.getItem('profile_me');
+                if (lfProfile) {
+                    const profile = JSON.parse(lfProfile);
+                    if (!userName) userName = profile.name || null;
+                    if (!userSignature) userSignature = profile.signature || null;
+                }
+            }
+        } catch(e) {}
+    }
+
+    // 5. fallback 默认值（与主页一致：DiceBear me seed / 昵称"我"）
+    if (!avatarUrl) avatarUrl = 'https://api.dicebear.com/7.x/avataaars/svg?seed=me&backgroundColor=b6e3f4';
+    if (!userName) userName = '我';
+
+    return { avatar: avatarUrl, name: userName, signature: userSignature };
+}
+
 function renderProfile() {
     const img = $('profileAvatarImg');
-    if (img) {
-        try {
-            if (window.getPartnerAvatar) {
-                const a = window.getPartnerAvatar();
-                if (a && a.startsWith('http')) img.src = a;
-            }
-        } catch(e){}
-    }
+    const nameEl = $('profileName');
+    const sigEl = $('profileSignature');
+
+    syncUserInfoFromHome().then(info => {
+        if (img) img.src = info.avatar;
+        if (nameEl) nameEl.textContent = info.name;
+        if (sigEl && info.signature) sigEl.textContent = info.signature;
+    });
+
     $('profileTotal').textContent = planData.tasks.length;
     $('profileDone').textContent = planData.tasks.filter(t=>t.done).length;
     $('profileFocus').textContent = planData.focusRecords.reduce((s,r)=>s+r.duration,0);
