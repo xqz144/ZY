@@ -1,0 +1,18 @@
+pluginManagement {
+    // Android Gradle Plugin (com.android.application) 由 Google 发布，不在 Gradle
+    // 官方插件仓库里，必须明确加上 google() 才解析得到。
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = 'MengJiao'
+include ':app'

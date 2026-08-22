@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 先用矢量 SVG 作为 Launcher 图标（粉色梦角主题色 + 爱心形状）。
+         后续可以替换成用户喜欢的 PNG，只要放在 mipmap-anydpi-v26 下同样覆盖即可 -->
+    <background android:drawable="@color/mj_theme" />
+    <foreground   android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>

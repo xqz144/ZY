@@ -26,7 +26,19 @@
     <link rel="stylesheet" href="css/shop.css">
     <link rel="icon" type="image/png" sizes="192x192" href="https://file.youtochat.com/images/20260216/1771224856844_qdqqd.jpeg">
     <link rel="apple-touch-icon" href="https://file.youtochat.com/images/20260216/1771224856844_qdqqd.jpeg">
+    <link rel="manifest" href="./manifest.json" />
     <meta name="apple-mobile-web-app-title" content="ʚ𝑳𝑶𝑽𝑬ɞ">
+    <script>
+      // PWA Service Worker：把全部 HTML/CSS/JS/图片缓存到本地，第二次打开秒开 + 完全离线可用。
+      // - 浏览器直接访问 index-zy.html → 注册 ./sw.js，scope=/
+      // - Android App (https://appassets.mengjiao.local/public/index.html)
+      //   地址开头是 /public/，所以注册 ./sw.js，scope=/public/
+      if ('serviceWorker' in navigator) {
+        try {
+          navigator.serviceWorker.register('./sw.js');
+        } catch (e) {}
+      }
+    </script>
     <script>
         // 确保 applyTheme 可用
         window.applyTheme = window.applyTheme || function(name) {

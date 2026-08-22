@@ -1,0 +1,95 @@
+// 应用级 Gradle：把 /workspace 下的网页资源整个打包进 assets/public/，
+// 主 Activity 用一个 WebView 直接打开 file:///android_asset/public/index.html
+//
+// —— 之后我改代码（修 bug / 加功能），你只要：
+//   1) 重跑 assembleRelease 生成新 APK → 你手机上点一下覆盖安装（就是普通"装APK"），
+//      所有聊天记录/任务/账本等本地数据**不会丢**（它们保存在 WebView 的 localStorage /
+//      WebViewDatabase，和 APK 是分离的，升级 App 不会 wipe）。
+//   2) 或：如果只改了前端 JS/HTML/CSS，不想重装 APK，可以把网站部署到你常用的 URL，
+//      App 会在启动时优先用本地 assets；要热更新模式就打开 App 内「设置→检查前端热更新」
+//      一键拉取最新前端资源文件到 app data，下一冷启动生效（无需重装 APK）。
+
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.mengjiao.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.mengjiao.app"
+        minSdk 24           // Android 7.0+，Oppo Reno7（Android 13）完全兼容
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            // 默认使用 debug keystore 方便你一人自用（自己手机装上就能用，不用去买签名）。
+            // 如果将来要上应用市场，再换正式证书即可。
+            def debugStore = rootProject.file('app/debug.keystore')
+            storeFile     debugStore
+            storePassword 'android'
+            keyAlias      'androiddebugkey'
+            keyPassword   'android'
+        }
+    }
+
+    buildTypes {
+        release {
+            // 你一个人自用的 APK：跳过 Lint（lintVitalAnalyzeRelease 在 AGP 8.7 + JDK 17
+            // 组合下会因为 IntelliJ MessageBus dispose 顺序问题抛 AlreadyDisposedException，
+            // 这是 Android Lint 内部问题，不影响 APK 本身；直接关掉即可）。
+            lintOptions {
+                abortOnError false
+                checkReleaseBuilds false
+                disable 'MissingTranslation', 'GoogleAppIndexingWarning', 'IconLauncherFormat',
+                        'IconDensities', 'IconDuplicatesConfig', 'GradleDependency'
+            }
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    // 只有当项目真正 apply Kotlin Android 插件时，AGP 才会注入 kotlinOptions DSL；
+    // 本项目是纯 Java + WebView，所以不要写这个 block，否则报 MissingMethodException。
+
+    // 打包前：把 /workspace 根目录（除了 /android /node_modules /.git）整个拷进
+    // app/src/main/assets/public/，这样 WebView 本地文件就能直接加载所有页面。
+    applicationVariants.all { variant ->
+        variant.mergeAssetsProvider.get().doFirst {
+            copy {
+                from(rootProject.rootDir.parentFile)
+                into("${buildDir}/intermediates/merged_assets/${variant.name}/merge${variant.name.capitalize()}Assets/out/public")
+                includeEmptyDirs = false
+                exclude(
+                    'android/**',
+                    '.git/**',
+                    '.gitignore',
+                    'node_modules/**',
+                    'apk/**',
+                    '.trae-html-share-packages/**',
+                    'push-fix.ps1',
+                    '**/*.zip'
+                )
+            }
+        }
+    }
+}
+
+dependencies {
+    // 使用 AndroidX AppCompat + WebKit（Android 13 自带 Chrome WebView，无需另外装包）
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'com.google.android.material:material:1.11.0'
+}

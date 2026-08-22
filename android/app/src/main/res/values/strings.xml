@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">梦角传讯</string>
+
+    <!-- 主色与主题色，与 manifest.json / 主界面 theme-color 保持一致 -->
+    <color name="mj_theme">#E8A4B8</color>
+    <color name="mj_page_bg">#F9F7F4</color>
+    <color name="mj_status_bar">#F9F7F4</color>
+</resources>

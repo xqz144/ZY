@@ -2,3 +2,26 @@
 *.design
 generation-tree.json
 orchestration-summary.json
+
+# Android build 产物与本地环境
+/android/gradle/
+/android/local.properties
+/android/app/build/
+/android/build/
+/android/.gradle/
+/android/app/debug.keystore
+/android/app/src/main/assets/public/
+/.trae-html-share-packages/android/
+/apk/
+/capacitor-sync/
+apk-update-*.json
+keystore-*.properties
+
+# Node
+node_modules/
+package-lock.json
+package.json
+
+# macOS / local
+.DS_Store
+.env.local

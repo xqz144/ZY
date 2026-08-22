@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MengJiao" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/mj_theme</item>
+        <item name="colorPrimaryVariant">@color/mj_theme</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="android:statusBarColor">@color/mj_status_bar</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/mj_page_bg</item>
+    </style>
+    <style name="Theme.MengJiao.NoActionBar" parent="Theme.MengJiao" />
+</resources>

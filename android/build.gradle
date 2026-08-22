@@ -1,0 +1,5 @@
+// 梦角传讯 — 顶层 Gradle 构建脚本
+// Gradle 8.14.x + Android Gradle Plugin 8.7.x（沙箱里预装了 Gradle 8.14.5，不再绕 wrapper 下载）
+plugins {
+    id 'com.android.application' version '8.7.2' apply false
+}

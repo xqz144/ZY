@@ -1,0 +1,14 @@
+<!-- 梦角传讯 — 桌面图标前景：一个简化的爱心+小月亮轮廓，粉色图标底 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108"
+    android:tint="#FFFFFF">
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M54,34 C49.4,27 40,24.3 33,28.2 C24.3,33 21.9,44.6 28.6,52.7 C33.2,58.2 45.6,67.6 51.8,72.2 C52.6,72.8 53.5,73.1 54,73.1 C54.5,73.1 55.4,72.8 56.2,72.2 C62.4,67.6 74.8,58.2 79.4,52.7 C86.1,44.6 83.7,33 75,28.2 C68,24.3 58.6,27 54,34 Z" />
+  <path
+      android:fillColor="#FFF2B6"
+      android:pathData="M76,31 C74.8,29.2 72.8,28.1 71,28.6 C71.2,31.8 73.2,34.1 75.6,33.7 C76.9,33.5 77.2,32.1 76,31 Z" />
+</vector>
