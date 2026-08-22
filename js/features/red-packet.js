@@ -313,6 +313,23 @@
 
     // ========== 领取红包弹窗 ==========
 
+    /** 红包领取弹窗底图：2026 狮头帽男孩捧红包插画（用户指定） */
+    var RP_POP_BG = 'url(\'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?image_size=portrait_4_3&prompt=' +
+        encodeURIComponent('Purpose: mobile red packet receive popup background. Kawaii chibi Q-version boy in white fluffy 2026 lion-dance hood with cat ears, dark curly hair, big shiny blue eyes, rosy cheeks, open smile with a tiny fang, red scarf with purple fish ornament, holding a large red envelope decorated with golden beads, heart-shaped gold emblem and ancient coins. Warm red-orange gradient background filled with floating gold ingots, 2026 number decorations, firework sparkles, confetti ribbons, star sparkles. Cozy festive Chinese New Year 2026 illustration, no text, full bleed, portrait orientation') +
+        '\')';
+
+    /** 弹窗面板共用的底图样式（cover 铺满不留白，叠一层暗渐变方便读字） */
+    var RP_PANEL_BG_STYLE =
+        'background-image:' + RP_POP_BG + ';' +
+        'background-size:cover;background-position:center top;background-repeat:no-repeat;';
+
+    /** 根据状态给面板额外叠一个半透明渐变，确保文字可读（待开轻微、已开更暗） */
+    function rpOverlayColor(isOpened, isReturned) {
+        if (isReturned) return 'background-color:rgba(60,60,60,0.55);';
+        if (isOpened)   return 'background-color:rgba(0,0,0,0.38);';
+        return            'background-color:rgba(0,0,0,0.22);';
+    }
+
     window.showRedPacketReceiveModal = function (recordId) {
         window.initTransferData();
 
@@ -343,16 +360,16 @@
 
         var senderName = record.from === 'me' ? getMyName() : getPartnerName();
 
-        var panelBg = isOpened
-            ? 'background:linear-gradient(180deg,#e0d8d8 0%,#ccc 100%);'
-            : 'background:#c4453c;';
+        // 面板底图：用户指定的 2026 狮头帽插画，叠一层半透明渐变确保文字可读性
+        var panelBg = RP_PANEL_BG_STYLE;
 
         var btnBg = isOpened
             ? 'background:#ddd;color:#999;box-shadow:none;cursor:default;'
             : 'background:#ffd700;color:#c4453c;box-shadow:0 2px 10px rgba(255,215,0,0.5);cursor:pointer;';
 
         var btnText = isPending ? '開' : (isReceived ? '已领取' : '已退回');
-        var titleColor = isPending ? 'color:#ffd700;' : (isReturned ? 'color:#999;' : 'color:#ffd700;');
+        var titleColor = 'color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,0.45);';
+        if (isReturned) titleColor = 'color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);';
         var titleText = isReturned ? '已过期' : record.message;
 
         // 判断是否为系统发出的红包（我方领取），添加退回按钮
@@ -361,20 +378,24 @@
             ? '<button id="rp-return-btn" style="width:100%;max-width:200px;padding:10px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;transition:all 0.25s cubic-bezier(0.4,0,0.2,1);box-shadow:0 2px 8px rgba(255,107,53,0.35);">退回红包</button>'
             : '';
 
+        var overlayClr = rpOverlayColor(isOpened, isReturned);
+
         var html =
-            '<div id="rp-receive-panel" style="text-align:center;position:relative;overflow:hidden;border-radius:16px;width:260px;min-height:380px;' + panelBg + 'display:flex;flex-direction:column;">' +
+            '<div id="rp-receive-panel" style="text-align:center;position:relative;overflow:hidden;border-radius:16px;width:260px;min-height:380px;' + panelBg + 'display:flex;flex-direction:column;color:#fff;">' +
+                // 整体暗渐变叠加层（让插画上的字更清楚，不挡插画本身太多）
+                '<div style="position:absolute;inset:0;' + overlayClr + 'pointer-events:none;"></div>' +
                 // 顶部金色装饰线
-                '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#ffd700 20%,#ffd700 80%,transparent);"></div>' +
-                // 发送者区域
-                '<div style="padding:30px 16px 20px;display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;">' +
-                    '<div style="width:48px;height:48px;border-radius:50%;background:var(--accent-color,#b8a9c9);border:2px solid rgba(255,215,0,0.5);margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">' +
+                '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#ffd700 20%,#ffd700 80%,transparent);z-index:1;"></div>' +
+                // 发送者区域（保持在插画上方，不覆盖背景）
+                '<div style="padding:30px 16px 20px;display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;position:relative;z-index:2;">' +
+                    '<div style="width:48px;height:48px;border-radius:50%;background:var(--accent-color,#b8a9c9);border:2px solid rgba(255,215,0,0.6);margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 10px rgba(0,0,0,0.25);">' +
                         (record.from === 'me' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-heart"></i>') +
                     '</div>' +
-                    '<div style="font-size:13px;color:rgba(255,255,255,0.9);margin-bottom:6px;">' + senderName + ' 发来的红包</div>' +
+                    '<div style="font-size:13px;color:rgba(255,255,255,0.95);margin-bottom:6px;text-shadow:0 1px 2px rgba(0,0,0,0.45);">' + senderName + ' 发来的红包</div>' +
                     '<div style="font-size:18px;font-weight:700;' + titleColor + '">' + titleText + '</div>' +
                 '</div>' +
                 // 底部按钮区域
-                '<div style="padding:30px 20px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;' + (isOpened ? 'background:#ccc;' : 'background:#c4453c;') + '">' +
+                '<div style="padding:30px 20px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent;position:relative;z-index:2;">' +
                     '<button id="rp-open-btn" style="width:60px;height:60px;border-radius:50%;' + btnBg + 'font-size:22px;font-weight:700;border:none;transition:all 0.15s;">' + btnText + '</button>' +
                     returnBtnHtml +
                 '</div>' +
@@ -399,17 +420,18 @@
 
                     // 更新弹窗为已退回状态
                     var panel = overlay.querySelector('#rp-receive-panel');
-                    panel.style.background = 'linear-gradient(180deg,#e0d8d8 0%,#ccc 100%)';
+                    panel.style.cssText = 'text-align:center;position:relative;overflow:hidden;border-radius:16px;width:260px;min-height:380px;' + RP_PANEL_BG_STYLE + 'display:flex;flex-direction:column;color:#fff;';
                     panel.innerHTML =
-                        '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#999 20%,#999 80%,transparent);"></div>' +
-                        '<div style="padding:30px 16px 20px;display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;">' +
-                            '<div style="width:48px;height:48px;border-radius:50%;background:#999;border:2px solid rgba(255,255,255,0.3);margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">' +
+                        '<div style="position:absolute;inset:0;' + rpOverlayColor(true, true) + 'pointer-events:none;"></div>' +
+                        '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#999 20%,#999 80%,transparent);z-index:1;"></div>' +
+                        '<div style="padding:30px 16px 20px;display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;position:relative;z-index:2;">' +
+                            '<div style="width:48px;height:48px;border-radius:50%;background:#999;border:2px solid rgba(255,255,255,0.45);margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 10px rgba(0,0,0,0.25);">' +
                                 '<i class="fas fa-undo"></i>' +
                             '</div>' +
-                            '<div style="font-size:13px;color:rgba(255,255,255,0.9);margin-bottom:6px;">' + senderName + ' 发来的红包</div>' +
-                            '<div style="font-size:18px;font-weight:700;color:#999;">已退回</div>' +
+                            '<div style="font-size:13px;color:rgba(255,255,255,0.95);margin-bottom:6px;text-shadow:0 1px 2px rgba(0,0,0,0.45);">' + senderName + ' 发来的红包</div>' +
+                            '<div style="font-size:18px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);">已退回</div>' +
                         '</div>' +
-                        '<div style="padding:30px 20px 40px;display:flex;justify-content:center;background:#ccc;">' +
+                        '<div style="padding:30px 20px 40px;display:flex;justify-content:center;background:transparent;position:relative;z-index:2;">' +
                             '<button style="width:60px;height:60px;border-radius:50%;background:#ddd;color:#999;font-size:22px;font-weight:700;border:none;box-shadow:none;cursor:default;">已退回</button>' +
                         '</div>';
 
@@ -459,20 +481,24 @@
 
                 // 更新弹窗为已领取状态
                 var panel = overlay.querySelector('#rp-receive-panel');
-                panel.style.background = 'linear-gradient(180deg,#e0d8d8 0%,#ccc 100%)';
+                panel.style.cssText = 'text-align:center;position:relative;overflow:hidden;border-radius:16px;width:260px;min-height:380px;' + RP_PANEL_BG_STYLE + 'display:flex;flex-direction:column;color:#fff;';
 
                 // 更新弹窗为已领取状态（领取后不再显示退回按钮）
                 panel.innerHTML =
-                    '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#ffd700 20%,#ffd700 80%,transparent);"></div>' +
-                    '<div style="padding:30px 16px 20px;display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;">' +
-                        '<div style="width:48px;height:48px;border-radius:50%;background:var(--accent-color,#b8a9c9);border:2px solid rgba(255,215,0,0.5);margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">' +
+                    '<div style="position:absolute;inset:0;' + rpOverlayColor(true, false) + 'pointer-events:none;"></div>' +
+                    '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#ffd700 20%,#ffd700 80%,transparent);z-index:1;"></div>' +
+                    '<div style="padding:30px 16px 20px;display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;position:relative;z-index:2;">' +
+                        '<div style="width:48px;height:48px;border-radius:50%;background:var(--accent-color,#b8a9c9);border:2px solid rgba(255,215,0,0.6);margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 10px rgba(0,0,0,0.25);">' +
                             '<i class="fas fa-heart"></i>' +
                         '</div>' +
-                        '<div style="font-size:13px;color:rgba(255,255,255,0.9);margin-bottom:6px;">' + senderName + ' 发来的红包</div>' +
-                        '<div style="font-size:18px;font-weight:700;color:#ffd700;">' + record.message + '</div>' +
-                        '<div style="font-size:24px;font-weight:700;color:#c4453c;margin-top:8px;">&yen;' + fmt(record.amount) + '</div>' +
+                        '<div style="font-size:13px;color:rgba(255,255,255,0.95);margin-bottom:6px;text-shadow:0 1px 2px rgba(0,0,0,0.45);">' + senderName + ' 发来的红包</div>' +
+                        '<div style="font-size:18px;font-weight:700;color:#ffd700;text-shadow:0 1px 3px rgba(0,0,0,0.5);">' + record.message + '</div>' +
+                        // 金额放大 + 金边红底 + 外发光，直接盖在插画上也够亮
+                        '<div style="margin-top:14px;padding:8px 20px;border-radius:14px;background:linear-gradient(135deg,#c4453c,#ef5a4b);border:2px solid #ffd700;box-shadow:0 4px 18px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,215,0,0.4) inset;">' +
+                            '<div style="font-size:24px;font-weight:800;color:#ffd700;letter-spacing:1px;">&yen;' + fmt(record.amount) + '</div>' +
+                        '</div>' +
                     '</div>' +
-                    '<div style="padding:20px 20px 30px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#ccc;">' +
+                    '<div style="padding:20px 20px 30px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent;position:relative;z-index:2;">' +
                         '<button style="width:60px;height:60px;border-radius:50%;background:#ddd;color:#999;font-size:22px;font-weight:700;border:none;box-shadow:none;cursor:default;">已领取</button>' +
                     '</div>';
 
