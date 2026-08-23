@@ -3612,6 +3612,10 @@
       generateOfflineVisitors();
       startOnlineVisitorTimer();
       updateVisitorBadge();
+
+      // 梦角自动发朋友圈（从文案库抽取，按设定频率）
+      // 延迟一点点，避免和首屏渲染抢资源
+      setTimeout(maybePartnerPost, 600);
     } catch (e) {
       console.error('MomentsApp init error:', e);
     }
@@ -3715,6 +3719,128 @@
     }
   }
 
+  // ========== 梦角自动发朋友圈（从文案库抽取）==========
+  const PARTNER_SETTINGS_KEY = 'moments_partner_settings';
+  const PARTNER_STATE_KEY = 'moments_partner_state';
+  const PARTNER_RECENT_KEY = 'moments_partner_recent'; // 最近发过的文案索引，避免短期重复
+
+  const DEFAULT_PARTNER_SETTINGS = {
+    enabled: true,        // 是否开启梦角自动发圈
+    intervalHours: 8,     // 距离上次发圈至少间隔多少小时
+    maxPerDay: 2           // 每天最多自动发几条
+  };
+
+  function getPartnerSettings() {
+    try {
+      const s = localStorage.getItem(PARTNER_SETTINGS_KEY);
+      if (s) return Object.assign({}, DEFAULT_PARTNER_SETTINGS, JSON.parse(s));
+    } catch (e) {}
+    return Object.assign({}, DEFAULT_PARTNER_SETTINGS);
+  }
+
+  function savePartnerSettings(settings) {
+    localStorage.setItem(PARTNER_SETTINGS_KEY, JSON.stringify(settings));
+  }
+
+  function getPartnerState() {
+    try {
+      const s = localStorage.getItem(PARTNER_STATE_KEY);
+      if (s) return JSON.parse(s);
+    } catch (e) {}
+    return { lastPostTime: 0, todayCount: 0, todayDate: '' };
+  }
+
+  function savePartnerState(state) {
+    localStorage.setItem(PARTNER_STATE_KEY, JSON.stringify(state));
+  }
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+
+  // 从文案库挑一条（优先没发过的，避免短期重复）
+  function pickLibraryEntry() {
+    const lib = window.MENGJIAO_MOMENTS_LIBRARY;
+    if (!Array.isArray(lib) || lib.length === 0) return null;
+    let recent = [];
+    try { recent = JSON.parse(localStorage.getItem(PARTNER_RECENT_KEY) || '[]'); } catch (e) {}
+    // 找没在 recent 里的候选
+    const candidates = [];
+    for (let i = 0; i < lib.length; i++) if (recent.indexOf(i) === -1) candidates.push(i);
+    // 全发过就清空重来
+    const pool = candidates.length > 0 ? candidates : lib.map((_, i) => i);
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+    recent.push(picked);
+    // 只保留最近 N 条记录
+    const keep = Math.min(lib.length - 1, 8);
+    if (recent.length > keep) recent = recent.slice(recent.length - keep);
+    localStorage.setItem(PARTNER_RECENT_KEY, JSON.stringify(recent));
+    return lib[picked];
+  }
+
+  // 真正发一条梦角朋友圈
+  function publishPartnerMoment(entry) {
+    if (!entry) return false;
+    const id = 'partner_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const images = (entry.images || []).slice(0, 9); // 最多 9 张，九宫格上限
+    const moment = {
+      id: id,
+      avatar: getPartnerAvatar(),
+      nickname: getPartnerName(),
+      time: Date.now(),
+      text: entry.text || '',
+      images: images,
+      sticker: null,
+      video: null,
+      likes: [],
+      likedByMe: false,
+      collected: false,
+      comments: [],
+      mentions: [],
+      location: '',
+      isPartner: true // 标记：这条是梦角发的
+    };
+    momentsData.unshift(moment);
+    saveMomentsToStorageSync();
+    renderMoments();
+    // 更新状态
+    const state = getPartnerState();
+    state.lastPostTime = Date.now();
+    state.todayCount = (state.todayCount || 0) + 1;
+    state.todayDate = todayStr();
+    savePartnerState(state);
+    return true;
+  }
+
+  // 进入朋友圈时检查：是否该让梦角自动发一条
+  function maybePartnerPost() {
+    const settings = getPartnerSettings();
+    if (!settings.enabled) return;
+    if (!Array.isArray(window.MENGJIAO_MOMENTS_LIBRARY) || window.MENGJIAO_MOMENTS_LIBRARY.length === 0) return;
+
+    const state = getPartnerState();
+    const today = todayStr();
+    if (state.todayDate !== today) {
+      state.todayDate = today;
+      state.todayCount = 0;
+    }
+    if (state.todayCount >= settings.maxPerDay) return;
+    const intervalMs = (settings.intervalHours || 8) * 3600 * 1000;
+    if (Date.now() - (state.lastPostTime || 0) < intervalMs) return;
+
+    const entry = pickLibraryEntry();
+    publishPartnerMoment(entry);
+  }
+
+  // 手动让梦角立刻发一条（设置面板里的按钮调用）
+  function manualPartnerPost() {
+    if (!Array.isArray(window.MENGJIAO_MOMENTS_LIBRARY) || window.MENGJIAO_MOMENTS_LIBRARY.length === 0) {
+      return false;
+    }
+    return publishPartnerMoment(pickLibraryEntry());
+  }
+
   // ========== 暴露全局 API ==========
   window.MomentsApp = {
     // 初始化
@@ -3768,6 +3894,13 @@
     // 收藏
     openCollectionPanel,
     closeCollectionPanel,
+
+    // 梦角自动发朋友圈
+    maybePartnerPost,
+    manualPartnerPost,
+    getPartnerSettings,
+    savePartnerSettings,
+    getPartnerState,
     
     // 发布
     openPublishPanel,
