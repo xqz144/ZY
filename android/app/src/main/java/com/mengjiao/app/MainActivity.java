@@ -1,6 +1,9 @@
 package com.mengjiao.app;
 
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -9,12 +12,14 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.webkit.MimeTypeMap;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebSettingsCompat;
@@ -54,11 +59,14 @@ public class MainActivity extends AppCompatActivity {
     private static final String HOST = "appassets.mengjiao.local";
     private static final String PREFIX_PUBLIC = "/public/";
     private static final String PREFIX_HOT = "/hot/";
-    private static final String APP_VERSION = "1.0.0";
+    private static final String APP_VERSION = "1.1.0";
+    private static final int FILE_CHOOSER_REQUEST_CODE = 51426;
 
     private WebView mWebView;
     private AssetManager mAssets;
     private File mHotDir;
+    // <input type="file"> 回调：WebView 点击上传按钮时触发，选完文件后通过它把结果回传给页面
+    private ValueCallback<Uri[]> mFilePathCallback;
 
     @SuppressLint({"SetJavaScriptEnabled"})
     @Override
@@ -88,7 +96,39 @@ public class MainActivity extends AppCompatActivity {
                 return intercept(request.getUrl());
             }
         });
-        mWebView.setWebChromeClient(new WebChromeClient());
+        mWebView.setWebChromeClient(new WebChromeClient() {
+            // 处理 <input type="file">：弹出系统文件/图片选择器，选完回传给页面。
+            // 没有这个方法的话，点击上传按钮会完全无反应（这是 WebView 默认行为）。
+            @Override
+            public boolean onShowFileChooser(WebView webView,
+                                             ValueCallback<Uri[]> filePathCallback,
+                                             FileChooserParams fileChooserParams) {
+                // 若存在上一次未完成的回调，先以 null 结束，避免页面一直等待
+                if (mFilePathCallback != null) {
+                    mFilePathCallback.onReceiveValue(null);
+                }
+                mFilePathCallback = filePathCallback;
+
+                // createIntent() 会根据 <input accept="..."> 自动设置好过滤类型（图片/相机/任意文件）
+                Intent contentIntent = fileChooserParams.createIntent();
+                // 允许多选（如果页面 input 带 multiple 属性）
+                contentIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+
+                // 再包一层 chooser，让用户能在「相册/文件管理器」之间选择打开方式
+                Intent chooser = new Intent(Intent.ACTION_CHOOSER);
+                chooser.putExtra(Intent.EXTRA_INTENT, contentIntent);
+                chooser.putExtra(Intent.EXTRA_TITLE, "选择文件");
+
+                try {
+                    startActivityForResult(chooser, FILE_CHOOSER_REQUEST_CODE);
+                } catch (ActivityNotFoundException e) {
+                    mFilePathCallback = null;
+                    Toast.makeText(MainActivity.this, "未找到可用的文件选择器", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+                return true;
+            }
+        });
 
         mWebView.loadUrl("https://" + HOST + "/public/index.html");
     }
@@ -209,6 +249,32 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    // 接收文件选择器返回的图片/文件，回传给 WebView 页面
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            Uri[] results = null;
+            if (resultCode == RESULT_OK && data != null) {
+                ClipData clip = data.getClipData();   // 多选
+                if (clip != null && clip.getItemCount() > 0) {
+                    results = new Uri[clip.getItemCount()];
+                    for (int i = 0; i < clip.getItemCount(); i++) {
+                        results[i] = clip.getItemAt(i).getUri();
+                    }
+                } else if (data.getData() != null) { // 单选
+                    results = new Uri[]{data.getData()};
+                }
+            }
+            // 必须回调，哪怕是 null（用户取消），否则下次 input 不会再触发
+            if (mFilePathCallback != null) {
+                mFilePathCallback.onReceiveValue(results);
+                mFilePathCallback = null;
+            }
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
