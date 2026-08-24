@@ -28,6 +28,92 @@
     <link rel="apple-touch-icon" href="https://file.youtochat.com/images/20260216/1771224856844_qdqqd.jpeg">
     <link rel="manifest" href="./manifest.json" />
     <meta name="apple-mobile-web-app-title" content="ʚ𝑳𝑶𝑽𝑬ɞ">
+    <style>
+      /* 原生 insets 变量：Android App 通过 onNativeInsets 回调注入 */
+      /* 让页面能正确处理状态栏遮挡和键盘弹出 */
+      :root {
+        --native-status-bar-height: 0px;
+        --native-bottom-inset: 0px;
+      }
+      /* WebView 被原生层加了 statusBarH 的 top-padding 后，body 再叠加一次就会双倍 */
+      /* 所以只用 CSS 变量做 fallback，真正的 padding 由原生 WebView.setPadding 控制 */
+    </style>
+    <script>
+      // 原生 Android 回调：传入状态栏高度和底部 inset（含键盘）
+      function onNativeInsets(statusBarH, bottomInset) {
+        document.documentElement.style.setProperty('--native-status-bar-height', statusBarH + 'px');
+        document.documentElement.style.setProperty('--native-bottom-inset', bottomInset + 'px');
+        // 触发自定义事件，方便各模块监听键盘弹出
+        window.dispatchEvent(new CustomEvent('nativeinsets', {
+          detail: { statusBarH: statusBarH, bottomInset: bottomInset }
+        }));
+        // 自动调整所有固定底部元素（聊天输入栏、评论弹窗等）
+        adjustFixedBottomElements(bottomInset);
+      }
+      window.onNativeInsets = onNativeInsets;
+
+      // 调整所有 position:fixed; bottom:0 的元素，让键盘弹出时它们能跟着上升
+      function adjustFixedBottomElements(bottomInset) {
+        // bottomInset 包含导航栏高度或键盘高度
+        // 如果大于导航栏阈值(~50px)，说明键盘弹出了
+        var isKeyboardUp = bottomInset > 50;
+        var kbHeight = isKeyboardUp ? bottomInset : 0;
+
+        // 1. 聊天主输入栏
+        var inputWrapper = document.querySelector('.input-area-wrapper');
+        if (inputWrapper) {
+          if (isKeyboardUp) {
+            inputWrapper.style.bottom = kbHeight + 'px';
+            inputWrapper.style.transition = 'bottom 0.15s ease';
+          } else {
+            inputWrapper.style.bottom = '0px';
+          }
+        }
+
+        // 2. 朋友圈评论弹窗（如果显示中）
+        var commentPopup = document.getElementById('commentPopup');
+        if (commentPopup && commentPopup.classList.contains('active')) {
+          if (isKeyboardUp) {
+            commentPopup.style.bottom = kbHeight + 'px';
+          } else {
+            commentPopup.style.bottom = '0px';
+          }
+        }
+
+        // 3. 朋友圈表情面板
+        var emojiPanel = document.getElementById('commentEmojiPanel');
+        if (emojiPanel && emojiPanel.classList.contains('active')) {
+          if (isKeyboardUp) {
+            emojiPanel.style.bottom = kbHeight + 'px';
+          } else {
+            emojiPanel.style.bottom = '0px';
+          }
+        }
+
+        // 4. 所有带 data-keyboard-adapt 属性的元素
+        document.querySelectorAll('[data-keyboard-adapt]').forEach(function(el) {
+          if (isKeyboardUp) {
+            el.style.bottom = kbHeight + 'px';
+          } else {
+            el.style.bottom = '0px';
+          }
+        });
+      }
+
+      // 监听 visualViewport 变化（作为浏览器/PWA 的兜底方案）
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function() {
+          var offset = window.innerHeight - window.visualViewport.height;
+          if (offset > 100) {
+            adjustFixedBottomElements(offset);
+          } else {
+            // 使用 CSS 变量中的底部 inset（如果有）
+            var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
+            adjustFixedBottomElements(bottomInset);
+          }
+        });
+      }
+    </script>
     <script>
       // PWA Service Worker：把全部 HTML/CSS/JS/图片缓存到本地，第二次打开秒开 + 完全离线可用。
       // - 浏览器直接访问 index-zy.html → 注册 ./sw.js，scope=/
@@ -488,12 +574,12 @@
                         <span class="app-name">萌宠屋</span>
                     </div>
                     <div class="app-item" onclick="openApp('spark-new')" data-spark-app>
-                        <div class="app-icon" data-spark-app-icon style="background: linear-gradient(145deg, #ffb86b, #ff8a56);">
+                        <div class="app-icon" data-spark-app-icon>
                             <svg data-spark-app-icon-inner viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6.5.5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
                             </svg>
                         </div>
-                        <span class="app-label" data-spark-app-label>伙伴</span>
+                        <span class="app-label" data-spark-app-label>小火人</span>
                     </div>
                     <div class="app-item" onclick="openApp('sweet-new')">
                         <div class="app-icon" style="background: linear-gradient(145deg, #f7a8c4, #e8759f);">

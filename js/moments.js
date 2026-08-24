@@ -1168,6 +1168,11 @@
     const m = momentsData.find(x => x.id === momentId);
     if (!m) return;
     m.collected = !m.collected;
+    if (m.collected) {
+      if (typeof window.showToast === 'function') window.showToast('已收藏');
+    } else {
+      if (typeof window.showToast === 'function') window.showToast('已取消收藏');
+    }
     saveMomentsToStorageSync();
     renderMoments();
   }
@@ -1395,9 +1400,11 @@
     if (idx >= 0) {
       m.likes.splice(idx, 1);
       m.likedByMe = false;
+      if (typeof window.showToast === 'function') window.showToast('已取消点赞');
     } else {
       m.likes.push(myName);
       m.likedByMe = true;
+      if (typeof window.showToast === 'function') window.showToast('已点赞');
     }
     saveMomentsToStorageSync();
     renderMoments();
@@ -2145,12 +2152,15 @@
     
     const popup = container.querySelector('#commentPopup');
     const input = container.querySelector('#commentInput');
-    // 重置输入框位置
-    popup.style.bottom = '0';
+    // 重置输入框位置，使用当前 native bottom inset（键盘可能已弹出）
+    var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
+    // 如果键盘已弹出（bottomInset > 导航栏阈值），则直接使用该值
+    popup.style.bottom = (bottomInset > 50 ? bottomInset : 0) + 'px';
     popup.classList.add('active');
     input.value = '';
     input.placeholder = '写评论...';
-    input.focus();
+    // 延迟 focus，确保键盘弹出时 nativeinsets 回调能正确调整位置
+    setTimeout(function() { input.focus(); }, 50);
     
     // 隐藏表情包预览
     const stickerPreview = container.querySelector('#commentStickerPreview');
@@ -2174,10 +2184,13 @@
     
     const popup = container.querySelector('#commentPopup');
     const input = container.querySelector('#commentInput');
+    // 使用当前 native bottom inset 调整位置
+    var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
+    popup.style.bottom = (bottomInset > 50 ? bottomInset : 0) + 'px';
     popup.classList.add('active');
     input.value = '';
     input.placeholder = `回复 ${name}：`;
-    input.focus();
+    setTimeout(function() { input.focus(); }, 50);
   }
 
   function submitComment() {
@@ -2185,11 +2198,19 @@
     if (!container) return;
     
     const input = container.querySelector('#commentInput');
+    if (!input) return;
+    
     const text = input.value.trim();
     
     // 支持发送表情包
-    if (!text && !pendingCommentSticker) return;
-    if (!currentCommentMomentId) return;
+    if (!text && !pendingCommentSticker) {
+      if (typeof window.showToast === 'function') window.showToast('请输入评论内容');
+      return;
+    }
+    if (!currentCommentMomentId) {
+      if (typeof window.showToast === 'function') window.showToast('评论失败，请重试');
+      return;
+    }
 
     const m = momentsData.find(x => x.id === currentCommentMomentId);
     if (m) {
@@ -2202,7 +2223,10 @@
       });
       pendingCommentSticker = null;
       saveMomentsToStorageSync();
+      if (typeof window.showToast === 'function') window.showToast('评论成功');
       renderMoments();
+    } else {
+      if (typeof window.showToast === 'function') window.showToast('评论失败，请重试');
     }
     closeCommentEmojiPanel();
     closeAllPanels();
@@ -3191,7 +3215,13 @@
     container.querySelector('#mask').classList.remove('active');
     container.querySelector('#publishPanel').classList.remove('active');
     container.querySelector('#commentPopup').classList.remove('active');
+    // 重置评论弹窗位置
+    var commentPopup = container.querySelector('#commentPopup');
+    if (commentPopup) commentPopup.style.bottom = '0px';
     container.querySelector('#commentEmojiPanel').classList.remove('active');
+    // 重置表情面板位置
+    var emojiPanel = container.querySelector('#commentEmojiPanel');
+    if (emojiPanel) emojiPanel.style.bottom = '0px';
     container.querySelector('#publishStickerPanel').classList.remove('active');
     container.querySelector('#customPanel').classList.remove('active');
     container.querySelector('#mentionPanel').classList.remove('active');

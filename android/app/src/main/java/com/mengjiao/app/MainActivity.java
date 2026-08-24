@@ -10,7 +10,11 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import android.webkit.MimeTypeMap;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -19,8 +23,10 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewFeature;
@@ -59,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String HOST = "appassets.mengjiao.local";
     private static final String PREFIX_PUBLIC = "/public/";
     private static final String PREFIX_HOT = "/hot/";
-    private static final String APP_VERSION = "1.4.0";
+    private static final String APP_VERSION = "1.5.0";
     private static final int FILE_CHOOSER_REQUEST_CODE = 51426;
 
     private WebView mWebView;
@@ -76,7 +82,9 @@ public class MainActivity extends AppCompatActivity {
 
         Window window = getWindow();
         window.setStatusBarColor(0xFFF9F7F4);
-        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        // 使用 LAYOUT_STABLE 让内容延伸到状态栏下方，但通过 WindowInsets 给 WebView 加 padding
+        window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
         setContentView(R.layout.activity_main);
 
@@ -89,6 +97,10 @@ public class MainActivity extends AppCompatActivity {
 
         mWebView = findViewById(R.id.web_view);
         applyWebSettings();
+
+        // 处理 WindowInsets：状态栏 padding + 键盘/IME padding
+        // 让 WebView 内容在状态栏下方开始，键盘弹出时 WebView 能正确 resize
+        setupWindowInsets();
 
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
@@ -131,6 +143,42 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mWebView.loadUrl("https://" + HOST + "/public/index.html");
+    }
+
+    /**
+     * 处理 WindowInsets：
+     * 1. 给 WebView 加状态栏高度的 top-padding，避免内容被状态栏遮挡
+     * 2. 监听 IME（软键盘）弹出/收起，动态调整 WebView 的 bottom-padding
+     *    这样 WebView 会自动 resize，输入栏不会被键盘挡住
+     */
+    private void setupWindowInsets() {
+        View decorView = getWindow().getDecorView();
+
+        // 初始 insets（状态栏 + 导航栏 + IME）
+        decorView.post(() -> {
+            WindowInsetsCompat initial = ViewCompat.getRootWindowInsets(decorView);
+            if (initial != null) applyInsets(initial);
+        });
+
+        // 监听 insets 变化（键盘弹出/收起时触发）
+        ViewCompat.setOnApplyWindowInsetsListener(decorView, (v, insets) -> {
+            applyInsets(insets);
+            return insets;
+        });
+    }
+
+    private void applyInsets(WindowInsetsCompat insets) {
+        if (insets == null || mWebView == null) return;
+        int statusBarH = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+        int navBarH = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+        int imeH = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+        // 键盘弹出时，IME 高度会覆盖导航栏
+        int bottomPad = Math.max(navBarH, imeH);
+        mWebView.setPadding(0, statusBarH, 0, bottomPad);
+        // 同时把 insets 信息传给 JS 层，方便 CSS 使用
+        mWebView.evaluateJavascript(
+                "if(window.onNativeInsets){window.onNativeInsets(" + statusBarH + "," + bottomPad + ");}",
+                null);
     }
 
     private WebResourceResponse intercept(Uri uri) {
