@@ -3723,12 +3723,42 @@
   const PARTNER_SETTINGS_KEY = 'moments_partner_settings';
   const PARTNER_STATE_KEY = 'moments_partner_state';
   const PARTNER_RECENT_KEY = 'moments_partner_recent'; // 最近发过的文案索引，避免短期重复
+  const PARTNER_LIBRARY_KEY = 'moments_partner_library'; // 用户编辑后的文案库（localStorage）
 
   const DEFAULT_PARTNER_SETTINGS = {
     enabled: true,        // 是否开启梦角自动发圈
     intervalHours: 8,     // 距离上次发圈至少间隔多少小时
     maxPerDay: 2           // 每天最多自动发几条
   };
+
+  // 取文案库：优先读 localStorage（用户编辑后的），否则用 moments-library.js 的初始库
+  function getPartnerLibrary() {
+    try {
+      const s = localStorage.getItem(PARTNER_LIBRARY_KEY);
+      if (s) {
+        const arr = JSON.parse(s);
+        if (Array.isArray(arr) && arr.length >= 0) return arr;
+      }
+    } catch (e) {}
+    // 首次：用 JS 文件里的初始文案库
+    const initial = Array.isArray(window.MENGJIAO_MOMENTS_LIBRARY) ? window.MENGJIAO_MOMENTS_LIBRARY : [];
+    return initial.map(item => ({
+      text: item.text || '',
+      images: Array.isArray(item.images) ? item.images.slice() : []
+    }));
+  }
+
+  function savePartnerLibrary(arr) {
+    try {
+      localStorage.setItem(PARTNER_LIBRARY_KEY, JSON.stringify(arr || []));
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // 重置文案库：清空 localStorage，回到 moments-library.js 的初始库
+  function resetPartnerLibrary() {
+    localStorage.removeItem(PARTNER_LIBRARY_KEY);
+  }
 
   function getPartnerSettings() {
     try {
@@ -3761,10 +3791,12 @@
 
   // 从文案库挑一条（优先没发过的，避免短期重复）
   function pickLibraryEntry() {
-    const lib = window.MENGJIAO_MOMENTS_LIBRARY;
+    const lib = getPartnerLibrary();
     if (!Array.isArray(lib) || lib.length === 0) return null;
     let recent = [];
     try { recent = JSON.parse(localStorage.getItem(PARTNER_RECENT_KEY) || '[]'); } catch (e) {}
+    // 过滤掉越界的 recent（编辑后索引可能变了）
+    recent = recent.filter(i => i >= 0 && i < lib.length);
     // 找没在 recent 里的候选
     const candidates = [];
     for (let i = 0; i < lib.length; i++) if (recent.indexOf(i) === -1) candidates.push(i);
@@ -3776,7 +3808,12 @@
     const keep = Math.min(lib.length - 1, 8);
     if (recent.length > keep) recent = recent.slice(recent.length - keep);
     localStorage.setItem(PARTNER_RECENT_KEY, JSON.stringify(recent));
-    return lib[picked];
+    // 返回深拷贝，避免后续修改污染原库
+    const item = lib[picked];
+    return {
+      text: item.text || '',
+      images: Array.isArray(item.images) ? item.images.slice() : []
+    };
   }
 
   // 真正发一条梦角朋友圈
@@ -3817,7 +3854,8 @@
   function maybePartnerPost() {
     const settings = getPartnerSettings();
     if (!settings.enabled) return;
-    if (!Array.isArray(window.MENGJIAO_MOMENTS_LIBRARY) || window.MENGJIAO_MOMENTS_LIBRARY.length === 0) return;
+    const lib = getPartnerLibrary();
+    if (!Array.isArray(lib) || lib.length === 0) return;
 
     const state = getPartnerState();
     const today = todayStr();
@@ -3835,7 +3873,8 @@
 
   // 手动让梦角立刻发一条（设置面板里的按钮调用）
   function manualPartnerPost() {
-    if (!Array.isArray(window.MENGJIAO_MOMENTS_LIBRARY) || window.MENGJIAO_MOMENTS_LIBRARY.length === 0) {
+    const lib = getPartnerLibrary();
+    if (!Array.isArray(lib) || lib.length === 0) {
       return false;
     }
     return publishPartnerMoment(pickLibraryEntry());
@@ -3858,9 +3897,10 @@
     const st = getPartnerState();
     const s = getPartnerSettings();
     const todayCount = st.todayCount || 0;
-    const libCount = Array.isArray(window.MENGJIAO_MOMENTS_LIBRARY) ? window.MENGJIAO_MOMENTS_LIBRARY.length : 0;
+    const libCount = getPartnerLibrary().length;
     el.innerHTML =
-      '文案库共 <b>' + libCount + '</b> 条<br>' +
+      '文案库共 <b>' + libCount + '</b> 条' +
+      ' · <a href="javascript:void(0)" onclick="MomentsApp.openLibraryEditor()" style="color:#e8749a;font-weight:600;">管理</a><br>' +
       '今天已发：<b>' + todayCount + ' / ' + (s.maxPerDay || 0) + '</b><br>' +
       '上次发圈：' + fmtRelativeTime(st.lastPostTime || 0);
   }
@@ -3907,6 +3947,184 @@
       window.showToast(ok ? '梦角发了一条朋友圈' : '文案库为空，无法发圈');
     }
     if (ok) setTimeout(renderPartnerStateInfo, 300);
+  }
+
+  // ===== 文案库编辑器 UI =====
+  // 编辑器内部状态：editingIndex = -1 表示新增，>=0 表示编辑第 N 条
+  let _libEditingIndex = -1;
+  let _libImages = []; // 当前编辑中的图片 URL 列表
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderLibraryList() {
+    const list = document.getElementById('msLibList');
+    if (!list) return;
+    const lib = getPartnerLibrary();
+    if (lib.length === 0) {
+      list.innerHTML = '<div class="ms-empty">文案库还是空的，点下方「+ 新增」添加第一条吧</div>';
+      return;
+    }
+    list.innerHTML = lib.map((item, i) => {
+      const text = item.text || '';
+      const imgCount = Array.isArray(item.images) ? item.images.length : 0;
+      const previewImg = imgCount > 0 ? escapeHtml(item.images[0]) : '';
+      const textPreview = escapeHtml(text.replace(/\n/g, ' ')).slice(0, 40) + (text.length > 40 ? '…' : '');
+      return `
+        <div class="ms-lib-item">
+          <div class="ms-lib-item-preview">
+            ${previewImg ? `<img src="${previewImg}" alt="" onerror="this.style.display='none'">` : '<div class="ms-lib-item-noimg">文</div>'}
+          </div>
+          <div class="ms-lib-item-content" onclick="MomentsApp.editLibraryItem(${i})">
+            <div class="ms-lib-item-text">${textPreview || '(空文字)'}</div>
+            <div class="ms-lib-item-meta">${imgCount > 0 ? '图文 · ' + imgCount + '张图' : '纯文字'}</div>
+          </div>
+          <button class="ms-lib-item-del" onclick="MomentsApp.deleteLibraryItem(${i})" aria-label="删除">×</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openLibraryEditor() {
+    const overlay = document.getElementById('momentsLibraryOverlay');
+    if (!overlay) return;
+    renderLibraryList();
+    // 重置编辑区
+    _libEditingIndex = -1;
+    _libImages = [];
+    const textArea = document.getElementById('msLibEditText');
+    if (textArea) textArea.value = '';
+    renderEditorImages();
+    updateEditorTitle();
+    overlay.style.display = 'flex';
+  }
+
+  function closeLibraryEditor() {
+    const overlay = document.getElementById('momentsLibraryOverlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  function updateEditorTitle() {
+    const el = document.getElementById('msLibEditTitle');
+    if (el) el.textContent = _libEditingIndex >= 0 ? '编辑文案 #' + (_libEditingIndex + 1) : '新增文案';
+  }
+
+  function renderEditorImages() {
+    const wrap = document.getElementById('msLibEditImages');
+    if (!wrap) return;
+    if (_libImages.length === 0) {
+      wrap.innerHTML = '<div class="ms-lib-img-empty">暂无图片（纯文字文案可不加）</div>';
+      return;
+    }
+    wrap.innerHTML = _libImages.map((url, i) => `
+      <div class="ms-lib-img-item">
+        <img src="${escapeHtml(url)}" alt="" onerror="this.parentElement.classList.add('broken')">
+        <button class="ms-lib-img-del" onclick="MomentsApp.removeEditorImage(${i})" aria-label="删除">×</button>
+      </div>
+    `).join('');
+  }
+
+  // 点列表里某条 → 加载到编辑区
+  function editLibraryItem(index) {
+    const lib = getPartnerLibrary();
+    if (index < 0 || index >= lib.length) return;
+    _libEditingIndex = index;
+    const item = lib[index];
+    _libImages = Array.isArray(item.images) ? item.images.slice() : [];
+    const textArea = document.getElementById('msLibEditText');
+    if (textArea) textArea.value = item.text || '';
+    renderEditorImages();
+    updateEditorTitle();
+    // 滚动到编辑区
+    const editor = document.getElementById('msLibEditor');
+    if (editor) editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // 添加一张图片 URL（从输入框读取）
+  function addEditorImage() {
+    const input = document.getElementById('msLibImgInput');
+    if (!input) return;
+    const url = (input.value || '').trim();
+    if (!url) {
+      if (typeof window.showToast === 'function') window.showToast('请填写图片链接');
+      return;
+    }
+    if (_libImages.length >= 9) {
+      if (typeof window.showToast === 'function') window.showToast('最多 9 张图');
+      return;
+    }
+    _libImages.push(url);
+    input.value = '';
+    renderEditorImages();
+  }
+
+  function removeEditorImage(index) {
+    if (index < 0 || index >= _libImages.length) return;
+    _libImages.splice(index, 1);
+    renderEditorImages();
+  }
+
+  // 保存当前编辑区的文案（新增或覆盖）
+  function saveLibraryItem() {
+    const textArea = document.getElementById('msLibEditText');
+    const text = textArea ? textArea.value : '';
+    const lib = getPartnerLibrary();
+    const item = { text: text, images: _libImages.slice() };
+    if (_libEditingIndex >= 0 && _libEditingIndex < lib.length) {
+      lib[_libEditingIndex] = item;
+    } else {
+      lib.push(item);
+    }
+    savePartnerLibrary(lib);
+    // 重置编辑区
+    _libEditingIndex = -1;
+    _libImages = [];
+    if (textArea) textArea.value = '';
+    renderEditorImages();
+    updateEditorTitle();
+    renderLibraryList();
+    renderPartnerStateInfo();
+    if (typeof window.showToast === 'function') window.showToast('已保存');
+  }
+
+  function deleteLibraryItem(index) {
+    const lib = getPartnerLibrary();
+    if (index < 0 || index >= lib.length) return;
+    if (typeof window.confirm === 'function' && !window.confirm('删除这条文案？')) return;
+    lib.splice(index, 1);
+    savePartnerLibrary(lib);
+    // 如果正在编辑这条，重置编辑区
+    if (_libEditingIndex === index) {
+      _libEditingIndex = -1;
+      _libImages = [];
+      const textArea = document.getElementById('msLibEditText');
+      if (textArea) textArea.value = '';
+      renderEditorImages();
+      updateEditorTitle();
+    } else if (_libEditingIndex > index) {
+      _libEditingIndex -= 1;
+      updateEditorTitle();
+    }
+    renderLibraryList();
+    renderPartnerStateInfo();
+  }
+
+  // 重置回初始文案库（moments-library.js 里的内容）
+  function resetLibraryToDefault() {
+    if (typeof window.confirm === 'function' && !window.confirm('重置文案库为初始内容？你编辑过的内容会丢失')) return;
+    resetPartnerLibrary();
+    // 清掉 recent 避免索引错乱
+    localStorage.removeItem(PARTNER_RECENT_KEY);
+    _libEditingIndex = -1;
+    _libImages = [];
+    const textArea = document.getElementById('msLibEditText');
+    if (textArea) textArea.value = '';
+    renderEditorImages();
+    updateEditorTitle();
+    renderLibraryList();
+    renderPartnerStateInfo();
+    if (typeof window.showToast === 'function') window.showToast('已重置为初始文案库');
   }
 
   // ========== 暴露全局 API ==========
@@ -3973,6 +4191,16 @@
     openSettingsPanel,
     closeSettingsPanel,
     doManualPost,
+    // 文案库编辑器
+    openLibraryEditor,
+    closeLibraryEditor,
+    editLibraryItem,
+    addEditorImage,
+    removeEditorImage,
+    saveLibraryItem,
+    deleteLibraryItem,
+    resetLibraryToDefault,
+    getPartnerLibrary,
     
     // 发布
     openPublishPanel,

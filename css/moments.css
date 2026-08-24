@@ -4136,3 +4136,225 @@ html[data-theme="dark"] .moments-container .visitor-panel {
   transform: translateX(20px);
 }
 
+/* ========== 文案库编辑器 ========== */
+.ms-lib-panel {
+  background: #fff;
+  border-radius: 18px;
+  width: 94%;
+  max-width: 380px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+.ms-lib-panel .ms-header svg {
+  width: 20px;
+  height: 20px;
+  fill: #9a8a92;
+}
+.ms-lib-body {
+  padding: 4px 16px 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+.ms-lib-list {
+  margin-bottom: 14px;
+}
+.ms-empty {
+  text-align: center;
+  color: #9a8a92;
+  font-size: 13px;
+  padding: 30px 10px;
+  line-height: 1.6;
+}
+.ms-lib-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-bottom: 1px solid #f5eef1;
+}
+.ms-lib-item-preview {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #faf4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ms-lib-item-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ms-lib-item-noimg {
+  font-size: 13px;
+  color: #c9a3ae;
+  background: #faf4f6;
+  border-radius: 8px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ms-lib-item-content {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.ms-lib-item-text {
+  font-size: 13.5px;
+  color: #4a3f45;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.ms-lib-item-meta {
+  font-size: 11.5px;
+  color: #b09aa3;
+  margin-top: 2px;
+}
+.ms-lib-item-del {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: #fbe7ec;
+  color: #d96a86;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ms-lib-item-del:active { opacity: 0.6; }
+
+/* 编辑区 */
+.ms-lib-editor {
+  border-top: 1px dashed #e8d8de;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+.ms-lib-edit-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a3f45;
+  margin-bottom: 8px;
+}
+.ms-lib-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e8d8de;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #4a3f45;
+  resize: vertical;
+  min-height: 70px;
+  box-sizing: border-box;
+}
+.ms-lib-edit-label {
+  font-size: 12px;
+  color: #9a8a92;
+  margin: 12px 0 6px;
+}
+.ms-lib-img-input-row {
+  display: flex;
+  gap: 6px;
+}
+.ms-lib-img-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #e8d8de;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #4a3f45;
+  min-width: 0;
+}
+.ms-lib-img-add {
+  width: 36px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  background: #e8749a;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ms-lib-img-add:active { opacity: 0.8; }
+.ms-lib-img-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+.ms-lib-img-empty {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: #b09aa3;
+  padding: 8px 0;
+}
+.ms-lib-img-item {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #faf4f6;
+}
+.ms-lib-img-item img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ms-lib-img-item.broken img { display: none; }
+.ms-lib-img-item.broken::after {
+  content: "图片失效";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #c9a3ae;
+  background: #f5eef1;
+}
+.ms-lib-img-del {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ms-lib-save {
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  background: #e8749a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ms-lib-save:active { opacity: 0.85; }
+
+
