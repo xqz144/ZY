@@ -2148,6 +2148,8 @@
               <input type="text" id="msLibImgInput" class="ms-lib-img-input" placeholder="粘贴图片链接，回车或点 + 添加" onkeydown="if(event.key==='Enter'){event.preventDefault();MomentsApp.addEditorImage();}">
               <button class="ms-lib-img-add" onclick="MomentsApp.addEditorImage()">+</button>
             </div>
+            <button class="ms-lib-pick-btn" onclick="document.getElementById('msLibPhotoInput').click()">从相册选择图片</button>
+            <input type="file" id="msLibPhotoInput" accept="image/*" multiple style="display:none;" onchange="MomentsApp.handlePhotoPick(event)">
             <div class="ms-lib-img-grid" id="msLibEditImages"></div>
             <button class="ms-lib-save" onclick="MomentsApp.saveLibraryItem()">保存这条文案</button>
           </div>

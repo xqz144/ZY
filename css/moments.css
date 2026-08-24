@@ -4290,6 +4290,29 @@ html[data-theme="dark"] .moments-container .visitor-panel {
   cursor: pointer;
 }
 .ms-lib-img-add:active { opacity: 0.8; }
+.ms-lib-pick-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 9px;
+  border: 1px dashed #e8749a;
+  border-radius: 8px;
+  background: #fff5f8;
+  color: #e8749a;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ms-lib-pick-btn:active { opacity: 0.7; }
+.ms-lib-img-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #c9a3ae;
+  background: #faf4f6;
+}
 .ms-lib-img-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

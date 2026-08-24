@@ -243,6 +243,62 @@
     });
   }
 
+  // ===== 文案库专用 IndexedDB 图片存储 =====
+  // 文案库图片引用格式：__LIB_IMG__<id>（区别于朋友圈的 __IDB_IMG__）
+  // IDB key 格式：libimg_<id>
+  const LIB_IMG_PREFIX = '__LIB_IMG__';
+  const LIB_IMG_IDB_PREFIX = 'libimg_';
+
+  function _genLibImgId() {
+    return 'lib_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  }
+
+  async function saveLibImageToIDB(imgBase64) {
+    const id = _genLibImgId();
+    try {
+      const db = await openMomentsDB();
+      const tx = db.transaction('images', 'readwrite');
+      await new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.objectStore('images').put(imgBase64, LIB_IMG_IDB_PREFIX + id);
+      });
+      return LIB_IMG_PREFIX + id;
+    } catch (e) {
+      console.warn('[Moments] 文案库图片存储失败:', e);
+      return null;
+    }
+  }
+
+  async function getLibImageFromIDB(imgRef) {
+    if (typeof imgRef !== 'string' || !imgRef.startsWith(LIB_IMG_PREFIX)) return null;
+    const id = imgRef.slice(LIB_IMG_PREFIX.length);
+    try {
+      const db = await openMomentsDB();
+      return new Promise(resolve => {
+        const tx = db.transaction('images', 'readonly');
+        const req = tx.objectStore('images').get(LIB_IMG_IDB_PREFIX + id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    } catch (e) { return null; }
+  }
+
+  async function deleteLibImageFromIDB(imgRef) {
+    if (typeof imgRef !== 'string' || !imgRef.startsWith(LIB_IMG_PREFIX)) return;
+    const id = imgRef.slice(LIB_IMG_PREFIX.length);
+    try {
+      const db = await openMomentsDB();
+      const tx = db.transaction('images', 'readwrite');
+      tx.objectStore('images').delete(LIB_IMG_IDB_PREFIX + id);
+    } catch (e) { /* 忽略 */ }
+  }
+
+  // 判断文案库图片引用是否需要从 IDB 加载
+  function isLibImgRef(s) {
+    return typeof s === 'string' && s.startsWith(LIB_IMG_PREFIX);
+  }
+
   // 同步保存朋友圈数据到 localStorage（确保不丢失）
   // 保留所有原始数据，不做任何修改
   function saveMomentsToStorageSync() {
@@ -3817,10 +3873,30 @@
   }
 
   // 真正发一条梦角朋友圈
-  function publishPartnerMoment(entry) {
+  // 注意：文案库图片是 __LIB_IMG__ 引用，发圈时要复制成朋友圈的 __IDB_IMG__ 引用，
+  // 这样后续编辑/删除文案库不会影响已发的朋友圈。
+  async function publishPartnerMoment(entry) {
     if (!entry) return false;
     const id = 'partner_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    const images = (entry.images || []).slice(0, 9); // 最多 9 张，九宫格上限
+    const srcImages = (entry.images || []).slice(0, 9); // 最多 9 张，九宫格上限
+    // 转换图片引用：文案库 IDB 图 → 复制一份到朋友圈 IDB 命名空间
+    const images = [];
+    for (let i = 0; i < srcImages.length; i++) {
+      const img = srcImages[i];
+      if (isLibImgRef(img)) {
+        // 从文案库 IDB 读出 base64，再以朋友圈格式存一份
+        const base64 = await getLibImageFromIDB(img);
+        if (base64) {
+          await saveImageToIDB(id, i, base64);
+          images.push('__IDB_IMG__' + id + '_' + i);
+        } else {
+          images.push('[图片]');
+        }
+      } else {
+        // 网络链接或已失效的引用，原样保留
+        images.push(img);
+      }
+    }
     const moment = {
       id: id,
       avatar: getPartnerAvatar(),
@@ -3851,7 +3927,7 @@
   }
 
   // 进入朋友圈时检查：是否该让梦角自动发一条
-  function maybePartnerPost() {
+  async function maybePartnerPost() {
     const settings = getPartnerSettings();
     if (!settings.enabled) return;
     const lib = getPartnerLibrary();
@@ -3868,16 +3944,16 @@
     if (Date.now() - (state.lastPostTime || 0) < intervalMs) return;
 
     const entry = pickLibraryEntry();
-    publishPartnerMoment(entry);
+    await publishPartnerMoment(entry);
   }
 
   // 手动让梦角立刻发一条（设置面板里的按钮调用）
-  function manualPartnerPost() {
+  async function manualPartnerPost() {
     const lib = getPartnerLibrary();
     if (!Array.isArray(lib) || lib.length === 0) {
       return false;
     }
-    return publishPartnerMoment(pickLibraryEntry());
+    return await publishPartnerMoment(pickLibraryEntry());
   }
 
   // ===== 设置面板 UI（在 index-zy.html 的朋友圈顶栏齿轮按钮触发）=====
@@ -3969,12 +4045,21 @@
     list.innerHTML = lib.map((item, i) => {
       const text = item.text || '';
       const imgCount = Array.isArray(item.images) ? item.images.length : 0;
-      const previewImg = imgCount > 0 ? escapeHtml(item.images[0]) : '';
+      const firstImg = imgCount > 0 ? item.images[0] : '';
       const textPreview = escapeHtml(text.replace(/\n/g, ' ')).slice(0, 40) + (text.length > 40 ? '…' : '');
+      // 预览图：如果是 IDB 引用，先放占位，稍后异步填充
+      let previewHtml;
+      if (!firstImg) {
+        previewHtml = '<div class="ms-lib-item-noimg">文</div>';
+      } else if (isLibImgRef(firstImg)) {
+        previewHtml = `<div class="ms-lib-item-preview-img" data-lib-img="${escapeHtml(firstImg)}"><div class="ms-lib-item-noimg">…</div></div>`;
+      } else {
+        previewHtml = `<img src="${escapeHtml(firstImg)}" alt="" onerror="this.style.display='none'">`;
+      }
       return `
         <div class="ms-lib-item">
           <div class="ms-lib-item-preview">
-            ${previewImg ? `<img src="${previewImg}" alt="" onerror="this.style.display='none'">` : '<div class="ms-lib-item-noimg">文</div>'}
+            ${previewHtml}
           </div>
           <div class="ms-lib-item-content" onclick="MomentsApp.editLibraryItem(${i})">
             <div class="ms-lib-item-text">${textPreview || '(空文字)'}</div>
@@ -3984,6 +4069,16 @@
         </div>
       `;
     }).join('');
+    // 异步填充 IDB 图片预览
+    list.querySelectorAll('[data-lib-img]').forEach(async (el) => {
+      const ref = el.getAttribute('data-lib-img');
+      const base64 = await getLibImageFromIDB(ref);
+      if (base64) {
+        el.innerHTML = `<img src="${escapeHtml(base64)}" alt="">`;
+      } else {
+        el.innerHTML = '<div class="ms-lib-item-noimg">×</div>';
+      }
+    });
   }
 
   function openLibraryEditor() {
@@ -4017,12 +4112,33 @@
       wrap.innerHTML = '<div class="ms-lib-img-empty">暂无图片（纯文字文案可不加）</div>';
       return;
     }
-    wrap.innerHTML = _libImages.map((url, i) => `
-      <div class="ms-lib-img-item">
-        <img src="${escapeHtml(url)}" alt="" onerror="this.parentElement.classList.add('broken')">
-        <button class="ms-lib-img-del" onclick="MomentsApp.removeEditorImage(${i})" aria-label="删除">×</button>
-      </div>
-    `).join('');
+    wrap.innerHTML = _libImages.map((url, i) => {
+      // IDB 引用先占位，稍后异步填充；网络链接直接显示
+      if (isLibImgRef(url)) {
+        return `
+          <div class="ms-lib-img-item" data-lib-img="${escapeHtml(url)}">
+            <div class="ms-lib-img-loading">…</div>
+            <button class="ms-lib-img-del" onclick="MomentsApp.removeEditorImage(${i})" aria-label="删除">×</button>
+          </div>
+        `;
+      }
+      return `
+        <div class="ms-lib-img-item">
+          <img src="${escapeHtml(url)}" alt="" onerror="this.parentElement.classList.add('broken')">
+          <button class="ms-lib-img-del" onclick="MomentsApp.removeEditorImage(${i})" aria-label="删除">×</button>
+        </div>
+      `;
+    }).join('');
+    // 异步填充 IDB 图片
+    wrap.querySelectorAll('[data-lib-img]').forEach(async (el) => {
+      const ref = el.getAttribute('data-lib-img');
+      const base64 = await getLibImageFromIDB(ref);
+      if (base64) {
+        el.innerHTML = `<img src="${escapeHtml(base64)}" alt=""><button class="ms-lib-img-del" onclick="MomentsApp.removeEditorImage(${_libImages.indexOf(ref)})" aria-label="删除">×</button>`;
+      } else {
+        el.classList.add('broken');
+      }
+    });
   }
 
   // 点列表里某条 → 加载到编辑区
@@ -4059,8 +4175,54 @@
     renderEditorImages();
   }
 
-  function removeEditorImage(index) {
+  // 从相册选图：读取 File 对象 → 压缩 → 存 IndexedDB → 添加引用到 _libImages
+  async function handlePhotoPick(event) {
+    const input = event && event.target;
+    if (!input || !input.files || input.files.length === 0) return;
+    const files = Array.prototype.slice.call(input.files);
+    // 清空 input，允许重复选择同一文件
+    input.value = '';
+    const remain = 9 - _libImages.length;
+    if (remain <= 0) {
+      if (typeof window.showToast === 'function') window.showToast('最多 9 张图，请先删掉一些');
+      return;
+    }
+    const toAdd = files.slice(0, remain);
+    if (files.length > remain && typeof window.showToast === 'function') {
+      window.showToast('最多 9 张，已添加前 ' + remain + ' 张');
+    }
+    for (const file of toAdd) {
+      try {
+        // 读取为 base64
+        const base64Raw = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('读取失败'));
+          reader.readAsDataURL(file);
+        });
+        // 压缩
+        const base64 = await compressImage(base64Raw, COMPRESS_MAX_WIDTH, COMPRESS_QUALITY);
+        // 存 IndexedDB，拿到引用
+        const ref = await saveLibImageToIDB(base64);
+        if (ref) {
+          _libImages.push(ref);
+        } else if (typeof window.showToast === 'function') {
+          window.showToast('图片存储失败，已跳过');
+        }
+      } catch (e) {
+        console.warn('[Moments] 文案库选图处理失败:', e);
+      }
+    }
+    renderEditorImages();
+  }
+
+  async function removeEditorImage(index) {
     if (index < 0 || index >= _libImages.length) return;
+    const ref = _libImages[index];
+    // 如果是 IDB 引用，从 IDB 删除这张图
+    if (isLibImgRef(ref)) {
+      await deleteLibImageFromIDB(ref);
+    }
     _libImages.splice(index, 1);
     renderEditorImages();
   }
@@ -4088,10 +4250,17 @@
     if (typeof window.showToast === 'function') window.showToast('已保存');
   }
 
-  function deleteLibraryItem(index) {
+  async function deleteLibraryItem(index) {
     const lib = getPartnerLibrary();
     if (index < 0 || index >= lib.length) return;
     if (typeof window.confirm === 'function' && !window.confirm('删除这条文案？')) return;
+    // 清理这条文案引用的所有 IDB 图片
+    const item = lib[index];
+    if (item && Array.isArray(item.images)) {
+      for (const img of item.images) {
+        if (isLibImgRef(img)) await deleteLibImageFromIDB(img);
+      }
+    }
     lib.splice(index, 1);
     savePartnerLibrary(lib);
     // 如果正在编辑这条，重置编辑区
@@ -4111,8 +4280,17 @@
   }
 
   // 重置回初始文案库（moments-library.js 里的内容）
-  function resetLibraryToDefault() {
+  async function resetLibraryToDefault() {
     if (typeof window.confirm === 'function' && !window.confirm('重置文案库为初始内容？你编辑过的内容会丢失')) return;
+    // 清理当前文案库里所有 IDB 图片引用
+    const lib = getPartnerLibrary();
+    for (const item of lib) {
+      if (item && Array.isArray(item.images)) {
+        for (const img of item.images) {
+          if (isLibImgRef(img)) await deleteLibImageFromIDB(img);
+        }
+      }
+    }
     resetPartnerLibrary();
     // 清掉 recent 避免索引错乱
     localStorage.removeItem(PARTNER_RECENT_KEY);
@@ -4196,6 +4374,7 @@
     closeLibraryEditor,
     editLibraryItem,
     addEditorImage,
+    handlePhotoPick,
     removeEditorImage,
     saveLibraryItem,
     deleteLibraryItem,
