@@ -924,12 +924,11 @@
     const container = document.getElementById('moments-container');
     if (!container) return;
     
+    // 点赞按钮：只用 touch 事件（移动端 WebView 不需要 mouse 事件）
     container.querySelectorAll('[data-like-btn]').forEach(btn => {
-      btn.addEventListener('touchstart', handleLongPressStart);
+      btn.addEventListener('touchstart', handleLongPressStart, { passive: true });
       btn.addEventListener('touchend', handleLongPressEnd);
-      btn.addEventListener('mousedown', handleLongPressStart);
-      btn.addEventListener('mouseup', handleLongPressEnd);
-      btn.addEventListener('mouseleave', handleLongPressEnd);
+      btn.addEventListener('touchcancel', handleLongPressEnd);
       btn.addEventListener('click', (e) => {
         if (!btn.dataset.longPressed) {
           toggleLike(parseInt(btn.dataset.likeBtn));
@@ -938,12 +937,11 @@
       });
     });
 
+    // 评论按钮：只用 touch 事件，避免 touch/mouse 事件竞争导致 toggleComment 不被调用
     container.querySelectorAll('[data-comment-btn]').forEach(btn => {
-      btn.addEventListener('touchstart', handleCommentLongPressStart);
+      btn.addEventListener('touchstart', handleCommentLongPressStart, { passive: true });
       btn.addEventListener('touchend', handleCommentLongPressEnd);
-      btn.addEventListener('mousedown', handleCommentLongPressStart);
-      btn.addEventListener('mouseup', handleCommentLongPressEnd);
-      btn.addEventListener('mouseleave', handleCommentLongPressEnd);
+      btn.addEventListener('touchcancel', handleCommentLongPressEnd);
       btn.addEventListener('click', (e) => {
         if (!btn.dataset.longPressed) {
           toggleComment(parseInt(btn.dataset.commentBtn));
@@ -952,6 +950,7 @@
       });
     });
 
+    // 收藏按钮
     container.querySelectorAll('[data-collect-btn]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -2152,6 +2151,8 @@
     
     const popup = container.querySelector('#commentPopup');
     const input = container.querySelector('#commentInput');
+    // 把 momentId 存到 popup 元素上，避免全局变量在事件竞争中丢失
+    popup.dataset.momentId = momentId;
     // 重置输入框位置，使用当前 native bottom inset（键盘可能已弹出）
     var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
     // 如果键盘已弹出（bottomInset > 导航栏阈值），则直接使用该值
@@ -2184,6 +2185,8 @@
     
     const popup = container.querySelector('#commentPopup');
     const input = container.querySelector('#commentInput');
+    // 存到 popup 元素上
+    popup.dataset.momentId = momentId;
     // 使用当前 native bottom inset 调整位置
     var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
     popup.style.bottom = (bottomInset > 50 ? bottomInset : 0) + 'px';
@@ -2198,7 +2201,8 @@
     if (!container) return;
     
     const input = container.querySelector('#commentInput');
-    if (!input) return;
+    const popup = container.querySelector('#commentPopup');
+    if (!input || !popup) return;
     
     const text = input.value.trim();
     
@@ -2207,12 +2211,15 @@
       if (typeof window.showToast === 'function') window.showToast('请输入评论内容');
       return;
     }
-    if (!currentCommentMomentId) {
+
+    // 从 popup 元素读取 momentId（比全局变量更可靠，不会在事件竞争中丢失）
+    const momentId = parseInt(popup.dataset.momentId);
+    if (!momentId) {
       if (typeof window.showToast === 'function') window.showToast('评论失败，请重试');
       return;
     }
 
-    const m = momentsData.find(x => x.id === currentCommentMomentId);
+    const m = momentsData.find(x => x.id === momentId);
     if (m) {
       // 支持文字+表情包同时发送
       m.comments.push({
