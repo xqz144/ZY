@@ -2254,12 +2254,138 @@
       saveMomentsToStorageSync();
       if (typeof window.showToast === 'function') window.showToast('评论成功');
       renderMoments();
+
+      // 触发梦角自动回复评论（如果开启）
+      if (isCommentReplyEnabled()) {
+        triggerCommentReply(momentId, userConfig.name);
+      }
     } else {
       console.error('[Moments] submitComment: moment not found, id=' + momentId);
       if (typeof window.showToast === 'function') window.showToast('评论失败，请重试');
     }
     closeCommentEmojiPanel();
     closeAllPanels();
+  }
+
+  // ========== 梦角评论互动回复（从字卡库回复库抽取） ==========
+  function isCommentReplyEnabled() {
+    var saved = localStorage.getItem('moments_comment_reply');
+    // 默认开启
+    return saved !== 'false';
+  }
+
+  function toggleCommentReplySwitch() {
+    var container = document.getElementById('moments-container');
+    if (!container) return;
+    var toggleEl = container.querySelector('#toggleCommentReply');
+    if (!toggleEl) return;
+    var isActive = toggleEl.classList.toggle('active');
+    localStorage.setItem('moments_comment_reply', isActive ? 'true' : 'false');
+  }
+
+  async function triggerCommentReply(momentId, repliedToName) {
+    var m = findMomentById(momentId);
+    if (!m) return;
+
+    // 刷新伴侣信息
+    await loadPartnerInfo();
+    var partnerName = getPartnerName();
+    var partnerAvatar = getPartnerAvatar();
+
+    // 不要回复自己
+    if (repliedToName === partnerName) return;
+
+    // 获取字卡库回复内容
+    var currentReplies = (window._customReplies || []).map(function(r) { return String(r || '').trim(); }).filter(Boolean);
+    var kaomojiLibrary = (window._kaomojiLibrary || []).map(function(k) { return String(k || '').trim(); }).filter(Boolean);
+    var customEmojis = (window._customEmojis || []).map(function(e) { return String(e || '').trim(); }).filter(Boolean);
+    var _stickerLib = [];
+    if (typeof window !== 'undefined' && window._stickerLibrary && Array.isArray(window._stickerLibrary)) {
+      _stickerLib = window._stickerLibrary;
+    } else if (typeof stickerLibrary !== 'undefined' && Array.isArray(stickerLibrary)) {
+      _stickerLib = stickerLibrary;
+    }
+    var stickerLibraryFiltered = _stickerLib.filter(Boolean);
+
+    var hasTextContent = currentReplies.length > 0 || kaomojiLibrary.length > 0 || customEmojis.length > 0;
+    var hasStickers = stickerLibraryFiltered.length > 0;
+
+    if (!hasTextContent && !hasStickers) return; // 字卡库为空，不回复
+
+    // 延迟回复（使用设置的速度）
+    var baseSpeed = getReplySpeed();
+    var delay = Math.random() * baseSpeed * 1000;
+    // 至少 1.5 秒，最多 baseSpeed 秒
+    delay = Math.max(1500, delay);
+
+    setTimeout(async function() {
+      // 重新查找动态（可能已被删除）
+      var mm = findMomentById(momentId);
+      if (!mm) return;
+
+      // 20% 概率发送表情包
+      var sendSticker = hasStickers && Math.random() < 0.2;
+
+      if (sendSticker) {
+        var sticker = stickerLibraryFiltered[Math.floor(Math.random() * stickerLibraryFiltered.length)];
+        mm.comments.push({
+          name: partnerName,
+          text: '',
+          sticker: sticker,
+          replyTo: repliedToName
+        });
+      } else {
+        var replyText = '';
+
+        // 优先从字卡库回复库抽取
+        var useKaomoji = currentReplies.length === 0 || (kaomojiLibrary.length > 0 && Math.random() < 0.3);
+
+        if (useKaomoji && kaomojiLibrary.length > 0) {
+          replyText = kaomojiLibrary[Math.floor(Math.random() * kaomojiLibrary.length)];
+        } else if (currentReplies.length > 0) {
+          replyText = currentReplies[Math.floor(Math.random() * currentReplies.length)];
+        }
+
+        if (!replyText && hasStickers) {
+          // 没有文字内容，用表情包兜底
+          var sticker2 = stickerLibraryFiltered[Math.floor(Math.random() * stickerLibraryFiltered.length)];
+          mm.comments.push({
+            name: partnerName,
+            text: '',
+            sticker: sticker2,
+            replyTo: repliedToName
+          });
+          saveMomentsToStorageSync();
+          renderMoments();
+          showMomentsNotification(partnerName, partnerAvatar, 'comment', 1, mm.id, '[表情包]', getMomentPreviewImage(mm));
+          return;
+        }
+
+        if (!replyText) return;
+
+        // Emoji 混入（20%概率）
+        if (customEmojis.length > 0 && Math.random() < 0.2) {
+          var emoji = customEmojis[Math.floor(Math.random() * customEmojis.length)];
+          replyText = Math.random() < 0.5 ? emoji + ' ' + replyText : replyText + ' ' + emoji;
+        }
+
+        // 颜文字混入
+        if (kaomojiLibrary.length > 0 && !useKaomoji && Math.random() < 0.25) {
+          var kaomoji = kaomojiLibrary[Math.floor(Math.random() * kaomojiLibrary.length)];
+          replyText = Math.random() < 0.5 ? kaomoji + ' ' + replyText : replyText + ' ' + kaomoji;
+        }
+
+        mm.comments.push({
+          name: partnerName,
+          text: replyText,
+          replyTo: repliedToName
+        });
+      }
+
+      saveMomentsToStorageSync();
+      renderMoments();
+      showMomentsNotification(partnerName, partnerAvatar, 'comment', 1, mm.id, replyText || '[表情包]', getMomentPreviewImage(mm));
+    }, delay);
   }
 
   // ========== Search ==========
@@ -3294,6 +3420,12 @@
     if (toggleEl) {
       var friendLikeEnabled = localStorage.getItem('moments_friend_like') === 'true';
       toggleEl.classList.toggle('active', friendLikeEnabled);
+    }
+    // 恢复梦角评论互动开关状态
+    var commentReplyToggle = container.querySelector('#toggleCommentReply');
+    if (commentReplyToggle) {
+      var commentReplyEnabled = localStorage.getItem('moments_comment_reply') !== 'false';
+      commentReplyToggle.classList.toggle('active', commentReplyEnabled);
     }
     // 恢复互动设置
     var speedSlider = container.querySelector('#beautifyReplySpeed');
@@ -4499,6 +4631,7 @@
     
     // 好友列表
     toggleFriendLikeSwitch,
+    toggleCommentReplySwitch,
     updateSpeedLabel,
     updateCountLabel,
     addFriend,

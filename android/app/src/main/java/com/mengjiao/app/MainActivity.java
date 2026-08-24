@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String HOST = "appassets.mengjiao.local";
     private static final String PREFIX_PUBLIC = "/public/";
     private static final String PREFIX_HOT = "/hot/";
-    private static final String APP_VERSION = "1.5.1";
+    private static final String APP_VERSION = "1.5.2";
     private static final int FILE_CHOOSER_REQUEST_CODE = 51426;
 
     private WebView mWebView;
