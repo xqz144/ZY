@@ -5660,14 +5660,16 @@ window.confirmNewPet = function(type) {
 // ===== 辅助功能 =====
 function showToast(message) {
     try {
-        const toast = document.getElementById('toast');
+        var toast = document.getElementById('toast');
         if (!toast) return;
         toast.textContent = message;
         toast.classList.add('show');
         clearTimeout(toast._timeout);
-        toast._timeout = setTimeout(() => { try { toast.classList.remove('show'); } catch(e){} }, 3000);
+        toast._timeout = setTimeout(function() { try { toast.classList.remove('show'); } catch(e){} }, 3000);
     } catch(e) { console.error('showToast error:', e); }
 }
+// 确保全局可访问
+window.showToast = showToast;
 
 function showSpeech(text) {
     try {

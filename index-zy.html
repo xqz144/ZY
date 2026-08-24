@@ -30,89 +30,166 @@
     <meta name="apple-mobile-web-app-title" content="ʚ𝑳𝑶𝑽𝑬ɞ">
     <style>
       /* 原生 insets 变量：Android App 通过 onNativeInsets 回调注入 */
-      /* 让页面能正确处理状态栏遮挡和键盘弹出 */
       :root {
         --native-status-bar-height: 0px;
         --native-bottom-inset: 0px;
       }
-      /* WebView 被原生层加了 statusBarH 的 top-padding 后，body 再叠加一次就会双倍 */
-      /* 所以只用 CSS 变量做 fallback，真正的 padding 由原生 WebView.setPadding 控制 */
+
+      /* 全局 Toast 样式（不依赖 pet-container） */
+      #toast {
+        position: fixed;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: rgba(50, 40, 50, 0.92);
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 22px;
+        font-size: 14px;
+        font-weight: 600;
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 999999;
+        pointer-events: none;
+        white-space: nowrap;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      }
+      #toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
     </style>
     <script>
-      // 原生 Android 回调：传入状态栏高度和底部 inset（含键盘）
+      // ===== 全局键盘适配 + 状态栏适配 =====
+      // 原生 Android 回调
       function onNativeInsets(statusBarH, bottomInset) {
         document.documentElement.style.setProperty('--native-status-bar-height', statusBarH + 'px');
         document.documentElement.style.setProperty('--native-bottom-inset', bottomInset + 'px');
-        // 触发自定义事件，方便各模块监听键盘弹出
         window.dispatchEvent(new CustomEvent('nativeinsets', {
           detail: { statusBarH: statusBarH, bottomInset: bottomInset }
         }));
-        // 自动调整所有固定底部元素（聊天输入栏、评论弹窗等）
         adjustFixedBottomElements(bottomInset);
       }
       window.onNativeInsets = onNativeInsets;
 
-      // 调整所有 position:fixed; bottom:0 的元素，让键盘弹出时它们能跟着上升
+      // 记录上次键盘高度，避免重复设置
+      var _lastKbHeight = -1;
+
+      // 调整所有固定底部元素
       function adjustFixedBottomElements(bottomInset) {
-        // bottomInset 包含导航栏高度或键盘高度
-        // 如果大于导航栏阈值(~50px)，说明键盘弹出了
-        var isKeyboardUp = bottomInset > 50;
+        // 导航栏高度通常在 24-72px 之间，键盘高度通常 > 150px
+        // 用 100px 作为阈值区分键盘和导航栏
+        var isKeyboardUp = bottomInset > 100;
         var kbHeight = isKeyboardUp ? bottomInset : 0;
+
+        if (kbHeight === _lastKbHeight) return; // 没变化就不处理
+        _lastKbHeight = kbHeight;
 
         // 1. 聊天主输入栏
         var inputWrapper = document.querySelector('.input-area-wrapper');
         if (inputWrapper) {
-          if (isKeyboardUp) {
-            inputWrapper.style.bottom = kbHeight + 'px';
-            inputWrapper.style.transition = 'bottom 0.15s ease';
-          } else {
-            inputWrapper.style.bottom = '0px';
-          }
+          inputWrapper.style.bottom = kbHeight + 'px';
+          inputWrapper.style.transition = 'bottom 0.2s ease';
         }
 
         // 2. 朋友圈评论弹窗（如果显示中）
         var commentPopup = document.getElementById('commentPopup');
         if (commentPopup && commentPopup.classList.contains('active')) {
-          if (isKeyboardUp) {
-            commentPopup.style.bottom = kbHeight + 'px';
-          } else {
-            commentPopup.style.bottom = '0px';
-          }
+          commentPopup.style.bottom = kbHeight + 'px';
         }
 
         // 3. 朋友圈表情面板
         var emojiPanel = document.getElementById('commentEmojiPanel');
         if (emojiPanel && emojiPanel.classList.contains('active')) {
-          if (isKeyboardUp) {
-            emojiPanel.style.bottom = kbHeight + 'px';
-          } else {
-            emojiPanel.style.bottom = '0px';
-          }
+          emojiPanel.style.bottom = kbHeight + 'px';
         }
 
         // 4. 所有带 data-keyboard-adapt 属性的元素
         document.querySelectorAll('[data-keyboard-adapt]').forEach(function(el) {
-          if (isKeyboardUp) {
-            el.style.bottom = kbHeight + 'px';
-          } else {
-            el.style.bottom = '0px';
+          el.style.bottom = kbHeight + 'px';
+        });
+      }
+
+      // 方案 A：visualViewport API（最可靠）
+      if (window.visualViewport) {
+        var _vvTimer = null;
+        window.visualViewport.addEventListener('resize', function() {
+          if (_vvTimer) clearTimeout(_vvTimer);
+          _vvTimer = setTimeout(function() {
+            var offset = window.innerHeight - window.visualViewport.height;
+            // offset > 50 说明有东西遮挡了视口（键盘或导航栏）
+            if (offset > 50) {
+              adjustFixedBottomElements(offset);
+            } else {
+              adjustFixedBottomElements(0);
+            }
+          }, 50);
+        });
+        window.visualViewport.addEventListener('scroll', function() {
+          var offset = window.innerHeight - window.visualViewport.height;
+          if (offset > 50) {
+            adjustFixedBottomElements(offset);
           }
         });
       }
 
-      // 监听 visualViewport 变化（作为浏览器/PWA 的兜底方案）
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', function() {
-          var offset = window.innerHeight - window.visualViewport.height;
-          if (offset > 100) {
-            adjustFixedBottomElements(offset);
-          } else {
-            // 使用 CSS 变量中的底部 inset（如果有）
-            var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
-            adjustFixedBottomElements(bottomInset);
+      // 方案 B：focusin/focusout 监听（当 visualViewport 不可靠时的补充）
+      // 当 input/textarea 获得焦点时，键盘会弹出
+      document.addEventListener('focusin', function(e) {
+        var tag = e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') {
+          // 延迟检测键盘高度（键盘弹出有动画时间）
+          setTimeout(function() {
+            if (window.visualViewport) {
+              var offset = window.innerHeight - window.visualViewport.height;
+              if (offset > 50) {
+                adjustFixedBottomElements(offset);
+              }
+            }
+          }, 300);
+          setTimeout(function() {
+            if (window.visualViewport) {
+              var offset = window.innerHeight - window.visualViewport.height;
+              if (offset > 50) {
+                adjustFixedBottomElements(offset);
+              }
+            }
+          }, 500);
+        }
+      });
+
+      document.addEventListener('focusout', function(e) {
+        var tag = e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') {
+          // 延迟检测（键盘收起有动画时间）
+          setTimeout(function() {
+            if (window.visualViewport) {
+              var offset = window.innerHeight - window.visualViewport.height;
+              if (offset < 50) {
+                adjustFixedBottomElements(0);
+              }
+            } else {
+              adjustFixedBottomElements(0);
+            }
+          }, 300);
+        }
+      });
+
+      // 方案 C：window resize 事件（最终兜底）
+      var _resizeTimer = null;
+      window.addEventListener('resize', function() {
+        if (_resizeTimer) clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(function() {
+          if (window.visualViewport) {
+            var offset = window.innerHeight - window.visualViewport.height;
+            if (offset > 50) {
+              adjustFixedBottomElements(offset);
+            } else {
+              adjustFixedBottomElements(0);
+            }
           }
-        });
-      }
+        }, 100);
+      });
     </script>
     <script>
       // PWA Service Worker：把全部 HTML/CSS/JS/图片缓存到本地，第二次打开秒开 + 完全离线可用。
@@ -1682,9 +1759,11 @@
             </div>
         </div>
         <!-- Toast提示 -->
-        <div class="toast" id="toast"></div>
     </div>
     <!-- ========== 萌宠屋模块结束 ========== -->
+
+    <!-- 全局 Toast 提示（从 pet-container 移出，确保所有页面都可见） -->
+    <div class="toast" id="toast"></div>
 
     <!-- ========== TA的手机模块 ========== -->
     <div class="ta-phone-container" id="ta-phone-container" style="display:none;">
@@ -4946,8 +5025,7 @@
         var shared = SparkShared.readPet('root');
         if (appLabel) appLabel.textContent = shared.name;
         if (extTitle) extTitle.textContent = shared.name;
-        // 图标：Lucide SVG 风格，保持结构不变，仅更新背景
-        if (appIcon) appIcon.style.background = shared.frameGradient;
+        // 图标：保持与其他图标一致的默认背景，不覆盖渐变色
         document.title = shared.name + ' · 梦角传讯';
       }
 

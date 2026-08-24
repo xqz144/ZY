@@ -3652,31 +3652,15 @@
   }
 
   // ========== Virtual Keyboard Adaptation ==========
+  // 已由 index-zy.html 中的全局 adjustFixedBottomElements() 统一处理
+  // 这里只做初始化时的位置重置
   function setupVirtualKeyboardAdaptation() {
     const container = document.getElementById('moments-container');
     if (!container) return;
-    
-    const popup = container.querySelector('#commentPopup');
-    const emojiPanel = container.querySelector('#commentEmojiPanel');
-    
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', () => {
-        const offset = window.innerHeight - window.visualViewport.height;
-        if (offset > 100) {
-          // 虚拟键盘弹出
-          if (popup && popup.classList.contains('active')) {
-            popup.style.bottom = offset + 'px';
-          }
-          if (emojiPanel && emojiPanel.classList.contains('active')) {
-            emojiPanel.style.bottom = offset + 'px';
-          }
-        } else {
-          // 虚拟键盘收起
-          if (popup) popup.style.bottom = '0';
-          if (emojiPanel) emojiPanel.style.bottom = '0';
-        }
-      });
-    }
+    var popup = container.querySelector('#commentPopup');
+    var emojiPanel = container.querySelector('#commentEmojiPanel');
+    if (popup) popup.style.bottom = '0px';
+    if (emojiPanel) emojiPanel.style.bottom = '0px';
   }
 
   // ========== Init ==========

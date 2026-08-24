@@ -148,13 +148,13 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 处理 WindowInsets：
      * 1. 给 WebView 加状态栏高度的 top-padding，避免内容被状态栏遮挡
-     * 2. 监听 IME（软键盘）弹出/收起，动态调整 WebView 的 bottom-padding
-     *    这样 WebView 会自动 resize，输入栏不会被键盘挡住
+     * 2. 不设置 bottom-padding：setPadding 对 WebView 内的 fixed 元素无效，
+     *    键盘适配由 adjustResize（系统自动 resize WebView）+ JS visualViewport 处理
      */
     private void setupWindowInsets() {
         View decorView = getWindow().getDecorView();
 
-        // 初始 insets（状态栏 + 导航栏 + IME）
+        // 初始 insets（状态栏）
         decorView.post(() -> {
             WindowInsetsCompat initial = ViewCompat.getRootWindowInsets(decorView);
             if (initial != null) applyInsets(initial);
@@ -172,12 +172,13 @@ public class MainActivity extends AppCompatActivity {
         int statusBarH = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
         int navBarH = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
         int imeH = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-        // 键盘弹出时，IME 高度会覆盖导航栏
-        int bottomPad = Math.max(navBarH, imeH);
-        mWebView.setPadding(0, statusBarH, 0, bottomPad);
-        // 同时把 insets 信息传给 JS 层，方便 CSS 使用
+        // 只设置 top padding（状态栏），不设置 bottom padding
+        // bottom padding 对 WebView 内 fixed 元素无效，反而会裁剪内容
+        mWebView.setPadding(0, statusBarH, 0, 0);
+        // 把 insets 信息传给 JS 层，由 JS 处理键盘适配
+        int bottomInset = Math.max(navBarH, imeH);
         mWebView.evaluateJavascript(
-                "if(window.onNativeInsets){window.onNativeInsets(" + statusBarH + "," + bottomPad + ");}",
+                "if(window.onNativeInsets){window.onNativeInsets(" + statusBarH + "," + bottomInset + ");}",
                 null);
     }
 
