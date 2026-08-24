@@ -223,7 +223,12 @@ body {
         <span>返回</span>
       </a>
       <span class="top-title">朋友圈</span>
-      <button class="post-trigger" id="openPost" data-dom-id="btn-post">发布</button>
+      <div class="top-actions">
+        <button class="post-trigger" id="openPost" data-dom-id="btn-post">发布</button>
+        <button class="settings-trigger" id="openMomentsSettings" aria-label="设置" data-dom-id="btn-moments-settings">
+          <i data-lucide="settings" class="settings-icon"></i>
+        </button>
+      </div>
     </header>
 
     <main id="stream">
@@ -286,6 +291,47 @@ body {
     </div>
   </div>
 
+  <!-- 梦角发圈设置面板 -->
+  <div class="modal-overlay" id="momentsSettingsModal" style="display:none;">
+    <div class="settings-panel">
+      <div class="panel-header">
+        <span class="panel-title">梦角发圈设置</span>
+        <button class="panel-close" id="closeMomentsSettings" aria-label="关闭">
+          <i data-lucide="x" class="panel-close-icon"></i>
+        </button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-row">
+          <div class="settings-label">
+            <div class="settings-title">允许梦角自动发朋友圈</div>
+            <div class="settings-hint">关闭后梦角不会再自动发圈</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="settingPartnerEnabled" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <div class="settings-title">发圈间隔（小时）</div>
+            <div class="settings-hint">梦角两次自动发圈的最小间隔</div>
+          </div>
+          <input type="number" id="settingIntervalHours" min="1" max="72" class="settings-input" />
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <div class="settings-title">每天最多发几条</div>
+            <div class="settings-hint">控制梦角发圈频率上限</div>
+          </div>
+          <input type="number" id="settingMaxPerDay" min="0" max="20" class="settings-input" />
+        </div>
+        <div class="settings-info" id="partnerStateInfo"></div>
+        <button class="settings-action" id="btnManualPartnerPost">让梦角现在发一条</button>
+        <div class="settings-tip">梦角发什么由文案库决定，编辑 <code>js/moments-library.js</code> 可增删内容，重启 App 生效。</div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <style type="text/tailwindcss">
@@ -338,6 +384,139 @@ body {
 
       @media (max-width: 479px) {
         #top-bar { padding-top: 16px; }
+      }
+
+      /* 顶栏右侧操作区 */
+      .top-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        flex-shrink: 0;
+      }
+      .settings-trigger {
+        background: transparent;
+        border: none;
+        padding: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .settings-trigger:active { opacity: 0.6; }
+      .settings-icon { width: 20px; height: 20px; }
+
+      /* 设置面板 */
+      .settings-panel {
+        background: #fff;
+        border-radius: 18px;
+        width: 92%;
+        max-width: 360px;
+        max-height: 82vh;
+        overflow-y: auto;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+      }
+      .settings-body {
+        padding: 8px 18px 18px;
+      }
+      .settings-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .settings-label { flex: 1; min-width: 0; }
+      .settings-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .settings-hint {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+      .settings-input {
+        width: 72px;
+        padding: 6px 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        text-align: center;
+        color: var(--text-primary);
+        background: #fff;
+      }
+      .settings-info {
+        font-size: 12px;
+        color: var(--text-secondary);
+        padding: 10px 0 4px;
+        line-height: 1.5;
+      }
+      .settings-action {
+        width: 100%;
+        margin-top: 12px;
+        padding: 11px;
+        border: none;
+        border-radius: 10px;
+        background: var(--accent-color);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .settings-action:active { opacity: 0.85; }
+      .settings-tip {
+        font-size: 11.5px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin-top: 12px;
+        padding: 10px;
+        background: var(--secondary-bg);
+        border-radius: 8px;
+      }
+      .settings-tip code {
+        background: rgba(0,0,0,0.05);
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 11px;
+      }
+
+      /* 开关样式 */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+        flex-shrink: 0;
+      }
+      .switch input { opacity: 0; width: 0; height: 0; }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background: #d4d4d4;
+        border-radius: 24px;
+        transition: 0.2s;
+      }
+      .slider::before {
+        content: "";
+        position: absolute;
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        top: 3px;
+        background: #fff;
+        border-radius: 50%;
+        transition: 0.2s;
+      }
+      .switch input:checked + .slider {
+        background: var(--accent-color);
+      }
+      .switch input:checked + .slider::before {
+        transform: translateX(20px);
       }
 
       .back-btn {
@@ -1265,6 +1444,72 @@ body {
       generatePartnerPosts(false);
       renderAll();
       document.getElementById("refreshBar").style.display = "flex";
+
+      // ===== 梦角发圈设置面板（基于 MomentsApp 的设置/状态 API）=====
+      var settingsModal = document.getElementById("momentsSettingsModal");
+      var elEnabled = document.getElementById("settingPartnerEnabled");
+      var elInterval = document.getElementById("settingIntervalHours");
+      var elMaxPerDay = document.getElementById("settingMaxPerDay");
+      var elStateInfo = document.getElementById("partnerStateInfo");
+
+      function fmtRelative(ts) {
+        if (!ts) return "从未";
+        var diff = Date.now() - ts;
+        var h = Math.floor(diff / 3600000);
+        var m = Math.floor((diff % 3600000) / 60000);
+        if (h > 0) return h + " 小时 " + m + " 分前";
+        if (m > 0) return m + " 分钟前";
+        return "刚刚";
+      }
+
+      function refreshStateInfo() {
+        var st = window.MomentsApp.getPartnerState();
+        var s = window.MomentsApp.getPartnerSettings();
+        var todayCount = st.todayCount || 0;
+        var libCount = Array.isArray(window.MENGJIAO_MOMENTS_LIBRARY) ? window.MENGJIAO_MOMENTS_LIBRARY.length : 0;
+        elStateInfo.innerHTML =
+          "文案库共 <b>" + libCount + "</b> 条<br>" +
+          "今天已发：<b>" + todayCount + " / " + (s.maxPerDay || 0) + "</b><br>" +
+          "上次发圈：" + fmtRelative(st.lastPostTime || 0);
+      }
+
+      function openSettings() {
+        var s = window.MomentsApp.getPartnerSettings();
+        elEnabled.checked = !!s.enabled;
+        elInterval.value = s.intervalHours;
+        elMaxPerDay.value = s.maxPerDay;
+        refreshStateInfo();
+        settingsModal.style.display = "flex";
+      }
+      function closeSettings() {
+        // 保存设置
+        var s = window.MomentsApp.getPartnerSettings();
+        s.enabled = !!elEnabled.checked;
+        var iv = parseInt(elInterval.value, 10);
+        var md = parseInt(elMaxPerDay.value, 10);
+        if (!isNaN(iv) && iv >= 1 && iv <= 72) s.intervalHours = iv;
+        if (!isNaN(md) && md >= 0 && md <= 20) s.maxPerDay = md;
+        window.MomentsApp.savePartnerSettings(s);
+        settingsModal.style.display = "none";
+      }
+
+      document.getElementById("openMomentsSettings").addEventListener("click", openSettings);
+      document.getElementById("closeMomentsSettings").addEventListener("click", closeSettings);
+      settingsModal.addEventListener("click", function (e) {
+        if (e.target === settingsModal) closeSettings();
+      });
+
+      document.getElementById("btnManualPartnerPost").addEventListener("click", function () {
+        if (window.MomentsApp && typeof window.MomentsApp.manualPartnerPost === "function") {
+          var ok = window.MomentsApp.manualPartnerPost();
+          showToast(ok ? "梦角发了一条朋友圈" : "文案库为空，无法发圈");
+          if (ok) {
+            setTimeout(refreshStateInfo, 300);
+          }
+        } else {
+          showToast("当前版本不支持该功能");
+        }
+      });
     })();
   </script>
 </body>

@@ -3841,6 +3841,74 @@
     return publishPartnerMoment(pickLibraryEntry());
   }
 
+  // ===== 设置面板 UI（在 index-zy.html 的朋友圈顶栏齿轮按钮触发）=====
+  function fmtRelativeTime(ts) {
+    if (!ts) return '从未';
+    const diff = Date.now() - ts;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    if (h > 0) return h + ' 小时 ' + m + ' 分前';
+    if (m > 0) return m + ' 分钟前';
+    return '刚刚';
+  }
+
+  function renderPartnerStateInfo() {
+    const el = document.getElementById('msStateInfo');
+    if (!el) return;
+    const st = getPartnerState();
+    const s = getPartnerSettings();
+    const todayCount = st.todayCount || 0;
+    const libCount = Array.isArray(window.MENGJIAO_MOMENTS_LIBRARY) ? window.MENGJIAO_MOMENTS_LIBRARY.length : 0;
+    el.innerHTML =
+      '文案库共 <b>' + libCount + '</b> 条<br>' +
+      '今天已发：<b>' + todayCount + ' / ' + (s.maxPerDay || 0) + '</b><br>' +
+      '上次发圈：' + fmtRelativeTime(st.lastPostTime || 0);
+  }
+
+  function openSettingsPanel() {
+    const overlay = document.getElementById('momentsSettingsOverlay');
+    if (!overlay) return;
+    const s = getPartnerSettings();
+    const elEnabled = document.getElementById('msEnabled');
+    const elInterval = document.getElementById('msIntervalHours');
+    const elMaxPerDay = document.getElementById('msMaxPerDay');
+    if (elEnabled) elEnabled.checked = !!s.enabled;
+    if (elInterval) elInterval.value = s.intervalHours;
+    if (elMaxPerDay) elMaxPerDay.value = s.maxPerDay;
+    renderPartnerStateInfo();
+    overlay.style.display = 'flex';
+  }
+
+  function closeSettingsPanel() {
+    const overlay = document.getElementById('momentsSettingsOverlay');
+    if (!overlay) return;
+    // 关闭时保存设置
+    const s = getPartnerSettings();
+    const elEnabled = document.getElementById('msEnabled');
+    const elInterval = document.getElementById('msIntervalHours');
+    const elMaxPerDay = document.getElementById('msMaxPerDay');
+    if (elEnabled) s.enabled = !!elEnabled.checked;
+    if (elInterval) {
+      const iv = parseInt(elInterval.value, 10);
+      if (!isNaN(iv) && iv >= 1 && iv <= 72) s.intervalHours = iv;
+    }
+    if (elMaxPerDay) {
+      const md = parseInt(elMaxPerDay.value, 10);
+      if (!isNaN(md) && md >= 0 && md <= 20) s.maxPerDay = md;
+    }
+    savePartnerSettings(s);
+    overlay.style.display = 'none';
+  }
+
+  // 设置面板「让梦角现在发一条」按钮
+  function doManualPost() {
+    const ok = manualPartnerPost();
+    if (typeof window.showToast === 'function') {
+      window.showToast(ok ? '梦角发了一条朋友圈' : '文案库为空，无法发圈');
+    }
+    if (ok) setTimeout(renderPartnerStateInfo, 300);
+  }
+
   // ========== 暴露全局 API ==========
   window.MomentsApp = {
     // 初始化
@@ -3901,6 +3969,10 @@
     getPartnerSettings,
     savePartnerSettings,
     getPartnerState,
+    // 设置面板 UI
+    openSettingsPanel,
+    closeSettingsPanel,
+    doManualPost,
     
     // 发布
     openPublishPanel,

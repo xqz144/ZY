@@ -3999,3 +3999,140 @@ html[data-theme="dark"] .moments-container .visitor-date-group {
 html[data-theme="dark"] .moments-container .visitor-panel {
     background: #1a1a1a;
 }
+
+/* ========== 梦角发圈设置面板 ========== */
+.moments-settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.moments-settings-panel {
+  background: #fff;
+  border-radius: 18px;
+  width: 92%;
+  max-width: 360px;
+  max-height: 82vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  font-family: inherit;
+}
+.ms-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid #f0e6ea;
+  font-size: 15px;
+  font-weight: 600;
+  color: #4a3f45;
+}
+.ms-header svg {
+  width: 20px;
+  height: 20px;
+  fill: #9a8a92;
+}
+.ms-body {
+  padding: 8px 18px 18px;
+}
+.ms-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid #f5eef1;
+}
+.ms-label { flex: 1; min-width: 0; }
+.ms-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a3f45;
+}
+.ms-hint {
+  font-size: 12px;
+  color: #9a8a92;
+  margin-top: 2px;
+}
+.ms-input {
+  width: 72px;
+  padding: 6px 8px;
+  border: 1px solid #e8d8de;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  color: #4a3f45;
+  background: #fff;
+}
+.ms-info {
+  font-size: 12px;
+  color: #9a8a92;
+  padding: 12px 0 4px;
+  line-height: 1.6;
+}
+.ms-info b { color: #e8749a; }
+.ms-action {
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  background: #e8749a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ms-action:active { opacity: 0.85; }
+.ms-tip {
+  font-size: 11.5px;
+  color: #9a8a92;
+  line-height: 1.5;
+  margin-top: 12px;
+  padding: 10px;
+  background: #faf4f6;
+  border-radius: 8px;
+}
+.ms-tip code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+.ms-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.ms-switch input { opacity: 0; width: 0; height: 0; }
+.ms-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #d4d4d4;
+  border-radius: 24px;
+  transition: 0.2s;
+}
+.ms-slider::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+.ms-switch input:checked + .ms-slider {
+  background: #e8749a;
+}
+.ms-switch input:checked + .ms-slider::before {
+  transform: translateX(20px);
+}
+
