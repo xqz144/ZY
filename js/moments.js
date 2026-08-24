@@ -106,6 +106,18 @@
 
   // ========== Sample Data (从 localStorage 恢复，或初始化为空) ==========
   const momentsData = [];
+  
+  // 统一的 ID 比较函数：支持数字和字符串两种 ID 格式
+  // 伙伴动态用字符串 ID（如 "partner_123_456"），用户发布的用数字 ID（Date.now()）
+  function idEq(a, b) {
+    if (a == null || b == null) return false;
+    return String(a) === String(b);
+  }
+  
+  // 从 momentsData 中查找动态
+  function findMomentById(id) {
+    return momentsData.find(m => idEq(m.id, id));
+  }
   (function loadMomentsFromStorage() {
     try {
       const saved = localStorage.getItem('moments_data');
@@ -545,7 +557,7 @@
       }
       // 恢复视频
       if (m.video && m.video.url && m.video.url.startsWith('__IDB__')) {
-        const momentId = parseInt(m.video.url.replace('__IDB__', ''));
+        const momentId = m.video.url.replace('__IDB__', '');
         const data = await getVideoFromIDB(momentId);
         if (data) {
           m.video.url = data; // 恢复到内存
@@ -734,7 +746,7 @@
   function handleCardLongPressStart(e) {
     const card = e.currentTarget;
     cardLongPressTimer = setTimeout(() => {
-      const momentId = parseInt(card.dataset.momentId);
+      const momentId = card.dataset.momentId;
       openEditPanel(momentId);
     }, 800);
   }
@@ -753,7 +765,7 @@
 
   function openEditPanel(momentId) {
     currentEditMomentId = momentId;
-    const m = momentsData.find(x => x.id === momentId);
+    const m = findMomentById(momentId);
     if (!m) return;
 
     const container = document.getElementById('moments-container');
@@ -841,7 +853,7 @@
   function saveEdit() {
     if (!currentEditMomentId) return;
 
-    const m = momentsData.find(x => x.id === currentEditMomentId);
+    const m = findMomentById(currentEditMomentId);
     if (!m) return;
 
     const container = document.getElementById('moments-container');
@@ -864,7 +876,7 @@
     if (!currentEditMomentId) return;
 
     if (confirm('确定要删除这条朋友圈吗？')) {
-      const idx = momentsData.findIndex(x => x.id === currentEditMomentId);
+      const idx = momentsData.findIndex(x => idEq(x.id, currentEditMomentId));
       if (idx >= 0) {
         const removed = momentsData.splice(idx, 1)[0];
         deleteMomentFromIDB(removed); // 清理 IDB 中的图片和视频
@@ -931,7 +943,7 @@
       btn.addEventListener('touchcancel', handleLongPressEnd);
       btn.addEventListener('click', (e) => {
         if (!btn.dataset.longPressed) {
-          toggleLike(parseInt(btn.dataset.likeBtn));
+          toggleLike(btn.dataset.likeBtn);
         }
         delete btn.dataset.longPressed;
       });
@@ -944,7 +956,7 @@
       btn.addEventListener('touchcancel', handleCommentLongPressEnd);
       btn.addEventListener('click', (e) => {
         if (!btn.dataset.longPressed) {
-          toggleComment(parseInt(btn.dataset.commentBtn));
+          toggleComment(btn.dataset.commentBtn);
         }
         delete btn.dataset.longPressed;
       });
@@ -954,7 +966,7 @@
     container.querySelectorAll('[data-collect-btn]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        toggleCollect(parseInt(btn.dataset.collectBtn));
+        toggleCollect(btn.dataset.collectBtn);
       });
     });
   }
@@ -966,7 +978,7 @@
       currentLongPressTarget.dataset.longPressed = 'true';
       showLongPressHint();
       setTimeout(() => {
-        openCustomLikePanel(parseInt(currentLongPressTarget.dataset.likeBtn));
+        openCustomLikePanel(currentLongPressTarget.dataset.likeBtn);
       }, 300);
     }, 800);
   }
@@ -985,7 +997,7 @@
       currentLongPressTarget.dataset.longPressed = 'true';
       showLongPressHint();
       setTimeout(() => {
-        openCustomCommentPanel(parseInt(currentLongPressTarget.dataset.commentBtn));
+        openCustomCommentPanel(currentLongPressTarget.dataset.commentBtn);
       }, 300);
     }, 800);
   }
@@ -1024,7 +1036,7 @@
     container.querySelector('#customInput').placeholder = '例如：张三, 李四, 王五';
     container.querySelector('#customCommentGroup').style.display = 'none';
     
-    const m = momentsData.find(x => x.id === momentId);
+    const m = findMomentById(momentId);
     container.querySelector('#customInput').value = m.likes.join(', ');
     
     // 渲染好友列表快捷选择
@@ -1140,7 +1152,7 @@
   function confirmCustom() {
     if (!customMomentId) return;
     
-    const m = momentsData.find(x => x.id === customMomentId);
+    const m = findMomentById(customMomentId);
     if (!m) return;
     
     const container = document.getElementById('moments-container');
@@ -1164,7 +1176,7 @@
 
   // ========== Collect ==========
   function toggleCollect(momentId) {
-    const m = momentsData.find(x => x.id === momentId);
+    const m = findMomentById(momentId);
     if (!m) return;
     m.collected = !m.collected;
     if (m.collected) {
@@ -1194,7 +1206,7 @@
 
   // ========== Auto Reply (从字卡库/表情包/颜文字随机选取，支持多会话) ==========
   async function triggerAutoReply(momentId) {
-    const m = momentsData.find(x => x.id === momentId);
+    const m = findMomentById(momentId);
     if (!m) return;
 
     // 刷新系统（伴侣）信息缓存
@@ -1392,7 +1404,7 @@
 
   // ========== Like ==========
   function toggleLike(momentId) {
-    const m = momentsData.find(x => x.id === momentId);
+    const m = findMomentById(momentId);
     if (!m) return;
     const myName = userConfig.name;
     const idx = m.likes.indexOf(myName);
@@ -1852,7 +1864,7 @@
 
       let previewHtml = '';
       // 始终从朋友圈数据中获取预览
-      var moment = momentsData.find(function(m) { return m.id === n.momentId; });
+      var moment = findMomentById(n.momentId);
       if (n.previewImage) {
         previewHtml = '<img class="detail-preview" src="' + n.previewImage + '" alt="">';
       } else if (moment) {
@@ -2214,25 +2226,22 @@
       return;
     }
 
-    // 三重保障获取 momentId
-    // 1. 从 input 元素的 dataset（openComment 设置）
-    // 2. 从 popup 元素的 dataset
-    // 3. 从全局变量
-    var momentId = parseInt(input.dataset.momentId || '0');
-    if (!momentId) momentId = parseInt(popup.dataset.momentId || '0');
-    if (!momentId) momentId = parseInt(currentCommentMomentId || '0');
+    // 三重保障获取 momentId（支持字符串和数字两种 ID）
+    var momentId = input.dataset.momentId;
+    if (!momentId) momentId = popup.dataset.momentId;
+    if (!momentId) momentId = currentCommentMomentId;
     
     console.log('[Moments] submitComment: text=' + text + ', momentId=' + momentId + 
                 ' (input.dataset=' + input.dataset.momentId + 
                 ', popup.dataset=' + popup.dataset.momentId + 
                 ', global=' + currentCommentMomentId + ')');
     
-    if (!momentId || momentId <= 0) {
+    if (!momentId) {
       if (typeof window.showToast === 'function') window.showToast('评论失败，请重试');
       return;
     }
 
-    const m = momentsData.find(x => x.id === momentId);
+    const m = findMomentById(momentId);
     if (m) {
       // 支持文字+表情包同时发送
       m.comments.push({
@@ -2492,7 +2501,7 @@
     if (!container) return;
     
     const cards = container.querySelectorAll('.moment-card');
-    const idx = momentsData.findIndex(m => m.id === momentId);
+    const idx = momentsData.findIndex(m => idEq(m.id, momentId));
     if (idx >= 0 && cards[idx]) {
       cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
       cards[idx].style.background = '#fffbe6';
@@ -2984,7 +2993,7 @@
     // 后台处理大图片：压缩后存 IndexedDB，然后更新为引用
     setTimeout(async () => {
       let hasLargeImage = false;
-      const moment = momentsData.find(m => m.id === momentId);
+      const moment = findMomentById(momentId);
       if (!moment) return;
       for (let i = 0; i < moment.images.length; i++) {
         const img = moment.images[i];
@@ -3069,7 +3078,7 @@
   let previewData = { momentId: null, images: [], index: 0 };
 
   function openPreview(momentId, imgIndex) {
-    const m = momentsData.find(x => x.id === momentId);
+    const m = findMomentById(momentId);
     if (!m || !m.images.length) return;
     
     previewData = { momentId, images: m.images, index: imgIndex };
@@ -3125,7 +3134,7 @@
   let videoPlaying = false;
 
   async function playVideo(momentId) {
-    const m = momentsData.find(x => x.id === momentId);
+    const m = findMomentById(momentId);
     if (!m || !m.video) return;
 
     previewData = { momentId, images: m.images, index: 0 };
@@ -3189,7 +3198,7 @@
       videoPlaying = false;
       playBtn.classList.remove('playing');
       playBtn.querySelector('svg').innerHTML = '<path d="M8 5v14l11-7z"/>';
-      info.textContent = '已暂停 · ' + (previewData && previewData.momentId ? (momentsData.find(x => x.id === previewData.momentId)?.video?.duration || '') : '');
+      info.textContent = '已暂停 · ' + (previewData && previewData.momentId ? (findMomentById(previewData.momentId)?.video?.duration || '') : '');
     }
 
     // 视频结束时重置
