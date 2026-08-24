@@ -2154,14 +2154,12 @@
     // 三重存储 momentId：popup.dataset + input.dataset + 全局变量
     popup.dataset.momentId = momentId;
     input.dataset.momentId = momentId;
-    // 重置输入框位置，使用当前 native bottom inset（键盘可能已弹出）
-    var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
-    // 如果键盘已弹出（bottomInset > 导航栏阈值），则直接使用该值
-    popup.style.bottom = (bottomInset > 50 ? bottomInset : 0) + 'px';
+    // adjustResize 会自动处理键盘，popup 保持 bottom:0 即可
+    popup.style.bottom = '0px';
     popup.classList.add('active');
     input.value = '';
     input.placeholder = '写评论...';
-    // 延迟 focus，确保键盘弹出时 nativeinsets 回调能正确调整位置
+    // 延迟 focus，确保键盘弹出时 adjustResize 正确缩放
     setTimeout(function() { input.focus(); }, 50);
     
     // 隐藏表情包预览
@@ -2189,9 +2187,8 @@
     // 三重存储：popup.dataset + input.dataset + 全局变量
     popup.dataset.momentId = momentId;
     input.dataset.momentId = momentId;
-    // 使用当前 native bottom inset 调整位置
-    var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
-    popup.style.bottom = (bottomInset > 50 ? bottomInset : 0) + 'px';
+    // adjustResize 会自动处理键盘，popup 保持 bottom:0 即可
+    popup.style.bottom = '0px';
     popup.classList.add('active');
     input.value = '';
     input.placeholder = `回复 ${name}：`;

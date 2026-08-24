@@ -76,6 +76,8 @@
       var _lastKbHeight = -1;
 
       // 调整所有固定底部元素
+      // 注意：AndroidManifest 已配置 adjustResize，WebView 会随键盘自动缩放，
+      // fixed 定位的 bottom:0 元素会自动位于键盘上方，无需 JS 调整 popup 位置
       function adjustFixedBottomElements(bottomInset) {
         // 导航栏高度通常在 24-72px 之间，键盘高度通常 > 150px
         // 用 100px 作为阈值区分键盘和导航栏
@@ -85,29 +87,14 @@
         if (kbHeight === _lastKbHeight) return; // 没变化就不处理
         _lastKbHeight = kbHeight;
 
-        // 1. 聊天主输入栏
+        // 聊天主输入栏需要适配（因为有 padding-bottom 的安全区）
         var inputWrapper = document.querySelector('.input-area-wrapper');
         if (inputWrapper) {
           inputWrapper.style.bottom = kbHeight + 'px';
-          inputWrapper.style.transition = 'bottom 0.2s ease';
         }
 
-        // 2. 朋友圈评论弹窗（如果显示中）
-        var commentPopup = document.getElementById('commentPopup');
-        if (commentPopup && commentPopup.classList.contains('active')) {
-          commentPopup.style.bottom = kbHeight + 'px';
-        }
-
-        // 3. 朋友圈表情面板
-        var emojiPanel = document.getElementById('commentEmojiPanel');
-        if (emojiPanel && emojiPanel.classList.contains('active')) {
-          emojiPanel.style.bottom = kbHeight + 'px';
-        }
-
-        // 4. 所有带 data-keyboard-adapt 属性的元素
-        document.querySelectorAll('[data-keyboard-adapt]').forEach(function(el) {
-          el.style.bottom = kbHeight + 'px';
-        });
+        // 注意：朋友圈评论弹窗和表情面板不在这里调整，
+        // adjustResize 已处理好，JS 调整反而会把它推到屏幕外
       }
 
       // 方案 A：visualViewport API（最可靠）

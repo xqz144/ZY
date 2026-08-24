@@ -1674,7 +1674,6 @@ html[data-theme="dark"] .moments-container .mb-bar-btn span {
   padding: 10px 12px;
   padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid #eee;
-  transition: bottom 0.2s ease;
   align-items: center;
   gap: 10px;
 }
