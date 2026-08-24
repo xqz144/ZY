@@ -1668,28 +1668,27 @@ html[data-theme="dark"] .moments-container .mb-bar-btn span {
   bottom: 0;
   left: 0;
   width: 100%;
-  background: #f7f7f7;
+  background: #fff;
   z-index: 410;
   display: none;
-  padding: 10px 16px;
+  padding: 10px 12px;
   padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid #ddd;
-  animation: slideUp 0.2s ease-out;
+  border-top: 1px solid #eee;
   transition: bottom 0.2s ease;
+  align-items: center;
+  gap: 10px;
 }
 
 .moments-container .comment-popup.active {
   display: flex;
-  gap: 8px;
-  align-items: flex-start;
 }
 
 .moments-container .emoji-toggle-btn {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
+  padding: 8px;
+  border-radius: 50%;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1707,9 +1706,12 @@ html[data-theme="dark"] .moments-container .mb-bar-btn span {
 
 .moments-container .comment-input-area {
   flex: 1;
+  min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  background: #f3f3f5;
+  border-radius: 24px;
+  padding: 0 4px;
 }
 
 .moments-container .comment-sticker-preview {
@@ -1742,34 +1744,35 @@ html[data-theme="dark"] .moments-container .mb-bar-btn span {
 .moments-container .comment-input-wrapper {
   flex: 1;
   display: flex;
-  gap: 8px;
   align-items: center;
 }
 
 .moments-container .comment-input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  font-size: 14px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
   outline: none;
-  background: #fff;
   color: #333;
+  min-width: 0;
 }
 
 .moments-container .comment-input:focus {
-  border-color: #576b95;
+  outline: none;
 }
 
 .moments-container .send-btn {
   background: #07c160;
   border: none;
   color: #fff;
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 10px 20px;
+  border-radius: 24px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .moments-container .send-btn:active {
@@ -3196,12 +3199,15 @@ html[data-theme="dark"] .moments-container .publish-tools {
 }
 
 html[data-theme="dark"] .moments-container .comment-popup {
-  background: #2a2a2a;
-  border-top-color: #3a3a3a;
+  background: #1a1a1a;
+  border-top-color: #333;
+}
+
+html[data-theme="dark"] .moments-container .comment-input-area {
+  background: #333;
 }
 
 html[data-theme="dark"] .moments-container .comment-input {
-  background: #333;
   color: #e0e0e0;
 }
 

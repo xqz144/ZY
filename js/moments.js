@@ -2151,8 +2151,9 @@
     
     const popup = container.querySelector('#commentPopup');
     const input = container.querySelector('#commentInput');
-    // 把 momentId 存到 popup 元素上，避免全局变量在事件竞争中丢失
+    // 三重存储 momentId：popup.dataset + input.dataset + 全局变量
     popup.dataset.momentId = momentId;
+    input.dataset.momentId = momentId;
     // 重置输入框位置，使用当前 native bottom inset（键盘可能已弹出）
     var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
     // 如果键盘已弹出（bottomInset > 导航栏阈值），则直接使用该值
@@ -2185,8 +2186,9 @@
     
     const popup = container.querySelector('#commentPopup');
     const input = container.querySelector('#commentInput');
-    // 存到 popup 元素上
+    // 三重存储：popup.dataset + input.dataset + 全局变量
     popup.dataset.momentId = momentId;
+    input.dataset.momentId = momentId;
     // 使用当前 native bottom inset 调整位置
     var bottomInset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--native-bottom-inset')) || 0;
     popup.style.bottom = (bottomInset > 50 ? bottomInset : 0) + 'px';
@@ -2202,7 +2204,10 @@
     
     const input = container.querySelector('#commentInput');
     const popup = container.querySelector('#commentPopup');
-    if (!input || !popup) return;
+    if (!input || !popup) {
+      console.error('[Moments] submitComment: input or popup not found');
+      return;
+    }
     
     const text = input.value.trim();
     
@@ -2212,9 +2217,20 @@
       return;
     }
 
-    // 从 popup 元素读取 momentId（比全局变量更可靠，不会在事件竞争中丢失）
-    const momentId = parseInt(popup.dataset.momentId);
-    if (!momentId) {
+    // 三重保障获取 momentId
+    // 1. 从 input 元素的 dataset（openComment 设置）
+    // 2. 从 popup 元素的 dataset
+    // 3. 从全局变量
+    var momentId = parseInt(input.dataset.momentId || '0');
+    if (!momentId) momentId = parseInt(popup.dataset.momentId || '0');
+    if (!momentId) momentId = parseInt(currentCommentMomentId || '0');
+    
+    console.log('[Moments] submitComment: text=' + text + ', momentId=' + momentId + 
+                ' (input.dataset=' + input.dataset.momentId + 
+                ', popup.dataset=' + popup.dataset.momentId + 
+                ', global=' + currentCommentMomentId + ')');
+    
+    if (!momentId || momentId <= 0) {
       if (typeof window.showToast === 'function') window.showToast('评论失败，请重试');
       return;
     }
@@ -2233,6 +2249,7 @@
       if (typeof window.showToast === 'function') window.showToast('评论成功');
       renderMoments();
     } else {
+      console.error('[Moments] submitComment: moment not found, id=' + momentId);
       if (typeof window.showToast === 'function') window.showToast('评论失败，请重试');
     }
     closeCommentEmojiPanel();

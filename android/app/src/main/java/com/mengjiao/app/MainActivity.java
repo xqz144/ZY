@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -21,6 +22,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
+import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
@@ -96,6 +98,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         mWebView = findViewById(R.id.web_view);
+
+        // 版本升级时清除 WebView 缓存（包括 Service Worker 缓存），
+        // 确保用户拿到最新的前端代码
+        SharedPreferences prefs = getSharedPreferences("mengjiao_prefs", MODE_PRIVATE);
+        String lastVersion = prefs.getString("app_version", "");
+        if (!APP_VERSION.equals(lastVersion)) {
+            mWebView.clearCache(true);
+            mWebView.clearHistory();
+            try {
+                WebStorage.getInstance().deleteAllData();
+            } catch (Exception ignored) {}
+            prefs.edit().putString("app_version", APP_VERSION).apply();
+        }
+
         applyWebSettings();
 
         // 处理 WindowInsets：状态栏 padding + 键盘/IME padding
