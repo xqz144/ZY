@@ -1934,6 +1934,13 @@
                         </div>
                     </div>
                     <div class="beautify-row">
+                        <label>评论回复速度</label>
+                        <div class="beautify-range-wrap">
+                            <input type="range" id="beautifyCommentReplySpeed" min="3" max="600" step="3" value="30" oninput="MomentsApp.updateCommentSpeedLabel()">
+                            <span class="beautify-range-label" id="commentSpeedLabel">30秒</span>
+                        </div>
+                    </div>
+                    <div class="beautify-row">
                         <label>评论数量</label>
                         <div class="beautify-count-wrap">
                             <input type="number" id="beautifyReplyCountMin" min="0" max="20" value="" placeholder="最少" oninput="MomentsApp.updateCountLabel()">

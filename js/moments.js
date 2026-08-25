@@ -2312,11 +2312,10 @@
 
     if (!hasTextContent && !hasStickers) return; // 字卡库为空，不回复
 
-    // 延迟回复（使用设置的速度）
-    var baseSpeed = getReplySpeed();
-    var delay = Math.random() * baseSpeed * 1000;
-    // 至少 1.5 秒，最多 baseSpeed 秒
-    delay = Math.max(1500, delay);
+    // 延迟回复（使用评论回复速度设置）
+    var baseSpeed = getCommentReplySpeed();
+    // 延迟范围：baseSpeed 的 50%~100%，避免秒回
+    var delay = (0.5 + Math.random() * 0.5) * baseSpeed * 1000;
 
     setTimeout(async function() {
       // 重新查找动态（可能已被删除）
@@ -3432,9 +3431,12 @@
     var countMinInput = container.querySelector('#beautifyReplyCountMin');
     var countMaxInput = container.querySelector('#beautifyReplyCountMax');
     if (speedSlider) speedSlider.value = localStorage.getItem('moments_reply_speed') || '5';
+    var commentSpeedSlider = container.querySelector('#beautifyCommentReplySpeed');
+    if (commentSpeedSlider) commentSpeedSlider.value = localStorage.getItem('moments_comment_reply_speed') || '30';
     if (countMinInput) countMinInput.value = localStorage.getItem('moments_reply_count_min') || '';
     if (countMaxInput) countMaxInput.value = localStorage.getItem('moments_reply_count_max') || '';
     updateSpeedLabel();
+    updateCommentSpeedLabel();
     updateCountLabel();
   }
 
@@ -3652,6 +3654,22 @@
   function getReplySpeed() {
     var saved = localStorage.getItem('moments_reply_speed');
     return saved ? Number(saved) : 5;
+  }
+
+  function getCommentReplySpeed() {
+    var saved = localStorage.getItem('moments_comment_reply_speed');
+    return saved ? Number(saved) : 30;
+  }
+
+  function updateCommentSpeedLabel() {
+    var container = document.getElementById('moments-container');
+    if (!container) return;
+    var slider = container.querySelector('#beautifyCommentReplySpeed');
+    var label = container.querySelector('#commentSpeedLabel');
+    if (slider && label) {
+      label.textContent = formatSpeed(slider.value);
+      localStorage.setItem('moments_comment_reply_speed', slider.value);
+    }
   }
 
   function getReplyCount() {
@@ -4633,6 +4651,7 @@
     toggleFriendLikeSwitch,
     toggleCommentReplySwitch,
     updateSpeedLabel,
+    updateCommentSpeedLabel,
     updateCountLabel,
     addFriend,
     removeFriend,
