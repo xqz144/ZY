@@ -1,13 +1,18 @@
 package com.mengjiao.app;
 
 import android.annotation.SuppressLint;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
@@ -35,8 +40,10 @@ import androidx.webkit.WebViewFeature;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URLConnection;
 
 /**
@@ -67,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String HOST = "appassets.mengjiao.local";
     private static final String PREFIX_PUBLIC = "/public/";
     private static final String PREFIX_HOT = "/hot/";
-    private static final String APP_VERSION = "1.5.5";
+    private static final String APP_VERSION = "1.5.6";
     private static final int FILE_CHOOSER_REQUEST_CODE = 51426;
 
     private WebView mWebView;
@@ -113,6 +120,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         applyWebSettings();
+
+        // 注册原生文件保存接口（JS 调用 window.AndroidFileSaver.saveBase64File）
+        mWebView.addJavascriptInterface(new FileSaverInterface(), "AndroidFileSaver");
 
         // 处理 WindowInsets：状态栏 padding + 键盘/IME padding
         // 让 WebView 内容在状态栏下方开始，键盘弹出时 WebView 能正确 resize
@@ -304,6 +314,89 @@ public class MainActivity extends AppCompatActivity {
 
         if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
             WebSettingsCompat.setAlgorithmicDarkeningAllowed(s, false);
+        }
+    }
+
+    /**
+     * 原生文件保存接口：JS 通过 window.AndroidFileSaver.saveBase64File(fileName, base64, mimeType) 调用
+     * 解决 WebView 中 <a download> 无法触发系统下载的问题。
+     * Android 10+ 用 MediaStore 写入公共 Downloads；低版本写到 App 专属目录。
+     */
+    private class FileSaverInterface {
+        @android.webkit.JavascriptInterface
+        public void saveBase64File(final String fileName, final String base64Data, final String mimeType) {
+            runOnUiThread(() -> {
+                try {
+                    byte[] bytes = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT);
+                    String savedPath = saveFileToDownloads(fileName, bytes, mimeType);
+                    if (savedPath != null) {
+                        Toast.makeText(MainActivity.this, "已保存到：\n" + savedPath, Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "保存失败，请重试", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "保存失败：" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @android.webkit.JavascriptInterface
+        public boolean isAvailable() {
+            return true;
+        }
+    }
+
+    /**
+     * 保存字节数组到 Downloads 目录
+     * Android 10+ (API 29+): 使用 MediaStore，无需权限
+     * Android 7-9: 使用 App 专属外部目录
+     */
+    private String saveFileToDownloads(String fileName, byte[] data, String mimeType) {
+        if (mimeType == null || mimeType.isEmpty()) {
+            mimeType = "application/octet-stream";
+        }
+
+        // Android 10+ (Q): 使用 MediaStore
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                ContentResolver resolver = getContentResolver();
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, mimeType);
+                values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/MengJiao");
+
+                Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) return null;
+
+                try (OutputStream os = resolver.openOutputStream(uri)) {
+                    if (os == null) return null;
+                    os.write(data);
+                    os.flush();
+                }
+                return Environment.DIRECTORY_DOWNLOADS + "/MengJiao/" + fileName;
+            } catch (Exception e) {
+                // MediaStore 失败时降级到 App 专属目录
+                return saveFileToAppDir(fileName, data);
+            }
+        } else {
+            // Android 7-9: 使用 App 专属外部目录（无需权限）
+            return saveFileToAppDir(fileName, data);
+        }
+    }
+
+    private String saveFileToAppDir(String fileName, byte[] data) {
+        try {
+            File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            if (dir == null) dir = getFilesDir();
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, fileName);
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(data);
+                fos.flush();
+            }
+            return file.getAbsolutePath();
+        } catch (Exception e) {
+            return null;
         }
     }
 

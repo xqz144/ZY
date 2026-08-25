@@ -83,6 +83,29 @@ function deduplicateContentArray(arr, baseSystemArray = []) {
         }
 
         function downloadFileFallback(blob, fileName) {
+            // 优先使用原生接口（Android WebView 中 <a download> 不可靠）
+            if (window.AndroidFileSaver && typeof window.AndroidFileSaver.saveBase64File === 'function') {
+                var reader = new FileReader();
+                reader.onload = function() {
+                    try {
+                        var result = reader.result;
+                        var base64 = result.split(',')[1];
+                        var mime = blob.type || 'application/octet-stream';
+                        window.AndroidFileSaver.saveBase64File(fileName, base64, mime);
+                    } catch (e) {
+                        _downloadViaLink(blob, fileName);
+                    }
+                };
+                reader.onerror = function() {
+                    _downloadViaLink(blob, fileName);
+                };
+                reader.readAsDataURL(blob);
+                return;
+            }
+            _downloadViaLink(blob, fileName);
+        }
+
+        function _downloadViaLink(blob, fileName) {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url; link.download = fileName; link.style.display = 'none';
