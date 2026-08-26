@@ -74,6 +74,9 @@
     /* ========== 存储 ========== */
     var STORAGE_KEY = 'qiyu_story_data';
     var HERO_BG_KEY = 'qiyu_story_hero_bg';
+    var SAVE_KEY = 'qiyu_story_saves';
+    var MAX_SAVES = 5;
+    var SAVE_VERSION = 1;
 
     function loadData() {
         try {
@@ -746,10 +749,12 @@
                 '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">标题</label><input id="ch-title" type="text" value="' + esc(ch.title || '') + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
                 '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">概要</label><textarea id="ch-summary" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:60px;resize:vertical;">' + esc(ch.summary || '') + '</textarea></div>' +
                 '<div style="margin-bottom:24px;"><label style="display:flex;align-items:center;gap:8px;font-size:13px;color:' + t.textPrimary + ';"><input id="ch-unconfirmed" type="checkbox" ' + (ch.status === 'unconfirmed' ? 'checked' : '') + ' style="width:16px;height:16px;" /><span>标记为「待确认」</span></label></div>' +
-                '<div style="font-size:12px;font-weight:700;color:' + t.accent + ';padding:8px 0;letter-spacing:0.5px;">场景</div>' +
+                '<div style="font-size:12px;font-weight:700;color:' + THEME.accent + ';padding:8px 0;letter-spacing:0.5px;">文游节点' + (ch.vnNodes ? (' · ' + ch.vnNodes.length + ' 个') : '') + '</div>' +
+                '<div onclick="QiyuStory.openVNEditor(\'' + catId + '\',' + idx + ')" style="padding:12px;border-radius:10px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + THEME.accent + ';font-size:13px;font-weight:600;text-align:center;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:6px;"><span>🎭</span>打开文游节点编辑器</div>' +
+                '<div style="font-size:12px;font-weight:700;color:' + THEME.accent + ';padding:8px 0;letter-spacing:0.5px;">场景</div>' +
                 '<div style="background:' + t.cardBg + ';border-radius:12px;border:1px solid ' + t.cardBorder + ';overflow:hidden;margin-bottom:12px;">' + scenesHtml + '</div>' +
                 '<div onclick="QiyuStory.addSceneForm(\'' + catId + '\',' + idx + ')" style="padding:10px;border-radius:10px;border:1px dashed ' + t.cardBorder + ';color:' + t.textSecondary + ';font-size:13px;text-align:center;cursor:pointer;margin-bottom:24px;">+ 添加场景</div>' +
-                '<div onclick="QiyuStory.saveChapterEdit(\'' + catId + '\',' + idx + ')" style="padding:12px;border-radius:10px;background:' + t.accent + ';color:#fff;font-size:14px;font-weight:500;text-align:center;cursor:pointer;">保存修改</div>' +
+                '<div onclick="QiyuStory.saveChapterEdit(\'' + catId + '\',' + idx + ')" style="padding:12px;border-radius:10px;background:' + THEME.accent + ';color:#fff;font-size:14px;font-weight:500;text-align:center;cursor:pointer;">保存修改</div>' +
             '</div>';
 
         document.body.appendChild(overlay);
@@ -917,6 +922,638 @@
         editChapter(catId, chIdx);
     }
 
+    /* ============================================================
+     *                        文游引擎 (VN Engine)
+     * ============================================================ */
+
+    /* ---------- 存档系统 ---------- */
+    function loadSaves() {
+        try {
+            var s = localStorage.getItem(SAVE_KEY);
+            if (s) {
+                var parsed = JSON.parse(s);
+                if (parsed && parsed.version === SAVE_VERSION && parsed.slots) return parsed.slots;
+            }
+        } catch(e) {}
+        var slots = [];
+        for (var i = 0; i < MAX_SAVES; i++) slots.push(null);
+        return slots;
+    }
+
+    function writeSaves(slots) {
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION, slots: slots })); } catch(e) {}
+    }
+
+    function saveToSlot(slotIdx, catId, chIdx, nodeId, chTitle, nodeTitle) {
+        var slots = loadSaves();
+        slots[slotIdx] = {
+            catId: catId, chIdx: chIdx, nodeId: nodeId,
+            chTitle: chTitle, nodeTitle: nodeTitle,
+            time: new Date().toLocaleString('zh-CN')
+        };
+        writeSaves(slots);
+    }
+
+    function getSaveSlot(slotIdx) {
+        var slots = loadSaves();
+        return slots[slotIdx] || null;
+    }
+
+    /* ---------- VN 运行状态 ---------- */
+    var vnState = null;
+
+    function startVN(catId, chIdx, startNodeId) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters || !cat.chapters[chIdx]) return;
+        var ch = cat.chapters[chIdx];
+        var nodes = ch.vnNodes || [];
+        if (nodes.length === 0) { alert('本章暂未录入文游节点，后续会完善'); return; }
+
+        // 建立索引
+        var nodeMap = {};
+        nodes.forEach(function(n) { nodeMap[n.id] = n; });
+        var startId = startNodeId || (nodes[0] && nodes[0].id) || 'start';
+        if (!nodeMap[startId]) { alert('找不到起始节点'); return; }
+
+        vnState = {
+            catId: catId, chIdx: chIdx,
+            nodes: nodes, nodeMap: nodeMap,
+            current: startId
+        };
+
+        renderVN();
+    }
+
+    /* ---------- 渲染 VN 界面 ---------- */
+    function renderVN() {
+        if (!vnState) return;
+        if (document.getElementById('qiyu-vn')) document.getElementById('qiyu-vn').remove();
+
+        var t = getTheme();
+        var node = vnState.nodeMap[vnState.current];
+        if (!node) { alert('节点不存在'); return; }
+
+        var dark = isDark();
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-vn';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;overflow:hidden;touch-action:none;';
+
+        // 背景
+        var bgStyle = node.bg ?
+            'background-image:url(' + node.bg + ');background-size:cover;background-position:center;' :
+            'background:' + (dark ? '#1a1816' : t.headerBg) + ';';
+
+        // 立绘位置
+        var portraitHtml = '';
+        if (node.portrait) {
+            var posStyle = node.position === 'right' ? 'right:5%;' : 'left:5%;';
+            portraitHtml =
+                '<div style="position:absolute;bottom:180px;bottom:calc(180px + env(safe-area-inset-bottom,0px));' + posStyle + 'width:45%;height:60%;pointer-events:none;z-index:2;">' +
+                    '<img src="' + esc(node.portrait) + '" style="width:100%;height:100%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.25));" />' +
+                '</div>';
+        }
+
+        // 角色名条
+        var nameHtml = '';
+        if (node.character && node.type !== 'narrate') {
+            var isMe = node.character === '我' || node.character === '主角';
+            var nameColor = isMe ? '#5B8C85' : THEME.accent;
+            nameHtml =
+                '<div style="position:relative;margin-bottom:-1px;display:inline-block;padding:4px 16px;border-radius:10px 10px 0 0;background:rgba(255,255,255,0.95);color:' + nameColor + ';font-size:13px;font-weight:700;box-shadow:0 -2px 6px rgba(0,0,0,0.05);backdrop-filter:blur(12px);">' +
+                    esc(node.character) +
+                '</div>';
+        }
+
+        // 文字框内容
+        var contentHtml = '';
+        if (node.type === 'choice') {
+            // 选项
+            contentHtml = '<div style="padding:6px 0;display:flex;flex-direction:column;gap:8px;">';
+            (node.choices || []).forEach(function(chc, i) {
+                contentHtml +=
+                    '<div onclick="QiyuStory.vnChoice(' + i + ')" style="padding:10px 14px;border-radius:10px;border:1px solid ' + (dark ? THEME.darkCardBorder : '#e4ddcf') + ';background:rgba(255,255,255,0.6);color:' + t.textPrimary + ';font-size:13px;cursor:pointer;backdrop-filter:blur(4px);transition:all 0.15s;" onmousedown="this.style.background=\'rgba(255,255,255,0.9)\'" onmouseup="this.style.background=\'rgba(255,255,255,0.6)\'">' +
+                        esc(chc.text) +
+                    '</div>';
+            });
+            contentHtml += '</div>';
+        } else if (node.type === 'end') {
+            contentHtml =
+                '<div style="text-align:center;padding:16px 0;">' +
+                    '<div style="font-size:15px;font-weight:700;color:' + THEME.accent + ';margin-bottom:8px;">' + esc(node.title || '本章完') + '</div>' +
+                    (node.text ? '<div style="font-size:13px;color:' + t.textSecondary + ';line-height:1.6;">' + esc(node.text) + '</div>' : '') +
+                '</div>';
+        } else {
+            contentHtml =
+                '<div style="padding:4px 2px;font-size:14.5px;line-height:1.85;letter-spacing:0.3px;color:' + t.textPrimary + ';min-height:72px;">' +
+                    esc(node.text || '…') +
+                '</div>';
+        }
+
+        // 下一页提示
+        var indicatorHtml = '';
+        if (node.type !== 'choice' && node.type !== 'end') {
+            indicatorHtml =
+                '<div onclick="QiyuStory.vnAdvance()" style="position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);font-size:11px;font-weight:700;color:' + THEME.accent + ';display:flex;align-items:center;gap:2px;cursor:pointer;padding:4px 8px;border-radius:6px;background:rgba(0,0,0,0.04);">' +
+                    '下一页 <span style="animation:vnPulse 1s infinite;">▸</span>' +
+                '</div>';
+        }
+
+        // 文本框容器
+        var textboxHtml =
+            '<div style="position:absolute;left:0;right:0;bottom:0;padding:0 16px calc(env(safe-area-inset-bottom,0px) + 48px);z-index:5;">' +
+                nameHtml +
+                '<div style="background:rgba(255,255,255,0.92);backdrop-filter:blur(14px);border-radius:14px 14px 14px 14px;padding:16px 18px 36px;box-shadow:0 -4px 24px rgba(0,0,0,0.08);border:1px solid ' + (dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)') + ';position:relative;">' +
+                    contentHtml +
+                    indicatorHtml +
+                '</div>' +
+            '</div>';
+
+        // 顶部菜单
+        var menuHtml =
+            '<div style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:16px;right:16px;z-index:10;display:flex;justify-content:space-between;align-items:center;">' +
+                '<div onclick="QiyuStory.vnBack()" style="width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;cursor:pointer;">←</div>' +
+                '<div style="display:flex;gap:8px;">' +
+                    '<div onclick="QiyuStory.vnSaveMenu()" style="width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;cursor:pointer;">💾</div>' +
+                    '<div onclick="QiyuStory.vnLoadMenu()" style="width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.3);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;cursor:pointer;">📂</div>' +
+                '</div>' +
+            '</div>';
+
+        // 点击空白区域翻页（除选项页/结束页）
+        var clickToAdvance = (node.type !== 'choice' && node.type !== 'end') ?
+            'onclick="QiyuStory.vnAdvance(event)"' : '';
+
+        overlay.innerHTML =
+            '<div style="position:relative;width:100%;height:100%;' + bgStyle + '" ' + clickToAdvance + ' id="qiyu-vn-bg">' +
+                // 背景遮罩保证文字可读
+                (node.bg ? '<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0.35) 100%);"></div>' : '') +
+                menuHtml +
+                portraitHtml +
+                textboxHtml +
+            '</div>';
+
+        // CSS 动画
+        overlay.innerHTML += '<style>@keyframes vnPulse{0%,100%{transform:translateX(0);opacity:1}50%{transform:translateX(3px);opacity:0.6}}</style>';
+
+        document.body.appendChild(overlay);
+    }
+
+    /* ---------- 翻页 ---------- */
+    function vnAdvance(evt) {
+        if (evt && evt.target) {
+            // 如果点在文字框或控件上，不触发
+            var tag = evt.target.tagName;
+            if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || evt.target.closest && evt.target.closest('[onclick*="vnChoice"],[onclick*="vnSave"],[onclick*="vnLoad"],[onclick*="vnBack"]')) return;
+        }
+        if (!vnState) return;
+        var node = vnState.nodeMap[vnState.current];
+        if (!node || node.type === 'choice' || node.type === 'end') return;
+
+        if (node.next) {
+            vnState.current = node.next;
+            renderVN();
+        }
+    }
+
+    /* ---------- 选项 ---------- */
+    function vnChoice(idx) {
+        if (!vnState) return;
+        var node = vnState.nodeMap[vnState.current];
+        if (!node || node.type !== 'choice' || !node.choices || !node.choices[idx]) return;
+        var nextId = node.choices[idx].next;
+        if (nextId && vnState.nodeMap[nextId]) {
+            vnState.current = nextId;
+            renderVN();
+        } else {
+            alert('选项跳转目标不存在：' + nextId);
+        }
+    }
+
+    /* ---------- 返回 ---------- */
+    function vnBack() {
+        if (confirm('确定退出文游模式？当前进度会丢失，建议先存档。')) {
+            var el = document.getElementById('qiyu-vn');
+            if (el) el.remove();
+            vnState = null;
+        }
+    }
+
+    /* ---------- 存档菜单 ---------- */
+    function vnSaveMenu() {
+        if (!vnState) return;
+        var t = getTheme();
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-vn-save';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999999998;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;';
+
+        var slots = loadSaves();
+        var slotsHtml = '<div style="display:flex;flex-direction:column;gap:8px;margin:16px 0;">';
+        slots.forEach(function(s, i) {
+            if (s) {
+                slotsHtml +=
+                    '<div onclick="QiyuStory.doSave(' + i + ')" style="padding:12px 14px;border-radius:10px;background:' + t.cardBg + ';border:1px solid ' + t.cardBorder + ';cursor:pointer;">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                            '<div><span style="font-size:12px;font-weight:700;color:' + THEME.accent + ';">存档 ' + (i+1) + '</span></div>' +
+                            '<span style="font-size:11px;color:' + t.textTertiary + ';">' + esc(s.time) + '</span>' +
+                        '</div>' +
+                        '<div style="font-size:13px;color:' + t.textPrimary + ';margin-top:4px;font-weight:600;">' + esc(s.chTitle || '') + ' - ' + esc(s.nodeTitle || '') + '</div>' +
+                    '</div>';
+            } else {
+                slotsHtml +=
+                    '<div onclick="QiyuStory.doSave(' + i + ')" style="padding:12px 14px;border-radius:10px;background:' + t.cardBg + ';border:1px dashed ' + t.cardBorder + ';cursor:pointer;">' +
+                        '<div style="font-size:12px;font-weight:700;color:' + THEME.accent + ';margin-bottom:4px;">存档 ' + (i+1) + '</div>' +
+                        '<div style="font-size:12px;color:' + t.textTertiary + ';">空存档位 · 点击保存</div>' +
+                    '</div>';
+            }
+        });
+        slotsHtml += '</div>';
+
+        overlay.innerHTML =
+            '<div style="background:' + t.bg + ';border-radius:18px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto;padding:20px 16px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+                    '<div style="font-size:16px;font-weight:700;color:' + t.textPrimary + ';">保存进度</div>' +
+                    '<div onclick="document.getElementById(\'qiyu-vn-save\').remove();" style="width:28px;height:28px;border-radius:50%;background:' + t.mutedBg + ';display:flex;align-items:center;justify-content:center;color:' + t.textPrimary + ';cursor:pointer;font-size:14px;">×</div>' +
+                '</div>' +
+                slotsHtml +
+            '</div>';
+
+        overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+        document.body.appendChild(overlay);
+    }
+
+    function doSave(slotIdx) {
+        if (!vnState) return;
+        var node = vnState.nodeMap[vnState.current];
+        var cat = getCat(vnState.catId);
+        var ch = cat && cat.chapters[vnState.chIdx];
+        saveToSlot(slotIdx, vnState.catId, vnState.chIdx, vnState.current,
+            ch ? ch.title : '', node && node.type === 'dialog' && node.character ? node.character + '：' + (node.text || '').slice(0, 15) : (node && node.title || node.type || ''));
+        alert('已保存到存档 ' + (slotIdx + 1));
+        var sm = document.getElementById('qiyu-vn-save');
+        if (sm) sm.remove();
+        // 刷新存档菜单
+        vnSaveMenu();
+    }
+
+    /* ---------- 读档菜单 ---------- */
+    function vnLoadMenu() {
+        var t = getTheme();
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-vn-load';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999999998;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;';
+
+        var slots = loadSaves();
+        var hasSave = slots.some(function(s) { return s; });
+        var slotsHtml = '';
+        if (!hasSave) {
+            slotsHtml = '<div style="padding:40px 16px;text-align:center;font-size:13px;color:' + t.textTertiary + ';">还没有存档</div>';
+        } else {
+            slotsHtml = '<div style="display:flex;flex-direction:column;gap:8px;margin:16px 0;">';
+            slots.forEach(function(s, i) {
+                if (s) {
+                    slotsHtml +=
+                        '<div onclick="QiyuStory.doLoad(' + i + ')" style="padding:12px 14px;border-radius:10px;background:' + t.cardBg + ';border:1px solid ' + t.cardBorder + ';cursor:pointer;">' +
+                            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                                '<div><span style="font-size:12px;font-weight:700;color:' + THEME.accent + ';">存档 ' + (i+1) + '</span></div>' +
+                                '<span style="font-size:11px;color:' + t.textTertiary + ';">' + esc(s.time) + '</span>' +
+                            '</div>' +
+                            '<div style="font-size:13px;color:' + t.textPrimary + ';margin-top:4px;font-weight:600;">' + esc(s.chTitle || '') + ' - ' + esc(s.nodeTitle || '') + '</div>' +
+                        '</div>';
+                }
+            });
+            slotsHtml += '</div>';
+        }
+
+        overlay.innerHTML =
+            '<div style="background:' + t.bg + ';border-radius:18px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto;padding:20px 16px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+                    '<div style="font-size:16px;font-weight:700;color:' + t.textPrimary + ';">读取进度</div>' +
+                    '<div onclick="document.getElementById(\'qiyu-vn-load\').remove();" style="width:28px;height:28px;border-radius:50%;background:' + t.mutedBg + ';display:flex;align-items:center;justify-content:center;color:' + t.textPrimary + ';cursor:pointer;font-size:14px;">×</div>' +
+                '</div>' +
+                slotsHtml +
+            '</div>';
+
+        overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+        document.body.appendChild(overlay);
+    }
+
+    function doLoad(slotIdx) {
+        var slot = getSaveSlot(slotIdx);
+        if (!slot) { alert('存档为空'); return; }
+        var lm = document.getElementById('qiyu-vn-load');
+        if (lm) lm.remove();
+        var vn = document.getElementById('qiyu-vn');
+        if (vn) vn.remove();
+        startVN(slot.catId, slot.chIdx, slot.nodeId);
+    }
+
+    /* ---------- VN 节点编辑器 ---------- */
+    function openVNEditor(catId, chIdx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx]) return;
+        var ch = cat.chapters[chIdx];
+        if (!ch.vnNodes) ch.vnNodes = [];
+        var t = getTheme();
+
+        var ce = document.getElementById('qiyu-chapter-edit');
+        if (ce) ce.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-vn-editor';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+        var nodesHtml = '';
+        ch.vnNodes.forEach(function(n, i) {
+            var typeLabel = n.type === 'dialog' ? '对话' : n.type === 'narrate' ? '旁白' : n.type === 'choice' ? '分支' : '结束';
+            nodesHtml +=
+                '<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-bottom:1px solid ' + t.cardBorder + ';">' +
+                    '<div style="width:24px;height:24px;border-radius:6px;background:' + THEME.accentLight + ';display:flex;align-items:center;justify-content:center;font-size:10px;color:' + THEME.accent + ';flex-shrink:0;margin-top:2px;">' + (i+1) + '</div>' +
+                    '<div style="flex:1;min-width:0;cursor:pointer;" onclick="QiyuStory.editVNNode(\'' + catId + '\',' + chIdx + ',' + i + ')">' +
+                        '<div style="font-size:12px;color:' + THEME.accent + ';font-weight:700;">' + typeLabel + ' · ' + esc(n.id) + '</div>' +
+                        '<div style="font-size:13px;color:' + t.textPrimary + ';margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + esc(n.text || (n.type === 'choice' ? ('选项 ×' + (n.choices ? n.choices.length : 0)) : (n.type === 'end' ? (n.title || '本章完') : ''))) + '</div>' +
+                    '</div>' +
+                    '<div onclick="QiyuStory.deleteVNNode(\'' + catId + '\',' + chIdx + ',' + i + ')" style="padding:4px 8px;color:#E0493B;cursor:pointer;font-size:16px;">×</div>' +
+                '</div>';
+        });
+        if (ch.vnNodes.length === 0) {
+            nodesHtml = '<div style="padding:40px 16px;text-align:center;font-size:12px;color:' + t.textTertiary + ';">还没有文游节点，点击下方 + 添加</div>';
+        }
+
+        overlay.innerHTML =
+            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + t.bg + ';border-bottom:1px solid ' + t.cardBorder + ';">' +
+                '<div onclick="document.getElementById(\'qiyu-vn-editor\').remove();QiyuStory.editChapter(\'' + catId + '\',' + chIdx + ')" style="width:32px;height:32px;border-radius:50%;background:' + t.mutedBg + ';display:flex;align-items:center;justify-content:center;font-size:15px;color:' + t.textPrimary + ';cursor:pointer;flex-shrink:0;">←</div>' +
+                '<div style="flex:1;">' +
+                    '<div style="font-size:16px;font-weight:600;color:' + t.textPrimary + ';">编辑文游节点</div>' +
+                    '<div style="font-size:11px;color:' + t.textSecondary + ';margin-top:2px;">' + esc(ch.title) + ' · ' + ch.vnNodes.length + ' 个节点</div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="padding:8px 0 80px;">' + nodesHtml + '</div>' +
+            '<div onclick="QiyuStory.addVNNodeForm(\'' + catId + '\',' + chIdx + ')" style="position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);right:20px;width:48px;height:48px;border-radius:50%;background:' + THEME.accent + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:20;">+</div>';
+
+        document.body.appendChild(overlay);
+    }
+
+    function addVNNodeForm(catId, chIdx) {
+        var t = getTheme();
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-vn-node-form';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;';
+
+        var html =
+            '<div style="background:' + t.cardBg + ';width:100%;border-radius:20px 20px 0 0;padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 24px);max-height:85vh;overflow-y:auto;">' +
+                '<div style="font-size:16px;font-weight:600;color:' + t.textPrimary + ';margin-bottom:16px;">添加文游节点</div>' +
+                '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">节点ID（唯一，跳转用）</label><input id="vnf-id" type="text" placeholder="如：node_start" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">类型</label><select id="vnf-type" onchange="vnToggleForm()" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;"><option value="dialog">对话（角色说话+可选立绘）</option><option value="narrate">旁白（纯叙述，无角色）</option><option value="choice">分支选项</option><option value="end">结束</option></select></div>' +
+                '<div id="vnf-fields-dialog">' +
+                    '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">角色名</label><input id="vnf-char" type="text" placeholder="如：祁煜 / 我" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                    '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘（可留空）</label><input id="vnf-portrait" type="file" accept="image/*" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:13px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                    '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘位置</label><select id="vnf-pos" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;"><option value="left">左侧</option><option value="right">右侧</option></select></div>' +
+                    '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">背景图（可留空）</label><input id="vnf-bg" type="file" accept="image/*" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:13px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                    '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">台词文本</label><textarea id="vnf-text" placeholder="写台词或叙述内容" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea></div>' +
+                    '<div style="margin-bottom:20px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">下一节点ID（留空=结束）</label><input id="vnf-next" type="text" placeholder="如：node_02" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                '</div>' +
+                '<div style="display:flex;gap:12px;">' +
+                    '<div onclick="document.getElementById(\'qiyu-vn-node-form\').remove();" style="flex:1;padding:12px;border-radius:10px;background:' + t.mutedBg + ';color:' + t.textPrimary + ';font-size:14px;font-weight:500;text-align:center;cursor:pointer;">取消</div>' +
+                    '<div onclick="QiyuStory.saveNewVNNode(\'' + catId + '\',' + chIdx + ')" style="flex:1;padding:12px;border-radius:10px;background:' + THEME.accent + ';color:#fff;font-size:14px;font-weight:500;text-align:center;cursor:pointer;">保存</div>' +
+                '</div>' +
+            '</div>';
+
+        overlay.innerHTML = html + '<script>function vnToggleForm(){}<\/script>';
+        overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+        document.body.appendChild(overlay);
+    }
+
+    function saveNewVNNode(catId, chIdx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx]) return;
+        var ch = cat.chapters[chIdx];
+        if (!ch.vnNodes) ch.vnNodes = [];
+
+        var id = document.getElementById('vnf-id').value.trim();
+        var type = document.getElementById('vnf-type').value;
+        if (!id) { alert('请输入节点ID'); return; }
+        if (ch.vnNodes.some(function(n) { return n.id === id; })) { alert('节点ID已存在，请换一个'); return; }
+
+        var node = { id: id, type: type };
+
+        var done = function() {
+            if (type === 'dialog' || type === 'narrate') {
+                node.character = document.getElementById('vnf-char').value.trim() || (type === 'dialog' ? '' : null);
+                var posEl = document.getElementById('vnf-pos');
+                node.position = posEl ? posEl.value : 'left';
+                node.text = document.getElementById('vnf-text').value;
+                node.next = document.getElementById('vnf-next').value.trim() || null;
+            } else if (type === 'choice') {
+                node.choices = [];
+            } else if (type === 'end') {
+                node.title = '本章完';
+            }
+            ch.vnNodes.push(node);
+            saveData(storyData);
+            var f = document.getElementById('qiyu-vn-node-form');
+            if (f) f.remove();
+            var ed = document.getElementById('qiyu-vn-editor');
+            if (ed) ed.remove();
+            openVNEditor(catId, chIdx);
+
+            if (type === 'choice') {
+                alert('分支节点已添加，请在列表中点击进入编辑选项及跳转目标');
+            }
+        };
+
+        // 处理上传文件
+        var portraitFile = type !== 'end' && document.getElementById('vnf-portrait') ? document.getElementById('vnf-portrait').files[0] : null;
+        var bgFile = type !== 'end' && type !== 'choice' && document.getElementById('vnf-bg') ? document.getElementById('vnf-bg').files[0] : null;
+        var pending = 0;
+        if (portraitFile) pending++;
+        if (bgFile) pending++;
+        if (pending === 0) { done(); return; }
+
+        if (portraitFile) {
+            var r1 = new FileReader();
+            r1.onload = function() { node.portrait = r1.result; pending--; if (pending === 0) done(); };
+            r1.readAsDataURL(portraitFile);
+        }
+        if (bgFile) {
+            var r2 = new FileReader();
+            r2.onload = function() { node.bg = r2.result; pending--; if (pending === 0) done(); };
+            r2.readAsDataURL(bgFile);
+        }
+    }
+
+    function editVNNode(catId, chIdx, nIdx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx] || !cat.chapters[chIdx].vnNodes) return;
+        var node = cat.chapters[chIdx].vnNodes[nIdx];
+        var t = getTheme();
+
+        var ed = document.getElementById('qiyu-vn-editor');
+        if (ed) ed.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-vn-node-edit';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+        var previewImg = function(data) { return data ? '<img src="' + data + '" style="width:100%;border-radius:8px;max-height:120px;object-fit:cover;" />' : ''; };
+
+        // 分支选项 UI
+        var choicesHtml = '';
+        if (node.type === 'choice') {
+            choicesHtml += '<div style="font-size:12px;font-weight:700;color:' + THEME.accent + ';padding:8px 0;">分支选项</div>';
+            (node.choices || []).forEach(function(c, i) {
+                choicesHtml +=
+                    '<div style="margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';">' +
+                        '<div style="margin-bottom:6px;"><input class="choice-text" data-idx="' + i + '" type="text" placeholder="选项文字" value="' + esc(c.text || '') + '" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:13px;box-sizing:border-box;" /></div>' +
+                        '<div><input class="choice-next" data-idx="' + i + '" type="text" placeholder="跳转节点ID" value="' + esc(c.next || '') + '" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:13px;box-sizing:border-box;" /></div>' +
+                    '</div>';
+            });
+            choicesHtml += '<div onclick="QiyuStory.addChoice(\'' + catId + '\',' + chIdx + ',' + nIdx + ')" style="padding:8px;border-radius:8px;border:1px dashed ' + t.cardBorder + ';text-align:center;font-size:12px;color:' + t.textSecondary + ';cursor:pointer;">+ 添加选项</div>';
+        }
+
+        var endFields = node.type === 'end' ?
+            '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">标题</label><input id="ne-title" type="text" value="' + esc(node.title || '') + '" placeholder="本章完" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' : '';
+
+        var dialogNarrateFields = (node.type === 'dialog' || node.type === 'narrate') ?
+            '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">角色名</label><input id="ne-char" type="text" value="' + esc(node.character || '') + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+            '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘（重新上传覆盖）</label>' + previewImg(node.portrait || '') +
+                '<input id="ne-portrait" type="file" accept="image/*" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:13px;font-family:inherit;box-sizing:border-box;margin-top:8px;" /></div>' +
+            '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘位置</label><select id="ne-pos" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;"><option value="left"' + (node.position !== 'right' ? ' selected' : '') + '>左侧</option><option value="right"' + (node.position === 'right' ? ' selected' : '') + '>右侧</option></select></div>' +
+            '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">背景图（重新上传覆盖）</label>' + previewImg(node.bg || '') +
+                '<input id="ne-bg" type="file" accept="image/*" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:13px;font-family:inherit;box-sizing:border-box;margin-top:8px;" /></div>' +
+            '<div style="margin-bottom:20px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">文本内容</label><textarea id="ne-text" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:100px;resize:vertical;">' + esc(node.text || '') + '</textarea></div>' +
+            (node.type !== 'choice' ? '<div style="margin-bottom:20px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">下一节点ID</label><input id="ne-next" type="text" value="' + esc(node.next || '') + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' : '') +
+            choicesHtml
+            : '';
+
+        overlay.innerHTML =
+            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + t.bg + ';border-bottom:1px solid ' + t.cardBorder + ';">' +
+                '<div onclick="document.getElementById(\'qiyu-vn-node-edit\').remove();QiyuStory.openVNEditor(\'' + catId + '\',' + chIdx + ')" style="width:32px;height:32px;border-radius:50%;background:' + t.mutedBg + ';display:flex;align-items:center;justify-content:center;font-size:15px;color:' + t.textPrimary + ';cursor:pointer;flex-shrink:0;">←</div>' +
+                '<div style="flex:1;font-size:16px;font-weight:600;color:' + t.textPrimary + ';">编辑节点 · ' + esc(node.id) + '</div>' +
+            '</div>' +
+            '<div style="padding:16px;">' +
+                '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">节点ID</label><input id="ne-id" type="text" value="' + esc(node.id) + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                endFields +
+                dialogNarrateFields +
+                '<div onclick="QiyuStory.saveVNNodeEdit(\'' + catId + '\',' + chIdx + ',' + nIdx + ')" style="padding:12px;border-radius:10px;background:' + THEME.accent + ';color:#fff;font-size:14px;font-weight:500;text-align:center;cursor:pointer;">保存</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+    }
+
+    function saveVNNodeEdit(catId, chIdx, nIdx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx] || !cat.chapters[chIdx].vnNodes) return;
+        var node = cat.chapters[chIdx].vnNodes[nIdx];
+
+        var newId = document.getElementById('ne-id').value.trim();
+        if (!newId) { alert('节点ID不能为空'); return; }
+
+        var finish = function() {
+            node.id = newId;
+            if (node.type === 'end') {
+                node.title = document.getElementById('ne-title').value.trim() || '本章完';
+            }
+            if (node.type === 'dialog' || node.type === 'narrate') {
+                node.character = document.getElementById('ne-char').value.trim() || null;
+                node.position = document.getElementById('ne-pos').value || 'left';
+                node.text = document.getElementById('ne-text').value;
+                node.next = document.getElementById('ne-next').value.trim() || null;
+            }
+            if (node.type === 'choice') {
+                var texts = document.querySelectorAll('.choice-text');
+                var nexts = document.querySelectorAll('.choice-next');
+                var newChoices = [];
+                texts.forEach(function(el) {
+                    var idx = parseInt(el.getAttribute('data-idx'));
+                    var text = el.value.trim();
+                    if (text) {
+                        var nextEl = document.querySelector('.choice-next[data-idx="' + idx + '"]');
+                        newChoices.push({ text: text, next: (nextEl && nextEl.value.trim()) || null });
+                    }
+                });
+                node.choices = newChoices;
+            }
+            saveData(storyData);
+            var ed = document.getElementById('qiyu-vn-node-edit');
+            if (ed) ed.remove();
+            openVNEditor(catId, chIdx);
+        };
+
+        var portraitFile = (node.type === 'dialog' || node.type === 'narrate') && document.getElementById('ne-portrait') ? document.getElementById('ne-portrait').files[0] : null;
+        var bgFile = (node.type === 'dialog' || node.type === 'narrate') && document.getElementById('ne-bg') ? document.getElementById('ne-bg').files[0] : null;
+        var pending = 0;
+        if (portraitFile) pending++;
+        if (bgFile) pending++;
+
+        if (pending === 0) { finish(); return; }
+
+        if (portraitFile) {
+            var r1 = new FileReader();
+            r1.onload = function() { node.portrait = r1.result; pending--; if (pending === 0) finish(); };
+            r1.readAsDataURL(portraitFile);
+        }
+        if (bgFile) {
+            var r2 = new FileReader();
+            r2.onload = function() { node.bg = r2.result; pending--; if (pending === 0) finish(); };
+            r2.readAsDataURL(bgFile);
+        }
+    }
+
+    function addChoice(catId, chIdx, nIdx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx] || !cat.chapters[chIdx].vnNodes) return;
+        var node = cat.chapters[chIdx].vnNodes[nIdx];
+        if (node.type !== 'choice') return;
+        if (!node.choices) node.choices = [];
+        node.choices.push({ text: '', next: '' });
+        saveData(storyData);
+        var ed = document.getElementById('qiyu-vn-node-edit');
+        if (ed) ed.remove();
+        editVNNode(catId, chIdx, nIdx);
+    }
+
+    function deleteVNNode(catId, chIdx, nIdx) {
+        if (!confirm('确定删除这个文游节点？')) return;
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx] || !cat.chapters[chIdx].vnNodes) return;
+        cat.chapters[chIdx].vnNodes.splice(nIdx, 1);
+        saveData(storyData);
+        var ed = document.getElementById('qiyu-vn-editor');
+        if (ed) ed.remove();
+        openVNEditor(catId, chIdx);
+    }
+
+    /* ---------- 修改 openChapter：有 vnNodes 走文游 ---------- */
+    var _origOpenChapter = openChapter;
+    openChapter = function(catId, index) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters || !cat.chapters[index]) return;
+        var ch = cat.chapters[index];
+
+        if (ch.vnNodes && ch.vnNodes.length > 0) {
+            // 检查是否有未完成存档
+            var hasSave = loadSaves().some(function(s) { return s && s.catId === catId && s.chIdx === index; });
+            if (hasSave && confirm('本章有存档，是否继续上次进度？')) {
+                // 找最近一个存档
+                var slots = loadSaves();
+                var lastSlot = null;
+                slots.forEach(function(s) { if (s && s.catId === catId && s.chIdx === index) lastSlot = s; });
+                if (lastSlot) { startVN(catId, index, lastSlot.nodeId); return; }
+            }
+            startVN(catId, index);
+            return;
+        }
+        // 否则走原来的场景列表
+        _origOpenChapter(catId, index);
+    };
+
     /* ========== 主线剧情数据初始化 ========== */
     function initMainStoryline() {
         if (!storyData) storyData = loadData();
@@ -932,7 +1569,37 @@
                 { title: '晴空广场', perspective: 'first', content: '' },
                 { title: '焰尾鱼', perspective: 'first', content: '' },
                 { title: '初识', perspective: 'first', content: '' }
-            ]},
+            ], vnNodes: [
+                { id: 'n1', type: 'narrate', character: null, position: 'left', text: '阳光明媚的午后，晴空广场人来人往。巨大的电子屏上滚动播放着今日消息，海风带着咸意掠过发梢。' , next: 'n2' },
+                { id: 'n2', type: 'narrate', character: null, position: 'left', text: '我在人群中漫无目的地走着——或者说，是被某种奇怪的预感牵引着脚步。', next: 'n3' },
+                { id: 'n3', type: 'dialog', character: '我', position: 'left', text: '（……总觉得，今天会遇到什么特别的事。）', next: 'n4' },
+                { id: 'n4', type: 'dialog', character: '我', position: 'left', text: '哎，那边怎么围了一群人？好像在看什么奇怪的东西……', next: 'n5' },
+                { id: 'n5', type: 'narrate', character: null, position: 'left', text: '我挤开人群，看到广场中央的喷泉池边——水正以一种违背常识的方式，凝成一条红色的鱼尾。', next: 'n6' },
+                { id: 'n6', type: 'dialog', character: '我', position: 'left', text: '那是……鱼的尾巴？在空中飘着？！', next: 'n7' },
+                { id: 'n7', type: 'narrate', character: null, position: 'left', text: '焰尾鱼在半空优雅地摆动尾鳍，像是在寻找什么。', next: 'n8' },
+                { id: 'n8', type: 'dialog', character: '祁煜', position: 'right', text: '别靠太近。', next: 'n9' },
+                { id: 'n9', type: 'narrate', character: null, position: 'left', text: '低沉的男声从身侧传来。我转过头——一个穿着深蓝衬衫、气质沉静的男人正站在我旁边，目光锁定那条焰尾鱼。', next: 'n10' },
+                { id: 'n10', type: 'choice', choices: [
+                    { text: '你是谁？为什么要管这种事？', next: 'b1_a' },
+                    { text: '谢谢提醒。你……认识这条鱼？', next: 'b1_b' },
+                    { text: '（退后一步，谨慎地观察他）', next: 'b1_c' }
+                ] },
+                // 分支 A
+                { id: 'b1_a', type: 'dialog', character: '祁煜', position: 'right', text: '祁煜。——至于我为什么要管，和你没关系。', next: 'merge1' },
+                // 分支 B
+                { id: 'b1_b', type: 'dialog', character: '祁煜', position: 'right', text: '……算不上认识。但它属于不该出现在这里的东西。', next: 'merge1' },
+                // 分支 C
+                { id: 'b1_c', type: 'dialog', character: '祁煜', position: 'right', text: '（微微瞥了你一眼）……别紧张，我对普通人没兴趣。', next: 'merge1' },
+                // 汇合
+                { id: 'merge1', type: 'narrate', character: null, position: 'left', text: '话音未落，焰尾鱼突然发出尖锐的嘶鸣，猛地向人群扑了过去！', next: 'n11' },
+                { id: 'n11', type: 'dialog', character: '祁煜', position: 'right', text: '啧。', next: 'n12' },
+                { id: 'n12', type: 'narrate', character: null, position: 'left', text: '他瞬间抬手，指间浮现一颗暗红色的光粒——焰尾鱼应声被定在半空，化作细碎的火屑消散。', next: 'n13' },
+                { id: 'n13', type: 'dialog', character: '我', position: 'left', text: '（刚才那是什么……？他是猎人？还是……）', next: 'n14' },
+                { id: 'n14', type: 'dialog', character: '祁煜', position: 'right', text: '你看到了。', next: 'n15' },
+                { id: 'n15', type: 'narrate', character: null, position: 'left', text: '他转过头看向我，那双暗红色的瞳孔里，像是映着深海里的火光。', next: 'n16' },
+                { id: 'n16', type: 'dialog', character: '祁煜', position: 'right', text: '记住，从今天开始，你已经算半个「圈内人」了。', next: 'end1' },
+                { id: 'end1', type: 'end', title: '第一章 · 焰尾鱼 · 完', text: '（剧情演示节点结束，后续可在编辑器中继续补充）' }
+            ] },
             { arc: '于深空之下', title: '油画幻境', summary: '雷温收藏家家中调查会引发幻境的油画，画作者是祁煜', status: 'confirmed', scenes: [
                 { title: '雷温家', perspective: 'first', content: '' },
                 { title: '油画与幻境', perspective: 'first', content: '' },
@@ -1064,6 +1731,23 @@
         saveSceneEdit: saveSceneEdit,
         deleteScene: deleteScene,
         initMainStoryline: initMainStoryline,
+        // 文游引擎
+        startVN: startVN,
+        vnAdvance: vnAdvance,
+        vnChoice: vnChoice,
+        vnBack: vnBack,
+        vnSaveMenu: vnSaveMenu,
+        doSave: doSave,
+        vnLoadMenu: vnLoadMenu,
+        doLoad: doLoad,
+        // 文游编辑
+        openVNEditor: openVNEditor,
+        addVNNodeForm: addVNNodeForm,
+        saveNewVNNode: saveNewVNNode,
+        editVNNode: editVNNode,
+        saveVNNodeEdit: saveVNNodeEdit,
+        addChoice: addChoice,
+        deleteVNNode: deleteVNNode,
         getData: function() { if (!storyData) storyData = loadData(); return storyData; },
         saveData: function(data) { storyData = data; saveData(data); },
         resetHeroBg: function() {
@@ -1114,6 +1798,41 @@
     // 自动初始化主线数据
     setTimeout(function() {
         try { initMainStoryline(); } catch(e) { console.error('[qiyu-story] init error', e); }
+        try {
+            // 给已有数据但没文游节点的用户，补充注入焰尾鱼文游演示
+            if (!storyData) storyData = loadData();
+            var cat = getCat('main');
+            if (cat && cat.chapters && cat.chapters[0] && cat.chapters[0].title === '焰尾鱼' && (!cat.chapters[0].vnNodes || cat.chapters[0].vnNodes.length === 0)) {
+                cat.chapters[0].vnNodes = [
+                    { id: 'n1', type: 'narrate', character: null, position: 'left', text: '阳光明媚的午后，晴空广场人来人往。巨大的电子屏上滚动播放着今日消息，海风带着咸意掠过发梢。' , next: 'n2' },
+                    { id: 'n2', type: 'narrate', character: null, position: 'left', text: '我在人群中漫无目的地走着——或者说，是被某种奇怪的预感牵引着脚步。', next: 'n3' },
+                    { id: 'n3', type: 'dialog', character: '我', position: 'left', text: '（……总觉得，今天会遇到什么特别的事。）', next: 'n4' },
+                    { id: 'n4', type: 'dialog', character: '我', position: 'left', text: '哎，那边怎么围了一群人？好像在看什么奇怪的东西……', next: 'n5' },
+                    { id: 'n5', type: 'narrate', character: null, position: 'left', text: '我挤开人群，看到广场中央的喷泉池边——水正以一种违背常识的方式，凝成一条红色的鱼尾。', next: 'n6' },
+                    { id: 'n6', type: 'dialog', character: '我', position: 'left', text: '那是……鱼的尾巴？在空中飘着？！', next: 'n7' },
+                    { id: 'n7', type: 'narrate', character: null, position: 'left', text: '焰尾鱼在半空优雅地摆动尾鳍，像是在寻找什么。', next: 'n8' },
+                    { id: 'n8', type: 'dialog', character: '祁煜', position: 'right', text: '别靠太近。', next: 'n9' },
+                    { id: 'n9', type: 'narrate', character: null, position: 'left', text: '低沉的男声从身侧传来。我转过头——一个穿着深蓝衬衫、气质沉静的男人正站在我旁边，目光锁定那条焰尾鱼。', next: 'n10' },
+                    { id: 'n10', type: 'choice', choices: [
+                        { text: '你是谁？为什么要管这种事？', next: 'b1_a' },
+                        { text: '谢谢提醒。你……认识这条鱼？', next: 'b1_b' },
+                        { text: '（退后一步，谨慎地观察他）', next: 'b1_c' }
+                    ] },
+                    { id: 'b1_a', type: 'dialog', character: '祁煜', position: 'right', text: '祁煜。——至于我为什么要管，和你没关系。', next: 'merge1' },
+                    { id: 'b1_b', type: 'dialog', character: '祁煜', position: 'right', text: '……算不上认识。但它属于不该出现在这里的东西。', next: 'merge1' },
+                    { id: 'b1_c', type: 'dialog', character: '祁煜', position: 'right', text: '（微微瞥了你一眼）……别紧张，我对普通人没兴趣。', next: 'merge1' },
+                    { id: 'merge1', type: 'narrate', character: null, position: 'left', text: '话音未落，焰尾鱼突然发出尖锐的嘶鸣，猛地向人群扑了过去！', next: 'n11' },
+                    { id: 'n11', type: 'dialog', character: '祁煜', position: 'right', text: '啧。', next: 'n12' },
+                    { id: 'n12', type: 'narrate', character: null, position: 'left', text: '他瞬间抬手，指间浮现一颗暗红色的光粒——焰尾鱼应声被定在半空，化作细碎的火屑消散。', next: 'n13' },
+                    { id: 'n13', type: 'dialog', character: '我', position: 'left', text: '（刚才那是什么……？他是猎人？还是……）', next: 'n14' },
+                    { id: 'n14', type: 'dialog', character: '祁煜', position: 'right', text: '你看到了。', next: 'n15' },
+                    { id: 'n15', type: 'narrate', character: null, position: 'left', text: '他转过头看向我，那双暗红色的瞳孔里，像是映着深海里的火光。', next: 'n16' },
+                    { id: 'n16', type: 'dialog', character: '祁煜', position: 'right', text: '记住，从今天开始，你已经算半个「圈内人」了。', next: 'end1' },
+                    { id: 'end1', type: 'end', title: '第一章 · 焰尾鱼 · 完', text: '（剧情演示节点结束，后续可在编辑器中继续补充）' }
+                ];
+                saveData(storyData);
+            }
+        } catch(e) { console.error('[qiyu-story] vn demo inject error', e); }
     }, 0);
 
 })(typeof window !== 'undefined' ? window : this);
