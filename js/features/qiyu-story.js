@@ -1,6 +1,6 @@
 /**
  * 祁煜故事集 — 剧情阅读模块
- * 框架版：UI + 数据结构 + 空壳内容（待补充）
+ * 简约风格版：细线图标 + 柔和色调 + 可替换顶部背景
  *
  * 分类结构（对应游戏剧情板块）：
  *   主线剧情 → chapter（章节翻页阅读）
@@ -16,131 +16,78 @@
 (function (global) {
     'use strict';
 
-    /* ========== 主题色 ========== */
-    // 祁煜：火 Evol + 利莫里亚海洋 → 珊瑚橙 + 深海青
+    /* ========== 简约主题色 ========== */
     var THEME = {
-        accent: '#FF6B5C',          // 珊瑚火橙
-        accentRgb: '255, 107, 92',
-        accentDark: '#E0493B',
-        ocean: '#2EC4B6',           // 利莫里亚海青
-        oceanDark: '#1A9E92',
-        goldStar: '#FFD700',
-        bgGradient: 'linear-gradient(160deg, #fff5f3 0%, #fef0ef 30%, #f0faf8 100%)',
-        cardBg: 'rgba(255, 255, 255, 0.92)',
-        cardBorder: 'rgba(255, 107, 92, 0.15)',
-        textPrimary: '#2d1f1c',
-        textSecondary: '#8a7a76',
-        textTertiary: '#b0a5a2',
-        shadowColor: 'rgba(255, 107, 92, 0.12)',
-        darkBgGradient: 'linear-gradient(160deg, #1a1212 0%, #1a1416 50%, #0f1a18 100%)',
-        darkCardBg: 'rgba(40, 30, 28, 0.92)',
-        darkCardBorder: 'rgba(255, 107, 92, 0.2)',
-        darkTextPrimary: '#f5ebe8',
-        darkTextSecondary: '#a89a96',
-        darkTextTertiary: '#6a5e5c',
+        accent: '#8B7355',           // 温润棕灰（主色）
+        accentLight: '#D4C5B0',      // 浅棕灰（卡片图标底）
+        bg: '#FAF8F5',               // 米白背景
+        cardBg: '#FFFFFF',
+        cardBorder: '#EDE8E1',
+        textPrimary: '#2C2420',
+        textSecondary: '#9B8E84',
+        textTertiary: '#C4BAB3',
+        headerBg: '#F5F1EC',
+        mutedBg: '#F2EEE9',
+        dark: {
+            accent: '#D4C5B0',
+            accentLight: '#5A4D40',
+            bg: '#1A1816',
+            cardBg: '#24201C',
+            cardBorder: '#352F2A',
+            textPrimary: '#F0EBE4',
+            textSecondary: '#A89E95',
+            textTertiary: '#6E645D',
+            headerBg: '#1F1C19',
+            mutedBg: '#2A2622'
+        }
+    };
+
+    /* ========== 细线 SVG 图标 ========== */
+    var ICONS = {
+        main: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="16" y2="7"/><line x1="9" y1="11" x2="14" y2="11"/></svg>',
+        bond: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+        memory: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+        legend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><path d="M12 2L8 8h8l-4-6z"/><path d="M8 8l-3 6 7 4 7-4-3-6"/><path d="M5 14l7 4 7-4"/><path d="M12 12v8"/></svg>',
+        anecdote: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+        world: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+        messages: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+        moments: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
+        trace: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><path d="M12 2l2.09 6.26L20 9.27l-5 4.14L16.18 21 12 17.77 7.82 21 9 13.41 4 9.27l5.91-1.01L12 2z"/></svg>',
     };
 
     /* ========== 数据结构（默认空壳） ========== */
     var DEFAULT_DATA = {
+        heroBg: null,  // 顶部背景图（base64）
         categories: [
-            {
-                id: 'main',
-                title: '主线剧情',
-                subtitle: '与祁煜并肩的冒险旅程',
-                icon: '📖',
-                gradient: 'linear-gradient(135deg, #FF6B5C, #FF8E5C)',
-                type: 'chapter',
-                chapters: []  // {id, title, summary, content, images:[]}
-            },
-            {
-                id: 'bond',
-                title: '倾心之约 · 牵绊',
-                subtitle: '好感度解锁的约会故事',
-                icon: '💕',
-                gradient: 'linear-gradient(135deg, #FF8E5C, #FFAA7A)',
-                type: 'chapter',
-                chapters: []
-            },
-            {
-                id: 'memory',
-                title: '倾心之约 · 思念',
-                subtitle: '五星思念卡专属剧情',
-                icon: '🌟',
-                gradient: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                type: 'card',
-                cards: []  // {id, title, subtitle, content, image, tag}
-            },
-            {
-                id: 'legend',
-                title: '倾心之约 · 传说',
-                subtitle: '深层身份与过往秘密',
-                icon: '🔱',
-                gradient: 'linear-gradient(135deg, #2EC4B6, #4FD9CC)',
-                type: 'chapter',
-                chapters: []
-            },
-            {
-                id: 'anecdote',
-                title: '逸闻',
-                subtitle: '不为人知的轶事',
-                icon: '📜',
-                gradient: 'linear-gradient(135deg, #C9A063, #E0B97A)',
-                type: 'card',
-                cards: []
-            },
-            {
-                id: 'world',
-                title: '世界深处',
-                subtitle: '世界观扩展与时间线',
-                icon: '🌍',
-                gradient: 'linear-gradient(135deg, #5B9BD5, #7BAFE0)',
-                type: 'card',
-                cards: []
-            },
-            {
-                id: 'messages',
-                title: '短信通话',
-                subtitle: '他的消息与来电',
-                icon: '💬',
-                gradient: 'linear-gradient(135deg, #7BC8A4, #95D9B5)',
-                type: 'chat',
-                conversations: []  // {id, title, type:'sms'|'call', messages:[]}
-            },
-            {
-                id: 'moments',
-                title: '朋友圈',
-                subtitle: '他的动态分享',
-                icon: '📱',
-                gradient: 'linear-gradient(135deg, #BB9EC7, #D4BEE0)',
-                type: 'moments',
-                posts: []  // {id, text, image, time, likes:[]}
-            },
-            {
-                id: 'trace',
-                title: '心迹互动',
-                subtitle: '互动剧情分支记录',
-                icon: '✨',
-                gradient: 'linear-gradient(135deg, #FF6B5C, #FFD700)',
-                type: 'card',
-                cards: []  // {id, title, subtitle, content, image, branches:[]}
-            }
+            { id: 'main', title: '主线剧情', subtitle: '与祁煜并肩的冒险旅程', iconKey: 'main', type: 'chapter', chapters: [] },
+            { id: 'bond', title: '倾心之约 · 牵绊', subtitle: '好感度解锁的约会故事', iconKey: 'bond', type: 'chapter', chapters: [] },
+            { id: 'memory', title: '倾心之约 · 思念', subtitle: '五星思念卡专属剧情', iconKey: 'memory', type: 'card', cards: [] },
+            { id: 'legend', title: '倾心之约 · 传说', subtitle: '深层身份与过往秘密', iconKey: 'legend', type: 'chapter', chapters: [] },
+            { id: 'anecdote', title: '逸闻', subtitle: '不为人知的轶事', iconKey: 'anecdote', type: 'card', cards: [] },
+            { id: 'world', title: '世界深处', subtitle: '世界观扩展与时间线', iconKey: 'world', type: 'card', cards: [] },
+            { id: 'messages', title: '短信通话', subtitle: '他的消息与来电', iconKey: 'messages', type: 'chat', conversations: [] },
+            { id: 'moments', title: '朋友圈', subtitle: '他的动态分享', iconKey: 'moments', type: 'moments', posts: [] },
+            { id: 'trace', title: '心迹互动', subtitle: '互动剧情分支记录', iconKey: 'trace', type: 'card', cards: [] }
         ]
     };
 
     /* ========== 存储 ========== */
     var STORAGE_KEY = 'qiyu_story_data';
+    var HERO_BG_KEY = 'qiyu_story_hero_bg';
 
     function loadData() {
         try {
             var saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 var data = JSON.parse(saved);
-                // 合并新分类（向前兼容）
                 if (data && data.categories) {
                     DEFAULT_DATA.categories.forEach(function(def) {
                         var exists = data.categories.find(function(c) { return c.id === def.id; });
                         if (!exists) data.categories.push(def);
                     });
+                    // 加载 hero 背景
+                    var bg = localStorage.getItem(HERO_BG_KEY);
+                    if (bg) data.heroBg = bg;
                     return data;
                 }
             }
@@ -150,7 +97,13 @@
 
     function saveData(data) {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            // heroBg 单独存（可能很大）
+            var toSave = JSON.parse(JSON.stringify(data));
+            var bg = toSave.heroBg;
+            delete toSave.heroBg;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+            if (bg) localStorage.setItem(HERO_BG_KEY, bg);
+            else localStorage.removeItem(HERO_BG_KEY);
         } catch (e) {
             console.error('[qiyu-story] 保存失败', e);
         }
@@ -158,43 +111,41 @@
 
     var storyData = null;
 
-    /* ========== UI 工具 ========== */
-    function isDarkMode() {
+    /* ========== 工具函数 ========== */
+    function isDark() {
         return document.documentElement.getAttribute('data-theme') === 'dark' ||
             (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches &&
                 document.documentElement.getAttribute('data-theme') !== 'light');
     }
 
-    function t(prop) {
-        return isDarkMode() ? THEME['dark' + prop.charAt(0).toUpperCase() + prop.slice(1)] || THEME[prop] : THEME[prop];
+    function getTheme() {
+        return isDark() ? THEME.dark : THEME;
     }
 
-    function escapeHtml(text) {
+    function esc(text) {
         if (!text) return '';
-        var div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        var d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
     }
 
     function formatContent(text) {
-        if (!text) return '<p style="color:' + (isDarkMode() ? THEME.darkTextTertiary : THEME.textTertiary) + ';font-style:italic;">内容待补充…</p>';
-        var html = escapeHtml(text);
-        // 段落分隔（空行或 --- 分隔）
+        if (!text) return '<p style="color:' + getTheme().textTertiary + ';font-style:italic;">内容待补充…</p>';
+        var html = esc(text);
         html = html.split(/\n\n+|---/).map(function(p) {
             p = p.trim();
             if (!p) return '';
-            // [img:位置|url] 插图标记
             var imgMatch = p.match(/\[img:(.+?)\]/);
             if (imgMatch) {
                 var url = imgMatch[1].trim();
-                return '<figure style="margin:20px 0;text-align:center;"><img src="' + escapeHtml(url) + '" style="max-width:100%;border-radius:14px;box-shadow:0 6px 20px ' + THEME.shadowColor + ';" /><figcaption style="font-size:11px;color:' + (isDarkMode() ? THEME.darkTextTertiary : THEME.textTertiary) + ';margin-top:6px;">' + escapeHtml(p.replace(imgMatch[0], '').trim()) + '</figcaption></figure>';
+                return '<figure style="margin:24px 0;text-align:center;"><img src="' + esc(url) + '" style="max-width:100%;border-radius:12px;" /><figcaption style="font-size:11px;color:' + getTheme().textTertiary + ';margin-top:6px;">' + esc(p.replace(imgMatch[0], '').trim()) + '</figcaption></figure>';
             }
-            return '<p style="margin:0 0 1.2em;line-height:1.85;font-size:14.5px;letter-spacing:0.3px;">' + p.replace(/\n/g, '<br>') + '</p>';
+            return '<p style="margin:0 0 1.4em;line-height:1.9;font-size:14.5px;letter-spacing:0.2px;">' + p.replace(/\n/g, '<br>') + '</p>';
         }).join('');
         return html;
     }
 
-    function getCategory(id) {
+    function getCat(id) {
         return storyData.categories.find(function(c) { return c.id === id; });
     }
 
@@ -206,349 +157,311 @@
         return 0;
     }
 
-    /* ========== 主面板（分类浏览器） ========== */
+    /* ========== 主面板 ========== */
     function openStory() {
         if (!storyData) storyData = loadData();
+        var t = getTheme();
 
         var overlay = document.createElement('div');
-        overlay.id = 'qiyu-story-overlay';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999995;background:' + (isDarkMode() ? THEME.darkBgGradient : THEME.bgGradient) + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+        overlay.id = 'qiyu-story-root';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999995;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
 
-        var dark = isDarkMode();
-        var tp = dark ? THEME.darkTextPrimary : THEME.textPrimary;
-        var ts = dark ? THEME.darkTextSecondary : THEME.textSecondary;
-        var cardBg = dark ? THEME.darkCardBg : THEME.cardBg;
-        var cardBorder = dark ? THEME.darkCardBorder : THEME.cardBorder;
+        // Hero 区域
+        var heroBgStyle = storyData.heroBg ?
+            'background-image:url(' + storyData.heroBg + ');background-size:cover;background-position:center;' :
+            'background:' + t.headerBg + ';';
 
-        // 顶部头图区域
         var heroHtml =
-            '<div style="position:relative;height:220px;overflow:hidden;flex-shrink:0;">' +
-                '<div style="position:absolute;inset:0;background:linear-gradient(160deg, #FF6B5C 0%, #FF8E5C 30%, #2EC4B6 100%);opacity:0.9;"></div>' +
-                // 装饰光晕
-                '<div style="position:absolute;top:-40px;right:-30px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle, rgba(255,215,0,0.2) 0%, transparent 70%);pointer-events:none;"></div>' +
-                '<div style="position:absolute;bottom:-30px;left:20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle, rgba(46,196,182,0.2) 0%, transparent 70%);pointer-events:none;"></div>' +
-                // 水波纹装饰
-                '<svg style="position:absolute;bottom:0;left:0;right:0;width:100%;height:60px;" viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,30 C320,50 640,10 960,30 C1280,50 1440,30 1440,30 L1440,60 L0,60 Z" fill="' + (dark ? '#1a1212' : '#fff5f3') + '" opacity="0.5"/></svg>' +
-                '<svg style="position:absolute;bottom:0;left:0;right:0;width:100%;height:40px;" viewBox="0 0 1440 40" preserveAspectRatio="none"><path d="M0,20 C480,35 960,5 1440,20 L1440,40 L0,40 Z" fill="' + (dark ? '#1a1212' : '#fff5f3') + '"/></svg>' +
-                // 文字
-                '<div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding-top:env(safe-area-inset-top,0px);">' +
-                    '<div style="font-size:48px;line-height:1;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.2));">🔥</div>' +
-                    '<div style="font-size:24px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.3);letter-spacing:2px;">祁煜故事集</div>' +
-                    '<div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:6px;font-weight:500;text-shadow:0 1px 4px rgba(0,0,0,0.2);">利莫里亚最后的火焰</div>' +
-                '</div>' +
+            '<div style="position:relative;height:200px;' + heroBgStyle + 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 20px 0;box-sizing:border-box;">' +
+                // 背景图遮罩
+                (storyData.heroBg ? '<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.1) 0%,rgba(0,0,0,0.35) 100%);"></div>' : '') +
                 // 返回按钮
-                '<div onclick="document.getElementById(\'qiyu-story-overlay\').remove();" style="position:absolute;top:env(safe-area-inset-top,0px);left:12px;z-index:10;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.25);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;cursor:pointer;">←</div>' +
+                '<div onclick="document.getElementById(\'qiyu-story-root\').remove();" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:16px;z-index:10;width:32px;height:32px;border-radius:50%;background:' + (storyData.heroBg ? 'rgba(0,0,0,0.3)' : t.mutedBg) + ';display:flex;align-items:center;justify-content:center;font-size:16px;color:' + (storyData.heroBg ? '#fff' : t.textSecondary) + ';cursor:pointer;">←</div>' +
+                // 上传按钮
+                '<div onclick="QiyuStory.uploadHeroBg()" style="position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:16px;z-index:10;width:32px;height:32px;border-radius:50%;background:' + (storyData.heroBg ? 'rgba(0,0,0,0.3)' : t.mutedBg) + ';display:flex;align-items:center;justify-content:center;font-size:14px;color:' + (storyData.heroBg ? '#fff' : t.textSecondary) + ';cursor:pointer;" title="更换背景">⤓</div>' +
+                // 文字
+                '<div style="position:relative;z-index:2;text-align:center;' + (storyData.heroBg ? 'color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.4);' : 'color:' + t.textPrimary + ';') + '">' +
+                    '<div style="font-size:22px;font-weight:700;letter-spacing:1px;margin-bottom:4px;">祁煜故事集</div>' +
+                    '<div style="font-size:12px;font-weight:500;' + (storyData.heroBg ? 'opacity:0.9;' : 'color:' + t.textSecondary + ';') + '">利莫里亚最后的火焰</div>' +
+                '</div>' +
             '</div>';
 
-        // 分类卡片网格
-        var cardsHtml = '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;padding:16px 16px 40px;">';
+        // 分类卡片
+        var cardsHtml = '<div style="padding:16px 16px 40px;display:flex;flex-direction:column;gap:10px;">';
 
         storyData.categories.forEach(function(cat) {
             var count = countItems(cat);
             var statusText = count > 0 ? count + ' 篇' : '待补充';
-            var statusColor = count > 0 ? THEME.accent : (dark ? THEME.darkTextTertiary : THEME.textTertiary);
+            var statusColor = count > 0 ? t.accent : t.textTertiary;
+            var iconHtml = ICONS[cat.iconKey] || ICONS.main;
+
             cardsHtml +=
-                '<div onclick="QiyuStory.openCategory(\'' + cat.id + '\')" style="position:relative;overflow:hidden;border-radius:18px;background:' + cardBg + ';border:1px solid ' + cardBorder + ';box-shadow:0 4px 16px ' + THEME.shadowColor + ';cursor:pointer;transition:transform 0.2s, box-shadow 0.2s;" onmousedown="this.style.transform=\'scale(0.97)\'" onmouseup="this.style.transform=\'scale(1)\'" ontouchstart="this.style.transform=\'scale(0.97)\'" ontouchend="this.style.transform=\'scale(1)\'">' +
-                    // 顶部渐变条
-                    '<div style="height:60px;background:' + cat.gradient + ';position:relative;overflow:hidden;">' +
-                        '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.2) 0%, transparent 60%);"></div>' +
-                        '<div style="position:absolute;top:50%;left:16px;transform:translateY(-50%);font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));">' + cat.icon + '</div>' +
+                '<div onclick="QiyuStory.openCategory(\'' + cat.id + '\')" style="display:flex;align-items:center;gap:16px;padding:16px;border-radius:14px;background:' + t.cardBg + ';border:1px solid ' + t.cardBorder + ';cursor:pointer;transition:background 0.15s;" onmousedown="this.style.background=\'' + t.mutedBg + '\'" onmouseup="this.style.background=\'' + t.cardBg + '\'" ontouchstart="this.style.background=\'' + t.mutedBg + '\'" ontouchend="this.style.background=\'' + t.cardBg + '\'">' +
+                    '<div style="width:44px;height:44px;border-radius:12px;background:' + t.accentLight + ';display:flex;align-items:center;justify-content:center;color:' + t.accent + ';flex-shrink:0;">' + iconHtml + '</div>' +
+                    '<div style="flex:1;min-width:0;">' +
+                        '<div style="font-size:15px;font-weight:600;color:' + t.textPrimary + ';line-height:1.3;">' + esc(cat.title) + '</div>' +
+                        '<div style="font-size:12px;color:' + t.textSecondary + ';margin-top:3px;line-height:1.4;">' + esc(cat.subtitle) + '</div>' +
                     '</div>' +
-                    // 内容
-                    '<div style="padding:12px 14px 14px;">' +
-                        '<div style="font-size:14px;font-weight:800;color:' + tp + ';line-height:1.3;">' + cat.title + '</div>' +
-                        '<div style="font-size:11px;color:' + ts + ';margin-top:4px;line-height:1.4;font-weight:500;">' + cat.subtitle + '</div>' +
-                        '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">' +
-                            '<span style="font-size:10px;font-weight:700;color:' + statusColor + ';padding:2px 8px;border-radius:8px;background:' + (dark ? 'rgba(255,107,92,0.12)' : 'rgba(255,107,92,0.08)') + ';">' + statusText + '</span>' +
-                            '<span style="font-size:14px;color:' + (dark ? THEME.darkTextTertiary : THEME.textTertiary) + ';">›</span>' +
-                        '</div>' +
+                    '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
+                        '<span style="font-size:11px;font-weight:500;color:' + statusColor + ';">' + statusText + '</span>' +
+                        '<span style="font-size:14px;color:' + t.textTertiary + ';">›</span>' +
                     '</div>' +
                 '</div>';
         });
         cardsHtml += '</div>';
 
-        // 底部说明
-        var footerHtml =
-            '<div style="text-align:center;padding:0 20px 40px;">' +
-                '<div style="font-size:11px;color:' + (dark ? THEME.darkTextTertiary : THEME.textTertiary) + ';line-height:1.6;">' +
-                    '剧情内容基于游戏公开资料整理<br>仅作阅读收藏用途<br><strong style="color:' + THEME.ocean + ';">🌊 利莫里亚 · 火焰不灭</strong>' +
-                '</div>' +
-            '</div>';
-
-        overlay.innerHTML = heroHtml + cardsHtml + footerHtml;
+        overlay.innerHTML = heroHtml + cardsHtml;
         document.body.appendChild(overlay);
     }
 
-    /* ========== 分类详情页 ========== */
-    function openCategory(catId) {
-        var cat = getCategory(catId);
-        if (!cat) return;
+    /* ========== 上传 Hero 背景 ========== */
+    function uploadHeroBg() {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = function(e) {
+            var file = e.target.files && e.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片不能超过 5MB');
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function() {
+                storyData.heroBg = reader.result;
+                saveData(storyData);
+                // 刷新 hero 区域
+                var root = document.getElementById('qiyu-story-root');
+                if (root) {
+                    var t = getTheme();
+                    var heroBgStyle = 'background-image:url(' + storyData.heroBg + ');background-size:cover;background-position:center;';
+                    root.querySelector('div').parentElement.querySelector('div').style.cssText = 'position:relative;height:200px;' + heroBgStyle + 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 20px 0;box-sizing:border-box;';
+                    // 简单起见，直接重新打开
+                    root.remove();
+                    openStory();
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    }
 
+    /* ========== 分类路由 ========== */
+    function openCategory(catId) {
+        var cat = getCat(catId);
+        if (!cat) return;
         if (cat.type === 'chapter') openChapterList(cat);
         else if (cat.type === 'card') openCardGrid(cat);
         else if (cat.type === 'chat') openChatList(cat);
         else if (cat.type === 'moments') openMomentsList(cat);
     }
 
-    /* ========== 章节列表（主线/牵绊/传说） ========== */
-    function openChapterList(cat) {
-        var dark = isDarkMode();
-        var tp = dark ? THEME.darkTextPrimary : THEME.textPrimary;
-        var ts = dark ? THEME.darkTextSecondary : THEME.textSecondary;
-        var cardBg = dark ? THEME.darkCardBg : THEME.cardBg;
-        var cardBorder = dark ? THEME.darkCardBorder : THEME.cardBorder;
+    /* ========== 子页面顶部栏 ========== */
+    function subHeader(title, subtitle) {
+        var t = getTheme();
+        return '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + t.bg + ';border-bottom:1px solid ' + t.cardBorder + ';">' +
+            '<div onclick="var o=document.getElementById(\'qiyu-chapter-list\')||document.getElementById(\'qiyu-card-grid\')||document.getElementById(\'qiyu-chat-list\')||document.getElementById(\'qiyu-moments-list\');if(o)o.remove();" style="width:32px;height:32px;border-radius:50%;background:' + t.mutedBg + ';display:flex;align-items:center;justify-content:center;font-size:15px;color:' + t.textPrimary + ';cursor:pointer;flex-shrink:0;">←</div>' +
+            '<div style="flex:1;">' +
+                '<div style="font-size:16px;font-weight:600;color:' + t.textPrimary + ';">' + esc(title) + '</div>' +
+                '<div style="font-size:11px;color:' + t.textSecondary + ';margin-top:2px;">' + esc(subtitle) + '</div>' +
+            '</div>' +
+        '</div>';
+    }
 
+    /* ========== 章节列表 ========== */
+    function openChapterList(cat) {
+        var t = getTheme();
         var overlay = document.createElement('div');
         overlay.id = 'qiyu-chapter-list';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999996;background:' + (dark ? THEME.darkBgGradient : THEME.bgGradient) + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999996;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
 
         var chapters = cat.chapters || [];
         var listHtml = '';
 
         if (chapters.length === 0) {
-            listHtml = emptyState(cat.icon, '还没有内容', '后续在这里补充' + cat.title + '的章节故事');
+            listHtml = '<div style="text-align:center;padding:80px 20px;"><div style="font-size:36px;color:' + t.textTertiary + ';margin-bottom:12px;">' + (ICONS[cat.iconKey] || '') + '</div><div style="font-size:14px;color:' + t.textSecondary + ';font-weight:500;">还没有内容</div><div style="font-size:12px;color:' + t.textTertiary + ';margin-top:6px;">后续在这里补充章节故事</div></div>';
         } else {
             chapters.forEach(function(ch, idx) {
                 listHtml +=
-                    '<div onclick="QiyuStory.openChapter(\'' + cat.id + '\', ' + idx + ')" style="display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px;background:' + cardBg + ';border:1px solid ' + cardBorder + ';margin-bottom:10px;cursor:pointer;transition:transform 0.15s;box-shadow:0 2px 10px ' + THEME.shadowColor + ';" onmousedown="this.style.transform=\'scale(0.98)\'" onmouseup="this.style.transform=\'scale(1)\'" ontouchstart="this.style.transform=\'scale(0.98)\'" ontouchend="this.style.transform=\'scale(1)\'">' +
-                        '<div style="width:42px;height:42px;border-radius:12px;background:' + cat.gradient + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;box-shadow:0 3px 10px ' + THEME.shadowColor + ';">' + (idx + 1) + '</div>' +
+                    '<div onclick="QiyuStory.openChapter(\'' + cat.id + '\',' + idx + ')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid ' + t.cardBorder + ';cursor:pointer;" onmousedown="this.style.background=\'' + t.mutedBg + '\'" onmouseup="this.style.background=\'transparent\'" ontouchstart="this.style.background=\'' + t.mutedBg + '\'" ontouchend="this.style.background=\'transparent\'">' +
+                        '<div style="width:28px;height:28px;border-radius:8px;background:' + t.accentLight + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:' + t.accent + ';flex-shrink:0;">' + (idx + 1) + '</div>' +
                         '<div style="flex:1;min-width:0;">' +
-                            '<div style="font-size:14px;font-weight:700;color:' + tp + ';line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(ch.title || ('第' + (idx+1) + '章')) + '</div>' +
-                            '<div style="font-size:11px;color:' + ts + ';margin-top:3px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(ch.summary || '点击阅读') + '</div>' +
+                            '<div style="font-size:14px;font-weight:600;color:' + t.textPrimary + ';line-height:1.3;">' + esc(ch.title || ('第' + (idx+1) + '章')) + '</div>' +
+                            '<div style="font-size:12px;color:' + t.textSecondary + ';margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(ch.summary || '点击阅读') + '</div>' +
                         '</div>' +
-                        '<div style="font-size:14px;color:' + (dark ? THEME.darkTextTertiary : THEME.textTertiary) + ';">›</div>' +
+                        '<span style="font-size:14px;color:' + t.textTertiary + ';">›</span>' +
                     '</div>';
             });
         }
 
-        overlay.innerHTML = buildSubHeader(cat, listHtml, dark);
+        overlay.innerHTML = subHeader(cat.title, cat.subtitle) + '<div>' + listHtml + '</div>';
         document.body.appendChild(overlay);
     }
 
     /* ========== 章节阅读器 ========== */
     function openChapter(catId, index) {
-        var cat = getCategory(catId);
+        var cat = getCat(catId);
         if (!cat || !cat.chapters || !cat.chapters[index]) return;
         var ch = cat.chapters[index];
-        var dark = isDarkMode();
-        var tp = dark ? THEME.darkTextPrimary : THEME.textPrimary;
-        var ts = dark ? THEME.darkTextSecondary : THEME.textSecondary;
+        var t = getTheme();
 
         var overlay = document.createElement('div');
         overlay.id = 'qiyu-chapter-reader';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999997;background:' + (dark ? '#1a1212' : '#fff8f6') + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999997;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
 
         var content = formatContent(ch.content);
 
-        // 翻页按钮
         var prevBtn = index > 0 ?
-            '<div onclick="QiyuStory.openChapter(\'' + catId + '\', ' + (index-1) + ')" style="flex:1;padding:12px;border-radius:12px;background:' + (dark ? THEME.darkCardBg : '#fff') + ';border:1px solid ' + (dark ? THEME.darkCardBorder : THEME.cardBorder) + ';color:' + tp + ';font-size:13px;font-weight:700;text-align:center;cursor:pointer;font-family:inherit;">← 上一章</div>' : '';
+            '<div onclick="QiyuStory.openChapter(\'' + catId + '\',' + (index-1) + ')" style="padding:12px 20px;border-radius:10px;background:' + t.mutedBg + ';color:' + t.textPrimary + ';font-size:13px;font-weight:500;text-align:center;cursor:pointer;">← 上一章</div>' : '';
         var nextBtn = index < cat.chapters.length - 1 ?
-            '<div onclick="QiyuStory.openChapter(\'' + catId + '\', ' + (index+1) + ')" style="flex:1;padding:12px;border-radius:12px;background:linear-gradient(135deg,' + THEME.accent + ',' + THEME.accentDark + ');color:#fff;font-size:13px;font-weight:700;text-align:center;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px ' + THEME.shadowColor + ';">下一章 →</div>' : '';
+            '<div onclick="QiyuStory.openChapter(\'' + catId + '\',' + (index+1) + ')" style="padding:12px 20px;border-radius:10px;background:' + t.accent + ';color:#fff;font-size:13px;font-weight:500;text-align:center;cursor:pointer;">下一章 →</div>' : '';
 
         overlay.innerHTML =
-            // 顶部栏
-            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + (dark ? 'rgba(26,18,18,0.9)' : 'rgba(255,248,246,0.9)') + ';backdrop-filter:blur(12px);border-bottom:1px solid ' + (dark ? THEME.darkCardBorder : THEME.cardBorder) + ';">' +
-                '<div onclick="document.getElementById(\'qiyu-chapter-reader\').remove();" style="width:32px;height:32px;border-radius:50%;background:' + (dark ? THEME.darkCardBg : '#fff') + ';display:flex;align-items:center;justify-content:center;font-size:16px;color:' + tp + ';cursor:pointer;flex-shrink:0;">←</div>' +
-                '<div style="flex:1;min-width:0;">' +
-                    '<div style="font-size:12px;font-weight:800;color:' + THEME.accent + ';line-height:1.2;">' + cat.icon + ' ' + escapeHtml(cat.title) + '</div>' +
-                    '<div style="font-size:13px;font-weight:700;color:' + tp + ';margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(ch.title || ('第' + (index+1) + '章')) + '</div>' +
-                '</div>' +
-            '</div>' +
-            // 内容区
-            '<div style="max-width:640px;margin:0 auto;padding:28px 22px 40px;">' +
-                // 章节标题
-                '<h1 style="font-size:22px;font-weight:900;color:' + tp + ';line-height:1.4;margin:0 0 8px;letter-spacing:0.5px;">' + escapeHtml(ch.title || ('第' + (index+1) + '章')) + '</h1>' +
-                (ch.summary ? '<div style="font-size:13px;color:' + ts + ';line-height:1.6;margin-bottom:24px;padding-left:12px;border-left:3px solid ' + THEME.accent + ';font-style:italic;">' + escapeHtml(ch.summary) + '</div>' : '<div style="height:20px;"></div>') +
-                // 正文
-                '<div style="font-family:-apple-system,\'PingFang SC\',\'Noto Serif SC\',serif;color:' + tp + ';">' + content + '</div>' +
-                // 翻页
-                '<div style="display:flex;gap:10px;margin-top:36px;">' + prevBtn + nextBtn + '</div>' +
+            subHeader(cat.title, '第' + (index+1) + '章') +
+            '<div style="max-width:600px;margin:0 auto;padding:32px 24px 60px;">' +
+                '<h1 style="font-size:20px;font-weight:700;color:' + t.textPrimary + ';line-height:1.5;margin:0 0 10px;">' + esc(ch.title || ('第' + (index+1) + '章')) + '</h1>' +
+                (ch.summary ? '<div style="font-size:13px;color:' + t.textSecondary + ';line-height:1.6;margin-bottom:28px;padding-left:10px;border-left:2px solid ' + t.accentLight + ';">' + esc(ch.summary) + '</div>' : '<div style="height:16px;"></div>') +
+                '<div style="color:' + t.textPrimary + ';">' + content + '</div>' +
+                '<div style="display:flex;gap:12px;margin-top:40px;">' + prevBtn + nextBtn + '</div>' +
             '</div>';
 
         document.body.appendChild(overlay);
-        overlay.scrollTop = 0;
     }
 
-    /* ========== 卡片网格（思念/逸闻/世界深处/心迹） ========== */
+    /* ========== 卡片网格 ========== */
     function openCardGrid(cat) {
-        var dark = isDarkMode();
-        var tp = dark ? THEME.darkTextPrimary : THEME.textPrimary;
-        var ts = dark ? THEME.darkTextSecondary : THEME.textSecondary;
-        var cardBg = dark ? THEME.darkCardBg : THEME.cardBg;
-        var cardBorder = dark ? THEME.darkCardBorder : THEME.cardBorder;
-
+        var t = getTheme();
         var overlay = document.createElement('div');
         overlay.id = 'qiyu-card-grid';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999996;background:' + (dark ? THEME.darkBgGradient : THEME.bgGradient) + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999996;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
 
         var cards = cat.cards || [];
         var gridHtml = '';
 
         if (cards.length === 0) {
-            gridHtml = emptyState(cat.icon, '还没有内容', '后续在这里补充' + cat.title);
+            gridHtml = '<div style="text-align:center;padding:80px 20px;"><div style="font-size:36px;color:' + t.textTertiary + ';margin-bottom:12px;">' + (ICONS[cat.iconKey] || '') + '</div><div style="font-size:14px;color:' + t.textSecondary + ';font-weight:500;">还没有内容</div><div style="font-size:12px;color:' + t.textTertiary + ';margin-top:6px;">后续在这里补充' + cat.title + '</div></div>';
         } else {
-            gridHtml = '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:12px;">';
+            gridHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px;">';
             cards.forEach(function(card, idx) {
-                var imgHtml = card.image ?
-                    '<div style="height:100px;border-radius:12px 12px 0 0;overflow:hidden;background:' + cat.gradient + ';">' +
-                        '<img src="' + escapeHtml(card.image) + '" style="width:100%;height:100%;object-fit:cover;" />' +
-                    '</div>' :
-                    '<div style="height:80px;border-radius:12px 12px 0 0;background:' + cat.gradient + ';display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;overflow:hidden;">' +
-                        '<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 60% 30%, rgba(255,255,255,0.15) 0%, transparent 60%);"></div>' +
-                        '<span style="position:relative;z-index:1;">' + cat.icon + '</span>' +
-                    '</div>';
-
+                var iconHtml = ICONS[cat.iconKey] || ICONS.memory;
                 gridHtml +=
-                    '<div onclick="QiyuStory.openCardDetail(\'' + cat.id + '\', ' + idx + ')" style="overflow:hidden;border-radius:14px;background:' + cardBg + ';border:1px solid ' + cardBorder + ';box-shadow:0 3px 12px ' + THEME.shadowColor + ';cursor:pointer;transition:transform 0.15s;" onmousedown="this.style.transform=\'scale(0.97)\'" onmouseup="this.style.transform=\'scale(1)\'" ontouchstart="this.style.transform=\'scale(0.97)\'" ontouchend="this.style.transform=\'scale(1)\'">' +
-                        imgHtml +
+                    '<div onclick="QiyuStory.openCardDetail(\'' + cat.id + '\',' + idx + ')" style="overflow:hidden;border-radius:12px;background:' + t.cardBg + ';border:1px solid ' + t.cardBorder + ';cursor:pointer;" onmousedown="this.style.background=\'' + t.mutedBg + '\'" onmouseup="this.style.background=\'' + t.cardBg + '\'" ontouchstart="this.style.background=\'' + t.mutedBg + '\'" ontouchend="this.style.background=\'' + t.cardBg + '\'">' +
+                        '<div style="height:72px;background:' + t.headerBg + ';display:flex;align-items:center;justify-content:center;color:' + t.accent + ';">' + iconHtml + '</div>' +
                         '<div style="padding:10px 12px 12px;">' +
-                            '<div style="font-size:13px;font-weight:800;color:' + tp + ';line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + escapeHtml(card.title || '未命名') + '</div>' +
-                            (card.subtitle ? '<div style="font-size:10px;color:' + ts + ';margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;font-weight:500;">' + escapeHtml(card.subtitle) + '</div>' : '') +
-                            (card.tag ? '<span style="display:inline-block;margin-top:6px;font-size:9px;font-weight:700;color:' + THEME.accent + ';padding:1px 7px;border-radius:6px;background:rgba(255,107,92,0.1);">' + escapeHtml(card.tag) + '</span>' : '') +
+                            '<div style="font-size:13px;font-weight:600;color:' + t.textPrimary + ';line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + esc(card.title || '未命名') + '</div>' +
+                            (card.tag ? '<span style="display:inline-block;margin-top:6px;font-size:10px;font-weight:500;color:' + t.accent + ';">' + esc(card.tag) + '</span>' : '') +
                         '</div>' +
                     '</div>';
             });
             gridHtml += '</div>';
         }
 
-        overlay.innerHTML = buildSubHeader(cat, gridHtml, dark);
+        overlay.innerHTML = subHeader(cat.title, cat.subtitle) + gridHtml;
         document.body.appendChild(overlay);
     }
 
-    /* ========== 卡片详情（阅读） ========== */
+    /* ========== 卡片详情 ========== */
     function openCardDetail(catId, index) {
-        var cat = getCategory(catId);
+        var cat = getCat(catId);
         if (!cat || !cat.cards || !cat.cards[index]) return;
         var card = cat.cards[index];
-        var dark = isDarkMode();
-        var tp = dark ? THEME.darkTextPrimary : THEME.textPrimary;
-        var ts = dark ? THEME.darkTextSecondary : THEME.textSecondary;
+        var t = getTheme();
 
         var overlay = document.createElement('div');
         overlay.id = 'qiyu-card-detail';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999997;background:' + (dark ? '#1a1212' : '#fff8f6') + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999997;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
 
         var content = formatContent(card.content);
 
-        // 分支选项（心迹用）
         var branchesHtml = '';
         if (card.branches && card.branches.length) {
-            branchesHtml = '<div style="margin-top:28px;padding:16px;border-radius:14px;background:' + (dark ? 'rgba(255,107,92,0.08)' : 'rgba(255,107,92,0.05)') + ';border:1px solid ' + (dark ? THEME.darkCardBorder : THEME.cardBorder) + ';">' +
-                '<div style="font-size:12px;font-weight:800;color:' + THEME.accent + ';margin-bottom:10px;">⚡ 分支选项</div>';
+            branchesHtml = '<div style="margin-top:32px;padding:16px;border-radius:10px;background:' + t.mutedBg + ';">' +
+                '<div style="font-size:12px;font-weight:600;color:' + t.accent + ';margin-bottom:12px;">分支选项</div>';
             card.branches.forEach(function(b) {
                 branchesHtml +=
-                    '<div style="padding:10px 12px;border-radius:10px;background:' + (dark ? THEME.darkCardBg : '#fff') + ';margin-bottom:8px;border-left:3px solid ' + THEME.ocean + ';">' +
-                        '<div style="font-size:13px;font-weight:700;color:' + tp + ';">' + escapeHtml(b.option || b.title || '') + '</div>' +
-                        (b.result ? '<div style="font-size:12px;color:' + ts + ';margin-top:4px;line-height:1.5;">' + escapeHtml(b.result) + '</div>' : '') +
+                    '<div style="padding:10px 12px;border-radius:8px;background:' + t.cardBg + ';margin-bottom:8px;border-left:2px solid ' + t.accentLight + ';">' +
+                        '<div style="font-size:13px;font-weight:500;color:' + t.textPrimary + ';">' + esc(b.option || b.title || '') + '</div>' +
+                        (b.result ? '<div style="font-size:12px;color:' + t.textSecondary + ';margin-top:4px;">' + esc(b.result) + '</div>' : '') +
                     '</div>';
             });
             branchesHtml += '</div>';
         }
 
         overlay.innerHTML =
-            // 顶部栏
-            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + (dark ? 'rgba(26,18,18,0.9)' : 'rgba(255,248,246,0.9)') + ';backdrop-filter:blur(12px);border-bottom:1px solid ' + (dark ? THEME.darkCardBorder : THEME.cardBorder) + ';">' +
-                '<div onclick="document.getElementById(\'qiyu-card-detail\').remove();" style="width:32px;height:32px;border-radius:50%;background:' + (dark ? THEME.darkCardBg : '#fff') + ';display:flex;align-items:center;justify-content:center;font-size:16px;color:' + tp + ';cursor:pointer;flex-shrink:0;">←</div>' +
-                '<div style="flex:1;font-size:13px;font-weight:800;color:' + THEME.accent + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + cat.icon + ' ' + escapeHtml(cat.title) + '</div>' +
-            '</div>' +
-            // 内容区
-            '<div style="max-width:640px;margin:0 auto;padding:24px 20px 40px;">' +
-                // 大图
-                (card.image ?
-                    '<div style="border-radius:16px;overflow:hidden;margin-bottom:20px;box-shadow:0 8px 24px ' + THEME.shadowColor + ';">' +
-                        '<img src="' + escapeHtml(card.image) + '" style="width:100%;display:block;" />' +
-                    '</div>' : '') +
-                // 标题
-                '<h1 style="font-size:20px;font-weight:900;color:' + tp + ';line-height:1.4;margin:0 0 6px;">' + escapeHtml(card.title || '未命名') + '</h1>' +
-                (card.subtitle ? '<div style="font-size:13px;color:' + ts + ';margin-bottom:20px;font-weight:500;">' + escapeHtml(card.subtitle) + '</div>' : '<div style="height:16px;"></div>') +
-                (card.tag ? '<span style="display:inline-block;font-size:10px;font-weight:700;color:' + THEME.accent + ';padding:2px 10px;border-radius:8px;background:rgba(255,107,92,0.1);margin-bottom:20px;">' + escapeHtml(card.tag) + '</span>' : '') +
-                // 正文
-                '<div style="font-family:-apple-system,\'PingFang SC\',\'Noto Serif SC\',serif;color:' + tp + ';">' + content + '</div>' +
+            subHeader(cat.title, card.title || '') +
+            '<div style="max-width:600px;margin:0 auto;padding:24px 24px 60px;">' +
+                '<h1 style="font-size:18px;font-weight:700;color:' + t.textPrimary + ';line-height:1.4;margin:0 0 8px;">' + esc(card.title || '未命名') + '</h1>' +
+                (card.subtitle ? '<div style="font-size:13px;color:' + t.textSecondary + ';margin-bottom:24px;">' + esc(card.subtitle) + '</div>' : '<div style="height:12px;"></div>') +
+                (card.tag ? '<span style="display:inline-block;font-size:10px;font-weight:500;color:' + t.accent + ';padding:3px 10px;border-radius:6px;background:' + t.mutedBg + ';margin-bottom:24px;">' + esc(card.tag) + '</span>' : '') +
+                '<div style="color:' + t.textPrimary + ';">' + content + '</div>' +
                 branchesHtml +
             '</div>';
 
         document.body.appendChild(overlay);
-        overlay.scrollTop = 0;
     }
 
     /* ========== 短信通话列表 ========== */
     function openChatList(cat) {
-        var dark = isDarkMode();
-        var tp = dark ? THEME.darkTextPrimary : THEME.textPrimary;
-        var ts = dark ? THEME.darkTextSecondary : THEME.textSecondary;
-        var cardBg = dark ? THEME.darkCardBg : THEME.cardBg;
-        var cardBorder = dark ? THEME.darkCardBorder : THEME.cardBorder;
-
+        var t = getTheme();
         var overlay = document.createElement('div');
         overlay.id = 'qiyu-chat-list';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999996;background:' + (dark ? THEME.darkBgGradient : THEME.bgGradient) + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999996;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
 
         var convs = cat.conversations || [];
         var listHtml = '';
 
         if (convs.length === 0) {
-            listHtml = emptyState(cat.icon, '还没有内容', '后续在这里补充短信和通话记录');
+            listHtml = '<div style="text-align:center;padding:80px 20px;"><div style="font-size:36px;color:' + t.textTertiary + ';margin-bottom:12px;">' + (ICONS[cat.iconKey] || '') + '</div><div style="font-size:14px;color:' + t.textSecondary + ';font-weight:500;">还没有内容</div><div style="font-size:12px;color:' + t.textTertiary + ';margin-top:6px;">后续在这里补充短信和通话记录</div></div>';
         } else {
             convs.forEach(function(conv, idx) {
-                var icon = conv.type === 'call' ? '📞' : '💬';
                 listHtml +=
-                    '<div onclick="QiyuStory.openChatDetail(\'' + cat.id + '\', ' + idx + ')" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:' + cardBg + ';border:1px solid ' + cardBorder + ';margin-bottom:8px;cursor:pointer;box-shadow:0 2px 8px ' + THEME.shadowColor + ';">' +
-                        '<div style="width:40px;height:40px;border-radius:12px;background:' + cat.gradient + ';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">' + icon + '</div>' +
+                    '<div onclick="QiyuStory.openChatDetail(\'' + cat.id + '\',' + idx + ')" style="display:flex;align-items:center;gap:14px;padding:16px;border-bottom:1px solid ' + t.cardBorder + ';cursor:pointer;" onmousedown="this.style.background=\'' + t.mutedBg + '\'" onmouseup="this.style.background=\'transparent\'" ontouchstart="this.style.background=\'' + t.mutedBg + '\'" ontouchend="this.style.background=\'transparent\'">' +
+                        '<div style="width:40px;height:40px;border-radius:50%;background:' + t.accentLight + ';display:flex;align-items:center;justify-content:center;font-size:18px;color:' + t.accent + ';">' + (conv.type === 'call' ? '📞' : '💬') + '</div>' +
                         '<div style="flex:1;min-width:0;">' +
-                            '<div style="font-size:13px;font-weight:700;color:' + tp + ';line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(conv.title || '未命名') + '</div>' +
-                            '<div style="font-size:11px;color:' + ts + ';margin-top:2px;">' + (conv.messages && conv.messages.length ? conv.messages.length + '条消息' : '空') + '</div>' +
+                            '<div style="font-size:14px;font-weight:500;color:' + t.textPrimary + ';">' + esc(conv.title || '未命名') + '</div>' +
+                            '<div style="font-size:12px;color:' + t.textSecondary + ';margin-top:3px;">' + (conv.messages && conv.messages.length ? conv.messages.length + ' 条消息' : '空') + '</div>' +
                         '</div>' +
-                        '<div style="font-size:14px;color:' + (dark ? THEME.darkTextTertiary : THEME.textTertiary) + ';">›</div>' +
+                        '<span style="font-size:14px;color:' + t.textTertiary + ';">›</span>' +
                     '</div>';
             });
         }
 
-        overlay.innerHTML = buildSubHeader(cat, listHtml, dark);
+        overlay.innerHTML = subHeader(cat.title, cat.subtitle) + '<div>' + listHtml + '</div>';
         document.body.appendChild(overlay);
     }
 
-    /* ========== 短信通话详情（仿聊天界面） ========== */
+    /* ========== 短信通话详情 ========== */
     function openChatDetail(catId, index) {
-        var cat = getCategory(catId);
+        var cat = getCat(catId);
         if (!cat || !cat.conversations || !cat.conversations[index]) return;
         var conv = cat.conversations[index];
-        var dark = isDarkMode();
-        var tp = dark ? THEME.darkTextPrimary : THEME.textPrimary;
-        var ts = dark ? THEME.darkTextSecondary : THEME.textSecondary;
+        var t = getTheme();
 
         var overlay = document.createElement('div');
         overlay.id = 'qiyu-chat-detail';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999997;background:' + (dark ? '#1a1212' : '#f5ebe8') + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999997;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
 
         var msgsHtml = '';
         var messages = conv.messages || [];
+
         if (messages.length === 0) {
-            msgsHtml = emptyState('💬', '没有消息', '后续在这里补充对话内容');
+            msgsHtml = '<div style="text-align:center;padding:60px 20px;color:' + t.textTertiary + ';font-size:13px;">没有消息记录</div>';
         } else {
             messages.forEach(function(msg) {
                 var isMe = msg.from === 'me';
-                var bubbleBg = isMe ? THEME.accent : (dark ? '#3a2a28' : '#fff');
-                var bubbleColor = isMe ? '#fff' : tp;
-                var align = isMe ? 'flex-end' : 'flex-start';
-                var avatar = isMe ? '我' : '煜';
-
                 if (msg.type === 'call') {
-                    // 通话记录样式
-                    msgsHtml +=
-                        '<div style="display:flex;justify-content:center;margin:10px 0;">' +
-                            '<div style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:16px;background:' + (dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)') + ';font-size:11px;color:' + ts + ';">' +
-                                '<span>📞</span>' +
-                                '<span>' + escapeHtml(msg.text || '通话记录') + '</span>' +
-                            '</div>' +
-                        '</div>';
+                    msgsHtml += '<div style="display:flex;justify-content:center;margin:12px 0;"><div style="padding:6px 14px;border-radius:14px;background:' + t.mutedBg + ';font-size:11px;color:' + t.textSecondary + ';">📞 ' + esc(msg.text || '通话记录') + '</div></div>';
                 } else {
+                    var align = isMe ? 'flex-end' : 'flex-start';
+                    var bubbleBg = isMe ? t.accent : t.cardBg;
+                    var bubbleColor = isMe ? '#fff' : t.textPrimary;
+                    var border = isMe ? 'none' : '1px solid ' + t.cardBorder;
                     msgsHtml +=
                         '<div style="display:flex;flex-direction:' + (isMe ? 'row-reverse' : 'row') + ';align-items:flex-start;gap:8px;margin:8px 16px;">' +
-                            '<div style="width:32px;height:32px;border-radius:50%;background:' + (isMe ? THEME.ocean : cat.gradient) + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">' + avatar + '</div>' +
-                            '<div style="max-width:72%;">' +
-                                (msg.time ? '<div style="font-size:10px;color:' + (dark ? THEME.darkTextTertiary : THEME.textTertiary) + ';margin-bottom:3px;text-align:' + (isMe ? 'right' : 'left') + ';">' + escapeHtml(msg.time) + '</div>' : '') +
-                                '<div style="padding:10px 14px;border-radius:16px;background:' + bubbleBg + ';color:' + bubbleColor + ';font-size:14px;line-height:1.5;box-shadow:0 2px 6px rgba(0,0,0,0.06);">' + escapeHtml(msg.text || '') + '</div>' +
+                            '<div style="width:30px;height:30px;border-radius:50%;background:' + (isMe ? t.accentLight : t.accent) + ';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:' + (isMe ? t.accent : '#fff') + ';flex-shrink:0;">' + (isMe ? '我' : '煜') + '</div>' +
+                            '<div style="max-width:70%;">' +
+                                (msg.time ? '<div style="font-size:10px;color:' + t.textTertiary + ';margin-bottom:3px;text-align:' + (isMe ? 'right' : 'left') + ';">' + esc(msg.time) + '</div>' : '') +
+                                '<div style="padding:10px 14px;border-radius:16px;background:' + bubbleBg + ';color:' + bubbleColor + ';font-size:14px;line-height:1.5;' + (border !== 'none' ? 'border:' + border + ';' : '') + '">' + esc(msg.text || '') + '</div>' +
                             '</div>' +
                         '</div>';
                 }
@@ -556,14 +469,8 @@
         }
 
         overlay.innerHTML =
-            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + (dark ? 'rgba(26,18,18,0.9)' : 'rgba(245,235,232,0.9)') + ';backdrop-filter:blur(12px);border-bottom:1px solid ' + (dark ? THEME.darkCardBorder : THEME.cardBorder) + ';">' +
-                '<div onclick="document.getElementById(\'qiyu-chat-detail\').remove();" style="width:32px;height:32px;border-radius:50%;background:' + (dark ? THEME.darkCardBg : '#fff') + ';display:flex;align-items:center;justify-content:center;font-size:16px;color:' + tp + ';cursor:pointer;flex-shrink:0;">←</div>' +
-                '<div style="flex:1;">' +
-                    '<div style="font-size:15px;font-weight:800;color:' + tp + ';line-height:1.2;">' + escapeHtml(conv.title || '对话') + '</div>' +
-                    '<div style="font-size:11px;color:' + ts + ';margin-top:2px;">' + (conv.type === 'call' ? '📞 通话' : '💬 短信') + '</div>' +
-                '</div>' +
-            '</div>' +
-            '<div style="padding:16px 0 40px;min-height:calc(100vh - 60px);">' + msgsHtml + '</div>';
+            subHeader(conv.title || '对话', conv.type === 'call' ? '📞 通话' : '💬 短信') +
+            '<div style="padding:12px 0 40px;min-height:calc(100vh - 52px);">' + msgsHtml + '</div>';
 
         document.body.appendChild(overlay);
         overlay.scrollTop = overlay.scrollHeight;
@@ -571,67 +478,35 @@
 
     /* ========== 朋友圈列表 ========== */
     function openMomentsList(cat) {
-        var dark = isDarkMode();
-        var tp = dark ? THEME.darkTextPrimary : THEME.textPrimary;
-        var ts = dark ? THEME.darkTextSecondary : THEME.textSecondary;
-        var cardBg = dark ? THEME.darkCardBg : THEME.cardBg;
-        var cardBorder = dark ? THEME.darkCardBorder : THEME.cardBorder;
-
+        var t = getTheme();
         var overlay = document.createElement('div');
         overlay.id = 'qiyu-moments-list';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999996;background:' + (dark ? THEME.darkBgGradient : THEME.bgGradient) + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999996;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
 
         var posts = cat.posts || [];
         var postsHtml = '';
 
         if (posts.length === 0) {
-            postsHtml = emptyState(cat.icon, '还没有内容', '后续在这里补充朋友圈动态');
+            postsHtml = '<div style="text-align:center;padding:80px 20px;"><div style="font-size:36px;color:' + t.textTertiary + ';margin-bottom:12px;">' + (ICONS[cat.iconKey] || '') + '</div><div style="font-size:14px;color:' + t.textSecondary + ';font-weight:500;">还没有内容</div><div style="font-size:12px;color:' + t.textTertiary + ';margin-top:6px;">后续在这里补充朋友圈动态</div></div>';
         } else {
             posts.forEach(function(post) {
                 postsHtml +=
-                    '<div style="display:flex;gap:12px;padding:16px;border-radius:16px;background:' + cardBg + ';border:1px solid ' + cardBorder + ';margin-bottom:10px;box-shadow:0 2px 10px ' + THEME.shadowColor + ';">' +
-                        '<div style="width:40px;height:40px;border-radius:12px;background:' + cat.gradient + ';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🔥</div>' +
-                        '<div style="flex:1;min-width:0;">' +
-                            '<div style="font-size:13px;font-weight:800;color:' + THEME.accent + ';">祁煜</div>' +
-                            (post.text ? '<div style="font-size:14px;color:' + tp + ';margin-top:6px;line-height:1.5;white-space:pre-wrap;">' + escapeHtml(post.text) + '</div>' : '') +
-                            (post.image ? '<div style="margin-top:8px;border-radius:12px;overflow:hidden;"><img src="' + escapeHtml(post.image) + '" style="width:100%;display:block;" /></div>' : '') +
-                            '<div style="font-size:11px;color:' + ts + ';margin-top:8px;">' + escapeHtml(post.time || '') + '</div>' +
+                    '<div style="padding:16px;border-bottom:1px solid ' + t.cardBorder + ';">' +
+                        '<div style="display:flex;gap:12px;">' +
+                            '<div style="width:36px;height:36px;border-radius:50%;background:' + t.accent + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;">煜</div>' +
+                            '<div style="flex:1;min-width:0;">' +
+                                '<div style="font-size:13px;font-weight:600;color:' + t.accent + ';">祁煜</div>' +
+                                (post.text ? '<div style="font-size:14px;color:' + t.textPrimary + ';margin-top:6px;line-height:1.5;white-space:pre-wrap;">' + esc(post.text) + '</div>' : '') +
+                                (post.image ? '<div style="margin-top:10px;border-radius:10px;overflow:hidden;"><img src="' + esc(post.image) + '" style="width:100%;display:block;" /></div>' : '') +
+                                '<div style="font-size:11px;color:' + t.textTertiary + ';margin-top:8px;">' + esc(post.time || '') + '</div>' +
+                            '</div>' +
                         '</div>' +
                     '</div>';
             });
         }
 
-        overlay.innerHTML = buildSubHeader(cat, postsHtml, dark);
+        overlay.innerHTML = subHeader(cat.title, cat.subtitle) + '<div>' + postsHtml + '</div>';
         document.body.appendChild(overlay);
-    }
-
-    /* ========== 公共组件：子页面顶部栏 ========== */
-    function buildSubHeader(cat, contentHtml, dark) {
-        var tp = dark ? THEME.darkTextPrimary : THEME.textPrimary;
-        var ts = dark ? THEME.darkTextSecondary : THEME.textSecondary;
-
-        return (
-            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + (dark ? 'rgba(26,18,18,0.9)' : 'rgba(255,245,243,0.9)') + ';backdrop-filter:blur(12px);border-bottom:1px solid ' + (dark ? THEME.darkCardBorder : THEME.cardBorder) + ';">' +
-                '<div onclick="(function(el){var o=document.getElementById(\'qiyu-chapter-list\')||document.getElementById(\'qiyu-card-grid\')||document.getElementById(\'qiyu-chat-list\')||document.getElementById(\'qiyu-moments-list\');if(o)o.remove();})(this)" style="width:32px;height:32px;border-radius:50%;background:' + (dark ? THEME.darkCardBg : '#fff') + ';display:flex;align-items:center;justify-content:center;font-size:16px;color:' + tp + ';cursor:pointer;flex-shrink:0;">←</div>' +
-                '<div style="flex:1;">' +
-                    '<div style="font-size:16px;font-weight:900;color:' + tp + ';line-height:1.2;">' + cat.icon + ' ' + escapeHtml(cat.title) + '</div>' +
-                    '<div style="font-size:11px;color:' + ts + ';margin-top:2px;font-weight:500;">' + escapeHtml(cat.subtitle) + '</div>' +
-                '</div>' +
-            '</div>' +
-            '<div style="padding:16px 16px 40px;max-width:640px;margin:0 auto;">' + contentHtml + '</div>'
-        );
-    }
-
-    /* ========== 空状态 ========== */
-    function emptyState(icon, title, desc) {
-        var dark = isDarkMode();
-        return (
-            '<div style="text-align:center;padding:60px 20px;">' +
-                '<div style="font-size:48px;margin-bottom:16px;opacity:0.5;">' + icon + '</div>' +
-                '<div style="font-size:15px;font-weight:700;color:' + (dark ? THEME.darkTextSecondary : THEME.textSecondary) + ';margin-bottom:6px;">' + title + '</div>' +
-                '<div style="font-size:12px;color:' + (dark ? THEME.darkTextTertiary : THEME.textTertiary) + ';line-height:1.5;">' + desc + '</div>' +
-            '</div>'
-        );
     }
 
     /* ========== 导出 API ========== */
@@ -641,42 +516,46 @@
         openChapter: openChapter,
         openCardDetail: openCardDetail,
         openChatDetail: openChatDetail,
+        uploadHeroBg: uploadHeroBg,
         getData: function() { if (!storyData) storyData = loadData(); return storyData; },
         saveData: function(data) { storyData = data; saveData(data); },
-        // 添加章节
+        resetHeroBg: function() {
+            if (!storyData) storyData = loadData();
+            storyData.heroBg = null;
+            saveData(storyData);
+            var root = document.getElementById('qiyu-story-root');
+            if (root) { root.remove(); openStory(); }
+        },
         addChapter: function(catId, chapter) {
             if (!storyData) storyData = loadData();
-            var cat = getCategory(catId);
+            var cat = getCat(catId);
             if (cat && cat.type === 'chapter') {
                 if (!cat.chapters) cat.chapters = [];
                 cat.chapters.push(chapter);
                 saveData(storyData);
             }
         },
-        // 添加卡片
         addCard: function(catId, card) {
             if (!storyData) storyData = loadData();
-            var cat = getCategory(catId);
+            var cat = getCat(catId);
             if (cat && cat.type === 'card') {
                 if (!cat.cards) cat.cards = [];
                 cat.cards.push(card);
                 saveData(storyData);
             }
         },
-        // 添加对话
         addConversation: function(catId, conv) {
             if (!storyData) storyData = loadData();
-            var cat = getCategory(catId);
+            var cat = getCat(catId);
             if (cat && cat.type === 'chat') {
                 if (!cat.conversations) cat.conversations = [];
                 cat.conversations.push(conv);
                 saveData(storyData);
             }
         },
-        // 添加朋友圈
         addPost: function(catId, post) {
             if (!storyData) storyData = loadData();
-            var cat = getCategory(catId);
+            var cat = getCat(catId);
             if (cat && cat.type === 'moments') {
                 if (!cat.posts) cat.posts = [];
                 cat.posts.push(post);
