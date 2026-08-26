@@ -268,7 +268,7 @@
         '</div>';
     }
 
-    /* ========== 章节列表 ========== */
+    /* ========== 章节列表（按篇分组 + 状态标记） ========== */
     function openChapterList(cat) {
         var t = getTheme();
         var overlay = document.createElement('div');
@@ -281,30 +281,61 @@
         if (chapters.length === 0) {
             listHtml = '<div style="text-align:center;padding:80px 20px;"><div style="font-size:36px;color:' + t.textTertiary + ';margin-bottom:12px;">' + (ICONS[cat.iconKey] || '') + '</div><div style="font-size:14px;color:' + t.textSecondary + ';font-weight:500;">还没有内容</div><div style="font-size:12px;color:' + t.textTertiary + ';margin-top:6px;">后续在这里补充章节故事</div></div>';
         } else {
-            chapters.forEach(function(ch, idx) {
-                listHtml +=
-                    '<div onclick="QiyuStory.openChapter(\'' + cat.id + '\',' + idx + ')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid ' + t.cardBorder + ';cursor:pointer;" onmousedown="this.style.background=\'' + t.mutedBg + '\'" onmouseup="this.style.background=\'transparent\'" ontouchstart="this.style.background=\'' + t.mutedBg + '\'" ontouchend="this.style.background=\'transparent\'">' +
-                        '<div style="width:28px;height:28px;border-radius:8px;background:' + t.accentLight + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:' + t.accent + ';flex-shrink:0;">' + (idx + 1) + '</div>' +
-                        '<div style="flex:1;min-width:0;">' +
-                            '<div style="font-size:14px;font-weight:600;color:' + t.textPrimary + ';line-height:1.3;">' + esc(ch.title || ('第' + (idx+1) + '章')) + '</div>' +
-                            '<div style="font-size:12px;color:' + t.textSecondary + ';margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(ch.summary || '点击阅读') + '</div>' +
-                        '</div>' +
-                        '<span style="font-size:14px;color:' + t.textTertiary + ';">›</span>' +
-                    '</div>';
+            // 按 arc 分组
+            var arcs = {};
+            var arcOrder = [];
+            chapters.forEach(function(ch) {
+                var arc = ch.arc || '未分类';
+                if (!arcs[arc]) { arcs[arc] = []; arcOrder.push(arc); }
+                arcs[arc].push(ch);
+            });
+
+            var globalIdx = 0;
+            arcOrder.forEach(function(arcName) {
+                // 篇标题
+                listHtml += '<div style="padding:16px 16px 8px;font-size:12px;font-weight:700;color:' + t.accent + ';letter-spacing:0.5px;">' + esc(arcName) + '</div>';
+                arcs[arcName].forEach(function(ch) {
+                    var idx = globalIdx;
+                    var statusBadge = ch.status === 'unconfirmed' ?
+                        '<span style="font-size:9px;font-weight:600;color:#E8A035;padding:1px 6px;border-radius:4px;background:rgba(232,160,53,0.12);margin-left:6px;">待确认</span>' : '';
+                    var sceneCount = (ch.scenes && ch.scenes.length) ? ch.scenes.length + ' 场景' : (ch.content ? '1 篇' : '空');
+                    var hasContent = (ch.scenes && ch.scenes.length) || ch.content;
+
+                    listHtml +=
+                        '<div onclick="QiyuStory.openChapter(\'' + cat.id + '\',' + idx + ')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid ' + t.cardBorder + ';cursor:pointer;" onmousedown="this.style.background=\'' + t.mutedBg + '\'" onmouseup="this.style.background=\'transparent\'" ontouchstart="this.style.background=\'' + t.mutedBg + '\'" ontouchend="this.style.background=\'transparent\'">' +
+                            '<div style="width:28px;height:28px;border-radius:8px;background:' + t.accentLight + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:' + t.accent + ';flex-shrink:0;">' + (idx + 1) + '</div>' +
+                            '<div style="flex:1;min-width:0;">' +
+                                '<div style="font-size:14px;font-weight:600;color:' + t.textPrimary + ';line-height:1.3;">' + esc(ch.title || ('第' + (idx+1) + '章')) + statusBadge + '</div>' +
+                                '<div style="font-size:12px;color:' + t.textSecondary + ';margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(ch.summary || sceneCount) + '</div>' +
+                            '</div>' +
+                            '<span style="font-size:14px;color:' + t.textTertiary + ';">›</span>' +
+                        '</div>';
+                    globalIdx++;
+                });
             });
         }
 
-        overlay.innerHTML = subHeader(cat.title, cat.subtitle) + '<div>' + listHtml + '</div>';
+        // 编辑按钮
+        var editBtn = '<div onclick="QiyuStory.openEditor(\'' + cat.id + '\')" style="position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);right:20px;width:48px;height:48px;border-radius:50%;background:' + t.accent + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:20;">✎</div>';
+
+        overlay.innerHTML = subHeader(cat.title, cat.subtitle) + '<div style="padding-bottom:80px;">' + listHtml + '</div>' + editBtn;
         document.body.appendChild(overlay);
     }
 
-    /* ========== 章节阅读器 ========== */
+    /* ========== 章节阅读器（支持场景列表） ========== */
     function openChapter(catId, index) {
         var cat = getCat(catId);
         if (!cat || !cat.chapters || !cat.chapters[index]) return;
         var ch = cat.chapters[index];
         var t = getTheme();
 
+        // 如果有场景，先显示场景列表
+        if (ch.scenes && ch.scenes.length > 0) {
+            openSceneList(catId, index);
+            return;
+        }
+
+        // 没有场景，直接显示内容
         var overlay = document.createElement('div');
         overlay.id = 'qiyu-chapter-reader';
         overlay.style.cssText = 'position:fixed;inset:0;z-index:999999997;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
@@ -316,16 +347,102 @@
         var nextBtn = index < cat.chapters.length - 1 ?
             '<div onclick="QiyuStory.openChapter(\'' + catId + '\',' + (index+1) + ')" style="padding:12px 20px;border-radius:10px;background:' + t.accent + ';color:#fff;font-size:13px;font-weight:500;text-align:center;cursor:pointer;">下一章 →</div>' : '';
 
+        var statusBadge = ch.status === 'unconfirmed' ?
+            '<span style="display:inline-block;font-size:10px;font-weight:600;color:#E8A035;padding:2px 8px;border-radius:6px;background:rgba(232,160,53,0.12);margin-left:8px;vertical-align:middle;">待确认</span>' : '';
+
         overlay.innerHTML =
-            subHeader(cat.title, '第' + (index+1) + '章') +
+            subHeader(cat.title, ch.arc || ('第' + (index+1) + '章')) +
             '<div style="max-width:600px;margin:0 auto;padding:32px 24px 60px;">' +
-                '<h1 style="font-size:20px;font-weight:700;color:' + t.textPrimary + ';line-height:1.5;margin:0 0 10px;">' + esc(ch.title || ('第' + (index+1) + '章')) + '</h1>' +
+                '<h1 style="font-size:20px;font-weight:700;color:' + t.textPrimary + ';line-height:1.5;margin:0 0 10px;">' + esc(ch.title || ('第' + (index+1) + '章')) + statusBadge + '</h1>' +
                 (ch.summary ? '<div style="font-size:13px;color:' + t.textSecondary + ';line-height:1.6;margin-bottom:28px;padding-left:10px;border-left:2px solid ' + t.accentLight + ';">' + esc(ch.summary) + '</div>' : '<div style="height:16px;"></div>') +
                 '<div style="color:' + t.textPrimary + ';">' + content + '</div>' +
                 '<div style="display:flex;gap:12px;margin-top:40px;">' + prevBtn + nextBtn + '</div>' +
             '</div>';
 
         document.body.appendChild(overlay);
+    }
+
+    /* ========== 场景列表 ========== */
+    function openSceneList(catId, chIdx) {
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters || !cat.chapters[chIdx]) return;
+        var ch = cat.chapters[chIdx];
+        var t = getTheme();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-chapter-reader';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999997;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+        var statusBadge = ch.status === 'unconfirmed' ?
+            '<span style="display:inline-block;font-size:10px;font-weight:600;color:#E8A035;padding:2px 8px;border-radius:6px;background:rgba(232,160,53,0.12);margin-left:8px;vertical-align:middle;">待确认</span>' : '';
+
+        var scenesHtml = '';
+        ch.scenes.forEach(function(sc, sIdx) {
+            var pIcon = sc.perspective === 'first' ? '◉' : '○';
+            var pLabel = sc.perspective === 'first' ? '第一人称' : '第三人称';
+            scenesHtml +=
+                '<div onclick="QiyuStory.openScene(\'' + catId + '\',' + chIdx + ',' + sIdx + ')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid ' + t.cardBorder + ';cursor:pointer;" onmousedown="this.style.background=\'' + t.mutedBg + '\'" onmouseup="this.style.background=\'transparent\'" ontouchstart="this.style.background=\'' + t.mutedBg + '\'" ontouchend="this.style.background=\'transparent\'">' +
+                    '<div style="width:24px;height:24px;border-radius:6px;background:' + t.accentLight + ';display:flex;align-items:center;justify-content:center;font-size:11px;color:' + t.accent + ';flex-shrink:0;">' + pIcon + '</div>' +
+                    '<div style="flex:1;min-width:0;">' +
+                        '<div style="font-size:14px;font-weight:600;color:' + t.textPrimary + ';line-height:1.3;">' + esc(sc.title || ('场景' + (sIdx+1))) + '</div>' +
+                        '<div style="font-size:11px;color:' + t.textTertiary + ';margin-top:2px;">' + pLabel + (sc.content ? '' : ' · 待补充') + '</div>' +
+                    '</div>' +
+                    '<span style="font-size:14px;color:' + t.textTertiary + ';">›</span>' +
+                '</div>';
+        });
+
+        // 翻页按钮
+        var prevBtn = chIdx > 0 ?
+            '<div onclick="QiyuStory.openChapter(\'' + catId + '\',' + (chIdx-1) + ')" style="padding:12px 20px;border-radius:10px;background:' + t.mutedBg + ';color:' + t.textPrimary + ';font-size:13px;font-weight:500;text-align:center;cursor:pointer;">← 上一章</div>' : '';
+        var nextBtn = chIdx < cat.chapters.length - 1 ?
+            '<div onclick="QiyuStory.openChapter(\'' + catId + '\',' + (chIdx+1) + ')" style="padding:12px 20px;border-radius:10px;background:' + t.accent + ';color:#fff;font-size:13px;font-weight:500;text-align:center;cursor:pointer;">下一章 →</div>' : '';
+
+        overlay.innerHTML =
+            subHeader(ch.arc || cat.title, ch.title || '') +
+            '<div style="max-width:600px;margin:0 auto;padding:24px 16px 60px;">' +
+                '<h1 style="font-size:20px;font-weight:700;color:' + t.textPrimary + ';line-height:1.5;margin:0 0 8px;">' + esc(ch.title || ('第' + (chIdx+1) + '章')) + statusBadge + '</h1>' +
+                (ch.summary ? '<div style="font-size:13px;color:' + t.textSecondary + ';line-height:1.6;margin-bottom:24px;padding-left:10px;border-left:2px solid ' + t.accentLight + ';">' + esc(ch.summary) + '</div>' : '<div style="height:12px;"></div>') +
+                '<div style="font-size:11px;font-weight:600;color:' + t.accent + ';padding:0 0 8px;letter-spacing:0.5px;">场景列表</div>' +
+                '<div style="background:' + t.cardBg + ';border-radius:12px;border:1px solid ' + t.cardBorder + ';overflow:hidden;">' + scenesHtml + '</div>' +
+                '<div style="display:flex;gap:12px;margin-top:32px;">' + prevBtn + nextBtn + '</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+    }
+
+    /* ========== 单场景阅读 ========== */
+    function openScene(catId, chIdx, sIdx) {
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters || !cat.chapters[chIdx]) return;
+        var ch = cat.chapters[chIdx];
+        if (!ch.scenes || !ch.scenes[sIdx]) return;
+        var sc = ch.scenes[sIdx];
+        var t = getTheme();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-scene-reader';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999998;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+        var content = formatContent(sc.content);
+        var pLabel = sc.perspective === 'first' ? '第一人称视角' : '第三人称视角';
+
+        // 场景间翻页
+        var prevBtn = sIdx > 0 ?
+            '<div onclick="QiyuStory.openScene(\'' + catId + '\',' + chIdx + ',' + (sIdx-1) + ')" style="padding:12px 20px;border-radius:10px;background:' + t.mutedBg + ';color:' + t.textPrimary + ';font-size:13px;font-weight:500;text-align:center;cursor:pointer;">← 上一场景</div>' : '';
+        var nextBtn = sIdx < ch.scenes.length - 1 ?
+            '<div onclick="QiyuStory.openScene(\'' + catId + '\',' + chIdx + ',' + (sIdx+1) + ')" style="padding:12px 20px;border-radius:10px;background:' + t.accent + ';color:#fff;font-size:13px;font-weight:500;text-align:center;cursor:pointer;">下一场景 →</div>' : '';
+
+        overlay.innerHTML =
+            subHeader(ch.title, pLabel) +
+            '<div style="max-width:600px;margin:0 auto;padding:28px 24px 60px;">' +
+                '<h2 style="font-size:17px;font-weight:700;color:' + t.textPrimary + ';line-height:1.5;margin:0 0 20px;">' + esc(sc.title || ('场景' + (sIdx+1))) + '</h2>' +
+                '<div style="color:' + t.textPrimary + ';">' + content + '</div>' +
+                '<div style="display:flex;gap:12px;margin-top:40px;">' + prevBtn + nextBtn + '</div>' +
+                '<div onclick="document.getElementById(\'qiyu-scene-reader\').remove();" style="margin-top:12px;padding:10px 20px;border-radius:10px;background:transparent;color:' + t.textSecondary + ';font-size:12px;font-weight:500;text-align:center;cursor:pointer;border:1px solid ' + t.cardBorder + ';">返回场景列表</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+        overlay.scrollTop = 0;
     }
 
     /* ========== 卡片网格 ========== */
@@ -509,14 +626,444 @@
         document.body.appendChild(overlay);
     }
 
+    /* ========== 内容编辑器 ========== */
+    function openEditor(catId) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat) return;
+        var t = getTheme();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-editor';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+        var chapters = cat.chapters || [];
+
+        var listHtml = '';
+        if (chapters.length > 0) {
+            // 按 arc 分组
+            var arcs = {};
+            var arcOrder = [];
+            chapters.forEach(function(ch, idx) {
+                var arc = ch.arc || '未分类';
+                if (!arcs[arc]) { arcs[arc] = []; arcOrder.push(arc); }
+                arcs[arc].push({ ch: ch, idx: idx });
+            });
+
+            arcOrder.forEach(function(arcName) {
+                listHtml += '<div style="padding:12px 16px 6px;font-size:11px;font-weight:700;color:' + t.accent + ';letter-spacing:0.5px;">' + esc(arcName) + '</div>';
+                arcs[arcName].forEach(function(item) {
+                    listHtml +=
+                        '<div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid ' + t.cardBorder + ';">' +
+                            '<div style="flex:1;min-width:0;cursor:pointer;" onclick="QiyuStory.editChapter(\'' + catId + '\',' + item.idx + ')">' +
+                                '<div style="font-size:13px;font-weight:600;color:' + t.textPrimary + ';">' + esc(item.ch.title || '未命名') + '</div>' +
+                                '<div style="font-size:11px;color:' + t.textTertiary + ';margin-top:2px;">' + (item.ch.scenes ? item.ch.scenes.length + ' 场景' : (item.ch.content ? '有内容' : '空')) + (item.ch.status === 'unconfirmed' ? ' · 待确认' : '') + '</div>' +
+                            '</div>' +
+                            '<div onclick="QiyuStory.deleteChapter(\'' + catId + '\',' + item.idx + ')" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:#E0493B;cursor:pointer;font-size:16px;">×</div>' +
+                        '</div>';
+                });
+            });
+        }
+
+        overlay.innerHTML =
+            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + t.bg + ';border-bottom:1px solid ' + t.cardBorder + ';">' +
+                '<div onclick="document.getElementById(\'qiyu-editor\').remove();" style="width:32px;height:32px;border-radius:50%;background:' + t.mutedBg + ';display:flex;align-items:center;justify-content:center;font-size:15px;color:' + t.textPrimary + ';cursor:pointer;flex-shrink:0;">←</div>' +
+                '<div style="flex:1;">' +
+                    '<div style="font-size:16px;font-weight:600;color:' + t.textPrimary + ';">编辑内容</div>' +
+                    '<div style="font-size:11px;color:' + t.textSecondary + ';margin-top:2px;">' + esc(cat.title) + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="padding:16px 0 80px;">' + listHtml + '</div>' +
+            '<div onclick="QiyuStory.addChapterForm(\'' + catId + '\')" style="position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);right:20px;width:48px;height:48px;border-radius:50%;background:' + t.accent + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:20;">+</div>';
+
+        document.body.appendChild(overlay);
+    }
+
+    /* ========== 添加章节表单 ========== */
+    function addChapterForm(catId) {
+        var t = getTheme();
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-editor-form';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;';
+
+        var html =
+            '<div style="background:' + t.cardBg + ';width:100%;border-radius:20px 20px 0 0;padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 24px);max-height:80vh;overflow-y:auto;">' +
+                '<div style="font-size:16px;font-weight:600;color:' + t.textPrimary + ';margin-bottom:20px;">添加章节</div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">篇名（arc）</label><input id="ed-arc" type="text" placeholder="如：于深空之下" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">标题</label><input id="ed-title" type="text" placeholder="如：焰尾鱼" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">概要</label><textarea id="ed-summary" placeholder="一句话描述这章讲了什么" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:60px;resize:vertical;"></textarea></div>' +
+                '<div style="margin-bottom:24px;"><label style="display:flex;align-items:center;gap:8px;font-size:13px;color:' + t.textPrimary + ';"><input id="ed-unconfirmed" type="checkbox" style="width:16px;height:16px;" /><span>标记为「待确认」</span></label></div>' +
+                '<div style="display:flex;gap:12px;">' +
+                    '<div onclick="document.getElementById(\'qiyu-editor-form\').remove();" style="flex:1;padding:12px;border-radius:10px;background:' + t.mutedBg + ';color:' + t.textPrimary + ';font-size:14px;font-weight:500;text-align:center;cursor:pointer;">取消</div>' +
+                    '<div onclick="QiyuStory.saveNewChapter(\'' + catId + '\')" style="flex:1;padding:12px;border-radius:10px;background:' + t.accent + ';color:#fff;font-size:14px;font-weight:500;text-align:center;cursor:pointer;">保存</div>' +
+                '</div>' +
+            '</div>';
+
+        overlay.innerHTML = html;
+        overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+        document.body.appendChild(overlay);
+    }
+
+    /* ========== 编辑章节（含场景编辑） ========== */
+    function editChapter(catId, idx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters || !cat.chapters[idx]) return;
+        var ch = cat.chapters[idx];
+        var t = getTheme();
+
+        // 移除编辑器
+        var ed = document.getElementById('qiyu-editor');
+        if (ed) ed.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-chapter-edit';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+        // 场景列表
+        var scenesHtml = '';
+        if (ch.scenes && ch.scenes.length) {
+            ch.scenes.forEach(function(sc, sIdx) {
+                scenesHtml +=
+                    '<div style="display:flex;align-items:flex-start;gap:8px;padding:12px 16px;border-bottom:1px solid ' + t.cardBorder + ';">' +
+                        '<div style="flex:1;min-width:0;">' +
+                            '<div style="font-size:13px;font-weight:600;color:' + t.textPrimary + ';">' + esc(sc.title || ('场景' + (sIdx+1))) + '</div>' +
+                            '<div style="font-size:11px;color:' + t.textTertiary + ';margin-top:2px;">' + (sc.perspective === 'first' ? '第一人称' : '第三人称') + (sc.content ? '' : ' · 待补充') + '</div>' +
+                        '</div>' +
+                        '<div onclick="QiyuStory.editScene(\'' + catId + '\',' + idx + ',' + sIdx + ')" style="padding:4px 10px;border-radius:6px;background:' + t.mutedBg + ';color:' + t.textPrimary + ';font-size:11px;cursor:pointer;">编辑</div>' +
+                        '<div onclick="QiyuStory.deleteScene(\'' + catId + '\',' + idx + ',' + sIdx + ')" style="padding:4px 8px;color:#E0493B;cursor:pointer;font-size:16px;">×</div>' +
+                    '</div>';
+            });
+        }
+
+        overlay.innerHTML =
+            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + t.bg + ';border-bottom:1px solid ' + t.cardBorder + ';">' +
+                '<div onclick="document.getElementById(\'qiyu-chapter-edit\').remove();" style="width:32px;height:32px;border-radius:50%;background:' + t.mutedBg + ';display:flex;align-items:center;justify-content:center;font-size:15px;color:' + t.textPrimary + ';cursor:pointer;flex-shrink:0;">←</div>' +
+                '<div style="flex:1;font-size:16px;font-weight:600;color:' + t.textPrimary + ';">编辑章节</div>' +
+            '</div>' +
+            '<div style="padding:16px 16px 80px;">' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">篇名</label><input id="ch-arc" type="text" value="' + esc(ch.arc || '') + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">标题</label><input id="ch-title" type="text" value="' + esc(ch.title || '') + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">概要</label><textarea id="ch-summary" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:60px;resize:vertical;">' + esc(ch.summary || '') + '</textarea></div>' +
+                '<div style="margin-bottom:24px;"><label style="display:flex;align-items:center;gap:8px;font-size:13px;color:' + t.textPrimary + ';"><input id="ch-unconfirmed" type="checkbox" ' + (ch.status === 'unconfirmed' ? 'checked' : '') + ' style="width:16px;height:16px;" /><span>标记为「待确认」</span></label></div>' +
+                '<div style="font-size:12px;font-weight:700;color:' + t.accent + ';padding:8px 0;letter-spacing:0.5px;">场景</div>' +
+                '<div style="background:' + t.cardBg + ';border-radius:12px;border:1px solid ' + t.cardBorder + ';overflow:hidden;margin-bottom:12px;">' + scenesHtml + '</div>' +
+                '<div onclick="QiyuStory.addSceneForm(\'' + catId + '\',' + idx + ')" style="padding:10px;border-radius:10px;border:1px dashed ' + t.cardBorder + ';color:' + t.textSecondary + ';font-size:13px;text-align:center;cursor:pointer;margin-bottom:24px;">+ 添加场景</div>' +
+                '<div onclick="QiyuStory.saveChapterEdit(\'' + catId + '\',' + idx + ')" style="padding:12px;border-radius:10px;background:' + t.accent + ';color:#fff;font-size:14px;font-weight:500;text-align:center;cursor:pointer;">保存修改</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+    }
+
+    /* ========== 添加场景表单 ========== */
+    function addSceneForm(catId, chIdx) {
+        var t = getTheme();
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-scene-form';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;';
+
+        var html =
+            '<div style="background:' + t.cardBg + ';width:100%;border-radius:20px 20px 0 0;padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 24px);max-height:85vh;overflow-y:auto;">' +
+                '<div style="font-size:16px;font-weight:600;color:' + t.textPrimary + ';margin-bottom:20px;">添加场景</div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">场景标题</label><input id="sc-title" type="text" placeholder="如：晴空广场" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">视角</label><select id="sc-perspective" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;"><option value="third">第三人称（叙述）</option><option value="first">第一人称（代入）</option></select></div>' +
+                '<div style="margin-bottom:24px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">内容（空行分段，[img:URL] 插图）</label><textarea id="sc-content" placeholder="场景内容…" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:120px;resize:vertical;"></textarea></div>' +
+                '<div style="display:flex;gap:12px;">' +
+                    '<div onclick="document.getElementById(\'qiyu-scene-form\').remove();" style="flex:1;padding:12px;border-radius:10px;background:' + t.mutedBg + ';color:' + t.textPrimary + ';font-size:14px;font-weight:500;text-align:center;cursor:pointer;">取消</div>' +
+                    '<div onclick="QiyuStory.saveNewScene(\'' + catId + '\',' + chIdx + ')" style="flex:1;padding:12px;border-radius:10px;background:' + t.accent + ';color:#fff;font-size:14px;font-weight:500;text-align:center;cursor:pointer;">保存</div>' +
+                '</div>' +
+            '</div>';
+
+        overlay.innerHTML = html;
+        overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+        document.body.appendChild(overlay);
+    }
+
+    /* ========== 编辑场景表单 ========== */
+    function editScene(catId, chIdx, sIdx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx]) return;
+        var ch = cat.chapters[chIdx];
+        if (!ch.scenes || !ch.scenes[sIdx]) return;
+        var sc = ch.scenes[sIdx];
+        var t = getTheme();
+
+        var sf = document.getElementById('qiyu-scene-form');
+        if (sf) sf.remove();
+        var ce = document.getElementById('qiyu-chapter-edit');
+        if (ce) ce.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'qiyu-scene-edit';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+        overlay.innerHTML =
+            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + t.bg + ';border-bottom:1px solid ' + t.cardBorder + ';">' +
+                '<div onclick="document.getElementById(\'qiyu-scene-edit\').remove();" style="width:32px;height:32px;border-radius:50%;background:' + t.mutedBg + ';display:flex;align-items:center;justify-content:center;font-size:15px;color:' + t.textPrimary + ';cursor:pointer;flex-shrink:0;">←</div>' +
+                '<div style="flex:1;font-size:16px;font-weight:600;color:' + t.textPrimary + ';">编辑场景</div>' +
+            '</div>' +
+            '<div style="padding:16px 16px 80px;">' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">场景标题</label><input id="se-title" type="text" value="' + esc(sc.title || '') + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">视角</label><select id="se-perspective" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;"><option value="third" ' + (sc.perspective !== 'first' ? 'selected' : '') + '>第三人称（叙述）</option><option value="first" ' + (sc.perspective === 'first' ? 'selected' : '') + '>第一人称（代入）</option></select></div>' +
+                '<div style="margin-bottom:24px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">内容（空行分段，[img:URL] 插图）</label><textarea id="se-content" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:200px;resize:vertical;">' + esc(sc.content || '') + '</textarea></div>' +
+                '<div onclick="QiyuStory.saveSceneEdit(\'' + catId + '\',' + chIdx + ',' + sIdx + ')" style="padding:12px;border-radius:10px;background:' + t.accent + ';color:#fff;font-size:14px;font-weight:500;text-align:center;cursor:pointer;">保存</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+    }
+
+    /* ========== 保存操作 ========== */
+    function saveNewChapter(catId) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat) return;
+        var arc = document.getElementById('ed-arc').value.trim();
+        var title = document.getElementById('ed-title').value.trim();
+        var summary = document.getElementById('ed-summary').value.trim();
+        var unconfirmed = document.getElementById('ed-unconfirmed').checked;
+
+        if (!title) { alert('请输入标题'); return; }
+
+        if (!cat.chapters) cat.chapters = [];
+        cat.chapters.push({
+            arc: arc || '未分类',
+            title: title,
+            summary: summary,
+            status: unconfirmed ? 'unconfirmed' : 'confirmed',
+            scenes: []
+        });
+        saveData(storyData);
+
+        document.getElementById('qiyu-editor-form').remove();
+        // 刷新编辑器
+        var ed = document.getElementById('qiyu-editor');
+        if (ed) ed.remove();
+        openEditor(catId);
+    }
+
+    function saveChapterEdit(catId, idx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[idx]) return;
+        var ch = cat.chapters[idx];
+
+        ch.arc = document.getElementById('ch-arc').value.trim() || '未分类';
+        ch.title = document.getElementById('ch-title').value.trim();
+        ch.summary = document.getElementById('ch-summary').value.trim();
+        ch.status = document.getElementById('ch-unconfirmed').checked ? 'unconfirmed' : 'confirmed';
+
+        saveData(storyData);
+        document.getElementById('qiyu-chapter-edit').remove();
+        openEditor(catId);
+    }
+
+    function deleteChapter(catId, idx) {
+        if (!confirm('确定删除这个章节？')) return;
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters) return;
+        cat.chapters.splice(idx, 1);
+        saveData(storyData);
+        var ed = document.getElementById('qiyu-editor');
+        if (ed) ed.remove();
+        openEditor(catId);
+    }
+
+    function saveNewScene(catId, chIdx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx]) return;
+        var ch = cat.chapters[chIdx];
+        var title = document.getElementById('sc-title').value.trim();
+        var perspective = document.getElementById('sc-perspective').value;
+        var content = document.getElementById('sc-content').value;
+
+        if (!title) { alert('请输入场景标题'); return; }
+        if (!ch.scenes) ch.scenes = [];
+        ch.scenes.push({ title: title, perspective: perspective, content: content });
+        saveData(storyData);
+
+        document.getElementById('qiyu-scene-form').remove();
+        var ce = document.getElementById('qiyu-chapter-edit');
+        if (ce) ce.remove();
+        editChapter(catId, chIdx);
+    }
+
+    function saveSceneEdit(catId, chIdx, sIdx) {
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx] || !cat.chapters[chIdx].scenes) return;
+        var sc = cat.chapters[chIdx].scenes[sIdx];
+
+        sc.title = document.getElementById('se-title').value.trim();
+        sc.perspective = document.getElementById('se-perspective').value;
+        sc.content = document.getElementById('se-content').value;
+
+        saveData(storyData);
+        document.getElementById('qiyu-scene-edit').remove();
+        editChapter(catId, chIdx);
+    }
+
+    function deleteScene(catId, chIdx, sIdx) {
+        if (!confirm('确定删除这个场景？')) return;
+        if (!storyData) storyData = loadData();
+        var cat = getCat(catId);
+        if (!cat || !cat.chapters[chIdx] || !cat.chapters[chIdx].scenes) return;
+        cat.chapters[chIdx].scenes.splice(sIdx, 1);
+        saveData(storyData);
+        var ce = document.getElementById('qiyu-chapter-edit');
+        if (ce) ce.remove();
+        editChapter(catId, chIdx);
+    }
+
+    /* ========== 主线剧情数据初始化 ========== */
+    function initMainStoryline() {
+        if (!storyData) storyData = loadData();
+        var cat = getCat('main');
+        if (!cat) return;
+
+        // 只在空数据时初始化
+        if (cat.chapters && cat.chapters.length > 0) return;
+
+        cat.chapters = [
+            // 篇一：于深空之下
+            { arc: '于深空之下', title: '焰尾鱼', summary: '晴空广场偶遇祁煜，焰尾鱼事件', status: 'confirmed', scenes: [
+                { title: '晴空广场', perspective: 'first', content: '' },
+                { title: '焰尾鱼', perspective: 'first', content: '' },
+                { title: '初识', perspective: 'first', content: '' }
+            ]},
+            { arc: '于深空之下', title: '油画幻境', summary: '雷温收藏家家中调查会引发幻境的油画，画作者是祁煜', status: 'confirmed', scenes: [
+                { title: '雷温家', perspective: 'first', content: '' },
+                { title: '油画与幻境', perspective: 'first', content: '' },
+                { title: 'FLUX画廊', perspective: 'third', content: '' }
+            ]},
+            { arc: '于深空之下', title: '私人保镖', summary: '珊瑚石触发幻象，答应成为祁煜的私人保镖', status: 'confirmed', scenes: [
+                { title: '珊瑚石', perspective: 'first', content: '' },
+                { title: '血之媒介', perspective: 'first', content: '' },
+                { title: '契约', perspective: 'first', content: '' }
+            ]},
+            { arc: '于深空之下', title: '出海·帽儿岛', summary: '祁煜带"我"前往帽儿岛猎杀流浪体磷龙取芯核', status: 'confirmed', scenes: [
+                { title: '启航', perspective: 'first', content: '' },
+                { title: '磷龙之战', perspective: 'first', content: '' }
+            ]},
+            { arc: '于深空之下', title: '海下月光', summary: '战后二人被卷入海中，祁煜化为人鱼将"我"带回海面——首次显人鱼真身', status: 'confirmed', scenes: [
+                { title: '落海', perspective: 'first', content: '' },
+                { title: '契约之力', perspective: 'first', content: '' },
+                { title: '人鱼真身', perspective: 'first', content: '' }
+            ]},
+            { arc: '于深空之下', title: '日落银河', summary: '雷温去世后祁煜出席葬礼，继续调查珊瑚石与海神书线索', status: 'confirmed', scenes: [
+                { title: '雷温葬礼', perspective: 'third', content: '' },
+                { title: '珊瑚石与海神书', perspective: 'first', content: '' }
+            ]},
+
+            // 篇二～五（待补充）
+            { arc: '久候狂欢之徒', title: '待补充', summary: '此篇章祁煜相关剧情待整理', status: 'unconfirmed', scenes: [] },
+            { arc: '明日序言', title: '待补充', summary: '此篇章祁煜相关剧情待整理', status: 'unconfirmed', scenes: [] },
+            { arc: '飞鸟回还日', title: '待补充', summary: '此篇章祁煜相关剧情待整理', status: 'unconfirmed', scenes: [] },
+            { arc: '以寂灭，以新生', title: '待补充', summary: '此篇章祁煜相关剧情待整理', status: 'unconfirmed', scenes: [] },
+
+            // 篇六：献给昨日之诗
+            { arc: '献给昨日之诗', title: '被移植的世界', summary: '临空市异象频发，祁煜暗中寻找海神书封存的力量', status: 'confirmed', scenes: [
+                { title: '异象', perspective: 'third', content: '' },
+                { title: '海神书', perspective: 'third', content: '' },
+                { title: '祁煜幼年', perspective: 'third', content: '' },
+                { title: 'EVER暗线', perspective: 'third', content: '' }
+            ]},
+            { arc: '献给昨日之诗', title: '往日回溯', summary: '回溯者们、女神圣剑碑、Echo等节点，菲罗斯星与地球的时空关联', status: 'confirmed', scenes: [
+                { title: '回溯者们', perspective: 'third', content: '' },
+                { title: '女神圣剑碑', perspective: 'third', content: '' }
+            ]},
+            { arc: '献给昨日之诗', title: '徘徊者的回信', summary: '进入鲸落城，海边挽歌，回到祁煜前世故乡', status: 'confirmed', scenes: [
+                { title: '鲸落城', perspective: 'first', content: '' },
+                { title: '海边挽歌', perspective: 'first', content: '' }
+            ]},
+            { arc: '献给昨日之诗', title: '岔路的伊始', summary: '前世今生的汇合与分别——逆流而别、至涟漪处', status: 'confirmed', scenes: [
+                { title: '旅程尽处', perspective: 'first', content: '' },
+                { title: '潮信回声', perspective: 'first', content: '' },
+                { title: '逆流而别', perspective: 'first', content: '' }
+            ]},
+
+            // 前世编年（利莫里亚线）
+            { arc: '前世编年', title: '祭品与海神', summary: '"我"作为祭品被神使养大，困于神庙；年幼的最后一位海神祁煜自由受限', status: 'confirmed', scenes: [
+                { title: '神庙中的祭品', perspective: 'first', content: '' },
+                { title: '年幼的海神', perspective: 'third', content: '' }
+            ]},
+            { arc: '前世编年', title: '暴雨夜', summary: '"我"被丢下海，祁煜私自跑出来救起"我"，带回鲸落城，结为信徒', status: 'confirmed', scenes: [
+                { title: '献祭', perspective: 'first', content: '' },
+                { title: '祁煜救人', perspective: 'third', content: '' },
+                { title: '鲸落城', perspective: 'first', content: '' }
+            ]},
+            { arc: '前世编年', title: '海底日出与海神祭典', summary: '二人看海底日出、逛海神祭典；祁煜将鳞片交给"我"', status: 'confirmed', scenes: [
+                { title: '海底日出', perspective: 'first', content: '' },
+                { title: '海神祭典', perspective: 'first', content: '' },
+                { title: '鳞片', perspective: 'first', content: '' }
+            ]},
+            { arc: '前世编年', title: '利莫里亚契约', summary: '神殿缔结契约；祁煜获得海神之力后被控制，意识苏醒后将火种交给"我"', status: 'confirmed', scenes: [
+                { title: '缔结契约', perspective: 'first', content: '' },
+                { title: '海神之力的控制', perspective: 'third', content: '' },
+                { title: '火种', perspective: 'first', content: '' }
+            ]},
+            { arc: '前世编年', title: '封印', summary: '得知不存在烛芯、利莫里亚注定灭亡，"我"用契约将祁煜封印在深海海底', status: 'confirmed', scenes: [
+                { title: '真相', perspective: 'first', content: '' },
+                { title: '封印', perspective: 'first', content: '' }
+            ]},
+            { arc: '前世编年', title: '万年后的重逢', summary: '"我"再次降生为海神新娘，被囚禁；祁煜被封印失忆，"我"是他唯一能听到的声音', status: 'confirmed', scenes: [
+                { title: '再次降生', perspective: 'first', content: '' },
+                { title: '囚禁', perspective: 'first', content: '' },
+                { title: '跨越封印的声音', perspective: 'first', content: '' }
+            ]},
+            { arc: '前世编年', title: '解封', summary: '聆海仪式上"我"唱祭海歌，祁煜用海水将"我"带到封印处，"我"解开他的封印', status: 'confirmed', scenes: [
+                { title: '聆海仪式', perspective: 'first', content: '' },
+                { title: '解开封印', perspective: 'first', content: '' }
+            ]},
+            { arc: '前世编年', title: '海神冢', summary: '二人前往海神冢完成试炼，重铸断潮戟，"我"想起部分记忆', status: 'confirmed', scenes: [
+                { title: '海神冢', perspective: 'first', content: '' },
+                { title: '断潮戟', perspective: 'first', content: '' },
+                { title: '记忆复苏', perspective: 'first', content: '' }
+            ]},
+            { arc: '前世编年', title: '第三月蚀·献心', summary: '祁煜力量耗尽即将陨灭，"我"用契约为祁煜献上自己的心；罗镜城颠倒回鲸落城', status: 'confirmed', scenes: [
+                { title: '力量耗尽', perspective: 'first', content: '' },
+                { title: '献心', perspective: 'first', content: '' },
+                { title: '罗镜城颠倒', perspective: 'third', content: '' }
+            ]},
+            { arc: '前世编年', title: '金沙时期', summary: '海洋干涸三万年后，"我"成为菲罗斯星公主；祁煜被作为贡品送到"我"面前', status: 'unconfirmed', scenes: [
+                { title: '三万年后', perspective: 'third', content: '' },
+                { title: '贡品', perspective: 'first', content: '' },
+                { title: '放走', perspective: 'first', content: '' }
+            ]},
+            { arc: '前世编年', title: '女巫与人鱼', summary: '祁煜献出逆鳞、人鱼之血与歌喉炼制魔药，让成为女巫的"我"变回人类', status: 'unconfirmed', scenes: [
+                { title: '女巫', perspective: 'first', content: '' },
+                { title: '逆鳞与魔药', perspective: 'third', content: '' },
+                { title: '消散', perspective: 'first', content: '' }
+            ]}
+        ];
+
+        saveData(storyData);
+    }
+
     /* ========== 导出 API ========== */
     global.QiyuStory = {
         openStory: openStory,
         openCategory: openCategory,
         openChapter: openChapter,
+        openScene: openScene,
+        openSceneList: openSceneList,
         openCardDetail: openCardDetail,
         openChatDetail: openChatDetail,
         uploadHeroBg: uploadHeroBg,
+        openEditor: openEditor,
+        addChapterForm: addChapterForm,
+        editChapter: editChapter,
+        addSceneForm: addSceneForm,
+        editScene: editScene,
+        saveNewChapter: saveNewChapter,
+        saveChapterEdit: saveChapterEdit,
+        deleteChapter: deleteChapter,
+        saveNewScene: saveNewScene,
+        saveSceneEdit: saveSceneEdit,
+        deleteScene: deleteScene,
+        initMainStoryline: initMainStoryline,
         getData: function() { if (!storyData) storyData = loadData(); return storyData; },
         saveData: function(data) { storyData = data; saveData(data); },
         resetHeroBg: function() {
@@ -563,5 +1110,10 @@
             }
         }
     };
+
+    // 自动初始化主线数据
+    setTimeout(function() {
+        try { initMainStoryline(); } catch(e) { console.error('[qiyu-story] init error', e); }
+    }, 0);
 
 })(typeof window !== 'undefined' ? window : this);
