@@ -815,7 +815,9 @@
                 '<div style="margin-bottom:16px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">概要</label><textarea id="ch-summary" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:60px;resize:vertical;">' + esc(ch.summary || '') + '</textarea></div>' +
                 '<div style="margin-bottom:24px;"><label style="display:flex;align-items:center;gap:8px;font-size:13px;color:' + t.textPrimary + ';"><input id="ch-unconfirmed" type="checkbox" ' + (ch.status === 'unconfirmed' ? 'checked' : '') + ' style="width:16px;height:16px;" /><span>标记为「待确认」</span></label></div>' +
                 '<div style="font-size:12px;font-weight:700;color:' + THEME.accent + ';padding:8px 0;letter-spacing:0.5px;">文游节点' + (ch.vnNodes ? (' · ' + ch.vnNodes.length + ' 个') : '') + '</div>' +
-                '<div onclick="QiyuStory.openVNEditor(\'' + catId + '\',' + idx + ')" style="padding:12px;border-radius:10px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + THEME.accent + ';font-size:13px;font-weight:600;text-align:center;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:6px;"><span>🎭</span>打开文游节点编辑器</div>' +
+                '<div onclick="QiyuStory.openVNEditor(\'' + catId + '\',' + idx + ')" style="padding:12px;border-radius:10px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + THEME.accent + ';font-size:13px;font-weight:600;text-align:center;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px;"><span>🎭</span>打开文游节点编辑器</div>' +
+                '<div onclick="QiyuStory.openAssetLibrary(\'scenes\',null)" style="padding:10px;border-radius:10px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textSecondary + ';font-size:12px;text-align:center;cursor:pointer;margin-bottom:6px;">🖼️ 管理场景素材</div>' +
+                '<div onclick="QiyuStory.openAssetLibrary(\'portraits\',null)" style="padding:10px;border-radius:10px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textSecondary + ';font-size:12px;text-align:center;cursor:pointer;margin-bottom:20px;">👤 管理立绘素材</div>' +
                 '<div style="font-size:12px;font-weight:700;color:' + THEME.accent + ';padding:8px 0;letter-spacing:0.5px;">场景</div>' +
                 '<div style="background:' + t.cardBg + ';border-radius:12px;border:1px solid ' + t.cardBorder + ';overflow:hidden;margin-bottom:12px;">' + scenesHtml + '</div>' +
                 '<div onclick="QiyuStory.addSceneForm(\'' + catId + '\',' + idx + ')" style="padding:10px;border-radius:10px;border:1px dashed ' + t.cardBorder + ';color:' + t.textSecondary + ';font-size:13px;text-align:center;cursor:pointer;margin-bottom:24px;">+ 添加场景</div>' +
@@ -1312,6 +1314,124 @@
         startVN(slot.catId, slot.chIdx, slot.nodeId);
     }
 
+    /* ---------- 素材库管理界面 ---------- */
+    var assetPickerCallback = null;
+    var assetPickerCategory = null;
+
+    function openAssetLibrary(category, callback) {
+        assetPickerCategory = category;
+        assetPickerCallback = callback;
+        var t = getTheme();
+        var overlay = document.getElementById('qiyu-asset-lib');
+        if (overlay) overlay.remove();
+
+        overlay = document.createElement('div');
+        overlay.id = 'qiyu-asset-lib';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999999999;background:' + t.bg + ';overflow-y:auto;-webkit-overflow-scrolling:touch;';
+
+        var assets = loadAssets();
+        var list = assets[category] || [];
+        var isScene = category === 'scenes';
+        var title = isScene ? '场景素材库' : '立绘素材库';
+
+        var gridHtml = '';
+        if (list.length === 0) {
+            gridHtml = '<div style="padding:60px 20px;text-align:center;font-size:13px;color:' + t.textTertiary + ';">还没有素材，点击下方 + 添加</div>';
+        } else {
+            gridHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;">';
+            list.forEach(function(a) {
+                var aspect = isScene ? 'aspect-ratio:9/16;' : 'aspect-ratio:3/4;';
+                gridHtml +=
+                    '<div style="border-radius:10px;overflow:hidden;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';">' +
+                        '<div onclick="QiyuStory.pickAsset(\'' + a.id + '\')" style="' + aspect + 'overflow:hidden;cursor:pointer;">' +
+                            '<img src="' + a.data + '" style="width:100%;height:100%;object-fit:cover;" />' +
+                        '</div>' +
+                        '<div style="padding:6px 8px;">' +
+                            '<div style="font-size:11px;color:' + t.textPrimary + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(a.name) + '</div>' +
+                            '<div style="display:flex;gap:6px;margin-top:4px;">' +
+                                '<div onclick="QiyuStory.renameAssetPrompt(\'' + a.id + '\')" style="font-size:10px;color:' + t.textSecondary + ';cursor:pointer;">重命名</div>' +
+                                '<div onclick="QiyuStory.deleteAssetConfirm(\'' + a.id + '\')" style="font-size:10px;color:#E0493B;cursor:pointer;">删除</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+            });
+            gridHtml += '</div>';
+        }
+
+        overlay.innerHTML =
+            '<div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:' + t.bg + ';border-bottom:1px solid ' + t.cardBorder + ';">' +
+                '<div onclick="QiyuStory.closeAssetLib()" style="width:32px;height:32px;border-radius:50%;background:' + t.mutedBg + ';display:flex;align-items:center;justify-content:center;font-size:15px;color:' + t.textPrimary + ';cursor:pointer;flex-shrink:0;">×</div>' +
+                '<div style="flex:1;font-size:16px;font-weight:600;color:' + t.textPrimary + ';">' + title + ' · ' + list.length + '</div>' +
+            '</div>' +
+            '<div style="padding:12px 16px;">' +
+                '<label style="display:block;padding:14px;border-radius:12px;border:2px dashed ' + t.cardBorder + ';text-align:center;cursor:pointer;background:' + t.cardBg + ';">' +
+                    '<div style="font-size:22px;">📷</div>' +
+                    '<div style="font-size:13px;color:' + t.textSecondary + ';margin-top:4px;">点击从相册选择图片添加</div>' +
+                    '<input type="file" accept="image/*" style="display:none;" onchange="QiyuStory.uploadAsset(this.files[0])" />' +
+                '</label>' +
+            '</div>' +
+            gridHtml +
+            '<div style="height:40px;"></div>';
+
+        document.body.appendChild(overlay);
+    }
+
+    function closeAssetLib() {
+        var el = document.getElementById('qiyu-asset-lib');
+        if (el) el.remove();
+        assetPickerCallback = null;
+    }
+
+    function uploadAsset(file) {
+        if (!file) return;
+        var name = file.name.replace(/\.[^.]+$/, '');
+        var maxWidth = assetPickerCategory === 'scenes' ? 1080 : 800;
+        processImage(file, maxWidth, 0, 0, function(data) {
+            var asset = addAsset(assetPickerCategory, name, data);
+            closeAssetLib();
+            openAssetLibrary(assetPickerCategory, assetPickerCallback);
+        });
+    }
+
+    function pickAsset(id) {
+        var assets = loadAssets();
+        var found = null;
+        (assets[assetPickerCategory] || []).forEach(function(a) { if (a.id === id) found = a; });
+        if (found && assetPickerCallback) {
+            assetPickerCallback(found);
+            closeAssetLib();
+        }
+    }
+
+    function renameAssetPrompt(id) {
+        var name = prompt('输入新名称：');
+        if (name && name.trim()) {
+            renameAsset(id, name.trim());
+            closeAssetLib();
+            openAssetLibrary(assetPickerCategory, assetPickerCallback);
+        }
+    }
+
+    function deleteAssetConfirm(id) {
+        if (confirm('确定删除这个素材？')) {
+            deleteAsset(id);
+            closeAssetLib();
+            openAssetLibrary(assetPickerCategory, assetPickerCallback);
+        }
+    }
+
+    /* 从素材库选择，填充到指定 hidden input + 预览区 */
+    function pickFromLibrary(category, inputId, previewId) {
+        openAssetLibrary(category, function(asset) {
+            var input = document.getElementById(inputId);
+            if (input) input.value = asset.data;
+            var preview = document.getElementById(previewId);
+            if (preview) {
+                preview.innerHTML = '<img src="' + asset.data + '" style="width:100%;border-radius:8px;max-height:140px;object-fit:cover;margin-bottom:6px;" />';
+            }
+        });
+    }
+
     /* ---------- VN 节点编辑器 ---------- */
     function openVNEditor(catId, chIdx) {
         if (!storyData) storyData = loadData();
@@ -1372,9 +1492,17 @@
                 '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">类型</label><select id="vnf-type" onchange="vnToggleForm()" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;"><option value="dialog">对话（角色说话+可选立绘）</option><option value="narrate">旁白（纯叙述，无角色）</option><option value="choice">分支选项</option><option value="end">结束</option></select></div>' +
                 '<div id="vnf-fields-dialog">' +
                     '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">角色名</label><input id="vnf-char" type="text" placeholder="如：祁煜 / 我" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
-                    '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘（可留空）</label><input id="vnf-portrait" type="file" accept="image/*" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:13px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                    '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘（可留空）</label>' +
+                        '<div id="vnf-portrait-preview"></div>' +
+                        '<div onclick="QiyuStory.pickFromLibrary(\'portraits\',\'vnf-portrait\',\'vnf-portrait-preview\')" style="padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + THEME.accent + ';font-size:13px;text-align:center;cursor:pointer;margin-top:6px;">从立绘素材库选择</div>' +
+                        '<input type="hidden" id="vnf-portrait" value="" />' +
+                    '</div>' +
                     '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘位置</label><select id="vnf-pos" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;"><option value="left">左侧</option><option value="right">右侧</option></select></div>' +
-                    '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">背景图（可留空）</label><input id="vnf-bg" type="file" accept="image/*" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:13px;font-family:inherit;box-sizing:border-box;" /></div>' +
+                    '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">背景图（可留空）</label>' +
+                        '<div id="vnf-bg-preview"></div>' +
+                        '<div onclick="QiyuStory.pickFromLibrary(\'scenes\',\'vnf-bg\',\'vnf-bg-preview\')" style="padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + THEME.accent + ';font-size:13px;text-align:center;cursor:pointer;margin-top:6px;">从场景素材库选择</div>' +
+                        '<input type="hidden" id="vnf-bg" value="" />' +
+                    '</div>' +
                     '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">台词文本</label><textarea id="vnf-text" placeholder="写台词或叙述内容" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;"></textarea></div>' +
                     '<div style="margin-bottom:20px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">下一节点ID（留空=结束）</label><input id="vnf-next" type="text" placeholder="如：node_02" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.bg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
                 '</div>' +
@@ -1403,48 +1531,33 @@
 
         var node = { id: id, type: type };
 
-        var done = function() {
-            if (type === 'dialog' || type === 'narrate') {
-                node.character = document.getElementById('vnf-char').value.trim() || (type === 'dialog' ? '' : null);
-                var posEl = document.getElementById('vnf-pos');
-                node.position = posEl ? posEl.value : 'left';
-                node.text = document.getElementById('vnf-text').value;
-                node.next = document.getElementById('vnf-next').value.trim() || null;
-            } else if (type === 'choice') {
-                node.choices = [];
-            } else if (type === 'end') {
-                node.title = '本章完';
-            }
-            ch.vnNodes.push(node);
-            saveData(storyData);
-            var f = document.getElementById('qiyu-vn-node-form');
-            if (f) f.remove();
-            var ed = document.getElementById('qiyu-vn-editor');
-            if (ed) ed.remove();
-            openVNEditor(catId, chIdx);
+        // 立绘和背景从 hidden input 读取 base64
+        var portraitVal = (type === 'dialog' || type === 'narrate') && document.getElementById('vnf-portrait') ? document.getElementById('vnf-portrait').value : '';
+        var bgVal = (type === 'dialog' || type === 'narrate') && document.getElementById('vnf-bg') ? document.getElementById('vnf-bg').value : '';
+        if (portraitVal) node.portrait = portraitVal;
+        if (bgVal) node.bg = bgVal;
 
-            if (type === 'choice') {
-                alert('分支节点已添加，请在列表中点击进入编辑选项及跳转目标');
-            }
-        };
-
-        // 处理上传文件
-        var portraitFile = type !== 'end' && document.getElementById('vnf-portrait') ? document.getElementById('vnf-portrait').files[0] : null;
-        var bgFile = type !== 'end' && type !== 'choice' && document.getElementById('vnf-bg') ? document.getElementById('vnf-bg').files[0] : null;
-        var pending = 0;
-        if (portraitFile) pending++;
-        if (bgFile) pending++;
-        if (pending === 0) { done(); return; }
-
-        if (portraitFile) {
-            var r1 = new FileReader();
-            r1.onload = function() { node.portrait = r1.result; pending--; if (pending === 0) done(); };
-            r1.readAsDataURL(portraitFile);
+        if (type === 'dialog' || type === 'narrate') {
+            node.character = document.getElementById('vnf-char').value.trim() || (type === 'dialog' ? '' : null);
+            var posEl = document.getElementById('vnf-pos');
+            node.position = posEl ? posEl.value : 'left';
+            node.text = document.getElementById('vnf-text').value;
+            node.next = document.getElementById('vnf-next').value.trim() || null;
+        } else if (type === 'choice') {
+            node.choices = [];
+        } else if (type === 'end') {
+            node.title = '本章完';
         }
-        if (bgFile) {
-            var r2 = new FileReader();
-            r2.onload = function() { node.bg = r2.result; pending--; if (pending === 0) done(); };
-            r2.readAsDataURL(bgFile);
+        ch.vnNodes.push(node);
+        saveData(storyData);
+        var f = document.getElementById('qiyu-vn-node-form');
+        if (f) f.remove();
+        var ed = document.getElementById('qiyu-vn-editor');
+        if (ed) ed.remove();
+        openVNEditor(catId, chIdx);
+
+        if (type === 'choice') {
+            alert('分支节点已添加，请在列表中点击进入编辑选项及跳转目标');
         }
     }
 
@@ -1483,11 +1596,15 @@
 
         var dialogNarrateFields = (node.type === 'dialog' || node.type === 'narrate') ?
             '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">角色名</label><input id="ne-char" type="text" value="' + esc(node.character || '') + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' +
-            '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘（重新上传覆盖）</label>' + previewImg(node.portrait || '') +
-                '<input id="ne-portrait" type="file" accept="image/*" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:13px;font-family:inherit;box-sizing:border-box;margin-top:8px;" /></div>' +
+            '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘</label>' +
+                '<div id="ne-portrait-preview">' + previewImg(node.portrait || '') + '</div>' +
+                '<div onclick="QiyuStory.pickFromLibrary(\'portraits\',\'ne-portrait\',\'ne-portrait-preview\')" style="padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + THEME.accent + ';font-size:13px;text-align:center;cursor:pointer;margin-top:6px;">从立绘素材库选择</div>' +
+                '<input type="hidden" id="ne-portrait" value="' + esc(node.portrait || '') + '" /></div>' +
             '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">立绘位置</label><select id="ne-pos" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;"><option value="left"' + (node.position !== 'right' ? ' selected' : '') + '>左侧</option><option value="right"' + (node.position === 'right' ? ' selected' : '') + '>右侧</option></select></div>' +
-            '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">背景图（重新上传覆盖）</label>' + previewImg(node.bg || '') +
-                '<input id="ne-bg" type="file" accept="image/*" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:13px;font-family:inherit;box-sizing:border-box;margin-top:8px;" /></div>' +
+            '<div style="margin-bottom:14px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">背景图</label>' +
+                '<div id="ne-bg-preview">' + previewImg(node.bg || '') + '</div>' +
+                '<div onclick="QiyuStory.pickFromLibrary(\'scenes\',\'ne-bg\',\'ne-bg-preview\')" style="padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + THEME.accent + ';font-size:13px;text-align:center;cursor:pointer;margin-top:6px;">从场景素材库选择</div>' +
+                '<input type="hidden" id="ne-bg" value="' + esc(node.bg || '') + '" /></div>' +
             '<div style="margin-bottom:20px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">文本内容</label><textarea id="ne-text" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;min-height:100px;resize:vertical;">' + esc(node.text || '') + '</textarea></div>' +
             (node.type !== 'choice' ? '<div style="margin-bottom:20px;"><label style="display:block;font-size:12px;font-weight:500;color:' + t.textSecondary + ';margin-bottom:6px;">下一节点ID</label><input id="ne-next" type="text" value="' + esc(node.next || '') + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid ' + t.cardBorder + ';background:' + t.cardBg + ';color:' + t.textPrimary + ';font-size:14px;font-family:inherit;box-sizing:border-box;" /></div>' : '') +
             choicesHtml
@@ -1519,6 +1636,11 @@
 
         var finish = function() {
             node.id = newId;
+            // 立绘和背景从 hidden input 读取
+            var portraitVal = (node.type === 'dialog' || node.type === 'narrate') && document.getElementById('ne-portrait') ? document.getElementById('ne-portrait').value : '';
+            var bgVal = (node.type === 'dialog' || node.type === 'narrate') && document.getElementById('ne-bg') ? document.getElementById('ne-bg').value : '';
+            if (portraitVal) node.portrait = portraitVal; else delete node.portrait;
+            if (bgVal) node.bg = bgVal; else delete node.bg;
             if (node.type === 'end') {
                 node.title = document.getElementById('ne-title').value.trim() || '本章完';
             }
@@ -1530,7 +1652,6 @@
             }
             if (node.type === 'choice') {
                 var texts = document.querySelectorAll('.choice-text');
-                var nexts = document.querySelectorAll('.choice-next');
                 var newChoices = [];
                 texts.forEach(function(el) {
                     var idx = parseInt(el.getAttribute('data-idx'));
@@ -1548,24 +1669,7 @@
             openVNEditor(catId, chIdx);
         };
 
-        var portraitFile = (node.type === 'dialog' || node.type === 'narrate') && document.getElementById('ne-portrait') ? document.getElementById('ne-portrait').files[0] : null;
-        var bgFile = (node.type === 'dialog' || node.type === 'narrate') && document.getElementById('ne-bg') ? document.getElementById('ne-bg').files[0] : null;
-        var pending = 0;
-        if (portraitFile) pending++;
-        if (bgFile) pending++;
-
-        if (pending === 0) { finish(); return; }
-
-        if (portraitFile) {
-            var r1 = new FileReader();
-            r1.onload = function() { node.portrait = r1.result; pending--; if (pending === 0) finish(); };
-            r1.readAsDataURL(portraitFile);
-        }
-        if (bgFile) {
-            var r2 = new FileReader();
-            r2.onload = function() { node.bg = r2.result; pending--; if (pending === 0) finish(); };
-            r2.readAsDataURL(bgFile);
-        }
+        finish();
     }
 
     function addChoice(catId, chIdx, nIdx) {
@@ -1813,6 +1917,14 @@
         saveVNNodeEdit: saveVNNodeEdit,
         addChoice: addChoice,
         deleteVNNode: deleteVNNode,
+        // 素材库
+        openAssetLibrary: openAssetLibrary,
+        closeAssetLib: closeAssetLib,
+        uploadAsset: uploadAsset,
+        pickAsset: pickAsset,
+        renameAssetPrompt: renameAssetPrompt,
+        deleteAssetConfirm: deleteAssetConfirm,
+        pickFromLibrary: pickFromLibrary,
         getData: function() { if (!storyData) storyData = loadData(); return storyData; },
         saveData: function(data) { storyData = data; saveData(data); },
         resetHeroBg: function() {
