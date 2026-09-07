@@ -77,6 +77,7 @@
     var SAVE_KEY = 'qiyu_story_saves';
     var MAX_SAVES = 5;
     var SAVE_VERSION = 1;
+    var ASSET_KEY = 'qiyu_story_assets';
 
     function loadData() {
         try {
@@ -113,6 +114,70 @@
     }
 
     var storyData = null;
+
+    /* ========== 素材库 ========== */
+    function loadAssets() {
+        try {
+            var s = localStorage.getItem(ASSET_KEY);
+            if (s) return JSON.parse(s);
+        } catch (e) {}
+        return { scenes: [], portraits: [] };
+    }
+
+    function saveAssets(assets) {
+        try { localStorage.setItem(ASSET_KEY, JSON.stringify(assets)); } catch (e) { console.error('[qiyu-story] 素材保存失败', e); }
+    }
+
+    function addAsset(category, name, data) {
+        var assets = loadAssets();
+        if (!assets[category]) assets[category] = [];
+        var asset = { id: 'asset_' + Date.now() + '_' + Math.floor(Math.random() * 1000), name: name, data: data, createdAt: Date.now() };
+        assets[category].push(asset);
+        saveAssets(assets);
+        return asset;
+    }
+
+    function deleteAsset(id) {
+        var assets = loadAssets();
+        ['scenes', 'portraits'].forEach(function(cat) {
+            assets[cat] = (assets[cat] || []).filter(function(a) { return a.id !== id; });
+        });
+        saveAssets(assets);
+    }
+
+    function renameAsset(id, name) {
+        var assets = loadAssets();
+        ['scenes', 'portraits'].forEach(function(cat) {
+            (assets[cat] || []).forEach(function(a) { if (a.id === id) a.name = name; });
+        });
+        saveAssets(assets);
+    }
+
+    /* 图片处理：压缩到指定最大宽度，返回 base64 */
+    function processImage(file, maxWidth, cropTopRatio, cropBottomRatio, callback) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = new Image();
+            img.onload = function() {
+                var w = img.width, h = img.height;
+                var scale = Math.min(1, maxWidth / w);
+                var dw = Math.round(w * scale);
+                var dh = Math.round(h * scale);
+                // 裁剪上下区域（用于去掉 UI 文字）
+                var sy = cropTopRatio ? Math.round(h * cropTopRatio) : 0;
+                var sh = cropBottomRatio ? Math.round(h * (1 - cropTopRatio - cropBottomRatio)) : h - sy;
+                if (sh <= 0) { sy = 0; sh = h; }
+                var canvas = document.createElement('canvas');
+                canvas.width = dw;
+                canvas.height = Math.round(dh * (sh / h));
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, sy, w, sh, 0, 0, dw, canvas.height);
+                callback(canvas.toDataURL('image/jpeg', 0.85));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
 
     /* ========== 工具函数 ========== */
     function isDark() {
