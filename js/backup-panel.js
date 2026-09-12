@@ -151,7 +151,7 @@
             desc: '通知开关、会话列表索引、最后导出提醒、新手指引等',
             incl: ['inclCoreExtra', 'inclOnboarding', 'inclFeatures'],
             indexedDBNeedles: ['lastSessionId', 'sessionList'],
-            localStorageNeedles: ['notifEnabled', 'exportReminderLastShown', 'tiSettings_showAvatar', 'tiSettings_customText', 'splashPledgeSigned_v3', 'tour_seen', 'headerAlwaysClear', 'keepaliveAudioEnabled', 'immersive_mode', 'ai_service_config']
+            localStorageNeedles: ['notifEnabled', 'exportReminderLastShown', 'tiSettings_showAvatar', 'tiSettings_customText', 'splashPledgeSigned_v3', 'tour_seen', 'headerAlwaysClear', 'keepaliveAudioEnabled', 'immersive_mode', 'ai_service_config', 'music_library', 'music_daily_record', 'music_settings']
         }
     ];
 

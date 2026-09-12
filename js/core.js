@@ -1768,8 +1768,17 @@ function createMessageFragment(msg, prevMsg, nextMsg, lastSenderRef) {
     const isImageOnly = !msg.text && !!msg.image;
     const isRedPacket = msg.type === 'red-packet';
     const isVoice = msg.type === 'voice';
+    const isMusic = msg.type === 'music';
     let content = msg.text ? `<div>${msg.text.replace(/\n/g, '<br>')}</div>` : '';
-    if (isVoice) {
+    if (isMusic) {
+        // 音乐卡片
+        if (window.MusicService && typeof window.MusicService.renderMusicCard === 'function') {
+            content = window.MusicService.renderMusicCard(msg);
+        } else {
+            var esc = window.escapeHtml || function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+            content = '<div style="padding:10px;">🎵 ' + esc(msg.text || '') + '</div>';
+        }
+    } else if (isVoice) {
         // 微信风格语音消息
         const voiceText = msg.voiceText || '';
         const voiceUrl = msg.voiceUrl || '';
@@ -1790,7 +1799,7 @@ function createMessageFragment(msg, prevMsg, nextMsg, lastSenderRef) {
     messageHTML += content;
 
     const messageDiv = document.createElement('div');
-    if (isRedPacket || isImageOnly) {
+    if (isRedPacket || isImageOnly || isMusic) {
         messageDiv.className = `message message-${msg.sender === 'user' ? 'sent' : 'received'} message-image-bubble-none`;
     } else if (isVoice) {
         messageDiv.className = `message message-${msg.sender === 'user' ? 'sent' : 'received'} ${settings.bubbleStyle}`;
@@ -1810,6 +1819,17 @@ function createMessageFragment(msg, prevMsg, nextMsg, lastSenderRef) {
                 if (typeof window.showRedPacketReceiveModal === 'function') {
                     window.showRedPacketReceiveModal(rpId);
                 }
+            });
+        }
+    }
+
+    // 音乐卡片：播放按钮
+    if (isMusic) {
+        const playBtn = messageDiv.querySelector('.music-play-btn');
+        if (playBtn && window.MusicService) {
+            playBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                window.MusicService.toggleMusicPlay(playBtn.dataset.url, playBtn);
             });
         }
     }
@@ -2605,6 +2625,13 @@ if (!isBatchMode && type === 'normal') {
                                 if (typeof window._sendPartnerNotification === 'function') {
                                     window._sendPartnerNotification(settings.partnerName || '对方', aiText);
                                 }
+                                // 聊天内嵌推歌：文字回复后概率推一首歌
+                                if (window.MusicService && typeof window.MusicService.maybePushSongInChat === 'function') {
+                                    var chatCtx = (history.length ? history[history.length - 1].content : '') + ' -> ' + aiText;
+                                    setTimeout(function () {
+                                        window.MusicService.maybePushSongInChat(chatCtx).catch(function () {});
+                                    }, 1500 + Math.random() * 1500);
+                                }
                             }, remaining);
                         }).catch(function (err) {
                             // AI 失败，回退到字卡
@@ -2626,6 +2653,12 @@ if (!isBatchMode && type === 'normal') {
                                     type: 'normal'
                                 });
                                 playSound('message');
+                                // 聊天内嵌推歌（字卡回退路径）
+                                if (window.MusicService && typeof window.MusicService.maybePushSongInChat === 'function') {
+                                    setTimeout(function () {
+                                        window.MusicService.maybePushSongInChat(fbText).catch(function () {});
+                                    }, 1500 + Math.random() * 1500);
+                                }
                             }
                         });
                         return;
@@ -2936,6 +2969,12 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                         // 检查24小时过期红包
                         if (typeof window.checkRedPacketExpiry === 'function') {
                             setTimeout(function() { window.checkRedPacketExpiry(); }, 500);
+                        }
+                        // 聊天内嵌推歌（字卡路径）
+                        if (window.MusicService && typeof window.MusicService.maybePushSongInChat === 'function') {
+                            setTimeout(function () {
+                                window.MusicService.maybePushSongInChat(finalText || '').catch(function () {});
+                            }, 2000 + Math.random() * 2000);
                         }
                     }
                     } catch (e) {

@@ -15,7 +15,8 @@
     features: {
       chat: true,
       diary: true,
-      moments: true
+      moments: true,
+      music: true
     },
     temperature: 0.8,
     maxTokens: 300
@@ -179,6 +180,83 @@
     ]);
   }
 
+  /**
+   * 从候选歌单中选一首歌并生成推荐理由
+   * @param {Object} context - { songs: [{id,title,artist,tags}], mood, chatContext, partnerName, myName }
+   * @returns {Promise<{songId: string, reason: string}>}
+   */
+  function pickSongAndReason(context) {
+    var cfg = loadConfig();
+    var ctx = context || {};
+    var songs = ctx.songs || [];
+    if (songs.length === 0) {
+      return Promise.reject(new Error('歌单为空'));
+    }
+
+    var systemPrompt = cfg.persona + '\n你扮演的角色是"' + (ctx.partnerName || '对方') + '"，要给"' + (ctx.myName || '我') + '"推荐一首歌。';
+
+    var songList = songs.map(function (s, i) {
+      var tagStr = (s.tags && s.tags.length) ? '（标签：' + s.tags.join('、') + '）' : '';
+      return (i + 1) + '. 《' + s.title + '》- ' + (s.artist || '未知') + tagStr;
+    }).join('\n');
+
+    var userContent = '这是我的歌单：\n' + songList + '\n';
+    if (ctx.chatContext) {
+      userContent += '\n我们刚才在聊：' + ctx.chatContext + '\n';
+    }
+    if (ctx.mood) {
+      userContent += '\n我现在的心情大概是：' + ctx.mood + '\n';
+    }
+    userContent += '\n请你从中选一首最合适的推荐给我，并写一句推荐理由（30字以内，温柔自然，像恋人说话）。\n';
+    userContent += '请严格用以下 JSON 格式回复，不要有其他内容：\n';
+    userContent += '{"songId":"选中的歌曲id","reason":"推荐理由"}';
+
+    return chatCompletion([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent }
+    ]).then(function (text) {
+      // 尝试解析 JSON
+      try {
+        var jsonStr = text.match(/\{[\s\S]*\}/);
+        if (jsonStr) {
+          var obj = JSON.parse(jsonStr[0]);
+          if (obj.songId && obj.reason) {
+            // 确认 songId 在候选列表中
+            var found = songs.find(function (s) { return s.id === obj.songId; });
+            if (found) {
+              return { songId: obj.songId, reason: String(obj.reason).trim() };
+            }
+          }
+        }
+      } catch (e) {}
+      // 解析失败：随机选一首，理由用 AI 原文（去掉 JSON 部分）
+      var fallbackSong = songs[Math.floor(Math.random() * songs.length)];
+      var reason = text.replace(/\{[\s\S]*\}/, '').trim() || '这首感觉很适合此刻的你~';
+      return { songId: fallbackSong.id, reason: reason };
+    });
+  }
+
+  /**
+   * 为每日一歌生成推荐理由（给定一首歌）
+   */
+  function generateDailySongReason(song, context) {
+    var cfg = loadConfig();
+    var ctx = context || {};
+    var systemPrompt = cfg.persona + '\n你扮演的角色是"' + (ctx.partnerName || '对方') + '"，要给"' + (ctx.myName || '我') + '"分享今天的每日一歌。';
+
+    var tagStr = (song.tags && song.tags.length) ? '，标签：' + song.tags.join('、') : '';
+    var userContent = '今天我想和你分享《' + song.title + '》- ' + (song.artist || '未知') + tagStr + '。\n';
+    if (ctx.mood) userContent += '我今天的心情是：' + ctx.mood + '。\n';
+    userContent += '请写一句推荐语（30字以内），温柔自然，像恋人分享喜欢的歌。只回复推荐语本身。';
+
+    return chatCompletion([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent }
+    ]).then(function (text) {
+      return text.trim().replace(/^["'「『]+|["'」』]+$/g, '');
+    });
+  }
+
   window.AIService = {
     getConfig: getConfig,
     updateConfig: updateConfig,
@@ -187,7 +265,9 @@
     testConnection: testConnection,
     generateChatReply: generateChatReply,
     generateDiary: generateDiary,
-    generateMomentComment: generateMomentComment
+    generateMomentComment: generateMomentComment,
+    pickSongAndReason: pickSongAndReason,
+    generateDailySongReason: generateDailySongReason
   };
 
   /* ========== AI 设置界面交互 ========== */
@@ -212,6 +292,8 @@
     document.getElementById('ai-feature-chat').checked = cfg.features.chat;
     document.getElementById('ai-feature-diary').checked = cfg.features.diary;
     document.getElementById('ai-feature-moments').checked = cfg.features.moments;
+    var musicToggle = document.getElementById('ai-feature-music');
+    if (musicToggle) musicToggle.checked = cfg.features.music !== false;
     document.getElementById('ai-temperature').value = cfg.temperature;
     document.getElementById('ai-temp-val').textContent = cfg.temperature;
     document.getElementById('ai-test-result').textContent = '';
@@ -271,6 +353,8 @@
     cfg.features.chat = document.getElementById('ai-feature-chat').checked;
     cfg.features.diary = document.getElementById('ai-feature-diary').checked;
     cfg.features.moments = document.getElementById('ai-feature-moments').checked;
+    var musicToggleEl = document.getElementById('ai-feature-music');
+    cfg.features.music = musicToggleEl ? musicToggleEl.checked : true;
     cfg.temperature = parseFloat(document.getElementById('ai-temperature').value);
 
     saveConfig(cfg);
