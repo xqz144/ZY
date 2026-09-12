@@ -70,7 +70,7 @@
             desc: '朝夕计划待办、习惯、纪念日、生理周期',
             incl: ['inclDiary'],
             indexedDBNeedles: ['diaryTodos', 'diaryHabits', 'diaryHabitRecords', 'diaryPeriodRecords', 'diaryAnniversaries', 'diaryTodoCategories'],
-            localStorageNeedles: ['diaryPeriodLastReminderDate']
+            localStorageNeedles: ['diaryPeriodLastReminderDate', 'diary_journal_entries']
         },
         {
             id: 'accounting',
@@ -151,7 +151,7 @@
             desc: '通知开关、会话列表索引、最后导出提醒、新手指引等',
             incl: ['inclCoreExtra', 'inclOnboarding', 'inclFeatures'],
             indexedDBNeedles: ['lastSessionId', 'sessionList'],
-            localStorageNeedles: ['notifEnabled', 'exportReminderLastShown', 'tiSettings_showAvatar', 'tiSettings_customText', 'splashPledgeSigned_v3', 'tour_seen', 'headerAlwaysClear', 'keepaliveAudioEnabled', 'immersive_mode']
+            localStorageNeedles: ['notifEnabled', 'exportReminderLastShown', 'tiSettings_showAvatar', 'tiSettings_customText', 'splashPledgeSigned_v3', 'tour_seen', 'headerAlwaysClear', 'keepaliveAudioEnabled', 'immersive_mode', 'ai_service_config']
         }
     ];
 

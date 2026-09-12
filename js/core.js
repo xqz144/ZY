@@ -2539,6 +2539,102 @@ if (!isBatchMode && type === 'normal') {
                 _updateReadReceiptsDOM(); throttledSaveData();
             }
 
+            // ── AI 回复优先（如果启用）──
+            if (window.AIService && window.AIService.isFeatureEnabled('chat')) {
+                try {
+                    // 获取用户最后一条消息
+                    var lastUserMsg = null;
+                    for (var i = messages.length - 1; i >= 0; i--) {
+                        if (messages[i].sender === 'user' && messages[i].text) {
+                            lastUserMsg = messages[i].text;
+                            break;
+                        }
+                    }
+                    if (lastUserMsg) {
+                        // 构建历史消息（最近 10 条）
+                        var history = [];
+                        var startIdx = Math.max(0, messages.length - 10);
+                        for (var j = startIdx; j < messages.length; j++) {
+                            var m = messages[j];
+                            if (m.sender === 'user' && m.text) {
+                                history.push({ role: 'user', content: m.text });
+                            } else if (m.sender !== 'user' && m.sender !== null && m.text) {
+                                history.push({ role: 'assistant', content: m.text });
+                            }
+                        }
+
+                        // 显示正在输入
+                        if (settings.typingIndicatorEnabled) {
+                            var tiW = document.getElementById('typing-indicator-wrapper');
+                            var tiL = document.getElementById('typing-indicator-label');
+                            var tiA = document.getElementById('typing-indicator-avatar');
+                            if (tiL) tiL.textContent = (settings.partnerName || '对方') + ' 正在输入';
+                            if (tiW) { positionTypingIndicator(); tiW.style.display = 'block'; }
+                            if (tiA) {
+                                var pImg = DOMElements.partner.avatar.querySelector('img');
+                                tiA.innerHTML = pImg ? '<img src="' + pImg.src + '">' : '<i class="fas fa-user"></i>';
+                            }
+                        }
+
+                        var aiReplyDelay = (settings.replyDelayMin || 1) * 1000 + Math.random() * 1500;
+                        var aiStart = Date.now();
+                        window.AIService.generateChatReply(
+                            lastUserMsg, history,
+                            settings.partnerName || '对方',
+                            settings.myName || '我'
+                        ).then(function (aiText) {
+                            // 隐藏正在输入
+                            var tiW2 = document.getElementById('typing-indicator-wrapper');
+                            if (tiW2) tiW2.style.display = 'none';
+
+                            // 确保至少有一定延迟（看起来像在打字）
+                            var elapsed = Date.now() - aiStart;
+                            var remaining = Math.max(0, aiReplyDelay - elapsed);
+                            setTimeout(function () {
+                                addMessage({
+                                    id: Date.now(),
+                                    sender: settings.partnerName || '对方',
+                                    text: aiText,
+                                    timestamp: new Date(),
+                                    status: 'received',
+                                    favorited: false,
+                                    note: null,
+                                    type: 'normal'
+                                });
+                                playSound('message');
+                                if (typeof window._sendPartnerNotification === 'function') {
+                                    window._sendPartnerNotification(settings.partnerName || '对方', aiText);
+                                }
+                            }, remaining);
+                        }).catch(function (err) {
+                            // AI 失败，回退到字卡
+                            var tiW3 = document.getElementById('typing-indicator-wrapper');
+                            if (tiW3) tiW3.style.display = 'none';
+                            console.warn('[AI 聊天] 失败，回退字卡:', err.message);
+                            // 简单回退：从字卡库随机选一条
+                            var fallbackPool = (window._customReplies || []).map(function(r){return String(r||'').trim();}).filter(Boolean);
+                            if (fallbackPool.length > 0) {
+                                var fbText = fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+                                addMessage({
+                                    id: Date.now(),
+                                    sender: settings.partnerName || '对方',
+                                    text: fbText,
+                                    timestamp: new Date(),
+                                    status: 'received',
+                                    favorited: false,
+                                    note: null,
+                                    type: 'normal'
+                                });
+                                playSound('message');
+                            }
+                        });
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('[AI 聊天] 异常:', e);
+                }
+            }
+
 if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                 const currentPool = [
                     ...partnerPersonas

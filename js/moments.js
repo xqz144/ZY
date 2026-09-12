@@ -2322,6 +2322,42 @@
       var mm = findMomentById(momentId);
       if (!mm) return;
 
+      // ── AI 评论回复优先（如果启用）──
+      if (window.AIService && window.AIService.isFeatureEnabled('moments')) {
+        try {
+          var momentContent = mm.text || '';
+          var commentContent = '';
+          if (repliedToName) {
+            var repliedComment = mm.comments.find(function(c) { return c.name === repliedToName; });
+            if (repliedComment) commentContent = repliedComment.text || '';
+          }
+
+          var aiContext = {
+            momentContent: momentContent,
+            commentContent: commentContent,
+            replierName: repliedToName || '',
+            partnerName: partnerName,
+            myName: (window.settings && window.settings.myName) || '我'
+          };
+
+          var aiReply = await window.AIService.generateMomentComment(aiContext);
+          if (aiReply) {
+            mm.comments.push({
+              name: partnerName,
+              text: aiReply,
+              replyTo: repliedToName
+            });
+            saveMomentsToStorageSync();
+            renderMoments();
+            showMomentsNotification(partnerName, partnerAvatar, 'comment', 1, mm.id, aiReply, getMomentPreviewImage(mm));
+            return;
+          }
+        } catch (e) {
+          console.warn('[AI 朋友圈] 失败，回退字卡:', e.message);
+          // 回退到字卡逻辑
+        }
+      }
+
       // 20% 概率发送表情包
       var sendSticker = hasStickers && Math.random() < 0.2;
 

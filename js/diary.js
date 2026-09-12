@@ -420,6 +420,7 @@ function renderDiaryModal() {
         case 'habit': renderDiaryHabits(); break;
         case 'period': renderDiaryPeriod(); break;
         case 'anniversary': renderDiaryAnniversaries(); break;
+        case 'journal': renderJournalPanel(); break;
     }
 }
 
@@ -2545,6 +2546,194 @@ function completeTodoFromReminder(todoId, notificationEl) {
         notificationEl.classList.add('hiding');
         setTimeout(() => notificationEl.remove(), 300);
     }
+}
+
+/* ========== 心记（AI 日记） ========== */
+var journalEntries = [];
+var JOURNAL_KEY = 'diary_journal_entries';
+
+function loadJournalEntries() {
+    try {
+        var saved = localStorage.getItem(JOURNAL_KEY);
+        journalEntries = saved ? JSON.parse(saved) : [];
+    } catch (e) {
+        journalEntries = [];
+    }
+}
+
+function saveJournalEntries() {
+    try {
+        localStorage.setItem(JOURNAL_KEY, JSON.stringify(journalEntries));
+    } catch (e) {}
+}
+
+function getTodayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function renderJournalPanel() {
+    loadJournalEntries();
+
+    var dateInput = document.getElementById('journal-date-input');
+    if (dateInput && !dateInput.value) dateInput.value = getTodayStr();
+
+    renderJournalHistory();
+    bindJournalEvents();
+}
+
+function bindJournalEvents() {
+    var aiBtn = document.getElementById('journal-ai-btn');
+    if (aiBtn && !aiBtn._journalBound) {
+        aiBtn._journalBound = true;
+        aiBtn.addEventListener('click', generateJournalByAI);
+    }
+
+    var saveBtn = document.getElementById('journal-save-btn');
+    if (saveBtn && !saveBtn._journalBound) {
+        saveBtn._journalBound = true;
+        saveBtn.addEventListener('click', saveJournalEntry);
+    }
+}
+
+function generateJournalByAI() {
+    if (!window.AIService || !window.AIService.isFeatureEnabled('diary')) {
+        showNotification('请先到「设置 → AI 设置」中开启 AI 并填写 API Key', 'error', 3000);
+        return;
+    }
+
+    var dateInput = document.getElementById('journal-date-input');
+    var moodSelect = document.getElementById('journal-mood-select');
+    var eventsInput = document.getElementById('journal-events-input');
+    var contentArea = document.getElementById('journal-content');
+    var aiBtn = document.getElementById('journal-ai-btn');
+
+    var context = {
+        todayMood: moodSelect ? moodSelect.value : '',
+        todayEvents: eventsInput ? eventsInput.value.trim() : '',
+        partnerName: (window.settings && window.settings.partnerName) || '对方',
+        myName: (window.settings && window.settings.myName) || '我'
+    };
+
+    if (aiBtn) {
+        aiBtn.textContent = '⏳ 正在生成...';
+        aiBtn.disabled = true;
+        aiBtn.style.opacity = '0.6';
+    }
+
+    window.AIService.generateDiary(context).then(function (text) {
+        if (contentArea) contentArea.value = text;
+        if (typeof showNotification === 'function') showNotification('✨ AI 已生成日记', 'success', 1500);
+    }).catch(function (err) {
+        if (typeof showNotification === 'function') showNotification('AI 生成失败：' + (err.message || '未知错误'), 'error', 3000);
+    }).finally(function () {
+        if (aiBtn) {
+            aiBtn.textContent = '✨ AI 帮我写';
+            aiBtn.disabled = false;
+            aiBtn.style.opacity = '1';
+        }
+    });
+}
+
+function saveJournalEntry() {
+    var dateInput = document.getElementById('journal-date-input');
+    var moodSelect = document.getElementById('journal-mood-select');
+    var contentArea = document.getElementById('journal-content');
+
+    var date = dateInput ? dateInput.value : getTodayStr();
+    var mood = moodSelect ? moodSelect.value : '';
+    var content = contentArea ? contentArea.value.trim() : '';
+
+    if (!content) {
+        showNotification('日记内容不能为空', 'error');
+        return;
+    }
+
+    loadJournalEntries();
+
+    // 同日期则覆盖
+    var existingIdx = journalEntries.findIndex(function (e) { return e.date === date; });
+    var entry = {
+        date: date,
+        mood: mood,
+        content: content,
+        updatedAt: Date.now()
+    };
+
+    if (existingIdx >= 0) {
+        journalEntries[existingIdx] = entry;
+    } else {
+        journalEntries.unshift(entry);
+    }
+
+    saveJournalEntries();
+    renderJournalHistory();
+
+    if (typeof showNotification === 'function') showNotification('💾 心记已保存', 'success', 1500);
+}
+
+function renderJournalHistory() {
+    var list = document.getElementById('journal-history-list');
+    if (!list) return;
+
+    loadJournalEntries();
+
+    if (journalEntries.length === 0) {
+        list.innerHTML = '<div style="text-align:center;color:var(--text-secondary);font-size:12px;padding:20px;">还没有心记，写一篇吧～</div>';
+        return;
+    }
+
+    var moodEmoji = { '开心': '😊', '平静': '😐', '难过': '😢', '生气': '😤', '疲惫': '😴', '甜蜜': '🥰' };
+
+    list.innerHTML = journalEntries.map(function (entry) {
+        var emoji = moodEmoji[entry.mood] || '📝';
+        var preview = entry.content.length > 60 ? entry.content.substring(0, 60) + '...' : entry.content;
+        return '<div style="padding:10px 12px;background:var(--secondary-bg);border-radius:10px;cursor:pointer;border:1px solid var(--border-color);" data-date="' + entry.date + '">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+            '<span style="font-size:12px;font-weight:600;color:var(--text-primary);">' + emoji + ' ' + entry.date + '</span>' +
+            '<button style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:12px;" class="journal-del-btn" data-date="' + entry.date + '"><i class="fas fa-trash"></i></button>' +
+            '</div>' +
+            '<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;white-space:pre-wrap;">' + (preview || '').replace(/</g, '&lt;') + '</div>' +
+            '</div>';
+    }).join('');
+
+    // 点击加载
+    list.querySelectorAll('[data-date]').forEach(function (item) {
+        var date = item.getAttribute('data-date');
+        if (item.classList.contains('journal-del-btn')) return;
+        item.addEventListener('click', function (e) {
+            if (e.target.closest('.journal-del-btn')) return;
+            loadJournalEntryToEditor(date);
+        });
+    });
+
+    // 删除
+    list.querySelectorAll('.journal-del-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var date = btn.getAttribute('data-date');
+            if (confirm('确定删除这篇心记吗？')) {
+                journalEntries = journalEntries.filter(function (e) { return e.date !== date; });
+                saveJournalEntries();
+                renderJournalHistory();
+            }
+        });
+    });
+}
+
+function loadJournalEntryToEditor(date) {
+    var entry = journalEntries.find(function (e) { return e.date === date; });
+    if (!entry) return;
+
+    var dateInput = document.getElementById('journal-date-input');
+    var moodSelect = document.getElementById('journal-mood-select');
+    var contentArea = document.getElementById('journal-content');
+
+    if (dateInput) dateInput.value = entry.date;
+    if (moodSelect) moodSelect.value = entry.mood || '开心';
+    if (contentArea) contentArea.value = entry.content;
+
+    if (contentArea) contentArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // 在 DOMContentLoaded 后自动初始化监听

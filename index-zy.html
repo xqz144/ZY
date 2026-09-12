@@ -2894,6 +2894,10 @@
                     <i class="fas fa-magic"></i>
                     <span>高级功能</span>
                 </div>
+                <div class="settings-card" id="ai-settings-entry">
+                    <i class="fas fa-robot"></i>
+                    <span>AI 设置</span>
+                </div>
                 <div class="settings-card" id="data-settings">
                     <i class="fas fa-database"></i>
                     <span>数据管理</span>
@@ -2907,6 +2911,89 @@
         </div>
     </div>
 
+    <!-- AI 设置弹窗 -->
+    <div class="modal" id="ai-settings-modal">
+        <div class="modal-content" style="max-height:85vh;overflow-y:auto;">
+            <div class="modal-title">
+                <i class="fas fa-robot"></i><span>AI 设置</span>
+            </div>
+
+            <div style="padding:4px 0 16px;">
+                <!-- 总开关 -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--secondary-bg);border-radius:12px;margin-bottom:14px;">
+                    <div>
+                        <div style="font-size:14px;font-weight:600;color:var(--text-primary);">启用 AI 功能</div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">开启后聊天/日记/朋友圈可使用 AI 生成内容</div>
+                    </div>
+                    <label class="switch" style="position:relative;display:inline-block;width:44px;height:24px;">
+                        <input type="checkbox" id="ai-enabled-toggle" style="opacity:0;width:0;height:0;">
+                        <span class="slider" style="position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.3s;"></span>
+                    </label>
+                </div>
+
+                <!-- API Key -->
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">API Key</label>
+                    <input id="ai-api-key" type="password" placeholder="sk-xxxxxxxxxxxxxxxx" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border-color);background:var(--primary-bg);color:var(--text-primary);font-size:13px;font-family:inherit;box-sizing:border-box;" />
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">前往 <a href="https://platform.deepseek.com" target="_blank" style="color:var(--accent-color);">DeepSeek 平台</a> 获取</div>
+                </div>
+
+                <!-- 模型选择 -->
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">模型</label>
+                    <select id="ai-model" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border-color);background:var(--primary-bg);color:var(--text-primary);font-size:13px;font-family:inherit;box-sizing:border-box;">
+                        <option value="deepseek-chat">deepseek-chat（推荐）</option>
+                        <option value="deepseek-reasoner">deepseek-reasoner（推理模型）</option>
+                    </select>
+                </div>
+
+                <!-- 角色设定 -->
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">角色设定（System Prompt）</label>
+                    <textarea id="ai-persona" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border-color);background:var(--primary-bg);color:var(--text-primary);font-size:13px;font-family:inherit;box-sizing:border-box;min-height:80px;resize:vertical;" placeholder="描述角色的性格、说话方式、与用户的关系等"></textarea>
+                </div>
+
+                <!-- 功能开关 -->
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;">启用的功能</label>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--secondary-bg);border-radius:10px;cursor:pointer;">
+                            <input type="checkbox" id="ai-feature-chat" checked>
+                            <span style="font-size:13px;color:var(--text-primary);">💬 聊天回复</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--secondary-bg);border-radius:10px;cursor:pointer;">
+                            <input type="checkbox" id="ai-feature-diary" checked>
+                            <span style="font-size:13px;color:var(--text-primary);">📔 日记生成</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--secondary-bg);border-radius:10px;cursor:pointer;">
+                            <input type="checkbox" id="ai-feature-moments" checked>
+                            <span style="font-size:13px;color:var(--text-primary);">📷 朋友圈评论</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 温度 -->
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">回复随机性（Temperature）: <span id="ai-temp-val">0.8</span></label>
+                    <input id="ai-temperature" type="range" min="0" max="1.5" step="0.1" value="0.8" style="width:100%;">
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-secondary);">
+                        <span>稳定</span><span>随机</span>
+                    </div>
+                </div>
+
+                <!-- 测试连接 -->
+                <div id="ai-test-btn" style="padding:12px;border-radius:10px;background:var(--secondary-bg);color:var(--accent-color);font-size:13px;font-weight:600;text-align:center;cursor:pointer;border:1px solid var(--border-color);">
+                    🔗 测试连接
+                </div>
+                <div id="ai-test-result" style="margin-top:8px;font-size:12px;text-align:center;min-height:18px;"></div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" id="cancel-ai-settings">关闭</button>
+                <button class="modal-btn" id="save-ai-settings" style="background:var(--accent-color);color:#fff;">保存</button>
+            </div>
+        </div>
+    </div>
 
     <div class="modal" id="appearance-modal">
         <div class="modal-content">
@@ -4244,6 +4331,9 @@
                 <button class="diary-tab-btn" data-tab="anniversary">
                     <i class="fas fa-heart"></i> <span>纪念日</span>
                 </button>
+                <button class="diary-tab-btn" data-tab="journal">
+                    <i class="fas fa-book-open"></i> <span>心记</span>
+                </button>
             </div>
 
             <!-- 待办事项面板 -->
@@ -4471,6 +4561,48 @@
                     <button class="diary-add-btn" id="diary-ann-add-btn"><i class="fas fa-plus"></i></button>
                 </div>
                 <div id="diary-anniversary-list"></div>
+            </div>
+
+            <!-- 心记面板（AI 日记） -->
+            <div class="diary-panel" data-panel="journal" style="display:none;">
+                <div style="padding:12px 0;">
+                    <!-- 日期与心情 -->
+                    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                        <input type="date" id="journal-date-input" style="padding:9px 10px;border:1.5px solid var(--border-color);border-radius:10px;background:var(--primary-bg);color:var(--text-primary);font-size:13px;outline:none;font-family:var(--font-family);">
+                        <select id="journal-mood-select" style="padding:9px 10px;border:1.5px solid var(--border-color);border-radius:10px;background:var(--primary-bg);color:var(--text-primary);font-size:13px;outline:none;font-family:var(--font-family);">
+                            <option value="开心">😊 开心</option>
+                            <option value="平静">😐 平静</option>
+                            <option value="难过">😢 难过</option>
+                            <option value="生气">😤 生气</option>
+                            <option value="疲惫">😴 疲惫</option>
+                            <option value="甜蜜">🥰 甜蜜</option>
+                        </select>
+                    </div>
+
+                    <!-- 今日事件（供 AI 参考） -->
+                    <div style="margin-bottom:10px;">
+                        <input type="text" id="journal-events-input" placeholder="今天发生了什么？（供 AI 参考，可留空）" style="width:100%;padding:9px 10px;border:1.5px solid var(--border-color);border-radius:10px;background:var(--primary-bg);color:var(--text-primary);font-size:13px;outline:none;font-family:var(--font-family);box-sizing:border-box;">
+                    </div>
+
+                    <!-- 日记正文 -->
+                    <textarea id="journal-content" placeholder="今天的心情和故事..." style="width:100%;min-height:180px;padding:12px;border:1.5px solid var(--border-color);border-radius:12px;background:var(--primary-bg);color:var(--text-primary);font-size:14px;line-height:1.6;outline:none;font-family:var(--font-family);box-sizing:border-box;resize:vertical;"></textarea>
+
+                    <!-- 操作按钮 -->
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <button id="journal-ai-btn" style="flex:1;padding:11px;border:1px solid var(--accent-color);border-radius:10px;background:rgba(var(--accent-color-rgb),0.08);color:var(--accent-color);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-family);">
+                            ✨ AI 帮我写
+                        </button>
+                        <button id="journal-save-btn" style="flex:1;padding:11px;border:none;border-radius:10px;background:var(--accent-color);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-family);">
+                            💾 保存
+                        </button>
+                    </div>
+
+                    <!-- 历史记录 -->
+                    <div style="margin-top:16px;">
+                        <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">📖 历史心记</div>
+                        <div id="journal-history-list" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- 底部按钮 -->
@@ -4946,6 +5078,7 @@
     <script src="js/utils.js"></script>
     <script src="js/backup-engine.js"></script>
     <script src="js/backup-panel.js"></script>
+    <script src="js/ai-service.js"></script>
     <script src="js/state.js"></script>
     <script src="js/core.js"></script>
     <script src="js/home.js"></script>
