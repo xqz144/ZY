@@ -66,11 +66,14 @@ android {
 
     // 打包前：把 /workspace 根目录（除了 /android /node_modules /.git）整个拷进
     // app/src/main/assets/public/，这样 WebView 本地文件就能直接加载所有页面。
-    applicationVariants.all { variant ->
-        variant.mergeAssetsProvider.get().doFirst {
+    // 注意：必须拷到 source set 目录，不能拷到 merged_assets/out（mergeAssets 会覆盖输出）。
+    def webAssetsDir = file("${projectDir}/src/main/assets/public")
+    tasks.named("preBuild").configure {
+        doFirst {
+            delete webAssetsDir
             copy {
                 from(rootProject.rootDir.parentFile)
-                into("${buildDir}/intermediates/merged_assets/${variant.name}/merge${variant.name.capitalize()}Assets/out/public")
+                into(webAssetsDir)
                 includeEmptyDirs = false
                 exclude(
                     'android/**',
@@ -80,6 +83,7 @@ android {
                     'apk/**',
                     '.trae-html-share-packages/**',
                     'push-fix.ps1',
+                    'mengjiao-v*.apk',
                     '**/*.zip'
                 )
             }
