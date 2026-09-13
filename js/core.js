@@ -2638,27 +2638,48 @@ if (!isBatchMode && type === 'normal') {
                             var tiW3 = document.getElementById('typing-indicator-wrapper');
                             if (tiW3) tiW3.style.display = 'none';
                             console.warn('[AI 聊天] 失败，回退字卡:', err.message);
-                            // 简单回退：从字卡库随机选一条
+
+                            // 给用户可见的失败提示
+                            if (typeof window.showNotification === 'function') {
+                                window.showNotification('AI 回复失败，已切换模拟回复', 'warning', 2500);
+                            }
+
+                            // 简单回退：从字卡库随机选一条；字卡为空用内置兜底
                             var fallbackPool = (window._customReplies || []).map(function(r){return String(r||'').trim();}).filter(Boolean);
+                            var builtinFallbacks = [
+                                '嗯嗯，我在呢~',
+                                '哈哈，真的呀',
+                                '好呀好呀',
+                                '想你啦~',
+                                '在忙什么呢？',
+                                '嗯嗯，说得对',
+                                '哈哈哈太可爱了',
+                                '我也是我也是',
+                                '那太好了！',
+                                '嗯嗯，我懂你的意思'
+                            ];
+                            var fbText;
                             if (fallbackPool.length > 0) {
-                                var fbText = fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
-                                addMessage({
-                                    id: Date.now(),
-                                    sender: settings.partnerName || '对方',
-                                    text: fbText,
-                                    timestamp: new Date(),
-                                    status: 'received',
-                                    favorited: false,
-                                    note: null,
-                                    type: 'normal'
-                                });
-                                playSound('message');
-                                // 聊天内嵌推歌（字卡回退路径）
-                                if (window.MusicService && typeof window.MusicService.maybePushSongInChat === 'function') {
-                                    setTimeout(function () {
-                                        window.MusicService.maybePushSongInChat(fbText).catch(function () {});
-                                    }, 1500 + Math.random() * 1500);
-                                }
+                                fbText = fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+                            } else {
+                                fbText = builtinFallbacks[Math.floor(Math.random() * builtinFallbacks.length)];
+                            }
+                            addMessage({
+                                id: Date.now(),
+                                sender: settings.partnerName || '对方',
+                                text: fbText,
+                                timestamp: new Date(),
+                                status: 'received',
+                                favorited: false,
+                                note: null,
+                                type: 'normal'
+                            });
+                            playSound('message');
+                            // 聊天内嵌推歌（字卡回退路径）
+                            if (window.MusicService && typeof window.MusicService.maybePushSongInChat === 'function') {
+                                setTimeout(function () {
+                                    window.MusicService.maybePushSongInChat(fbText).catch(function () {});
+                                }, 1500 + Math.random() * 1500);
                             }
                         });
                         return;

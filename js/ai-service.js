@@ -65,7 +65,14 @@
       return Promise.reject(new Error('API Key 未配置，请先到 AI 设置中填写'));
     }
 
-    return fetch(cfg.baseUrl + '/chat/completions', {
+    // 15 秒超时（手机网络可能较慢）
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timeoutId = null;
+    if (controller) {
+      timeoutId = setTimeout(function () { controller.abort(); }, 15000);
+    }
+
+    var fetchOpts = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -78,11 +85,17 @@
         max_tokens: cfg.maxTokens,
         stream: false
       })
-    }).then(function (res) {
+    };
+    if (controller) fetchOpts.signal = controller.signal;
+
+    return fetch(cfg.baseUrl + '/chat/completions', fetchOpts).then(function (res) {
+      if (timeoutId) clearTimeout(timeoutId);
       if (!res.ok) {
         return res.json().then(function (err) {
           var msg = (err.error && err.error.message) || ('HTTP ' + res.status);
           throw new Error('AI 服务错误：' + msg);
+        }).catch(function () {
+          throw new Error('AI 服务错误：HTTP ' + res.status);
         });
       }
       return res.json();
@@ -91,6 +104,12 @@
         return data.choices[0].message.content.trim();
       }
       throw new Error('AI 返回格式异常');
+    }).catch(function (err) {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (err && err.name === 'AbortError') {
+        throw new Error('AI 响应超时，请检查网络');
+      }
+      throw err;
     });
   }
 
