@@ -1829,7 +1829,7 @@ function createMessageFragment(msg, prevMsg, nextMsg, lastSenderRef) {
         if (playBtn && window.MusicService) {
             playBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
-                window.MusicService.toggleMusicPlay(playBtn.dataset.url, playBtn);
+                window.MusicService.toggleMusicPlay(playBtn.dataset.url, playBtn, playBtn.dataset.fileId);
             });
         }
     }
