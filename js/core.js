@@ -2365,6 +2365,8 @@ if (!isBatchMode && type === 'normal') {
     const chance = Math.max(0, Math.min(1, Number(settings.readNoReplyChance) || 0));
     const shouldIgnore = settings.allowReadNoReply && (Math.random() < chance);
 
+    console.log('[AI 调试] sendMessage createMessage内, isBatchMode:', isBatchMode, 'shouldIgnore:', shouldIgnore, 'randomDelay:', randomDelay, 'replyEnabled:', settings.replyEnabled);
+
     const readDelay = 1500 + Math.random() * 2500;
                 setTimeout(() => {
         let changed = false;
@@ -2386,9 +2388,9 @@ if (!isBatchMode && type === 'normal') {
             const tiLabel = document.getElementById('typing-indicator-label');
             const tiAvatar = document.getElementById('typing-indicator-avatar');
             if (tiLabel) tiLabel.textContent = (settings.partnerName || '对方') + ' 正在输入';
-            if (tiWrapper) { 
-                positionTypingIndicator(); 
-                tiWrapper.style.display = 'block'; 
+            if (tiWrapper) {
+                positionTypingIndicator();
+                tiWrapper.style.display = 'block';
             }
             if (tiAvatar) {
                 const partnerImg = DOMElements.partner.avatar.querySelector('img');
@@ -2396,11 +2398,17 @@ if (!isBatchMode && type === 'normal') {
             }
             if (DOMElements.chatContainer) DOMElements.chatContainer.scrollTop = DOMElements.chatContainer.scrollHeight;
         }
+        console.log('[AI 调试] 设置 setTimeout 调用 simulateReply, delay:', randomDelay);
         window._pendingReplyTimer = setTimeout(() => {
             window._pendingReplyTimer = null;
+            console.log('[AI 调试] setTimeout 回调触发, simulateReply类型:', typeof simulateReply);
             simulateReply();
         }, randomDelay);
+    } else {
+        console.log('[AI 调试] shouldIgnore=true, 跳过回复');
     }
+} else {
+    console.log('[AI 调试] 不进入回复逻辑, isBatchMode:', isBatchMode, 'type:', type);
 }
 };
 
@@ -2532,6 +2540,7 @@ if (!isBatchMode && type === 'normal') {
         })();
 
         window.simulateReply = function() {
+            console.log('[AI 聊天] simulateReply 被调用, messages数量:', messages.length);
             function showTypingIndicator() {
                 if (!settings.typingIndicatorEnabled) return;
                 const tiWrapper = document.getElementById('typing-indicator-wrapper');
@@ -2596,13 +2605,15 @@ if (!isBatchMode && type === 'normal') {
                             }
                         }
 
-                        var aiReplyDelay = (settings.replyDelayMin || 1) * 1000 + Math.random() * 1500;
+                        var aiReplyDelay = (settings.replyDelayMin || 3000) + Math.random() * 1500;
                         var aiStart = Date.now();
+                        console.log('[AI 聊天] 开始调用 generateChatReply, lastUserMsg:', lastUserMsg);
                         window.AIService.generateChatReply(
                             lastUserMsg, history,
                             settings.partnerName || '对方',
                             settings.myName || '我'
                         ).then(function (aiText) {
+                            console.log('[AI 聊天] 收到AI回复, 长度:', (aiText||'').length, '内容:', (aiText||'').substring(0,50));
                             // 隐藏正在输入
                             var tiW2 = document.getElementById('typing-indicator-wrapper');
                             if (tiW2) tiW2.style.display = 'none';
@@ -2610,17 +2621,24 @@ if (!isBatchMode && type === 'normal') {
                             // 确保至少有一定延迟（看起来像在打字）
                             var elapsed = Date.now() - aiStart;
                             var remaining = Math.max(0, aiReplyDelay - elapsed);
+                            console.log('[AI 聊天] elapsed:', elapsed, 'remaining:', remaining, 'aiReplyDelay:', aiReplyDelay);
                             setTimeout(function () {
-                                addMessage({
-                                    id: Date.now(),
-                                    sender: settings.partnerName || '对方',
-                                    text: aiText,
-                                    timestamp: new Date(),
-                                    status: 'received',
-                                    favorited: false,
-                                    note: null,
-                                    type: 'normal'
-                                });
+                                console.log('[AI 聊天] 准备 addMessage, sender:', settings.partnerName || '对方');
+                                try {
+                                    addMessage({
+                                        id: Date.now(),
+                                        sender: settings.partnerName || '对方',
+                                        text: aiText,
+                                        timestamp: new Date(),
+                                        status: 'received',
+                                        favorited: false,
+                                        note: null,
+                                        type: 'normal'
+                                    });
+                                    console.log('[AI 聊天] addMessage 完成, messages总数:', messages.length);
+                                } catch(addMsgErr) {
+                                    console.error('[AI 聊天] addMessage 出错:', addMsgErr.message, addMsgErr.stack);
+                                }
                                 playSound('message');
                                 if (typeof window._sendPartnerNotification === 'function') {
                                     window._sendPartnerNotification(settings.partnerName || '对方', aiText);
@@ -2637,7 +2655,7 @@ if (!isBatchMode && type === 'normal') {
                             // AI 失败，回退到字卡
                             var tiW3 = document.getElementById('typing-indicator-wrapper');
                             if (tiW3) tiW3.style.display = 'none';
-                            console.warn('[AI 聊天] 失败，回退字卡:', err.message);
+                            console.warn('[AI 聊天] 失败，回退字卡:', err.message, err.stack);
 
                             // 给用户可见的失败提示
                             if (typeof window.showNotification === 'function') {

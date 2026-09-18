@@ -74,12 +74,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String HOST = "appassets.mengjiao.local";
     private static final String PREFIX_PUBLIC = "/public/";
     private static final String PREFIX_HOT = "/hot/";
-    private static final String APP_VERSION = "1.8.3";
+    private static final String APP_VERSION = "1.8.4";
     private static final int FILE_CHOOSER_REQUEST_CODE = 51426;
 
     private WebView mWebView;
     private AssetManager mAssets;
     private File mHotDir;
+    private boolean mNeedSWClear = false;
     // <input type="file"> 回调：WebView 点击上传按钮时触发，选完文件后通过它把结果回传给页面
     private ValueCallback<Uri[]> mFilePathCallback;
 
@@ -106,16 +107,17 @@ public class MainActivity extends AppCompatActivity {
 
         mWebView = findViewById(R.id.web_view);
 
-        // 版本升级时清除 WebView 缓存（包括 Service Worker 缓存），
-        // 确保用户拿到最新的前端代码
+        // 版本升级时清除 WebView 缓存，确保用户拿到最新的前端代码
         SharedPreferences prefs = getSharedPreferences("mengjiao_prefs", MODE_PRIVATE);
         String lastVersion = prefs.getString("app_version", "");
         if (!APP_VERSION.equals(lastVersion)) {
+            // 清除 HTTP 缓存
             mWebView.clearCache(true);
             mWebView.clearHistory();
-            try {
-                WebStorage.getInstance().deleteAllData();
-            } catch (Exception ignored) {}
+            // 标记需要在页面加载后清除 Service Worker 缓存
+            mNeedSWClear = true;
+            // 注意：不调用 WebStorage.getInstance().deleteAllData()，
+            // 因为它会删除 localStorage / IndexedDB（用户的聊天记录、AI配置等数据）。
             prefs.edit().putString("app_version", APP_VERSION).apply();
         }
 
@@ -132,6 +134,30 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return intercept(request.getUrl());
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // 版本升级时清除 Service Worker 缓存（clearCache 无法清除 SW Cache API）
+                if (mNeedSWClear) {
+                    mNeedSWClear = false;
+                    view.evaluateJavascript(
+                        "if ('serviceWorker' in navigator) {" +
+                        "  navigator.serviceWorker.getRegistrations().then(function(regs) {" +
+                        "    return Promise.all(regs.map(function(r) { return r.unregister(); }));" +
+                        "  }).then(function() {" +
+                        "    if (window.caches) {" +
+                        "      return caches.keys().then(function(keys) {" +
+                        "        return Promise.all(keys.map(function(k) { return caches.delete(k); }));" +
+                        "      });" +
+                        "    }" +
+                        "  }).then(function() {" +
+                        "    window.location.reload();" +
+                        "  });" +
+                        "}",
+                        null);
+                }
             }
         });
         mWebView.setWebChromeClient(new WebChromeClient() {
