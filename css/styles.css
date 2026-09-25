@@ -1117,6 +1117,25 @@ html[data-theme="dark"] .message-sent {
     font-weight: 500;
     text-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }
+/* 回复来源小字标签（AI / 字卡） */
+.reply-source {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    line-height: 1.5;
+    vertical-align: middle;
+}
+.reply-source--ai {
+    color: var(--accent-color);
+    background: rgba(255,255,255,0.10);
+    background: color-mix(in srgb, var(--accent-color) 14%, transparent);
+}
+.reply-source--card {
+    color: var(--text-secondary);
+    background: rgba(127,127,127,0.12);
+}
 .read-receipt {
     font-size: 12px;
 }

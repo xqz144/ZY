@@ -1951,6 +1951,14 @@ function createMessageFragment(msg, prevMsg, nextMsg, lastSenderRef) {
         metaHTML += `<div class="timestamp">${timeStr}</div>`;
     }
 
+    // 回复来源小字标签（AI / 字卡）—— 仅对方消息且标记了来源时显示
+    if (msg.sender !== 'user' && msg.source) {
+        const isAI = msg.source === 'ai';
+        const sourceLabel = isAI ? 'AI' : '字卡';
+        const sourceClass = isAI ? 'reply-source--ai' : 'reply-source--card';
+        metaHTML += `<span class="reply-source ${sourceClass}">${sourceLabel}</span>`;
+    }
+
     if (msg.sender === 'user' && settings.readReceiptsEnabled && isLastInSenderGroup) {
         const rrStyle = settings.readReceiptStyle || 'icon';
         if (rrStyle === 'text') {
@@ -2568,8 +2576,15 @@ if (!isBatchMode && type === 'normal') {
                 _updateReadReceiptsDOM(); throttledSaveData();
             }
 
-            // ── AI 回复优先（如果启用）──
+            // ── AI 回复（如果启用）──
             if (window.AIService && window.AIService.isFeatureEnabled('chat')) {
+                // 混合模式：按权重决定走 AI 还是字卡
+                var useAI = true;
+                if (window.AIService.isHybridMode && window.AIService.isHybridMode()) {
+                    var aiW = (window.AIService.getAIWeight) ? window.AIService.getAIWeight() : 70;
+                    useAI = Math.random() * 100 < aiW;
+                }
+                if (useAI) {
                 try {
                     // 获取用户最后一条消息
                     var lastUserMsg = null;
@@ -2633,7 +2648,8 @@ if (!isBatchMode && type === 'normal') {
                                         status: 'received',
                                         favorited: false,
                                         note: null,
-                                        type: 'normal'
+                                        type: 'normal',
+                                        source: 'ai'
                                     });
                                     console.log('[AI 聊天] addMessage 完成, messages总数:', messages.length);
                                 } catch(addMsgErr) {
@@ -2690,7 +2706,8 @@ if (!isBatchMode && type === 'normal') {
                                 status: 'received',
                                 favorited: false,
                                 note: null,
-                                type: 'normal'
+                                type: 'normal',
+                                source: 'card'
                             });
                             playSound('message');
                             // 聊天内嵌推歌（字卡回退路径）
@@ -2704,6 +2721,7 @@ if (!isBatchMode && type === 'normal') {
                     }
                 } catch (e) {
                     console.warn('[AI 聊天] 异常:', e);
+                }
                 }
             }
 
@@ -2764,7 +2782,8 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                             status: 'received',
                             favorited: false,
                             note: null,
-                            type: 'normal'
+                            type: 'normal',
+                            source: 'card'
                         });
                         playSound('message');
                         if (typeof window._sendPartnerNotification === 'function') {
@@ -2872,7 +2891,8 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                         replyTo: (i === 0 && recentUserMsgs.length > 0 && Math.random() < 0.3)
                             ? (function(){ const m = recentUserMsgs[Math.floor(Math.random() * recentUserMsgs.length)]; return { id: m.id, text: m.text, sender: m.sender }; })()
                             : null,
-                        type: 'normal'
+                        type: 'normal',
+                        source: 'card'
                     });
                     if (typeof window._sendPartnerNotification === 'function') {
                         window._sendPartnerNotification(settings.partnerName || '对方', finalText);
@@ -2891,7 +2911,8 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                                 status: 'received',
                                 favorited: false,
                                 note: null,
-                                type: 'normal'
+                                type: 'normal',
+                                source: 'card'
                             });
                             playSound('message');
                             if (typeof window._sendPartnerNotification === 'function') {
@@ -2910,7 +2931,8 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                                 status: 'received',
                                 favorited: false,
                                 note: null,
-                                type: 'normal'
+                                type: 'normal',
+                                source: 'card'
                             });
                             playSound('message');
                         }, 300 + Math.random() * 400);
@@ -2926,7 +2948,8 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                                 status: 'received',
                                 favorited: false,
                                 note: null,
-                                type: 'normal'
+                                type: 'normal',
+                                source: 'card'
                             });
                             playSound('message');
                         }, 350 + Math.random() * 400);
@@ -2950,7 +2973,8 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                                 status: 'received',
                                 favorited: false,
                                 note: null,
-                                replyTo: null
+                                replyTo: null,
+                                source: 'card'
                             };
                             if (randomVoice.audioUrl) {
                                 try {

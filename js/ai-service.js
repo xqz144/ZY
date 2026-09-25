@@ -19,7 +19,11 @@
       music: true
     },
     temperature: 0.9,
-    maxTokens: 200
+    maxTokens: 200,
+    // 混合模式：开启后 AI 回复与字卡回复按权重随机混用（而非 AI 优先、字卡仅兜底）
+    hybridMode: false,
+    // AI 回复权重（0-100），剩余概率走字卡回复
+    aiWeight: 70
   };
 
   function loadConfig() {
@@ -63,6 +67,18 @@
   function isFeatureEnabled(feature) {
     var cfg = loadConfig();
     return cfg.enabled && cfg.apiKey && cfg.features[feature];
+  }
+
+  function isHybridMode() {
+    var cfg = loadConfig();
+    return !!cfg.hybridMode;
+  }
+
+  function getAIWeight() {
+    var cfg = loadConfig();
+    var w = Number(cfg.aiWeight);
+    if (isNaN(w)) w = 70;
+    return Math.max(0, Math.min(100, w));
   }
 
   /**
@@ -329,6 +345,8 @@
     getConfig: getConfig,
     updateConfig: updateConfig,
     isFeatureEnabled: isFeatureEnabled,
+    isHybridMode: isHybridMode,
+    getAIWeight: getAIWeight,
     chatCompletion: chatCompletion,
     testConnection: testConnection,
     generateChatReply: generateChatReply,
@@ -366,6 +384,16 @@
     document.getElementById('ai-temp-val').textContent = cfg.temperature;
     document.getElementById('ai-test-result').textContent = '';
 
+    // 混合模式
+    var hybridToggle = document.getElementById('ai-hybrid-toggle');
+    if (hybridToggle) hybridToggle.checked = !!cfg.hybridMode;
+    var weightSlider = document.getElementById('ai-weight');
+    if (weightSlider) {
+      weightSlider.value = (cfg.aiWeight !== undefined) ? cfg.aiWeight : 70;
+      var wv = document.getElementById('ai-weight-val');
+      if (wv) wv.textContent = weightSlider.value;
+    }
+
     // 显示弹窗
     if (typeof window.homeShowModal === 'function') {
       window.homeShowModal(modal);
@@ -383,6 +411,15 @@
     if (tempSlider) {
       tempSlider.oninput = function () {
         document.getElementById('ai-temp-val').textContent = this.value;
+      };
+    }
+
+    // AI 权重滑块
+    var weightSliderEl = document.getElementById('ai-weight');
+    if (weightSliderEl) {
+      weightSliderEl.oninput = function () {
+        var v = document.getElementById('ai-weight-val');
+        if (v) v.textContent = this.value;
       };
     }
 
@@ -424,6 +461,13 @@
     var musicToggleEl = document.getElementById('ai-feature-music');
     cfg.features.music = musicToggleEl ? musicToggleEl.checked : true;
     cfg.temperature = parseFloat(document.getElementById('ai-temperature').value);
+
+    // 混合模式
+    var hybridToggleEl = document.getElementById('ai-hybrid-toggle');
+    cfg.hybridMode = hybridToggleEl ? hybridToggleEl.checked : false;
+    var weightEl = document.getElementById('ai-weight');
+    var parsedWeight = parseFloat(weightEl ? weightEl.value : 70);
+    cfg.aiWeight = isNaN(parsedWeight) ? 70 : Math.max(0, Math.min(100, parsedWeight));
 
     saveConfig(cfg);
 
@@ -471,7 +515,7 @@
 
   // 开关样式
   var style = document.createElement('style');
-  style.textContent = '#ai-enabled-toggle:checked + .slider{background:var(--accent-color);}#ai-enabled-toggle:checked + .slider:before{transform:translateX(20px);}#ai-enabled-toggle + .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}';
+  style.textContent = '#ai-enabled-toggle:checked + .slider,#ai-hybrid-toggle:checked + .slider{background:var(--accent-color);}#ai-enabled-toggle:checked + .slider:before,#ai-hybrid-toggle:checked + .slider:before{transform:translateX(20px);}#ai-enabled-toggle + .slider:before,#ai-hybrid-toggle + .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}';
   document.head.appendChild(style);
 
   if (document.readyState === 'loading') {
