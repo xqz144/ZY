@@ -11,22 +11,30 @@
     apiKey: '',
     model: 'deepseek-chat',
     baseUrl: 'https://api.deepseek.com',
-    persona: '你是用户的虚拟伴侣，请用温柔、自然的语气和用户交流，像真正的恋人一样关心对方。回复要简短自然，不要太书面化。',
+    persona: '你是用户的虚拟恋人，和用户在谈恋爱。你有自己的性格和情绪，不是机械的客服。\n\n【说话风格】\n- 像真实情侣聊天一样，语气自然、口语化，不要书面语\n- 回复简短（1-3句话为主），可以带语气词（啦、嘛、呀、哼、唔）\n- 可以撒娇、可以傲娇、可以关心、可以调侃，要有情绪起伏\n- 适当使用颜文字或emoji，但不要太多\n\n【关系设定】\n- 你爱着用户，会主动关心对方的生活和情绪\n- 会主动找话题，不会只被动回答\n- 记得你们之间的小细节和约定\n\n【绝对禁止】\n- 不要说"作为AI""作为虚拟伴侣"之类暴露身份的话\n- 不要说"我无法""我不能"之类的话\n- 不要长篇大论讲道理\n- 不要用"您好""请问"等礼貌用语，你们是恋人',
     features: {
       chat: true,
       diary: true,
       moments: true,
       music: true
     },
-    temperature: 0.8,
-    maxTokens: 300
+    temperature: 0.9,
+    maxTokens: 200
   };
 
   function loadConfig() {
     try {
       var saved = localStorage.getItem(CONFIG_KEY);
       if (saved) {
-        return Object.assign({}, DEFAULT_CONFIG, JSON.parse(saved));
+        var parsed = JSON.parse(saved);
+        var merged = Object.assign({}, DEFAULT_CONFIG, parsed);
+        // 迁移：旧版默认 persona 只有一句话，自动升级到新版详细人设
+        if (parsed.persona && parsed.persona.indexOf('你是用户的虚拟伴侣，请用温柔、自然的语气') >= 0) {
+          merged.persona = DEFAULT_CONFIG.persona;
+          // 持久化升级后的配置
+          try { localStorage.setItem(CONFIG_KEY, JSON.stringify(merged)); } catch (e) {}
+        }
+        return merged;
       }
     } catch (e) {}
     return Object.assign({}, DEFAULT_CONFIG);
@@ -125,6 +133,23 @@
   }
 
   /**
+   * 从 window.settings 获取角色信息（性格、昵称等）
+   */
+  function getCharacterContext() {
+    try {
+      if (window.settings) {
+        return {
+          partnerName: window.settings.partnerName,
+          myName: window.settings.myName,
+          personality: window.settings.partnerPersonality || window.settings.personality || '',
+          petName: window.settings.petName || window.settings.partnerPetName || ''
+        };
+      }
+    } catch (e) {}
+    return {};
+  }
+
+  /**
    * 生成聊天回复
    * @param {string} userMessage - 用户最新消息
    * @param {Array} history - 历史消息 [{role, content}]
@@ -133,13 +158,32 @@
    */
   function generateChatReply(userMessage, history, partnerName, myName) {
     var cfg = loadConfig();
-    var systemPrompt = cfg.persona + '\n你扮演的角色名字叫"' + (partnerName || '对方') + '"，用户名字叫"' + (myName || '我') + '"。';
+    var ctx = getCharacterContext();
+    var pName = partnerName || ctx.partnerName || '对方';
+    var uName = myName || ctx.myName || '我';
+
+    // 构建富角色信息的 system prompt
+    var systemPrompt = cfg.persona;
+    systemPrompt += '\n\n【你的身份】';
+    systemPrompt += '\n你叫"' + pName + '"，是' + uName + '的恋人。';
+    if (ctx.personality) {
+      systemPrompt += '\n你的性格是"' + ctx.personality + '"，说话方式要符合这个性格。';
+    }
+    if (ctx.petName) {
+      systemPrompt += '\n' + uName + '喜欢叫你"' + ctx.petName + '"。';
+    }
+    systemPrompt += '\n\n【回复规则】';
+    systemPrompt += '\n- 直接输出你要说的话，不要加任何前缀（不要写"梦角："）';
+    systemPrompt += '\n- 不要用括号描述动作（如"（微笑）"），那是小说不是聊天';
+    systemPrompt += '\n- 一次只说1-3句话，像真实微信聊天';
+    systemPrompt += '\n- 根据用户说的内容自然回应，可以撒娇、关心、调侃';
+    systemPrompt += '\n- 如果不知道说什么，可以反问对方或表达关心';
 
     var messages = [{ role: 'system', content: systemPrompt }];
 
-    // 加入最近的历史（最多 10 条，避免 token 过多）
+    // 加入最近的历史（最多 12 条，避免 token 过多）
     if (history && history.length) {
-      var recent = history.slice(-10);
+      var recent = history.slice(-12);
       recent.forEach(function (m) {
         if (m.role === 'user' || m.role === 'assistant') {
           messages.push({ role: m.role, content: m.content });
@@ -150,8 +194,10 @@
     messages.push({ role: 'user', content: userMessage });
 
     return chatCompletion(messages).then(function (reply) {
-      // 清理可能的角色前缀
-      reply = reply.replace(/^[^:：]+[：:]\s*/, '');
+      // 清理可能的角色前缀（如 "梦角："、"对方:"）
+      reply = reply.replace(/^[^:：\n]+[：:]\s*/, '');
+      // 去掉引号包裹
+      reply = reply.replace(/^["「『'"]|["」』'"]$/g, '').trim();
       return reply;
     });
   }
