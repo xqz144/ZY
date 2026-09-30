@@ -812,6 +812,90 @@ gap: 10px;
     min-width: 52px;
 }
 
+/* 好感度小条 */
+.favorability-bar {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    color: var(--text-secondary);
+    opacity: 0.85;
+    order: 3;
+    line-height: 1;
+}
+.favorability-bar .fav-icon {
+    font-size: 9px;
+}
+.favorability-bar .fav-track {
+    width: 28px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-color);
+    overflow: hidden;
+}
+.favorability-bar .fav-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #9E9E9E, #E91E63);
+    transition: width 0.5s ease;
+}
+.favorability-bar .fav-num {
+    font-size: 9px;
+    font-weight: 600;
+    min-width: 14px;
+    text-align: left;
+}
+/* 好感度变化浮动提示 */
+.fav-float {
+    position: fixed;
+    pointer-events: none;
+    font-size: 13px;
+    font-weight: 700;
+    z-index: 9999;
+    animation: favFloat 1.2s ease-out forwards;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+@keyframes favFloat {
+    0% { opacity: 0; transform: translateY(0) scale(0.8); }
+    20% { opacity: 1; transform: translateY(-10px) scale(1.1); }
+    100% { opacity: 0; transform: translateY(-40px) scale(1); }
+}
+/* 好感度升级遮罩 */
+.fav-levelup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: favFadeIn 0.3s ease;
+}
+@keyframes favFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.fav-levelup-card {
+    background: var(--primary-bg);
+    border-radius: 20px;
+    padding: 30px 40px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    animation: favPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes favPop {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.fav-levelup-card .fav-stage-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.fav-levelup-card .fav-stage-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
 .avatar:hover {
     border-color: var(--accent-color);
     transform: scale(1.05);

@@ -2346,6 +2346,11 @@ const addMessage = (message) => {
                     window.SparkApp.recordChat();
                 }
 
+                // 好感度：用户发消息增加
+                if (type === 'normal' && text && typeof window.Favorability === 'object') {
+                    try { window.Favorability.onUserMessage(text); } catch (e) {}
+                }
+
                 // 小火人：聊天实时对接 —— 每次发送消息都记录互动
                 if (type === 'normal' && typeof window.SparkTracker === 'object' && typeof window.SparkTracker.recordInteraction === 'function') {
                     try {
@@ -2753,7 +2758,11 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                 const allCards = [];
                 // 收集字卡库中的字卡
                 if (window._customReplies && window._customReplies.length > 0) {
-                    allCards.push(...window._customReplies.map(r => String(r || '').trim()).filter(Boolean));
+                    var rawCards = window._customReplies.map(r => String(r || '').trim()).filter(Boolean);
+                    var favCards = (window.Favorability && window.Favorability.filterCards)
+                        ? window.Favorability.filterCards(rawCards)
+                        : rawCards;
+                    allCards.push(...(favCards.length > 0 ? favCards : rawCards));
                 }
                 // 收集颜文字
                 if (window._kaomojiLibrary && window._kaomojiLibrary.length > 0) {
@@ -2813,7 +2822,12 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                 .filter(r => !disabledItemsOnce.has(r) && !disabledGroupItemsOnce.has(r))
                 .map(r => String(r || '').trim())
                 .filter(Boolean);
-            if (!replyPoolOnce.length) {
+            // 好感度门槛过滤
+            const favFiltered = (window.Favorability && window.Favorability.filterCards)
+                ? window.Favorability.filterCards(replyPoolOnce)
+                : replyPoolOnce;
+            const finalPool = favFiltered.length > 0 ? favFiltered : replyPoolOnce; // 万一全被过滤，回退到全部
+            if (!finalPool.length) {
                 showNotification('回复库可用内容为空（可能被分组禁用或屏蔽），请到「自定义回复」中调整', 'info', 4000);
                 return;
             }
@@ -2829,7 +2843,7 @@ if (partnerPersonas && partnerPersonas.length > 0 && Math.random() < 0.3) {
                 delay += settings.replyDelayMin + Math.random() * delayRange;
                 setTimeout(() => {
                     try {
-                    const replyPool = replyPoolOnce;
+                    const replyPool = finalPool;
                     // 被屏蔽或无效项直接换下一个，尽量保证每次都产出可用回复
                     let replyText = '';
                     for (let t = 0; t < 6; t++) {

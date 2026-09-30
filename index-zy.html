@@ -2403,6 +2403,12 @@
                 <div class="status" id="partner-status">
                     <span>在线</span>
                 </div>
+                <!-- 好感度小条 -->
+                <div id="favorability-bar" class="favorability-bar" title="好感度">
+                    <span class="fav-icon">💕</span>
+                    <div class="fav-track"><div class="fav-fill" id="fav-fill"></div></div>
+                    <span class="fav-num" id="fav-num">0</span>
+                </div>
             </div>
             <div class="header-actions">
                 <button id="home-btn" class="action-btn" title="主页" onclick="showHomePage()"><i class="fas fa-home"></i></button>
@@ -2898,6 +2904,10 @@
                     <i class="fas fa-robot"></i>
                     <span>AI 设置</span>
                 </div>
+                <div class="settings-card" id="favorability-entry">
+                    <i class="fas fa-heart"></i>
+                    <span>好感度</span>
+                </div>
                 <div class="settings-card" id="music-library-entry">
                     <i class="fas fa-music"></i>
                     <span>音乐推歌</span>
@@ -2911,6 +2921,29 @@
 
             <div class="modal-buttons">
                 <button class="modal-btn modal-btn-secondary" id="cancel-settings">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 好感度详情弹窗 -->
+    <div class="modal" id="favorability-modal">
+        <div class="modal-content" style="max-height:85vh;overflow-y:auto;">
+            <div class="modal-title">
+                <i class="fas fa-heart"></i><span>好感度</span>
+            </div>
+            <div id="favorability-detail" style="padding:8px 4px;">
+                <!-- 由 JS 动态渲染 -->
+            </div>
+            <div style="margin-top:16px;padding:14px;background:var(--secondary-bg);border-radius:12px;">
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px;">手动调整（控剧情/测试）</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <input id="fav-manual-slider" type="range" min="0" max="100" step="1" value="0" style="flex:1;">
+                    <span id="fav-manual-val" style="font-size:13px;font-weight:600;color:var(--text-primary);min-width:30px;">0</span>
+                </div>
+                <button id="fav-manual-apply" class="modal-btn" style="width:100%;margin-top:10px;">应用</button>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="(function(){hideModal(document.getElementById('favorability-modal'));showModal(document.getElementById('settings-modal'))})()">返回</button>
             </div>
         </div>
     </div>
@@ -5171,6 +5204,7 @@
     <script src="js/backup-engine.js"></script>
     <script src="js/backup-panel.js"></script>
     <script src="js/ai-service.js"></script>
+    <script src="js/favorability.js"></script>
     <script src="js/music-service.js"></script>
     <script src="js/state.js"></script>
     <script src="js/core.js"></script>
