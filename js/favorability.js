@@ -62,6 +62,30 @@
         return STAGES[0];
     }
 
+    // ── 字卡门槛 map（key=字卡文本, value=门槛0-100）──
+    var GATE_KEY = 'card_favor_gates';
+    function loadGateMap() {
+        try {
+            var raw = localStorage.getItem(GATE_KEY);
+            if (raw) return JSON.parse(raw) || {};
+        } catch (e) {}
+        return {};
+    }
+    function saveGateMap(map) {
+        try { localStorage.setItem(GATE_KEY, JSON.stringify(map)); } catch (e) {}
+    }
+    // 取某张卡的门槛（对象卡用 favorGate 字段；字符串卡查 map）
+    function getCardGate(c, gates) {
+        gates = gates || loadGateMap();
+        if (typeof c === 'string') {
+            return typeof gates[c] === 'number' ? gates[c] : 0;
+        }
+        if (c && typeof c === 'object') {
+            return typeof c.favorGate === 'number' ? c.favorGate : 0;
+        }
+        return 0;
+    }
+
     // 重置每日增长计数（跨天自动重置）
     function ensureDailyReset(data) {
         var today = todayStr();
@@ -226,13 +250,10 @@
         filterCards: function (cards) {
             var fav = this.getValue();
             if (!Array.isArray(cards)) return [];
+            var gates = loadGateMap();
             return cards.filter(function (c) {
-                if (typeof c === 'string') return true; // 旧版纯字符串卡，门槛=0
-                if (c && typeof c === 'object') {
-                    var gate = typeof c.favorGate === 'number' ? c.favorGate : 0;
-                    return gate <= fav;
-                }
-                return false;
+                var gate = getCardGate(c, gates);
+                return gate <= fav;
             });
         },
 
@@ -241,17 +262,50 @@
             if (typeof c === 'string') return c;
             if (c && typeof c === 'object') return c.text || '';
             return '';
+        },
+
+        // ── 字卡门槛管理 ──
+        getGate: function (text) {
+            var gates = loadGateMap();
+            return getCardGate(text, gates);
+        },
+        setGate: function (text, gate) {
+            if (!text) return;
+            var gates = loadGateMap();
+            var g = Math.max(0, Math.min(100, parseInt(gate, 10) || 0));
+            if (g === 0) {
+                delete gates[text]; // 0 门槛直接删除记录，节省空间
+            } else {
+                gates[text] = g;
+            }
+            saveGateMap(gates);
+            return g;
+        },
+        removeGate: function (text) {
+            var gates = loadGateMap();
+            delete gates[text];
+            saveGateMap(gates);
+        },
+        getAllGates: function () { return loadGateMap(); },
+        /** 门槛对应的阶段名 */
+        gateStage: function (gate) {
+            var s = getStage(gate);
+            return s.name;
         }
     };
 
-    // 启动时检查衰减
-    document.addEventListener('DOMContentLoaded', function () {
+    // 启动时检查衰减 + 渲染 + 绑定入口
+    function init() {
         try { window.Favorability.checkDailyDecay(); } catch (e) {}
-        // 渲染初始好感度
         try { renderFavorabilityUI(); } catch (e) {}
-        // 绑定设置入口
         try { bindFavorabilityEntry(); } catch (e) {}
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
     // ── UI 渲染 ──
     function renderFavorabilityUI() {
@@ -311,39 +365,70 @@
     // 暴露 UI 刷新方法
     window.Favorability.refreshUI = renderFavorabilityUI;
 
-    // ── 设置入口绑定 ──
+    // ── 设置入口绑定（事件委托，避免被其他模块的 cloneNode 覆盖） ──
+    var _entryBound = false;
+    var _sliderBound = false;
+    var _applyBound = false;
+
     function bindFavorabilityEntry() {
-        var entry = document.getElementById('favorability-entry');
-        if (entry) {
-            entry.addEventListener('click', function () {
+        if (!_entryBound) {
+            _entryBound = true;
+            document.addEventListener('click', function (e) {
+                var entry = e.target.closest && e.target.closest('#favorability-entry');
+                if (!entry) return;
                 console.log('[好感度] 入口被点击');
                 try {
                     var sm = document.getElementById('settings-modal');
                     var fm = document.getElementById('favorability-modal');
-                    console.log('[好感度] sm=', !!sm, 'fm=', !!fm, 'showModal=', typeof window.showModal);
                     if (sm && typeof window.hideModal === 'function') window.hideModal(sm);
                     if (fm && typeof window.showModal === 'function') window.showModal(fm);
-                    console.log('[好感度] 调用showModal后 display=', fm ? fm.style.display : 'no fm');
                     renderFavorabilityDetail();
-                } catch (e) { console.error('[好感度] 打开详情失败:', e); }
+                } catch (err) { console.error('[好感度] 打开详情失败:', err); }
             });
         }
 
-        // 手动滑块
-        var slider = document.getElementById('fav-manual-slider');
-        var valEl = document.getElementById('fav-manual-val');
-        if (slider && valEl) {
-            slider.addEventListener('input', function () { valEl.textContent = slider.value; });
+        // 手动滑块（事件委托）
+        if (!_sliderBound) {
+            _sliderBound = true;
+            document.addEventListener('input', function (e) {
+                var slider = e.target;
+                if (slider && slider.id === 'fav-manual-slider') {
+                    var valEl = document.getElementById('fav-manual-val');
+                    if (valEl) valEl.textContent = slider.value;
+                }
+            });
         }
-        var applyBtn = document.getElementById('fav-manual-apply');
-        if (applyBtn) {
-            applyBtn.addEventListener('click', function () {
+        if (!_applyBound) {
+            _applyBound = true;
+            document.addEventListener('click', function (e) {
+                var applyBtn = e.target.closest && e.target.closest('#fav-manual-apply');
+                if (!applyBtn) return;
+                var slider = document.getElementById('fav-manual-slider');
+                if (!slider) return;
                 var v = parseInt(slider.value, 10);
                 if (!isNaN(v)) {
                     window.Favorability.setValue(v);
                     renderFavorabilityDetail();
-                    if (typeof showNotification === 'function') showNotification('好感度已调整为 ' + v, 'info', 1500);
+                    if (typeof window.showNotification === 'function') {
+                        window.showNotification('好感度已调整为 ' + v, 'info', 1500);
+                    }
                 }
+            });
+        }
+
+        // 顶栏小条点击 → 打开详情
+        if (!window._favBarBound) {
+            window._favBarBound = true;
+            document.addEventListener('click', function (e) {
+                var bar = e.target.closest && e.target.closest('#favorability-bar');
+                if (!bar) return;
+                try {
+                    var fm = document.getElementById('favorability-modal');
+                    if (fm && typeof window.showModal === 'function') {
+                        window.showModal(fm);
+                        renderFavorabilityDetail();
+                    }
+                } catch (err) {}
             });
         }
     }

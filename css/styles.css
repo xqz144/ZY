@@ -896,6 +896,224 @@ gap: 10px;
     color: var(--text-secondary);
 }
 
+/* ============ 伴侣状态系统 ============ */
+.partner-state-chips {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    color: var(--text-secondary);
+    opacity: 0.9;
+    order: 4;
+    line-height: 1;
+}
+.ps-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 5px;
+    border-radius: 8px;
+    background: var(--message-received-bg);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    --chip-color: #BDBDBD;
+    max-width: 60px;
+    overflow: hidden;
+}
+.ps-chip-emoji { font-size: 10px; }
+.ps-chip-text {
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 38px;
+}
+.ps-chip-active {
+    background: var(--chip-color);
+    color: #fff;
+}
+.ps-chip-active .ps-chip-text { color: #fff; }
+
+/* 头像呼吸圈 */
+.avatar.has-state-ring {
+    box-shadow: 0 0 0 2px var(--state-ring-color, #E91E63),
+                0 0 8px 1px var(--state-ring-color, #E91E63);
+    animation: stateRingPulse 2.4s ease-in-out infinite;
+}
+@keyframes stateRingPulse {
+    0%, 100% { box-shadow: 0 0 0 2px var(--state-ring-color, #E91E63),
+                          0 0 6px 0 var(--state-ring-color, #E91E63); }
+    50%      { box-shadow: 0 0 0 2px var(--state-ring-color, #E91E63),
+                          0 0 12px 2px var(--state-ring-color, #E91E63); }
+}
+
+/* 详情弹窗 Tab */
+.ps-tabs {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0 4px;
+    border-bottom: 1px solid var(--border-color);
+}
+.ps-tab {
+    flex: 1;
+    padding: 8px 10px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.ps-tab.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* 状态网格 */
+.ps-grid-inner {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+}
+.ps-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 4px;
+    border-radius: 10px;
+    background: var(--message-received-bg);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    --item-color: #BDBDBD;
+}
+.ps-item:hover {
+    transform: translateY(-1px);
+    border-color: var(--item-color);
+}
+.ps-item-active {
+    border-color: var(--item-color);
+    background: rgba(0,0,0,0.04);
+}
+.ps-item-emoji { font-size: 22px; line-height: 1; }
+.ps-item-text {
+    font-size: 11px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+.ps-item-del {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    background: #ff4757;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 11px;
+    line-height: 14px;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+/* ============ 字卡门槛编辑器 ============ */
+.ce-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 4px;
+}
+.ce-card {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--message-received-bg);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+.ce-card-locked-bg {
+    border-color: #FF8A80;
+    background: rgba(255, 138, 128, 0.08);
+}
+.ce-card-text {
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.5;
+    word-break: break-word;
+    margin-bottom: 6px;
+}
+.ce-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 10px;
+    margin-bottom: 6px;
+}
+.ce-card-group {
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--border-color);
+    color: var(--text-secondary);
+}
+.ce-card-locked {
+    color: #E53935;
+    font-weight: 600;
+}
+.ce-card-open {
+    color: #43A047;
+}
+.ce-card-gate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+.ce-card-gate label { white-space: nowrap; }
+.ce-card-gate input[type="range"] {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border-color);
+    border-radius: 2px;
+    outline: none;
+}
+.ce-card-gate input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    cursor: pointer;
+}
+.ce-card-gate-val {
+    min-width: 24px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.ce-card-gate-stage {
+    min-width: 42px;
+    text-align: right;
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
 .avatar:hover {
     border-color: var(--accent-color);
     transform: scale(1.05);

@@ -2586,7 +2586,7 @@ if (!isBatchMode && type === 'normal') {
                 // 混合模式：按权重决定走 AI 还是字卡
                 var useAI = true;
                 if (window.AIService.isHybridMode && window.AIService.isHybridMode()) {
-                    var aiW = (window.AIService.getAIWeight) ? window.AIService.getAIWeight() : 70;
+                    var aiW = (window.AIService.getAIWeight) ? window.AIService.getAIWeight() : 30;
                     useAI = Math.random() * 100 < aiW;
                 }
                 if (useAI) {

@@ -21,9 +21,11 @@
     temperature: 0.9,
     maxTokens: 200,
     // 混合模式：开启后 AI 回复与字卡回复按权重随机混用（而非 AI 优先、字卡仅兜底）
-    hybridMode: false,
+    // 默认开启，让 AI 仅作"锦上添花"，字卡为主
+    hybridMode: true,
     // AI 回复权重（0-100），剩余概率走字卡回复
-    aiWeight: 70
+    // 默认 30：AI 仅锦上添花，字卡为主；设为 0 即纯字卡模式
+    aiWeight: 30
   };
 
   function loadConfig() {
@@ -38,7 +40,16 @@
           (parsed.persona && parsed.persona.indexOf('你是用户的虚拟恋人，和用户在谈恋爱') >= 0);
         if (isOldDefault) {
           merged.persona = DEFAULT_CONFIG.persona;
-          // 持久化升级后的配置
+          try { localStorage.setItem(CONFIG_KEY, JSON.stringify(merged)); } catch (e) {}
+        }
+        // 迁移 v2：AI 降级 —— 旧默认 hybridMode=false + aiWeight=70 → 新默认 hybridMode=true + aiWeight=30
+        // 仅当用户仍持有旧默认值（未自定义过）时迁移；已自定义的用户保持原样
+        if (!parsed._migratedV2 &&
+            parsed.hybridMode === false &&
+            (parsed.aiWeight === 70 || parsed.aiWeight === undefined)) {
+          merged.hybridMode = DEFAULT_CONFIG.hybridMode;
+          merged.aiWeight = DEFAULT_CONFIG.aiWeight;
+          merged._migratedV2 = true;
           try { localStorage.setItem(CONFIG_KEY, JSON.stringify(merged)); } catch (e) {}
         }
         return merged;
@@ -77,7 +88,7 @@
   function getAIWeight() {
     var cfg = loadConfig();
     var w = Number(cfg.aiWeight);
-    if (isNaN(w)) w = 70;
+    if (isNaN(w)) w = 30;
     return Math.max(0, Math.min(100, w));
   }
 
@@ -389,7 +400,7 @@
     if (hybridToggle) hybridToggle.checked = !!cfg.hybridMode;
     var weightSlider = document.getElementById('ai-weight');
     if (weightSlider) {
-      weightSlider.value = (cfg.aiWeight !== undefined) ? cfg.aiWeight : 70;
+      weightSlider.value = (cfg.aiWeight !== undefined) ? cfg.aiWeight : 30;
       var wv = document.getElementById('ai-weight-val');
       if (wv) wv.textContent = weightSlider.value;
     }
@@ -421,6 +432,31 @@
         var v = document.getElementById('ai-weight-val');
         if (v) v.textContent = this.value;
       };
+    }
+
+    // 快捷预设按钮（纯字卡 0% / 锦上添花 30% / AI 为主 70%）
+    // 用事件委托，避免按钮被重建后失效
+    if (!window._aiWeightPresetBound) {
+      window._aiWeightPresetBound = true;
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.ai-weight-preset');
+        if (!btn) return;
+        var w = parseInt(btn.dataset.weight, 10);
+        if (isNaN(w)) return;
+        var slider = document.getElementById('ai-weight');
+        var valEl = document.getElementById('ai-weight-val');
+        if (slider) slider.value = w;
+        if (valEl) valEl.textContent = w;
+        // 自动开启混合模式（否则权重不生效）
+        var hybridToggle = document.getElementById('ai-hybrid-toggle');
+        if (hybridToggle && !hybridToggle.checked) {
+          hybridToggle.checked = true;
+        }
+        if (typeof window.showNotification === 'function') {
+          var tip = w === 0 ? '已切换为纯字卡模式' : ('AI 占比已设为 ' + w + '%');
+          window.showNotification(tip, 'info', 1500);
+        }
+      });
     }
 
     // 保存
@@ -466,8 +502,8 @@
     var hybridToggleEl = document.getElementById('ai-hybrid-toggle');
     cfg.hybridMode = hybridToggleEl ? hybridToggleEl.checked : false;
     var weightEl = document.getElementById('ai-weight');
-    var parsedWeight = parseFloat(weightEl ? weightEl.value : 70);
-    cfg.aiWeight = isNaN(parsedWeight) ? 70 : Math.max(0, Math.min(100, parsedWeight));
+    var parsedWeight = parseFloat(weightEl ? weightEl.value : 30);
+    cfg.aiWeight = isNaN(parsedWeight) ? 30 : Math.max(0, Math.min(100, parsedWeight));
 
     saveConfig(cfg);
 

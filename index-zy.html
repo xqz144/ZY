@@ -2403,6 +2403,17 @@
                 <div class="status" id="partner-status">
                     <span>在线</span>
                 </div>
+                <!-- 伴侣状态胶囊：情绪 + 互动倾向 -->
+                <div id="partner-state-chips" class="partner-state-chips" title="点击切换伴侣状态">
+                    <span class="ps-chip" id="ps-mood-chip" data-type="mood">
+                        <span class="ps-chip-emoji" id="ps-mood-emoji">—</span>
+                        <span class="ps-chip-text" id="ps-mood-text">情绪</span>
+                    </span>
+                    <span class="ps-chip" id="ps-tend-chip" data-type="tendency">
+                        <span class="ps-chip-emoji" id="ps-tend-emoji">—</span>
+                        <span class="ps-chip-text" id="ps-tend-text">倾向</span>
+                    </span>
+                </div>
                 <!-- 好感度小条 -->
                 <div id="favorability-bar" class="favorability-bar" title="好感度">
                     <span class="fav-icon">💕</span>
@@ -2908,6 +2919,14 @@
                     <i class="fas fa-heart"></i>
                     <span>好感度</span>
                 </div>
+                <div class="settings-card" id="partner-state-entry">
+                    <i class="fas fa-magnet"></i>
+                    <span>伴侣状态</span>
+                </div>
+                <div class="settings-card" id="card-editor-entry">
+                    <i class="fas fa-id-card"></i>
+                    <span>字卡门槛</span>
+                </div>
                 <div class="settings-card" id="music-library-entry">
                     <i class="fas fa-music"></i>
                     <span>音乐推歌</span>
@@ -2944,6 +2963,70 @@
             </div>
             <div class="modal-buttons">
                 <button class="modal-btn modal-btn-secondary" onclick="(function(){hideModal(document.getElementById('favorability-modal'));showModal(document.getElementById('settings-modal'))})()">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 伴侣状态弹窗 -->
+    <div class="modal" id="partner-state-modal">
+        <div class="modal-content" style="max-height:85vh;overflow-y:auto;">
+            <div class="modal-title">
+                <i class="fas fa-magnet"></i><span>伴侣状态</span>
+            </div>
+            <div style="padding:4px 0 8px;font-size:12px;color:var(--text-secondary);">
+                纯展示型状态，仅影响显示，不影响回复。点击切换，再次点击取消。
+            </div>
+
+            <!-- Tab 切换 -->
+            <div class="ps-tabs" id="ps-tabs">
+                <button class="ps-tab active" data-tab="mood">情绪状态</button>
+                <button class="ps-tab" data-tab="tendency">互动倾向</button>
+            </div>
+
+            <!-- 状态网格（由 JS 渲染） -->
+            <div id="ps-grid" style="padding:8px 4px;"></div>
+
+            <!-- 添加自定义 -->
+            <div style="margin-top:14px;padding:14px;background:var(--secondary-bg);border-radius:12px;">
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px;">添加自定义</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <input id="ps-add-emoji" type="text" maxlength="2" placeholder="😀" style="width:50px;text-align:center;font-size:18px;" class="search-input">
+                    <input id="ps-add-text" type="text" maxlength="8" placeholder="状态文字" style="flex:1;min-width:100px;" class="search-input">
+                    <input id="ps-add-color" type="color" value="#BDBDBD" style="width:36px;height:36px;border:none;background:none;cursor:pointer;" title="颜色（仅情绪）">
+                    <button id="ps-add-btn" class="modal-btn" style="width:auto;padding:8px 14px;">添加</button>
+                </div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">自定义项可删除，预设不可删。</div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="(function(){hideModal(document.getElementById('partner-state-modal'));showModal(document.getElementById('settings-modal'))})()">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 字卡门槛编辑器弹窗 -->
+    <div class="modal" id="card-editor-modal">
+        <div class="modal-content" style="max-height:88vh;overflow-y:auto;">
+            <div class="modal-title">
+                <i class="fas fa-id-card"></i><span>字卡门槛编辑器</span>
+            </div>
+            <div style="padding:4px 0 8px;font-size:12px;color:var(--text-secondary);line-height:1.6;">
+                为每张字卡设置好感度门槛。当前好感度低于门槛时，该字卡不会出现在回复中。<br>
+                <span id="card-editor-fav-hint"></span>
+            </div>
+
+            <!-- 工具栏 -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0;">
+                <input id="card-editor-search" type="text" placeholder="筛选字卡文本..." class="search-input" style="flex:1;min-width:120px;">
+                <select id="card-editor-group-sel" class="search-input" style="width:auto;min-width:110px;"></select>
+                <button id="card-editor-clear-all" class="modal-btn modal-btn-secondary" style="width:auto;padding:8px 12px;">全部清除</button>
+            </div>
+
+            <!-- 字卡列表（由 JS 渲染） -->
+            <div id="card-editor-list"></div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="(function(){hideModal(document.getElementById('card-editor-modal'));showModal(document.getElementById('settings-modal'))})()">返回</button>
             </div>
         </div>
     </div>
@@ -3036,10 +3119,15 @@
 
                 <!-- AI 权重 -->
                 <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">AI 回复占比: <span id="ai-weight-val">70</span>%</label>
-                    <input id="ai-weight" type="range" min="0" max="100" step="5" value="70" style="width:100%;">
+                    <label style="display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">AI 回复占比: <span id="ai-weight-val">30</span>%</label>
+                    <input id="ai-weight" type="range" min="0" max="100" step="5" value="30" style="width:100%;">
                     <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-secondary);">
                         <span>纯字卡</span><span>纯 AI</span>
+                    </div>
+                    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                        <button type="button" class="ai-weight-preset modal-btn modal-btn-secondary" data-weight="0" style="flex:1;min-width:60px;padding:6px 4px;font-size:11px;">纯字卡 0%</button>
+                        <button type="button" class="ai-weight-preset modal-btn modal-btn-secondary" data-weight="30" style="flex:1;min-width:60px;padding:6px 4px;font-size:11px;">锦上添花 30%</button>
+                        <button type="button" class="ai-weight-preset modal-btn modal-btn-secondary" data-weight="70" style="flex:1;min-width:60px;padding:6px 4px;font-size:11px;">AI 为主 70%</button>
                     </div>
                 </div>
 
@@ -5205,6 +5293,8 @@
     <script src="js/backup-panel.js"></script>
     <script src="js/ai-service.js"></script>
     <script src="js/favorability.js"></script>
+    <script src="js/partner-state.js"></script>
+    <script src="js/card-editor.js"></script>
     <script src="js/music-service.js"></script>
     <script src="js/state.js"></script>
     <script src="js/core.js"></script>
