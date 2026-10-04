@@ -2927,6 +2927,10 @@
                     <i class="fas fa-id-card"></i>
                     <span>字卡门槛</span>
                 </div>
+                <div class="settings-card" id="handwriting-entry">
+                    <i class="fas fa-pen-fancy"></i>
+                    <span>手写涂鸦</span>
+                </div>
                 <div class="settings-card" id="music-library-entry">
                     <i class="fas fa-music"></i>
                     <span>音乐推歌</span>
@@ -3004,6 +3008,50 @@
 
             <div class="modal-buttons">
                 <button class="modal-btn modal-btn-secondary" onclick="(function(){hideModal(document.getElementById('card-editor-modal'));showModal(document.getElementById('settings-modal'))})()">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 手写涂鸦弹窗 -->
+    <div class="modal" id="handwriting-modal">
+        <div class="modal-content" style="max-height:85vh;overflow-y:auto;">
+            <div class="modal-title">
+                <i class="fas fa-pen-fancy"></i><span>手写涂鸦</span>
+            </div>
+            <div style="padding:4px 0 8px;font-size:12px;color:var(--text-secondary);">
+                在画布上写写画画，画完发送给对方。
+            </div>
+
+            <!-- 工具栏 -->
+            <div class="hw-toolbar">
+                <div class="hw-colors">
+                    <button class="hw-color active" data-color="#E91E63" style="background:#E91E63;"></button>
+                    <button class="hw-color" data-color="#4CAF50" style="background:#4CAF50;"></button>
+                    <button class="hw-color" data-color="#2196F3" style="background:#2196F3;"></button>
+                    <button class="hw-color" data-color="#FF9800" style="background:#FF9800;"></button>
+                    <button class="hw-color" data-color="#9C27B0" style="background:#9C27B0;"></button>
+                    <button class="hw-color" data-color="#000000" style="background:#000000;"></button>
+                </div>
+                <div class="hw-controls">
+                    <button id="hw-eraser" class="hw-icon-btn" title="橡皮"><i class="fas fa-eraser"></i></button>
+                    <button id="hw-undo" class="hw-icon-btn" title="撤销"><i class="fas fa-undo"></i></button>
+                    <button id="hw-clear" class="hw-icon-btn" title="清空"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+
+            <!-- 笔粗细 -->
+            <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+                <span style="font-size:11px;color:var(--text-secondary);">粗细</span>
+                <input id="hw-size" type="range" min="2" max="20" step="1" value="4" style="flex:1;">
+                <span id="hw-size-val" style="font-size:11px;font-weight:600;min-width:20px;">4</span>
+            </div>
+
+            <!-- 画布 -->
+            <canvas id="hw-canvas" class="hw-canvas"></canvas>
+
+            <div class="modal-buttons">
+                <button id="hw-send" class="modal-btn">发送</button>
+                <button class="modal-btn modal-btn-secondary" onclick="(function(){hideModal(document.getElementById('handwriting-modal'));showModal(document.getElementById('settings-modal'))})()">取消</button>
             </div>
         </div>
     </div>
@@ -5272,6 +5320,13 @@
     <script src="js/favorability.js"></script>
     <script src="js/partner-state.js"></script>
     <script src="js/card-editor.js"></script>
+    <script src="js/screen-effects.js"></script>
+    <script src="js/bubble-effects.js"></script>
+    <script src="js/tapback.js"></script>
+    <script src="js/message-status.js"></script>
+    <script src="js/poke-upgrade.js"></script>
+    <script src="js/easter-eggs.js"></script>
+    <script src="js/handwriting.js"></script>
     <script src="js/music-service.js"></script>
     <script src="js/state.js"></script>
     <script src="js/core.js"></script>

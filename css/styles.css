@@ -1121,6 +1121,253 @@ html[data-theme="dark"] .avatar:hover {
     border-radius: 50%;
     object-fit: cover;
 }
+
+/* ============ 屏幕特效 ============ */
+.fx-shake {
+    animation: fxShake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes fxShake {
+    10%, 90% { transform: translate3d(-2px, 0, 0); }
+    20%, 80% { transform: translate3d(4px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+    40%, 60% { transform: translate3d(6px, 0, 0); }
+}
+
+/* ============ 气泡动效 ============ */
+.message-bubble, .voice-message-bubble {
+    animation-fill-mode: both;
+}
+.fx-bubble-slide {
+    animation: fxBubbleSlide 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.message-wrapper.sent .fx-bubble-slide {
+    animation-name: fxBubbleSlideSent;
+}
+@keyframes fxBubbleSlide {
+    from { opacity: 0; transform: translateX(-12px) scale(0.95); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes fxBubbleSlideSent {
+    from { opacity: 0; transform: translateX(12px) scale(0.95); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.fx-bubble-pop {
+    animation: fxBubblePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes fxBubblePop {
+    0%   { opacity: 0; transform: scale(0.3); }
+    60%  { opacity: 1; transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+.fx-bubble-shake {
+    animation: fxBubbleShake 0.5s ease both;
+}
+@keyframes fxBubbleShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px) rotate(-2deg); }
+    40% { transform: translateX(4px) rotate(2deg); }
+    60% { transform: translateX(-3px) rotate(-1deg); }
+    80% { transform: translateX(3px) rotate(1deg); }
+}
+.fx-bubble-grow {
+    animation: fxBubbleGrow 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes fxBubbleGrow {
+    from { opacity: 0; transform: scale(0.5); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* ============ Tapback 反应 + 长按菜单 ============ */
+.tapback-menu {
+    position: fixed;
+    z-index: 10001;
+    background: var(--modal-bg, #fff);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 8px;
+    opacity: 0;
+    transform: scale(0.85) translateY(8px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    pointer-events: none;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    min-width: 220px;
+}
+.tapback-menu-show {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+}
+.tapback-react-row {
+    display: flex;
+    justify-content: space-around;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+.tapback-react-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: var(--message-received-bg, #f0f0f0);
+    cursor: pointer;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+.tapback-react-btn:hover {
+    transform: scale(1.15);
+    background: var(--accent-color);
+}
+.tapback-react-btn.active {
+    background: var(--accent-color);
+    transform: scale(1.1);
+}
+.tapback-divider {
+    height: 1px;
+    background: var(--border-color, #eee);
+    margin: 6px 0;
+}
+.tapback-action-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.tapback-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-primary, #333);
+    transition: background 0.15s ease;
+    text-align: left;
+    width: 100%;
+}
+.tapback-action-btn:hover {
+    background: var(--message-received-bg, #f0f0f0);
+}
+.tapback-action-icon { font-size: 16px; }
+
+/* 反应气泡（显示在消息角落） */
+.tapback-badge {
+    position: absolute;
+    bottom: -8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--accent-color, #E91E63);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    animation: tapbackPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    z-index: 5;
+    line-height: 1;
+}
+.tapback-sent { right: -8px; }
+.tapback-received { left: -8px; }
+@keyframes tapbackPop {
+    0%   { transform: scale(0); }
+    60%  { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* ============ 已读/送达状态 ============ */
+.msg-status {
+    position: absolute;
+    bottom: -16px;
+    right: 4px;
+    font-size: 9px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+.msg-status-sent {
+    color: var(--text-secondary, #999);
+}
+.msg-status-read {
+    color: #4FC3F7;
+    font-weight: 500;
+}
+.msg-status::before {
+    content: '✓';
+    margin-right: 2px;
+}
+.msg-status-read::before {
+    content: '✓✓';
+}
+
+/* ============ 手写涂鸦 ============ */
+.hw-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+    flex-wrap: wrap;
+}
+.hw-colors {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.hw-color {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color, #ddd);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+.hw-color:hover { transform: scale(1.15); }
+.hw-color.active {
+    border-color: var(--text-primary, #333);
+    transform: scale(1.15);
+    box-shadow: 0 0 0 2px var(--accent-color, #E91E63);
+}
+.hw-controls {
+    display: flex;
+    gap: 6px;
+}
+.hw-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #ddd);
+    background: var(--secondary-bg, #f5f5f5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--text-secondary, #666);
+    transition: all 0.15s ease;
+}
+.hw-icon-btn:hover { background: var(--accent-color, #E91E63); color: #fff; }
+.hw-icon-btn.active { background: var(--accent-color, #E91E63); color: #fff; }
+.hw-canvas {
+    width: 100%;
+    height: 220px;
+    background: #fff;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 12px;
+    display: block;
+    touch-action: none;
+    cursor: crosshair;
+}
 .username {
     font-weight: 600;
     font-size: 11.5px;
