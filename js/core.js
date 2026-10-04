@@ -2348,8 +2348,13 @@ const addMessage = (message) => {
 
                 // 好感度：用户发消息增加
                 if (type === 'normal' && text && typeof window.Favorability === 'object') {
-                    try { window.Favorability.onUserMessage(text); } catch (e) {}
-                }
+            try { window.Favorability.onUserMessage(text); } catch (e) {}
+        }
+
+        // 伴侣状态：聊天驱动
+        if (type === 'normal' && text && typeof window.PartnerState === 'object' && typeof window.PartnerState.onUserMessage === 'function') {
+            try { window.PartnerState.onUserMessage(text); } catch (e) {}
+        }
 
                 // 小火人：聊天实时对接 —— 每次发送消息都记录互动
                 if (type === 'normal' && typeof window.SparkTracker === 'object' && typeof window.SparkTracker.recordInteraction === 'function') {

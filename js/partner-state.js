@@ -1,8 +1,8 @@
 /**
- * 伴侣状态系统（纯展示型）
+ * 伴侣状态系统（全自动版）
  * - 情绪状态 + 互动倾向 两个维度
  * - 不影响回复逻辑，仅展示
- * - 系统预设 + 用户自定义增删
+ * - 完全自动驱动：聊天驱动 + 好感度联动 + 随机微抖动
  * - localStorage 持久化，key: partner_state
  */
 (function () {
@@ -34,12 +34,50 @@
         { id: 'tend_work',      emoji: '💼', text: '在忙' }
     ];
 
+    // ── 情绪相近池（用于随机微抖动，避免跳到毫不相关的情绪）──
+    var MOOD_NEIGHBORS = {
+        mood_happy:   ['mood_excited', 'mood_calm', 'mood_shy'],
+        mood_calm:    ['mood_happy', 'mood_tired', 'mood_calm'],
+        mood_sad:     ['mood_miss', 'mood_tired', 'mood_angry'],
+        mood_angry:   ['mood_sad', 'mood_miss', 'mood_calm'],
+        mood_miss:    ['mood_sad', 'mood_shy', 'mood_happy'],
+        mood_shy:     ['mood_happy', 'mood_miss', 'mood_calm'],
+        mood_tired:   ['mood_calm', 'mood_sleepy', 'mood_sad'],
+        mood_excited: ['mood_happy', 'mood_playful', 'mood_shy'],
+        mood_sick:    ['mood_tired', 'mood_sad', 'mood_calm']
+    };
+
+    // ── 关键词触发规则（聊天驱动）──
+    // 命中关键词 → 设置对应情绪，附带 reason
+    var KEYWORD_RULES = [
+        { keys: ['想你', '想你了', '好想', '怀念', '惦记'], mood: 'mood_miss',  reason: '你说想我了' },
+        { keys: ['早安', '早上好', '起床', '醒了'],         mood: 'mood_happy', reason: '你跟我说了早安' },
+        { keys: ['晚安', '睡觉', '睡了', '休息'],           mood: 'mood_tired', reason: '你说要睡觉了' },
+        { keys: ['对不起', '抱歉', '不好意思'],             mood: 'mood_sad',   reason: '你跟我道歉了' },
+        { keys: ['生气', '气死', '烦死', '讨厌'],           mood: 'mood_angry', reason: '你好像在生气' },
+        { keys: ['生病', '难受', '不舒服', '感冒'],         mood: 'mood_sick',  reason: '你说你不舒服' },
+        { keys: ['兴奋', '太棒了', '开心', '好耶'],         mood: 'mood_excited', reason: '你听起来很兴奋' },
+        { keys: ['害羞', '脸红', '不好意思说'],             mood: 'mood_shy',  reason: '你害羞了' },
+        { keys: ['忙', '工作', '加班', '开会'],             tendency: 'tend_work', reason: '你说在忙' }
+    ];
+
+    // ── 好感度阶段 → 倾向映射 ──
+    var FAV_STAGE_TENDENCY = [
+        { max: 20,  tendency: 'tend_solo',     reason: '我们还不熟，先各自待着' },     // 陌生人
+        { max: 40,  tendency: 'tend_quiet',    reason: '刚认识，话还不多' },            // 认识
+        { max: 60,  tendency: 'tend_talkative',reason: '我们越来越熟了' },             // 熟悉
+        { max: 80,  tendency: 'tend_sticky',   reason: '好感度到暧昧阶段了，想黏着你' }, // 暧昧
+        { max: 100, tendency: 'tend_sweet',    reason: '已经是恋人了，想撒糖' }        // 恋人
+    ];
+
     // ── 数据读写 ──
     function defaultData() {
         return {
-            current: { mood: null, tendency: null }, // 默认不选中
-            customMoods: [],
-            customTendencies: []
+            current: { mood: 'mood_calm', tendency: 'tend_quiet' }, // 默认平静+话少
+            reason: { mood: '刚开始，先静一静', tendency: '刚认识，话还不多' },
+            lastUpdate: Date.now(),
+            lastUserMessage: 0,  // 上次用户发消息时间戳，0 表示从未
+            messageCount: 0       // 本次会话累计消息数
         };
     }
 
@@ -50,9 +88,11 @@
                 var parsed = JSON.parse(raw);
                 if (parsed && typeof parsed === 'object') {
                     var merged = defaultData();
-                    merged.current = Object.assign({ mood: null, tendency: null }, parsed.current || {});
-                    merged.customMoods = Array.isArray(parsed.customMoods) ? parsed.customMoods : [];
-                    merged.customTendencies = Array.isArray(parsed.customTendencies) ? parsed.customTendencies : [];
+                    merged.current = Object.assign(merged.current, parsed.current || {});
+                    merged.reason = Object.assign(merged.reason, parsed.reason || {});
+                    merged.lastUpdate = parsed.lastUpdate || Date.now();
+                    merged.lastUserMessage = parsed.lastUserMessage || 0;
+                    merged.messageCount = parsed.messageCount || 0;
                     return merged;
                 }
             }
@@ -62,61 +102,181 @@
 
     function saveData(data) {
         try {
+            data.lastUpdate = Date.now();
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) { console.warn('[伴侣状态] 保存失败:', e); }
     }
 
     // ── 工具 ──
-    function genId(prefix) {
-        return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
-    }
-
-    function findMood(data, id) {
-        var list = getAllMoods(data);
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].id === id) return list[i];
+    function findMood(id) {
+        for (var i = 0; i < PRESET_MOODS.length; i++) {
+            if (PRESET_MOODS[i].id === id) return PRESET_MOODS[i];
         }
         return null;
     }
-
-    function findTendency(data, id) {
-        var list = getAllTendencies(data);
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].id === id) return list[i];
+    function findTendency(id) {
+        for (var i = 0; i < PRESET_TENDENCIES.length; i++) {
+            if (PRESET_TENDENCIES[i].id === id) return PRESET_TENDENCIES[i];
         }
         return null;
-    }
-
-    function getAllMoods(data) {
-        return (PRESET_MOODS || []).concat(data.customMoods || []);
-    }
-
-    function getAllTendencies(data) {
-        return (PRESET_TENDENCIES || []).concat(data.customTendencies || []);
-    }
-
-    function isPresetMood(id) {
-        return PRESET_MOODS.some(function (m) { return m.id === id; });
-    }
-    function isPresetTendency(id) {
-        return PRESET_TENDENCIES.some(function (t) { return t.id === id; });
     }
 
     // ── 触发 UI 更新事件 ──
     function emitChange(data) {
         try {
-            var mood = findMood(data, data.current.mood) || null;
-            var tend = findTendency(data, data.current.tendency) || null;
             window.dispatchEvent(new CustomEvent('partner-state:changed', {
                 detail: {
-                    mood: mood,
-                    tendency: tend,
+                    mood: findMood(data.current.mood),
+                    tendency: findTendency(data.current.tendency),
                     moodId: data.current.mood,
-                    tendencyId: data.current.tendency
+                    tendencyId: data.current.tendency,
+                    reason: data.reason,
+                    lastUpdate: data.lastUpdate,
+                    lastUserMessage: data.lastUserMessage
                 }
             }));
         } catch (e) {}
     }
+
+    // ── 内部：强制设置状态（自动模式用，不触发取消逻辑）──
+    function _setMood(data, id, reason) {
+        if (!findMood(id)) return;
+        data.current.mood = id;
+        data.reason = data.reason || {};
+        data.reason.mood = reason || '';
+    }
+    function _setTendency(data, id, reason) {
+        if (!findTendency(id)) return;
+        data.current.tendency = id;
+        data.reason = data.reason || {};
+        data.reason.tendency = reason || '';
+    }
+
+    // ════════════════════════════════════════════
+    //   AutoState 自动驱动引擎
+    // ════════════════════════════════════════════
+
+    var AutoState = {
+        // 聊天驱动：用户发消息时调用
+        onUserMessage: function (text) {
+            var data = loadData();
+            var now = Date.now();
+            data.lastUserMessage = now;
+            data.messageCount = (data.messageCount || 0) + 1;
+
+            // 1. 关键词触发优先
+            var hit = null;
+            text = String(text || '');
+            for (var i = 0; i < KEYWORD_RULES.length; i++) {
+                var rule = KEYWORD_RULES[i];
+                for (var j = 0; j < rule.keys.length; j++) {
+                    if (text.indexOf(rule.keys[j]) >= 0) { hit = rule; break; }
+                }
+                if (hit) break;
+            }
+            if (hit) {
+                if (hit.mood) _setMood(data, hit.mood, hit.reason);
+                if (hit.tendency) _setTendency(data, hit.tendency, hit.reason);
+                saveData(data);
+                emitChange(data);
+                return;
+            }
+
+            // 2. 默认：用户发消息 → 开心
+            // 但如果当前已经是 happy/excited/shy，不重复切换（避免每次发消息都"重置"）
+            var cur = data.current.mood;
+            if (cur !== 'mood_happy' && cur !== 'mood_excited' && cur !== 'mood_shy') {
+                _setMood(data, 'mood_happy', '你刚给我发了消息');
+            }
+
+            // 3. 倾向：用户连续发多条 → 话多；否则保持当前
+            if (data.messageCount >= 3 && data.current.tendency !== 'tend_talkative') {
+                _setTendency(data, 'tend_talkative', '你连续说了好多话');
+            }
+
+            saveData(data);
+            emitChange(data);
+        },
+
+        // 好感度联动：好感度变化时调用
+        onFavorabilityChange: function (fav) {
+            var data = loadData();
+            // 找到当前好感度对应的倾向
+            var stage = FAV_STAGE_TENDENCY[0];
+            for (var i = 0; i < FAV_STAGE_TENDENCY.length; i++) {
+                if (fav <= FAV_STAGE_TENDENCY[i].max) { stage = FAV_STAGE_TENDENCY[i]; break; }
+            }
+            // 只有倾向变化时才更新（避免每次好感度+1都触发）
+            if (data.current.tendency !== stage.tendency) {
+                _setTendency(data, stage.tendency, stage.reason);
+                saveData(data);
+                emitChange(data);
+            }
+        },
+
+        // 随机微抖动：定时检查，30% 概率切换到相近情绪
+        tick: function () {
+            var data = loadData();
+            var now = Date.now();
+
+            // ── 检查长时间未聊天 → 想念/生气 ──
+            if (data.lastUserMessage > 0) {
+                var silenceMin = (now - data.lastUserMessage) / 60000;
+                if (silenceMin >= 60 && data.current.mood !== 'mood_miss' && data.current.mood !== 'mood_angry') {
+                    // 超过 1 小时没聊 → 70% 想念，30% 生气
+                    if (Math.random() < 0.7) {
+                        _setMood(data, 'mood_miss', '你一个小时没理我了……');
+                        _setTendency(data, 'tend_sticky', '想让你来找我');
+                    } else {
+                        _setMood(data, 'mood_angry', '你怎么这么久都不理我！');
+                    }
+                    saveData(data);
+                    emitChange(data);
+                    return;
+                }
+                if (silenceMin >= 30 && silenceMin < 60 && data.current.mood === 'mood_happy') {
+                    // 30-60 分钟：从开心转为想念
+                    _setMood(data, 'mood_miss', '你有一会儿没说话了');
+                    saveData(data);
+                    emitChange(data);
+                    return;
+                }
+            }
+
+            // ── 时段感知：深夜 → 困倦 ──
+            var hour = new Date().getHours();
+            if ((hour >= 0 && hour < 6) && data.current.mood !== 'mood_tired' && data.current.mood !== 'mood_sleepy' && data.current.mood !== 'mood_sick') {
+                if (Math.random() < 0.5) {
+                    _setMood(data, 'mood_tired', '夜深了，有点困');
+                    _setTendency(data, 'tend_sleepy', '想睡觉了');
+                    saveData(data);
+                    emitChange(data);
+                    return;
+                }
+            }
+
+            // ── 随机微抖动：30% 概率切换到相近情绪 ──
+            // 但要求距离上次更新 > 30 分钟，避免频繁跳
+            var sinceUpdateMin = (now - (data.lastUpdate || 0)) / 60000;
+            if (sinceUpdateMin >= 30 && Math.random() < 0.3) {
+                var neighbors = MOOD_NEIGHBORS[data.current.mood] || ['mood_calm'];
+                var next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                if (next !== data.current.mood) {
+                    var m = findMood(next);
+                    _setMood(data, next, '心情有些小波动');
+                    saveData(data);
+                    emitChange(data);
+                }
+            }
+        },
+
+        // 重置会话计数（页面刷新时调用，避免 messageCount 跨会话累积）
+        resetSession: function () {
+            var data = loadData();
+            data.messageCount = 0;
+            saveData(data);
+        }
+    };
 
     // ── 公开 API ──
     window.PartnerState = {
@@ -128,84 +288,52 @@
         getCurrent: function () {
             var data = loadData();
             return {
-                mood: findMood(data, data.current.mood) || null,
-                tendency: findTendency(data, data.current.tendency) || null
+                mood: findMood(data.current.mood),
+                tendency: findTendency(data.current.tendency),
+                reason: data.reason,
+                lastUpdate: data.lastUpdate,
+                lastUserMessage: data.lastUserMessage
             };
         },
 
-        getAllMoods: function () { return getAllMoods(loadData()); },
-        getAllTendencies: function () { return getAllTendencies(loadData()); },
-
-        setMood: function (id) {
-            var data = loadData();
-            // 切换：再次点击同项 → 取消选中
-            data.current.mood = (data.current.mood === id) ? null : id;
-            saveData(data);
-            emitChange(data);
-            return data.current.mood;
-        },
-
-        setTendency: function (id) {
-            var data = loadData();
-            data.current.tendency = (data.current.tendency === id) ? null : id;
-            saveData(data);
-            emitChange(data);
-            return data.current.tendency;
-        },
-
-        addMood: function (emoji, text, color) {
-            var data = loadData();
-            var item = { id: genId('mood'), emoji: emoji || '✨', text: (text || '').trim() || '自定义', color: color || '#BDBDBD' };
-            data.customMoods = data.customMoods || [];
-            data.customMoods.push(item);
-            saveData(data);
-            emitChange(data);
-            return item;
-        },
-
-        removeMood: function (id) {
-            var data = loadData();
-            if (isPresetMood(id)) return false; // 预设不可删
-            data.customMoods = (data.customMoods || []).filter(function (m) { return m.id !== id; });
-            if (data.current.mood === id) data.current.mood = null;
-            saveData(data);
-            emitChange(data);
-            return true;
-        },
-
-        addTendency: function (emoji, text) {
-            var data = loadData();
-            var item = { id: genId('tend'), emoji: emoji || '✨', text: (text || '').trim() || '自定义' };
-            data.customTendencies = data.customTendencies || [];
-            data.customTendencies.push(item);
-            saveData(data);
-            emitChange(data);
-            return item;
-        },
-
-        removeTendency: function (id) {
-            var data = loadData();
-            if (isPresetTendency(id)) return false;
-            data.customTendencies = (data.customTendencies || []).filter(function (t) { return t.id !== id; });
-            if (data.current.tendency === id) data.current.tendency = null;
-            saveData(data);
-            emitChange(data);
-            return true;
-        },
-
-        isPresetMood: isPresetMood,
-        isPresetTendency: isPresetTendency
+        // 暴露给 core.js 调用
+        onUserMessage: AutoState.onUserMessage,
+        onFavorabilityChange: AutoState.onFavorabilityChange,
+        tick: AutoState.tick
     };
 
-    // ── 启动时触发一次 UI 渲染 ──
+    // ── 启动 ──
+    var _tickTimer = null;
     function init() {
         try {
+            // 1. 触发一次 UI 渲染
             var cur = window.PartnerState.getCurrent();
             window.dispatchEvent(new CustomEvent('partner-state:changed', {
-                detail: { mood: cur.mood, tendency: cur.tendency, init: true }
+                detail: { mood: cur.mood, tendency: cur.tendency, reason: cur.reason, init: true }
             }));
         } catch (e) {}
         try { bindPartnerStateUI(); } catch (e) { console.error('[伴侣状态] 绑定失败:', e); }
+
+        // 2. 启动时跑一次 tick（处理长时间未聊天的状态）
+        try { AutoState.tick(); } catch (e) {}
+
+        // 3. 监听好感度变化 → 联动倾向
+        try {
+            window.addEventListener('favorability:changed', function (e) {
+                try {
+                    var fav = (e.detail && typeof e.detail.value === 'number') ? e.detail.value : 0;
+                    AutoState.onFavorabilityChange(fav);
+                } catch (err) {}
+            });
+        } catch (e) {}
+
+        // 4. 定时器：每 10 分钟跑一次 tick（检查沉默/时段/微抖动）
+        try {
+            if (_tickTimer) clearInterval(_tickTimer);
+            _tickTimer = setInterval(function () {
+                try { AutoState.tick(); } catch (e) {}
+            }, 10 * 60 * 1000);
+        } catch (e) {}
     }
 
     if (document.readyState === 'loading') {
@@ -215,11 +343,23 @@
     }
 
     // ────────────────────────────────────────────
-    //   UI 层：顶栏胶囊渲染 + 详情弹窗渲染 + 事件委托
+    //   UI 层：顶栏胶囊 + 详情弹窗（只读查看）
     // ────────────────────────────────────────────
 
-    // 当前打开的 tab（默认 mood）
-    var _currentTab = 'mood';
+    function escapeHTML(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function timeAgo(ts) {
+        if (!ts) return '从未';
+        var sec = Math.floor((Date.now() - ts) / 1000);
+        if (sec < 60) return '刚刚';
+        if (sec < 3600) return Math.floor(sec / 60) + ' 分钟前';
+        if (sec < 86400) return Math.floor(sec / 3600) + ' 小时前';
+        return Math.floor(sec / 86400) + ' 天前';
+    }
 
     function renderChips() {
         var cur = window.PartnerState.getCurrent();
@@ -235,23 +375,13 @@
             if (moodText) moodText.textContent = cur.mood.text;
             if (moodChip) moodChip.style.setProperty('--chip-color', cur.mood.color || '#BDBDBD');
             if (moodChip) moodChip.classList.add('ps-chip-active');
-        } else {
-            if (moodEmoji) moodEmoji.textContent = '—';
-            if (moodText) moodText.textContent = '情绪';
-            if (moodChip) moodChip.classList.remove('ps-chip-active');
         }
-
         if (cur.tendency) {
             if (tendEmoji) tendEmoji.textContent = cur.tendency.emoji;
             if (tendText) tendText.textContent = cur.tendency.text;
             if (tendChip) tendChip.classList.add('ps-chip-active');
-        } else {
-            if (tendEmoji) tendEmoji.textContent = '—';
-            if (tendText) tendText.textContent = '倾向';
-            if (tendChip) tendChip.classList.remove('ps-chip-active');
         }
 
-        // 头像呼吸圈：有任一选中时显示
         applyAvatarRing();
     }
 
@@ -269,59 +399,63 @@
         }
     }
 
-    // ── 详情弹窗网格渲染 ──
-    function renderGrid() {
-        var grid = document.getElementById('ps-grid');
-        if (!grid) return;
+    // ── 详情弹窗：只读查看当前状态 + 驱动原因 ──
+    function renderDetail() {
+        var root = document.getElementById('ps-detail');
+        if (!root) return;
+        var cur = window.PartnerState.getCurrent();
         var data = loadData();
-        var list = (_currentTab === 'mood') ? getAllMoods(data) : getAllTendencies(data);
-        var currentId = (_currentTab === 'mood') ? data.current.mood : data.current.tendency;
-        var isPresetFn = (_currentTab === 'mood') ? isPresetMood : isPresetTendency;
 
-        var html = '<div class="ps-grid-inner">';
-        list.forEach(function (item) {
-            var active = (item.id === currentId) ? ' ps-item-active' : '';
-            var colorStyle = (_currentTab === 'mood' && item.color)
-                ? ('style="--item-color:' + item.color + ';"')
-                : '';
-            var delBtn = isPresetFn(item.id)
-                ? ''
-                : '<span class="ps-item-del" data-del-id="' + item.id + '" title="删除">×</span>';
-            html += '<div class="ps-item' + active + '" ' + colorStyle +
-                ' data-id="' + item.id + '" data-type="' + _currentTab + '">' +
-                '<span class="ps-item-emoji">' + (item.emoji || '✨') + '</span>' +
-                '<span class="ps-item-text">' + escapeHTML(item.text || '') + '</span>' +
-                delBtn +
-                '</div>';
-        });
+        var mood = cur.mood || { emoji: '—', text: '—', color: '#BDBDBD' };
+        var tend = cur.tendency || { emoji: '—', text: '—' };
+
+        var html = '';
+        // 当前状态卡片
+        html += '<div class="ps-now-card">';
+        html += '<div class="ps-now-row" style="--state-color:' + (mood.color || '#BDBDBD') + ';">';
+        html += '<div class="ps-now-emoji">' + (mood.emoji || '—') + '</div>';
+        html += '<div class="ps-now-info">';
+        html += '<div class="ps-now-label">情绪状态</div>';
+        html += '<div class="ps-now-value">' + escapeHTML(mood.text || '—') + '</div>';
+        html += '<div class="ps-now-reason">' + escapeHTML((cur.reason && cur.reason.mood) || '—') + '</div>';
+        html += '</div></div>';
+
+        html += '<div class="ps-now-row">';
+        html += '<div class="ps-now-emoji">' + (tend.emoji || '—') + '</div>';
+        html += '<div class="ps-now-info">';
+        html += '<div class="ps-now-label">互动倾向</div>';
+        html += '<div class="ps-now-value">' + escapeHTML(tend.text || '—') + '</div>';
+        html += '<div class="ps-now-reason">' + escapeHTML((cur.reason && cur.reason.tendency) || '—') + '</div>';
+        html += '</div></div>';
         html += '</div>';
-        grid.innerHTML = html;
+
+        // 驱动机制说明
+        html += '<div class="ps-auto-explain">';
+        html += '<div class="ps-auto-title">状态自动驱动机制</div>';
+        html += '<ul class="ps-auto-list">';
+        html += '<li><b>聊天驱动</b>：你发消息时，根据内容和频率自动调整情绪</li>';
+        html += '<li><b>好感度联动</b>：好感度阶段决定互动倾向（陌生→独处，暧昧→黏人）</li>';
+        html += '<li><b>沉默感知</b>：长时间没聊天，会变得想念或闹小情绪</li>';
+        html += '<li><b>随机微抖动</b>：心情会有小波动，不会一直不变</li>';
+        html += '</ul>';
+        html += '</div>';
+
+        // 时间信息
+        html += '<div class="ps-time-info">';
+        html += '<div>状态更新：' + timeAgo(data.lastUpdate) + '</div>';
+        html += '<div>上次你发消息：' + timeAgo(data.lastUserMessage) + '</div>';
+        html += '</div>';
+
+        root.innerHTML = html;
     }
 
-    function escapeHTML(s) {
-        return String(s).replace(/[&<>"']/g, function (c) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-        });
-    }
-
-    function switchTab(tab) {
-        _currentTab = tab;
-        document.querySelectorAll('.ps-tab').forEach(function (btn) {
-            btn.classList.toggle('active', btn.dataset.tab === tab);
-        });
-        // 颜色选择器仅情绪有意义
-        var colorInput = document.getElementById('ps-add-color');
-        if (colorInput) colorInput.style.display = (tab === 'mood') ? '' : 'none';
-        renderGrid();
-    }
-
-    // ── 事件委托（避免被 cloneNode 覆盖） ──
+    // ── 事件委托 ──
     var _bound = false;
     function bindPartnerStateUI() {
         if (_bound) return;
         _bound = true;
 
-        // 1. 顶栏胶囊点击 → 打开详情
+        // 1. 顶栏胶囊 / 设置入口点击 → 打开详情（只读）
         document.addEventListener('click', function (e) {
             var chip = e.target.closest && e.target.closest('#partner-state-chips .ps-chip, #partner-state-entry');
             if (!chip) return;
@@ -330,84 +464,21 @@
                 var fm = document.getElementById('partner-state-modal');
                 if (sm && typeof window.hideModal === 'function') window.hideModal(sm);
                 if (fm && typeof window.showModal === 'function') window.showModal(fm);
-                renderGrid();
+                renderDetail();
             } catch (err) { console.error('[伴侣状态] 打开失败:', err); }
         });
 
-        // 2. Tab 切换
-        document.addEventListener('click', function (e) {
-            var tab = e.target.closest && e.target.closest('.ps-tab');
-            if (!tab) return;
-            switchTab(tab.dataset.tab);
-        });
-
-        // 3. 状态项点击：切换 / 删除
-        document.addEventListener('click', function (e) {
-            var del = e.target.closest && e.target.closest('.ps-item-del');
-            if (del) {
-                // 删除自定义
-                var delId = del.dataset.delId;
-                if (_currentTab === 'mood') window.PartnerState.removeMood(delId);
-                else window.PartnerState.removeTendency(delId);
-                renderGrid();
-                renderChips();
-                if (typeof window.showNotification === 'function') {
-                    window.showNotification('已删除', 'info', 1200);
-                }
-                return;
-            }
-            var item = e.target.closest && e.target.closest('.ps-item');
-            if (!item) return;
-            var id = item.dataset.id;
-            var type = item.dataset.type;
-            if (!id || !type) return;
-            if (type === 'mood') window.PartnerState.setMood(id);
-            else window.PartnerState.setTendency(id);
-            renderGrid();
-            renderChips();
-        });
-
-        // 4. 添加自定义
-        document.addEventListener('click', function (e) {
-            var addBtn = e.target.closest && e.target.closest('#ps-add-btn');
-            if (!addBtn) return;
-            var emojiEl = document.getElementById('ps-add-emoji');
-            var textEl = document.getElementById('ps-add-text');
-            var colorEl = document.getElementById('ps-add-color');
-            var emoji = emojiEl ? emojiEl.value.trim() : '';
-            var text = textEl ? textEl.value.trim() : '';
-            var color = colorEl ? colorEl.value : '#BDBDBD';
-            if (!text) {
-                if (typeof window.showNotification === 'function') {
-                    window.showNotification('请输入状态文字', 'warning', 1500);
-                }
-                return;
-            }
-            if (_currentTab === 'mood') {
-                window.PartnerState.addMood(emoji, text, color);
-            } else {
-                window.PartnerState.addTendency(emoji, text);
-            }
-            if (emojiEl) emojiEl.value = '';
-            if (textEl) textEl.value = '';
-            renderGrid();
-            renderChips();
-            if (typeof window.showNotification === 'function') {
-                window.showNotification('已添加', 'success', 1200);
-            }
-        });
-
-        // 5. 监听状态变化 → 更新顶栏胶囊
+        // 2. 监听状态变化 → 更新顶栏胶囊 + 详情（如果开着）
         window.addEventListener('partner-state:changed', function () {
             renderChips();
+            // 如果详情弹窗开着，刷新内容
+            var fm = document.getElementById('partner-state-modal');
+            if (fm && fm.style.display === 'flex') renderDetail();
         });
 
-        // 初始渲染
         renderChips();
     }
 
-    // 暴露渲染方法（调试/外部调用）
     window.PartnerState.renderChips = renderChips;
-    window.PartnerState.renderGrid = renderGrid;
-    window.PartnerState.switchTab = switchTab;
+    window.PartnerState.renderDetail = renderDetail;
 })();

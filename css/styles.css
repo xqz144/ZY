@@ -947,86 +947,80 @@ gap: 10px;
                           0 0 12px 2px var(--state-ring-color, #E91E63); }
 }
 
-/* 详情弹窗 Tab */
-.ps-tabs {
-    display: flex;
-    gap: 6px;
-    margin: 8px 0 4px;
-    border-bottom: 1px solid var(--border-color);
-}
-.ps-tab {
-    flex: 1;
-    padding: 8px 10px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-secondary);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.ps-tab.active {
-    color: var(--accent-color);
-    border-bottom-color: var(--accent-color);
-    font-weight: 600;
-}
-
-/* 状态网格 */
-.ps-grid-inner {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 6px;
-}
-.ps-item {
-    position: relative;
+/* 详情弹窗：当前状态卡片 */
+.ps-now-card {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 10px 4px;
-    border-radius: 10px;
-    background: var(--message-received-bg);
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    --item-color: #BDBDBD;
+    gap: 10px;
+    margin-bottom: 14px;
 }
-.ps-item:hover {
-    transform: translateY(-1px);
-    border-color: var(--item-color);
-}
-.ps-item-active {
-    border-color: var(--item-color);
-    background: rgba(0,0,0,0.04);
-}
-.ps-item-emoji { font-size: 22px; line-height: 1; }
-.ps-item-text {
-    font-size: 11px;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-.ps-item-del {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    width: 16px;
-    height: 16px;
-    background: #ff4757;
-    color: #fff;
-    border-radius: 50%;
-    font-size: 11px;
-    line-height: 14px;
-    text-align: center;
-    cursor: pointer;
+.ps-now-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    z-index: 2;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--message-received-bg);
+    border-left: 4px solid var(--state-color, #BDBDBD);
+    transition: all 0.3s ease;
+}
+.ps-now-emoji {
+    font-size: 32px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.ps-now-info { flex: 1; min-width: 0; }
+.ps-now-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+.ps-now-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.ps-now-reason {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    font-style: italic;
+}
+
+/* 驱动机制说明 */
+.ps-auto-explain {
+    margin: 14px 0;
+    padding: 12px 14px;
+    background: var(--secondary-bg);
+    border-radius: 10px;
+}
+.ps-auto-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.ps-auto-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+.ps-auto-list li { margin-bottom: 2px; }
+.ps-auto-list b { color: var(--text-primary); font-weight: 600; }
+
+/* 时间信息 */
+.ps-time-info {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 4px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    border-top: 1px dashed var(--border-color);
+    margin-top: 8px;
 }
 
 /* ============ 字卡门槛编辑器 ============ */

@@ -367,8 +367,6 @@
 
     // ── 设置入口绑定（事件委托，避免被其他模块的 cloneNode 覆盖） ──
     var _entryBound = false;
-    var _sliderBound = false;
-    var _applyBound = false;
 
     function bindFavorabilityEntry() {
         if (!_entryBound) {
@@ -384,35 +382,6 @@
                     if (fm && typeof window.showModal === 'function') window.showModal(fm);
                     renderFavorabilityDetail();
                 } catch (err) { console.error('[好感度] 打开详情失败:', err); }
-            });
-        }
-
-        // 手动滑块（事件委托）
-        if (!_sliderBound) {
-            _sliderBound = true;
-            document.addEventListener('input', function (e) {
-                var slider = e.target;
-                if (slider && slider.id === 'fav-manual-slider') {
-                    var valEl = document.getElementById('fav-manual-val');
-                    if (valEl) valEl.textContent = slider.value;
-                }
-            });
-        }
-        if (!_applyBound) {
-            _applyBound = true;
-            document.addEventListener('click', function (e) {
-                var applyBtn = e.target.closest && e.target.closest('#fav-manual-apply');
-                if (!applyBtn) return;
-                var slider = document.getElementById('fav-manual-slider');
-                if (!slider) return;
-                var v = parseInt(slider.value, 10);
-                if (!isNaN(v)) {
-                    window.Favorability.setValue(v);
-                    renderFavorabilityDetail();
-                    if (typeof window.showNotification === 'function') {
-                        window.showNotification('好感度已调整为 ' + v, 'info', 1500);
-                    }
-                }
             });
         }
 
@@ -470,12 +439,6 @@
             '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">近 30 天变化</div>' +
             historyHTML +
             '</div>';
-
-        // 同步手动滑块
-        var slider = document.getElementById('fav-manual-slider');
-        var valEl = document.getElementById('fav-manual-val');
-        if (slider) slider.value = data.value;
-        if (valEl) valEl.textContent = data.value;
     }
 
     window.Favorability.renderDetail = renderFavorabilityDetail;
