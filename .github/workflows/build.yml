@@ -20,10 +20,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      version_name: ${{ steps.meta.outputs.version_name }}
-      version_code: ${{ steps.meta.outputs.version_code }}
-      apk_name: ${{ steps.meta.outputs.apk_name }}
 
     steps:
       - name: 📥 Checkout
@@ -35,12 +31,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: 🤖 Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          api-levels: 34
-          target: commandlinetools
-          build-tools: 34.0.0
+      - name: 🤖 Setup Android SDK components
+        run: |
+          export ANDROID_SDK_ROOT="/usr/local/lib/android/sdk"
+          export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
+          yes | sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" 2>&1 | tail -5
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
 
       - name: 🛠️ Install Gradle 8.10
         run: |
@@ -49,9 +45,9 @@ jobs:
           echo "/opt/gradle-8.10/bin" >> $GITHUB_PATH
           gradle --version | head -3
 
-      - name: 🔧 Prepare environment
+      - name: 🔧 Prepare build env
         run: |
-          # 移除本地代理（CI 不需要）
+          # 移除本地代理配置
           sed -i '/systemProp\.http\.proxy/d; /systemProp\.https\.proxy/d; /systemProp\.nonProxyHosts/d' android/gradle.properties
           # 生成 debug keystore
           keytool -genkey -v \
@@ -61,7 +57,7 @@ jobs:
             -dname "CN=MengJiaoDev, OU=Personal, O=MengJiao, L=Shenzhen, ST=Guangdong, C=CN" \
             2>&1 | tail -2
 
-      - name: 📦 Sync web assets to Android
+      - name: 📦 Sync web assets
         run: |
           mkdir -p android/app/src/main/assets/public
           rsync -a --delete \
@@ -71,7 +67,7 @@ jobs:
             ./ android/app/src/main/assets/public/
           echo "Assets: $(find android/app/src/main/assets/public -type f | wc -l) files"
 
-      - name: 🏗️ Build release APK
+      - name: 🏗️ Build APK
         working-directory: android
         run: |
           gradle :app:assembleRelease \
@@ -85,7 +81,8 @@ jobs:
           VC=$(grep versionCode android/app/build.gradle | sed -E 's/.*versionCode ([0-9]+).*/\1/')
           APK="mengjiao-v${VN}-code${VC}.apk"
           cp android/app/build/outputs/apk/release/app-release.apk "$APK"
-          echo "✅ $APK  (v${VN} code${VC})"
+          SIZE=$(du -h "$APK" | cut -f1)
+          echo "✅ $APK ($SIZE) — v${VN} code${VC}"
           echo "version_name=$VN" >> $GITHUB_OUTPUT
           echo "version_code=$VC" >> $GITHUB_OUTPUT
           echo "apk_name=$APK" >> $GITHUB_OUTPUT
