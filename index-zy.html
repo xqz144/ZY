@@ -9,11 +9,10 @@
     <meta name="theme-color" content="#000000">
 
     <title>传讯</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 字体与图标全部本地化（assets/lib/），离线也能正常显示，不依赖任何 CDN -->
+    <link href="assets/lib/fonts/fonts.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/lib/fontawesome/css/all.min.css">
+    <script src="assets/lib/lucide.min.js"></script>
     <script>
       // Lucide 图标初始化：把所有 <i data-lucide="xxx"> 替换为对应 SVG
       function initLucideIcons() {
@@ -24,8 +23,8 @@
       document.addEventListener('DOMContentLoaded', initLucideIcons);
     </script>
     <link rel="stylesheet" href="css/shop.css">
-    <link rel="icon" type="image/png" sizes="192x192" href="https://file.youtochat.com/images/20260216/1771224856844_qdqqd.jpeg">
-    <link rel="apple-touch-icon" href="https://file.youtochat.com/images/20260216/1771224856844_qdqqd.jpeg">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/app-icon.jpg">
+    <link rel="apple-touch-icon" href="assets/app-icon.jpg">
     <link rel="manifest" href="./manifest.json" />
     <meta name="apple-mobile-web-app-title" content="ʚ𝑳𝑶𝑽𝑬ɞ">
     <style>
@@ -197,8 +196,9 @@
         };
     </script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- 本地化：localforage（大容量存储）与 jszip（备份导出）离线可用 -->
+    <script src="assets/lib/localforage.min.js"></script>
+    <script src="assets/lib/jszip.min.js"></script>
 
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/diary.css">

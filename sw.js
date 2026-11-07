@@ -4,7 +4,7 @@
  * 升级版本号（CACHE_NAME）即可触发用户端在下次打开时后台静默刷新缓存
  * —— 也就是"热更新"的基础。
  */
-const CACHE_NAME = 'mengjiao-v23';
+const CACHE_NAME = 'mengjiao-v24';
 
 const URLS_TO_CACHE = [
   // ======= 入口 =======
@@ -127,6 +127,18 @@ const URLS_TO_CACHE = [
   './assets/map_qiyu_v5.jpg',
   './assets/map_qiyu_v6.jpg',
   './assets/微信图片_20260819141630_127_38.jpg',
+
+  // ======= 本地化第三方库（离线关键依赖）=======
+  './assets/app-icon.jpg',
+  './assets/lib/localforage.min.js',
+  './assets/lib/jszip.min.js',
+  './assets/lib/lucide.min.js',
+  './assets/lib/fonts/fonts.css',
+  './assets/lib/fontawesome/css/all.min.css',
+  './assets/lib/fontawesome/webfonts/fa-solid-900.woff2',
+  './assets/lib/fontawesome/webfonts/fa-regular-400.woff2',
+  './assets/lib/fontawesome/webfonts/fa-brands-400.woff2',
+  './assets/lib/fontawesome/webfonts/fa-v4compatibility.woff2',
 ];
 
 self.addEventListener('install', event => {
