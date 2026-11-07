@@ -38,13 +38,16 @@ jobs:
 
       - name: 🔧 Prepare build env
         run: |
+          # 固定签名证书（来自仓库 Secret，保证每次构建签名一致 → 手机可覆盖安装）
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "::error::缺少 KEYSTORE_BASE64 密钥，无法生成可覆盖安装的 APK"
+            exit 1
+          fi
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
+          keytool -list -keystore android/app/debug.keystore -storepass android -alias androiddebugkey | tail -3
+
+          # 移除本地代理配置
           sed -i '/systemProp\.http\.proxy/d; /systemProp\.https\.proxy/d; /systemProp\.nonProxyHosts/d' android/gradle.properties
-          keytool -genkey -v \
-            -keystore android/app/debug.keystore \
-            -storepass android -alias androiddebugkey \
-            -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=MengJiaoDev, OU=Personal, O=MengJiao, L=Shenzhen, ST=Guangdong, C=CN" \
-            2>&1 | tail -2
 
       - name: 📦 Sync web assets
         run: |
@@ -69,8 +72,11 @@ jobs:
           VN=$(grep versionName android/app/build.gradle | sed -E 's/.*versionName "([^"]+)".*/\1/')
           VC=$(grep versionCode android/app/build.gradle | sed -E 's/.*versionCode ([0-9]+).*/\1/')
           APK="mengjiao-v${VN}-code${VC}.apk"
-          cp android/app/build/outputs/apk/release/app-release.apk "$APK"
-          SIZE=$(du -h "$APK" | cut -f1)
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/$APK"
+          SIZE=$(du -h "dist/$APK" | cut -f1)
+          # 校验签名指纹，便于出问题时排查
+          keytool -printcert -jarfile "dist/$APK" | grep -E "SHA256:|Owner:" | head -3
           echo "✅ $APK ($SIZE) — v${VN} code${VC}"
           echo "version_name=$VN" >> $GITHUB_OUTPUT
           echo "version_code=$VC" >> $GITHUB_OUTPUT
@@ -80,7 +86,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mengjiao-apk-${{ github.run_number }}
-          path: mengjiao-v*-code*.apk
+          path: dist/*.apk
           retention-days: 7
 
       - name: 🏷️ Publish Release (永久下载链接)
@@ -98,8 +104,7 @@ jobs:
             1. 手机浏览器打开本页，下载 APK
             2. 允许「安装未知来源应用」
             3. 点击安装 → **覆盖安装不丢失数据**
-          files: |
-            mengjiao-v*-code*.apk
+          files: dist/*.apk
           update_existing: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
