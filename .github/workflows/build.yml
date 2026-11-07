@@ -4,15 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      create_release:
-        description: '是否创建永久 Release？'
-        required: false
-        default: 'no'
-        type: choice
-        options:
-          - no       # 只上传 7 天 Artifact
-          - yes      # 同时创建/更新永久 Release
 
 permissions:
   contents: write
@@ -47,9 +38,7 @@ jobs:
 
       - name: 🔧 Prepare build env
         run: |
-          # 移除本地代理配置
           sed -i '/systemProp\.http\.proxy/d; /systemProp\.https\.proxy/d; /systemProp\.nonProxyHosts/d' android/gradle.properties
-          # 生成 debug keystore
           keytool -genkey -v \
             -keystore android/app/debug.keystore \
             -storepass android -alias androiddebugkey \
@@ -94,8 +83,7 @@ jobs:
           path: mengjiao-v*-code*.apk
           retention-days: 7
 
-      - name: 🏷️ Create/Update Release (永久)
-        if: github.event_name == 'workflow_dispatch' && inputs.create_release == 'yes'
+      - name: 🏷️ Publish Release (永久下载链接)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.meta.outputs.version_name }}
@@ -104,8 +92,6 @@ jobs:
             ## 📱 梦角传讯 Android 安装包
 
             **版本**: v${{ steps.meta.outputs.version_name }} (code ${{ steps.meta.outputs.version_code }})
-            **触发**: 手动构建
-            **时间**: $(date '+%Y-%m-%d %H:%M:%S UTC')
             **Commit**: ${{ github.sha }}
 
             ### 安装步骤
