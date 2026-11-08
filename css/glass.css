@@ -1,0 +1,207 @@
+/* ============================================================
+   梦角传讯 · ins 风毛玻璃皮肤（第一期）
+   作用范围：首页 / 聊天页 / 设置弹窗
+   设计参数：A 粉紫薄荷柔光 + B 中强度玻璃（blur 18px / 白 0.65）
+   明暗：仅浅色生效，切到暗色自动全部失效
+   回退：删除 index-zy.html 中 glass.css 的 <link> 即可
+   ============================================================ */
+
+:root {
+    --glass-blur: 18px;
+    --glass-alpha: 0.65;
+    --glass-alpha-soft: 0.45;
+    --glass-bg: rgba(255, 255, 255, var(--glass-alpha));
+    --glass-bg-soft: rgba(255, 255, 255, var(--glass-alpha-soft));
+    --glass-border: rgba(255, 255, 255, 0.60);
+    --glass-stroke: rgba(255, 255, 255, 0.90);
+    --glass-shadow: 0 8px 32px rgba(84, 64, 110, 0.10), 0 2px 8px rgba(84, 64, 110, 0.05);
+    --glass-radius: 22px;
+}
+
+/* ============ 1. 全局柔光背景 ============ */
+html[data-theme="light"] {
+    background-color: #f6f2f7;
+    background-image:
+        radial-gradient(70vw 60vw at 6% 0%, rgba(255, 173, 186, 0.55) 0%, rgba(255, 173, 186, 0) 62%),
+        radial-gradient(65vw 60vw at 98% 4%, rgba(186, 170, 255, 0.50) 0%, rgba(186, 170, 255, 0) 60%),
+        radial-gradient(80vw 70vw at 50% 108%, rgba(160, 232, 205, 0.55) 0%, rgba(160, 232, 205, 0) 66%),
+        linear-gradient(160deg, #fdf7fa 0%, #f6f2f7 55%, #f2f8f6 100%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+/* 让底层的实色背景透出柔光；用户自定义的聊天背景图保持不变 */
+html[data-theme="light"] body::before {
+    background-color: transparent;
+    background-image: var(--chat-bg-image, none);
+}
+
+/* 首页背景层透明化（不加 !important，用户内联设置的自定义背景仍然优先） */
+html[data-theme="light"] .home-page-bg {
+    background: transparent;
+    background-image: none;
+}
+
+/* ============ 2. 聊天页 ============ */
+html[data-theme="light"] .header {
+    background-color: rgba(255, 255, 255, 0.58);
+    opacity: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+        0 4px 20px rgba(84, 64, 110, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .input-area-wrapper {
+    background-color: rgba(255, 255, 255, 0.60);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .input-area {
+    border-top: 1px solid rgba(255, 255, 255, 0.60);
+}
+
+html[data-theme="light"] .message-input {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    box-shadow: inset 0 1px 2px rgba(84, 64, 110, 0.04);
+}
+
+html[data-theme="light"] .message-input:focus {
+    border-color: rgba(var(--accent-color-rgb, 197, 164, 126), 0.55);
+    box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb, 197, 164, 126), 0.14);
+}
+
+/* 收到的消息：半透明玻璃质感（不使用 blur，保滚动性能） */
+html[data-theme="light"] .message-received {
+    background-color: rgba(255, 255, 255, 0.70);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow:
+        0 2px 10px rgba(84, 64, 110, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* 发出的消息：强调色玻璃（保留白字可读性） */
+html[data-theme="light"] .message-sent {
+    background-color: rgba(var(--accent-color-rgb, 197, 164, 126), 0.92);
+    box-shadow:
+        0 2px 10px rgba(var(--accent-color-rgb, 197, 164, 126), 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+/* 气泡悬浮操作条：数量少，可用 blur */
+html[data-theme="light"] .message-meta-actions {
+    background-color: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 6px 20px rgba(84, 64, 110, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* ============ 3. 首页 ============ */
+html[data-theme="light"] .hero-card {
+    border-radius: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.62);
+    box-shadow:
+        0 12px 40px rgba(84, 64, 110, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+html[data-theme="light"] .app-item {
+    background: rgba(255, 255, 255, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.60);
+    border-radius: 18px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+html[data-theme="light"] .app-item:active {
+    background: rgba(255, 255, 255, 0.62);
+}
+
+html[data-theme="light"] .app-icon {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.80);
+    box-shadow:
+        0 4px 16px rgba(84, 64, 110, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    /* 图标数量多，关闭逐个模糊，避免掉帧 */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+html[data-theme="light"] .home-nav-bar {
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.62) 0%,
+        rgba(255, 255, 255, 0.48) 50%,
+        rgba(255, 255, 255, 0.56) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+        0 8px 32px rgba(84, 64, 110, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .standalone-time .time-display {
+    color: #3a3540;
+}
+
+html[data-theme="light"] .standalone-time .date-display {
+    color: #6f6a78;
+}
+
+/* ============ 4. 设置弹窗 ============ */
+html[data-theme="light"] #settings-modal {
+    background-color: rgba(60, 45, 80, 0.28);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-theme="light"] #settings-modal .modal-content {
+    background-color: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 26px;
+    box-shadow:
+        0 24px 70px rgba(60, 45, 80, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] #settings-modal .settings-card {
+    background-color: rgba(255, 255, 255, 0.50);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+        0 6px 22px rgba(84, 64, 110, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme="light"] #settings-modal .settings-card:hover {
+    background-color: rgba(255, 255, 255, 0.70);
+    border-color: rgba(255, 255, 255, 0.85);
+}
+
+/* 数据备份 banner：只改视觉，不改 DOM / 事件 */
+html[data-theme="light"] #settings-modal #mj-backup-banner {
+    background: rgba(255, 255, 255, 0.55) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.80) !important;
+    box-shadow:
+        0 8px 24px rgba(84, 64, 110, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* ============ 5. 不支持 backdrop-filter 时的降级 ============ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    html[data-theme="light"] .header,
+    html[data-theme="light"] .input-area-wrapper,
+    html[data-theme="light"] #settings-modal .modal-content {
+        background-color: rgba(255, 255, 255, 0.92);
+    }
+}
