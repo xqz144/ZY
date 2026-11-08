@@ -7,6 +7,61 @@
 (function (global) {
     'use strict';
 
+    // 上次成功导出备份的时间戳（设置页顶部横幅展示）
+    var LAST_BACKUP_KEY = 'mj_last_backup_at';
+
+    /** 把时间戳格式化成「刚刚 / x分钟前 / x小时前 / x天前 / 日期」 */
+    function formatLastBackup(ts) {
+        if (!ts) return '从未备份';
+        var diff = Date.now() - ts;
+        if (diff < 0) diff = 0;
+        var m = Math.floor(diff / 60000);
+        if (m < 1) return '刚刚备份';
+        if (m < 60) return m + ' 分钟前备份';
+        var h = Math.floor(m / 60);
+        if (h < 24) return h + ' 小时前备份';
+        var d = Math.floor(h / 24);
+        if (d <= 30) return d + ' 天前备份';
+        var dt = new Date(ts);
+        return (dt.getMonth() + 1) + '月' + dt.getDate() + '日备份';
+    }
+
+    /** 刷新设置页顶部横幅的「上次备份」文案与告警色 */
+    function refreshBackupBanner() {
+        var el = document.getElementById('mj-backup-time');
+        if (!el) return;
+        var ts = 0;
+        try { ts = Number(localStorage.getItem(LAST_BACKUP_KEY) || 0); } catch (e) { ts = 0; }
+        el.textContent = formatLastBackup(ts);
+        var days = ts ? (Date.now() - ts) / 86400000 : 999;
+        if (days >= 30) {
+            el.style.color = '#c0392b';
+            el.style.background = 'rgba(192,57,43,.10)';
+        } else if (days >= 7) {
+            el.style.color = '#b9770e';
+            el.style.background = 'rgba(185,119,14,.10)';
+        } else {
+            el.style.color = '#2e7d5b';
+            el.style.background = 'rgba(46,125,91,.10)';
+        }
+    }
+
+    /** 把设置页顶部的「导出/导入」按钮接到备份面板上 */
+    function bindSettingsBackupEntry() {
+        var exp = document.getElementById('mj-backup-export');
+        var imp = document.getElementById('mj-backup-import');
+        if (!exp && !imp) return;
+        if (exp) exp.onclick = function () { openBackupPanel('export'); };
+        if (imp) imp.onclick = function () { openBackupPanel('import'); };
+        refreshBackupBanner();
+        // 设置弹窗每次显示时刷新一次（备份时间可能在别处被更新）
+        var sm = document.getElementById('settings-modal');
+        if (sm && !sm._mjBackupObserved) {
+            sm._mjBackupObserved = true;
+            new MutationObserver(refreshBackupBanner).observe(sm, { attributes: true, attributeFilter: ['class', 'style'] });
+        }
+    }
+
     /**
      * 统一分类表：
      *  id:       导入 selective 模式的 categoryId（与 applyBackupToStorage.categories 对应）
@@ -260,7 +315,7 @@
     /**
      * 打开备份与导入主面板
      */
-    function openBackupPanel() {
+    async function openBackupPanel(autoAction) {
         var overlay = document.createElement('div');
         overlay.style.cssText = 'position:fixed;inset:0;z-index:999999997;background:rgba(0,0,0,0.55);backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;';
         overlay.innerHTML =
@@ -325,6 +380,8 @@
                 // 让面板先关闭视觉上更顺
                 // ChatBackup.exportBackupToFile 自己会弹通知
                 await ChatBackup.exportBackupToFile(flags);
+                try { localStorage.setItem(LAST_BACKUP_KEY, String(Date.now())); } catch (e) {}
+                refreshBackupBanner();
             } catch (e) {
                 console.error('[bp] 导出失败', e);
                 if (typeof showNotification === 'function') showNotification('导出失败：' + (e && e.message ? e.message : '未知错误'), 'error', 5000);
@@ -378,12 +435,27 @@
                 if (typeof showNotification === 'function') showNotification('导入失败：' + msg, 'error', 5000);
             }
         };
+
+        // 从设置页直达时，自动触发对应动作
+        if (autoAction === 'export') {
+            setTimeout(function () { try { exportCard.click(); } catch (e) {} }, 80);
+        } else if (autoAction === 'import') {
+            setTimeout(function () { try { importCard.click(); } catch (e) {} }, 80);
+        }
     }
 
     global.BackupPanel = {
         CATEGORIES: BACKUP_CATEGORIES,
         categoriesToFlags: categoriesToFlags,
         openCategoryPicker: openCategoryPicker,
-        openBackupPanel: openBackupPanel
+        openBackupPanel: openBackupPanel,
+        refreshBackupBanner: refreshBackupBanner
     };
+
+    // 设置页顶部备份入口：脚本在 body 末尾加载，DOM 已就绪
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindSettingsBackupEntry);
+    } else {
+        bindSettingsBackupEntry();
+    }
 })(typeof window !== 'undefined' ? window : this);

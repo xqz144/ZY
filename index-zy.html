@@ -2898,6 +2898,22 @@
                 <i class="fas fa-cog"></i><span>设置</span>
             </div>
 
+            <!-- ===== 数据备份（置顶常驻入口） ===== -->
+            <div id="mj-backup-banner" style="margin:0 0 16px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,#fff7fb 0%,#f3f7ff 100%);border:1.5px solid rgba(184,169,201,0.35);">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                    <span style="font-size:18px;">💾</span>
+                    <span style="font-size:15px;font-weight:800;color:var(--text-primary,#1a1a1a);">数据备份</span>
+                    <span id="mj-backup-time" style="margin-left:auto;font-size:11px;font-weight:700;color:#c0392b;background:rgba(192,57,43,0.10);padding:3px 8px;border-radius:8px;">从未备份</span>
+                </div>
+                <div style="font-size:11.5px;line-height:1.6;color:var(--text-secondary,#8a8a8a);margin-bottom:10px;">
+                    聊天记录、账本、萌宠等数据都只存在这台手机里。卸载或换机会全部丢失，建议定期导出一份备份文件。
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button type="button" id="mj-backup-export" style="flex:1;padding:10px;border:none;border-radius:12px;background:linear-gradient(135deg,#b8a9c9,#d4c5e0);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">📤 导出备份</button>
+                    <button type="button" id="mj-backup-import" style="flex:1;padding:10px;border:none;border-radius:12px;background:linear-gradient(135deg,#8bc9a9,#a4d9c0);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">📥 导入备份</button>
+                </div>
+            </div>
+
             <div class="settings-grid">
                 <div class="settings-card" id="appearance-settings">
                     <i class="fas fa-palette"></i>
@@ -5359,7 +5375,7 @@
     <script src="js/onboarding.js"></script>
     <script src="js/listeners.js"></script>
     <script src="js/app.js"></script>
-    <script src="js/pet-game.js"></script>
+    <!-- pet-game.js 改为懒加载：首次进入萌宠屋时才注入，见 home.js loadPetGameModule() -->
     <script src="js/ta-phone.js"></script>
     <script src="js/shop.js"></script>
     <script src="js/gift-cabinet.js"></script>

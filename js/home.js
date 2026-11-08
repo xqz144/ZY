@@ -392,16 +392,35 @@
             }
         }
 
-        // 初始化宠物游戏（每次都调用init，init内部会判断是否需要绑定事件）
+        // 初始化宠物游戏（pet-game.js 为懒加载模块，首次进入时才下载解析）
         setTimeout(() => {
-            try {
-                if (typeof window.initPetGame === 'function') {
-                    window.initPetGame();
+            window.loadPetGameModule().then(function () {
+                try {
+                    if (typeof window.initPetGame === 'function') window.initPetGame();
+                } catch (e) {
+                    console.error('initPetGame error:', e);
                 }
-            } catch (e) {
-                console.error('initPetGame error:', e);
-            }
+            });
         }, 100);
+    };
+
+    // ── 宠物模块懒加载：353KB 的 pet-game.js 不进冷启动路径 ──
+    window.loadPetGameModule = function () {
+        if (window._petGameLoading) return window._petGameLoading;
+        window._petGameLoading = new Promise(function (resolve) {
+            if (typeof window.initPetGame === 'function') { resolve(); return; }
+            var s = document.createElement('script');
+            s.src = 'js/pet-game.js';
+            s.onload = function () { resolve(); };
+            s.onerror = function () {
+                console.error('[pet] pet-game.js 加载失败');
+                if (typeof showNotification === 'function') showNotification('萌宠屋加载失败，请退出重进', 'error');
+                window._petGameLoading = null;
+                resolve();
+            };
+            document.body.appendChild(s);
+        });
+        return window._petGameLoading;
     };
 
     // 确保萌宠屋所需的全局函数始终可用（防止pet-game.js未加载完成时点击无响应）

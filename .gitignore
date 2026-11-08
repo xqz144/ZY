@@ -17,6 +17,11 @@ orchestration-summary.json
 apk-update-*.json
 keystore-*.properties
 
+# 安装包统一由 CI 产出并上传到 Release，不提交进仓库
+*.apk
+*.aab
+/dist/
+
 # Node
 node_modules/
 package-lock.json
