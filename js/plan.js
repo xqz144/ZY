@@ -947,3 +947,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const p = new URLSearchParams(location.search).get('page');
     if (p && ['list','view','focus','stats','profile'].includes(p)) switchPanel(p);
 });
+
+/* ============ 安卓返回键：由父页面调用，先关弹层再退页 ============ */
+window.mjHandleBack = function() {
+    const openOverlays = document.querySelectorAll('.plan-overlay.active');
+    if (openOverlays.length) {
+        openOverlays[openOverlays.length - 1].classList.remove('active');
+        return true;
+    }
+    return false;
+};

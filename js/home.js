@@ -2965,19 +2965,30 @@
                 }
 
                 // 8) iframe 功能页（计划 / 账本 / 甜蜜 / 火花）
-                let extappOpen = false;
+                //    先让子页面处理自己的弹层（如计划页的任务弹窗），再退出整页
+                let extappFrame = null;
                 document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]').forEach(function(frame) {
                     let box = frame.parentNode;
                     for (let d = 0; d < 4 && box && box !== document.body; d++, box = box.parentNode) {
                         if (box.id && box.id.indexOf('extapp-') === 0 && isShown(box)) {
-                            extappOpen = true;
+                            extappFrame = frame;
                             return;
                         }
                     }
                 });
-                if (extappOpen && typeof window.hideExtApp === 'function') {
-                    window.hideExtApp();
-                    return true;
+                if (extappFrame) {
+                    try {
+                        if (typeof extappFrame.contentWindow.mjHandleBack === 'function' &&
+                            extappFrame.contentWindow.mjHandleBack()) {
+                            return true;
+                        }
+                    } catch (err) {
+                        // 跨域或子页未实现时直接退页
+                    }
+                    if (typeof window.hideExtApp === 'function') {
+                        window.hideExtApp();
+                        return true;
+                    }
                 }
 
                 // 9) 聊天页 → 回首页
