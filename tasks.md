@@ -72,6 +72,6 @@
   - grep 确认 `glass.css` 中 `backdrop-filter` 只出现在容器级/悬浮层选择器。
   - 验收：以上全部通过。
 
-- [ ] **T15 提交并发布**
+- [x] **T15 提交并发布**
   - commit + push `main`，等待 Actions 完成，取最新 Release APK 链接。
   - 验收：回复中列出本期覆盖的页面清单与 APK 链接。
