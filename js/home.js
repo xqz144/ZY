@@ -2897,4 +2897,100 @@
         }
     }, true); // 使用捕获阶段
 
+    // ========== 安卓返回键：优先返回上一级，而不是直接退出 App ==========
+    // MainActivity 在 canGoBack() 为 false 时调用 window.mjHandleBack()：
+    // 返回 true = 已处理（关弹窗 / 退出功能页 / 回首页）；返回 false = 允许系统退出。
+    (function installAndroidBackHandler() {
+        function isShown(el) {
+            if (!el) return false;
+            if (el.classList.contains('hidden')) return false;
+            const cs = window.getComputedStyle(el);
+            if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false;
+            const rect = el.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
+        }
+
+        window.mjHandleBack = function() {
+            try {
+                // 1) 弹窗（从最后 / 最上层开始关）
+                const modals = document.querySelectorAll('.modal');
+                for (let i = modals.length - 1; i >= 0; i--) {
+                    if (isShown(modals[i])) {
+                        if (typeof window.hideModal === 'function') window.hideModal(modals[i]);
+                        else modals[i].style.display = 'none';
+                        return true;
+                    }
+                }
+
+                // 2) 商城的商品 / 心愿单弹层
+                const shopModals = document.querySelectorAll('.shop-modal.active');
+                if (shopModals.length) {
+                    shopModals[shopModals.length - 1].classList.remove('active');
+                    return true;
+                }
+
+                // 3) TA的手机
+                if (isShown(document.getElementById('ta-phone-container')) &&
+                    window.TaPhoneApp && typeof window.TaPhoneApp.hideTaPhone === 'function') {
+                    window.TaPhoneApp.hideTaPhone();
+                    return true;
+                }
+
+                // 4) 商城页
+                if (isShown(document.getElementById('shop-container')) &&
+                    window.ShopApp && typeof window.ShopApp.hideShop === 'function') {
+                    window.ShopApp.hideShop();
+                    return true;
+                }
+
+                // 5) 地图页
+                if (isShown(document.getElementById('map-app-overlay')) &&
+                    window.MapApp && typeof window.MapApp.hide === 'function') {
+                    window.MapApp.hide();
+                    return true;
+                }
+
+                // 6) 萌宠屋
+                if (isShown(document.getElementById('pet-container')) &&
+                    typeof window.hidePetPage === 'function') {
+                    window.hidePetPage();
+                    return true;
+                }
+
+                // 7) 朋友圈
+                if (isShown(document.getElementById('moments-container')) &&
+                    typeof window.hideMomentsPage === 'function') {
+                    window.hideMomentsPage();
+                    return true;
+                }
+
+                // 8) iframe 功能页（计划 / 账本 / 甜蜜 / 火花）
+                let extappOpen = false;
+                document.querySelectorAll('iframe[id^="extapp-"][id$="-iframe"]').forEach(function(frame) {
+                    let box = frame.parentNode;
+                    for (let d = 0; d < 4 && box && box !== document.body; d++, box = box.parentNode) {
+                        if (box.id && box.id.indexOf('extapp-') === 0 && isShown(box)) {
+                            extappOpen = true;
+                            return;
+                        }
+                    }
+                });
+                if (extappOpen && typeof window.hideExtApp === 'function') {
+                    window.hideExtApp();
+                    return true;
+                }
+
+                // 9) 聊天页 → 回首页
+                if (isShown(document.querySelector('.main-chat-area')) &&
+                    typeof window.showHomePage === 'function') {
+                    window.showHomePage();
+                    return true;
+                }
+            } catch (e) {
+                console.warn('mjHandleBack error:', e);
+            }
+            return false;
+        };
+    })();
+
 })();

@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String HOST = "appassets.mengjiao.local";
     private static final String PREFIX_PUBLIC = "/public/";
     private static final String PREFIX_HOT = "/hot/";
-    private static final String APP_VERSION = "1.10.4";
+    private static final String APP_VERSION = "1.10.5";
     private static final int FILE_CHOOSER_REQUEST_CODE = 51426;
 
     private WebView mWebView;
@@ -426,13 +426,45 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** 上一次按返回键的时间，用于「再按一次退出」 */
+    private long mLastBackPressedTime = 0;
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && mWebView != null && mWebView.canGoBack()) {
-            mWebView.goBack();
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            if (mWebView != null && mWebView.canGoBack()) {
+                mWebView.goBack();
+            } else {
+                handleBackPress();
+            }
             return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    /**
+     * 优先让前端返回上一级（关弹窗 / 退出功能页 / 回首页），
+     * 前端返回 1 表示已处理；否则 2 秒内再按一次才真正退出 App。
+     */
+    private void handleBackPress() {
+        if (mWebView == null) {
+            finish();
+            return;
+        }
+        mWebView.evaluateJavascript(
+                "(function(){try{return (window.mjHandleBack && window.mjHandleBack()) ? '1' : '0';}catch(e){return '0';}})()",
+                value -> {
+                    if ("\"1\"".equals(value)) {
+                        return;
+                    }
+                    long now = System.currentTimeMillis();
+                    if (now - mLastBackPressedTime < 2000L) {
+                        finish();
+                    } else {
+                        mLastBackPressedTime = now;
+                        Toast.makeText(MainActivity.this, "再按一次退出应用", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     // 接收文件选择器返回的图片/文件，回传给 WebView 页面
