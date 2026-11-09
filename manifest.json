@@ -1,6 +1,6 @@
 {
-  "name": "梦角传讯",
-  "short_name": "梦角传讯",
+  "name": "ʚ YU ɞ",
+  "short_name": "ʚ YU ɞ",
   "description": "与梦角的温馨对话空间",
   "start_url": "./index.html",
   "scope": ".",
@@ -10,10 +10,16 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "./icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "./assets/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/app-icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     }
   ]
 }

@@ -4,7 +4,7 @@
  * 升级版本号（CACHE_NAME）即可触发用户端在下次打开时后台静默刷新缓存
  * —— 也就是"热更新"的基础。
  */
-const CACHE_NAME = 'mengjiao-v29';
+const CACHE_NAME = 'mengjiao-v30';
 
 const URLS_TO_CACHE = [
   // ======= 入口 =======
@@ -131,6 +131,7 @@ const URLS_TO_CACHE = [
 
   // ======= 本地化第三方库（离线关键依赖）=======
   './assets/app-icon.jpg',
+  './assets/app-icon-512.png',
   './assets/lib/localforage.min.js',
   './assets/lib/jszip.min.js',
   './assets/lib/lucide.min.js',

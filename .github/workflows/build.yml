@@ -93,9 +93,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.meta.outputs.version_name }}
-          name: 梦角传讯 v${{ steps.meta.outputs.version_name }}
+          name: ʚ YU ɞ v${{ steps.meta.outputs.version_name }}
           body: |
-            ## 📱 梦角传讯 Android 安装包
+            ## 📱 ʚ YU ɞ Android 安装包
 
             **版本**: v${{ steps.meta.outputs.version_name }} (code ${{ steps.meta.outputs.version_code }})
             **Commit**: ${{ github.sha }}
