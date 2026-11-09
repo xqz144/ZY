@@ -21,8 +21,8 @@ android {
         applicationId "com.mengjiao.app"
         minSdk 24           // Android 7.0+，Oppo Reno7（Android 13）完全兼容
         targetSdk 34
-        versionCode 30
-        versionName "1.10.3"
+        versionCode 31
+        versionName "1.10.4"
     }
 
     signingConfigs {

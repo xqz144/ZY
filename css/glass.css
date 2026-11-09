@@ -205,3 +205,358 @@ html[data-theme="light"] #settings-modal #mj-backup-banner {
         background-color: rgba(255, 255, 255, 0.92);
     }
 }
+
+/* ============================================================
+   第二期：其余功能页（朋友圈 / 日记 / 记账 / 商城 / 萌宠 / 火花
+   + iframe 页：计划 / 账本 / 甜蜜 / 火花）
+   沿用同一套 --glass-* token；仅浅色生效
+   ============================================================ */
+
+/* ============ 6. 主容器透明化（让柔光背景透出） ============ */
+html[data-theme="light"] .moments-container,
+html[data-theme="light"] .moments-container .app-container,
+html[data-theme="light"] .shop-container,
+html[data-theme="light"] .pet-container,
+html[data-theme="light"] .plan-app,
+html[data-theme="light"] .ledger-app,
+html[data-theme="light"] .sweet-app,
+html[data-theme="light"] .app-bg {
+    background: transparent;
+}
+
+/* ============ 7. 朋友圈 ============ */
+/* 底部工具条：悬浮玻璃 */
+html[data-theme="light"] .moments-container .moments-bottom-bar {
+    margin: 10px 12px 18px;
+    padding: 10px;
+    border-radius: 24px;
+    background-color: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    box-shadow: 0 8px 32px rgba(84, 64, 110, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .moments-container .mb-bar-btn {
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 4px 16px rgba(84, 64, 110, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+/* 动态卡片：玻璃化，隐藏原分割线 */
+html[data-theme="light"] .moments-container .moment-card {
+    background-color: rgba(255, 255, 255, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 18px;
+    margin: 10px 12px 0;
+    padding: 13px 14px;
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+html[data-theme="light"] .moments-container .moment-card:first-child {
+    margin-top: 10px;
+    padding-top: 13px;
+}
+
+html[data-theme="light"] .moments-container .moment-card::after {
+    display: none;
+}
+
+html[data-theme="light"] .moments-container .user-profile-inner {
+    background-color: rgba(255, 255, 255, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 20px;
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+html[data-theme="light"] .moments-container .moments-notification-card,
+html[data-theme="light"] .moments-container .interaction-bubble {
+    background-color: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 6px 20px rgba(84, 64, 110, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+/* 全屏浮层：磨砂玻璃 */
+html[data-theme="light"] .moments-container .notification-detail-panel,
+html[data-theme="light"] .moments-container .search-panel {
+    background-color: rgba(255, 255, 255, 0.74);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .moments-container .search-input-wrap {
+    background: rgba(255, 255, 255, 0.60);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+}
+
+/* ============ 8. 朝夕心记 / 同心记账（内嵌弹窗） ============ */
+html[data-theme="light"] .modal {
+    background-color: rgba(60, 45, 80, 0.30);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-theme="light"] .modal-content.diary-modal-wrapper,
+html[data-theme="light"] .modal-content.accounting-modal-wrapper {
+    background-color: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 26px;
+    box-shadow: 0 24px 70px rgba(60, 45, 80, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .diary-modal-header,
+html[data-theme="light"] .accounting-modal-header {
+    border-bottom-color: rgba(255, 255, 255, 0.70);
+}
+
+html[data-theme="light"] .diary-tabs,
+html[data-theme="light"] .diary-view-tabs,
+html[data-theme="light"] .accounting-tabs {
+    background-color: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 16px;
+}
+
+html[data-theme="light"] .diary-panel {
+    background-color: rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 18px;
+}
+
+html[data-theme="light"] .accounting-summary-bar {
+    background-color: rgba(255, 255, 255, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 18px;
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+html[data-theme="light"] .accounting-stats-card,
+html[data-theme="light"] .accounting-label-card {
+    background-color: rgba(255, 255, 255, 0.50);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 18px;
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+/* 小弹层：遮罩 + 玻璃卡片 */
+html[data-theme="light"] .mini-calendar-overlay,
+html[data-theme="light"] .mini-cal-detail-overlay,
+html[data-theme="light"] .diary-period-editor-overlay,
+html[data-theme="light"] .diary-editor-overlay,
+html[data-theme="light"] .accounting-form-overlay {
+    background-color: rgba(60, 45, 80, 0.30);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-theme="light"] .mini-calendar-card,
+html[data-theme="light"] .mini-cal-detail-card,
+html[data-theme="light"] .diary-period-editor-card,
+html[data-theme="light"] .diary-editor-card,
+html[data-theme="light"] .accounting-form-popup {
+    background-color: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 22px;
+    box-shadow: 0 24px 70px rgba(60, 45, 80, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+/* ============ 9. 商城 ============ */
+html[data-theme="light"] .shop-header,
+html[data-theme="light"] .cart-footer,
+html[data-theme="light"] .shop-bottom-nav {
+    background-color: rgba(255, 255, 255, 0.60);
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .shop-tabs {
+    border-bottom-color: rgba(255, 255, 255, 0.65);
+}
+
+html[data-theme="light"] .product-card,
+html[data-theme="light"] .cart-item {
+    background-color: rgba(255, 255, 255, 0.50);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 16px;
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+html[data-theme="light"] .search-input {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+}
+
+html[data-theme="light"] .search-dropdown {
+    background-color: rgba(255, 255, 255, 0.80);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 12px 32px rgba(84, 64, 110, 0.14);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+html[data-theme="light"] .shop-modal {
+    background: rgba(60, 45, 80, 0.30);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-theme="light"] .shop-modal-content {
+    background-color: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 24px 70px rgba(60, 45, 80, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* ============ 10. 萌宠 ============ */
+html[data-theme="light"] .pet-container .pet-page-nav,
+html[data-theme="light"] .pet-container .top-bar {
+    background-color: rgba(255, 255, 255, 0.62);
+    border-color: rgba(255, 255, 255, 0.70);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .pet-container .dreamy-card,
+html[data-theme="light"] .pet-container .pet-card,
+html[data-theme="light"] .pet-container .input-card,
+html[data-theme="light"] .pet-container .story-box,
+html[data-theme="light"] .pet-container .guide-box,
+html[data-theme="light"] .pet-container .speech-bubble {
+    background-color: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+html[data-theme="light"] .pet-container .dreamy-input {
+    background: rgba(255, 255, 255, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+}
+
+/* ============ 11. 火花弹窗（主文档内） ============ */
+html[data-theme="light"] .spark-modal-overlay {
+    background: rgba(60, 45, 80, 0.30);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-theme="light"] .spark-modal {
+    background-color: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 24px 70px rgba(60, 45, 80, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .spark-stat-card {
+    background-color: rgba(255, 255, 255, 0.50);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 16px;
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+/* ============ 12. 计划（pages/plan.html） ============ */
+html[data-theme="light"] .plan-subtabs,
+html[data-theme="light"] .ledger-subtabs,
+html[data-theme="light"] .sweet-tabs,
+html[data-theme="light"] .sweet-subtabs {
+    background-color: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+html[data-theme="light"] .plan-hero,
+html[data-theme="light"] .plan-cal-wrap,
+html[data-theme="light"] .plan-focus-card,
+html[data-theme="light"] .plan-stats-card,
+html[data-theme="light"] .plan-stat-card,
+html[data-theme="light"] .plan-chart-card,
+html[data-theme="light"] .plan-profile-card,
+html[data-theme="light"] .plan-quad,
+html[data-theme="light"] .plan-vday-item,
+html[data-theme="light"] .plan-qitem {
+    background-color: rgba(255, 255, 255, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 18px;
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+html[data-theme="light"] .plan-overlay,
+html[data-theme="light"] .ledger-overlay,
+html[data-theme="light"] .sweet-overlay {
+    background-color: rgba(60, 45, 80, 0.30);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-theme="light"] .plan-sheet,
+html[data-theme="light"] .ledger-sheet,
+html[data-theme="light"] .sweet-sheet {
+    background-color: rgba(255, 255, 255, 0.80);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 22px;
+    box-shadow: 0 24px 70px rgba(60, 45, 80, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+/* ============ 13. 账本（pages/ledger.html） ============ */
+html[data-theme="light"] .ledger-hero,
+html[data-theme="light"] .ledger-cal-wrap,
+html[data-theme="light"] .ledger-day-block,
+html[data-theme="light"] .ledger-entry,
+html[data-theme="light"] .ledger-ticket {
+    background-color: rgba(255, 255, 255, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 18px;
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+/* ============ 14. 甜蜜轨迹（pages/sweet.html） ============ */
+html[data-theme="light"] .sweet-hero,
+html[data-theme="light"] .sweet-stat-card,
+html[data-theme="light"] .sweet-checkin-item,
+html[data-theme="light"] .sweet-anni-card,
+html[data-theme="light"] .sweet-diary-card,
+html[data-theme="light"] .sweet-wish-item,
+html[data-theme="light"] .mood-wrap {
+    background-color: rgba(255, 255, 255, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.70);
+    border-radius: 18px;
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+/* ============ 15. 火花页（pages/spark-new.html） ============ */
+html[data-theme="light"] .stat-card,
+html[data-theme="light"] .form-card {
+    background-color: rgba(255, 255, 255, 0.52);
+    box-shadow: 0 6px 22px rgba(84, 64, 110, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+/* ============ 16. 不支持 backdrop-filter 时的降级（第二期） ============ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    html[data-theme="light"] .moments-container .moments-bottom-bar,
+    html[data-theme="light"] .moments-container .notification-detail-panel,
+    html[data-theme="light"] .moments-container .search-panel,
+    html[data-theme="light"] .modal-content.diary-modal-wrapper,
+    html[data-theme="light"] .modal-content.accounting-modal-wrapper,
+    html[data-theme="light"] .shop-header,
+    html[data-theme="light"] .shop-bottom-nav,
+    html[data-theme="light"] .pet-container .pet-page-nav,
+    html[data-theme="light"] .pet-container .top-bar,
+    html[data-theme="light"] .spark-modal,
+    html[data-theme="light"] .plan-sheet,
+    html[data-theme="light"] .ledger-sheet,
+    html[data-theme="light"] .sweet-sheet {
+        background-color: rgba(255, 255, 255, 0.94);
+    }
+}
