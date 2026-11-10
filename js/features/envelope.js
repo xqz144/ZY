@@ -114,6 +114,13 @@ async function checkEnvelopeStatus() {
 function showEnvelopeReplyPopup(letter) {
     const existing = document.getElementById('envelope-reply-popup');
     if (existing) existing.remove();
+
+    // 原生系统通知（App 在后台时弹出）
+    if (document.hidden && window.AndroidNotify && typeof window.AndroidNotify.notify === 'function') {
+        const pName = (window.settings && window.settings.partnerName) || '对方';
+        const preview = (letter.content || '').substring(0, 40);
+        try { window.AndroidNotify.notify('💌 ' + pName + ' 的回信', preview, 'letter'); } catch (e) {}
+    }
     const popup = document.createElement('div');
     popup.id = 'envelope-reply-popup';
     popup.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--secondary-bg);border:1px solid var(--border-color);border-radius:20px;padding:18px 20px;z-index:8000;max-width:320px;width:88%;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:flex;flex-direction:column;gap:12px;animation:slideUpNotif 0.4s cubic-bezier(0.22,1,0.36,1);';

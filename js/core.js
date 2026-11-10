@@ -2146,6 +2146,14 @@ const addMessage = (message) => {
                 });
             }
         }
+
+        // 原生系统通知（App 在后台时弹出，类似 QQ/微信）
+        if (document.hidden && window.AndroidNotify && typeof window.AndroidNotify.notify === 'function') {
+            const notifyText = message.image ? '[图片]' : (message.text || '');
+            if (notifyText) {
+                try { window.AndroidNotify.notify(message.sender, notifyText, 'msg'); } catch (e) {}
+            }
+        }
     }
 };
 

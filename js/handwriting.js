@@ -119,9 +119,37 @@
         img.src = last;
     }
 
+    // 梦角收到涂鸦后的文字反应
+    var DOODLE_REACTIONS = [
+        '哇，你画的好可爱！',
+        '这是画给我的吗？好喜欢💕',
+        '你怎么这么会画呀～',
+        '收到你的画啦，开心～',
+        '你画的我都要收藏起来！',
+        '哼哼，收到你的心意啦',
+        '画得真好，我也要画一个给你！'
+    ];
+
+    function showTyping(name) {
+        var tiWrapper = document.getElementById('typing-indicator-wrapper');
+        var tiLabel = document.getElementById('typing-indicator-label');
+        var tiAvatar = document.getElementById('typing-indicator-avatar');
+        if (tiLabel) tiLabel.textContent = (name || '对方') + ' 正在输入';
+        if (tiWrapper) {
+            var inputArea = document.querySelector('.input-area-wrapper');
+            if (inputArea) tiWrapper.style.bottom = inputArea.offsetHeight + 'px';
+            tiWrapper.style.display = 'block';
+        }
+        var chat = document.getElementById('chat-container') || document.querySelector('.main-chat-area');
+        if (chat) chat.scrollTop = chat.scrollHeight;
+    }
+    function hideTyping() {
+        var tiWrapper = document.getElementById('typing-indicator-wrapper');
+        if (tiWrapper) tiWrapper.style.display = 'none';
+    }
+
     function send() {
         if (!canvas) return;
-        // 检查画布是否为空（全白）
         var dataUrl = canvas.toDataURL('image/png');
         // 关闭弹窗
         var modal = document.getElementById('handwriting-modal');
@@ -140,6 +168,50 @@
         } catch (e) { console.error('[手写] 发送失败:', e); }
         // 清空画布
         clearCanvas();
+
+        // ── 梦角收到涂鸦后的反应 ──
+        var partnerName = (window.settings && window.settings.partnerName) || '对方';
+        showTyping(partnerName);
+
+        var textDelay = 1500 + Math.random() * 1500;
+        setTimeout(function () {
+            hideTyping();
+            var reaction = DOODLE_REACTIONS[Math.floor(Math.random() * DOODLE_REACTIONS.length)];
+            if (typeof addMessage === 'function') {
+                addMessage({
+                    id: Date.now(),
+                    sender: partnerName,
+                    text: reaction,
+                    timestamp: new Date(),
+                    status: 'received',
+                    favorited: false,
+                    type: 'normal'
+                });
+            }
+            if (typeof playSound === 'function') playSound('message');
+
+            // 50% 概率回一张程序化涂鸦
+            if (Math.random() < 0.5 && typeof window.generateDoodle === 'function') {
+                showTyping(partnerName);
+                var doodleDelay = 1500 + Math.random() * 1500;
+                setTimeout(function () {
+                    hideTyping();
+                    window.generateDoodle(partnerName).then(function (doodleUrl) {
+                        if (typeof addMessage === 'function') {
+                            addMessage({
+                                id: Date.now() + 1,
+                                image: doodleUrl,
+                                sender: partnerName,
+                                timestamp: new Date(),
+                                status: 'received',
+                                type: 'image'
+                            });
+                        }
+                        if (typeof playSound === 'function') playSound('message');
+                    }).catch(function () {});
+                }, doodleDelay);
+            }
+        }, textDelay);
     }
 
     function openModal() {

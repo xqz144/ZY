@@ -1,10 +1,14 @@
 package com.mengjiao.app;
 
 import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.SharedPreferences;
@@ -19,6 +23,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import android.webkit.MimeTypeMap;
@@ -74,8 +81,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String HOST = "appassets.mengjiao.local";
     private static final String PREFIX_PUBLIC = "/public/";
     private static final String PREFIX_HOT = "/hot/";
-    private static final String APP_VERSION = "1.10.11";
+    private static final String APP_VERSION = "1.10.12";
     private static final int FILE_CHOOSER_REQUEST_CODE = 51426;
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 51427;
+    private static final String CHANNEL_MSG = "mengjiao_msg";
 
     private WebView mWebView;
     private AssetManager mAssets;
@@ -125,6 +134,11 @@ public class MainActivity extends AppCompatActivity {
 
         // 注册原生文件保存接口（JS 调用 window.AndroidFileSaver.saveBase64File）
         mWebView.addJavascriptInterface(new FileSaverInterface(), "AndroidFileSaver");
+
+        // 注册原生通知接口（JS 调用 window.AndroidNotify.notify(title, text, tag)）
+        mWebView.addJavascriptInterface(new NotificationInterface(), "AndroidNotify");
+        createNotificationChannel();
+        requestNotificationPermission();
 
         // 处理 WindowInsets：状态栏 padding + 键盘/IME padding
         // 让 WebView 内容在状态栏下方开始，键盘弹出时 WebView 能正确 resize
@@ -372,6 +386,81 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // ────────────── 系统通知 ──────────────
+
+    /** 创建通知渠道（Android O+ 必须） */
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null && nm.getNotificationChannel(CHANNEL_MSG) == null) {
+                NotificationChannel channel = new NotificationChannel(
+                        CHANNEL_MSG, "新消息", NotificationManager.IMPORTANCE_HIGH);
+                channel.setDescription("梦角发来的新消息和信件");
+                channel.enableVibration(true);
+                channel.setShowBadge(true);
+                nm.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    /** Android 13+ 运行时申请通知权限 */
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_REQUEST_CODE);
+            }
+        }
+    }
+
+    /**
+     * 原生通知接口：JS 通过 window.AndroidNotify.notify(title, text, tag) 调用
+     * 用于梦角发消息、信件到达时弹出系统通知
+     */
+    private class NotificationInterface {
+        @android.webkit.JavascriptInterface
+        public void notify(final String title, final String text, final String tag) {
+            runOnUiThread(() -> showNotification(title, text, tag));
+        }
+
+        @android.webkit.JavascriptInterface
+        public boolean isAvailable() {
+            return true;
+        }
+    }
+
+    /** 实际弹出通知 */
+    private void showNotification(String title, String text, String tag) {
+        if (title == null) title = "ʚ YU ɞ";
+        if (text == null) text = "";
+        if (tag == null) tag = "msg";
+
+        // 点击通知打开 App
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent pi = PendingIntent.getActivity(this, 0, intent, flags);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_MSG)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
+                .setAutoCancel(true)
+                .setContentIntent(pi)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) {
+            nm.notify(tag.hashCode(), builder.build());
+        }
+    }
+
     /**
      * 保存字节数组到 Downloads 目录
      * Android 10+ (API 29+): 使用 MediaStore，无需权限
@@ -465,6 +554,12 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "再按一次退出应用", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    /** 通知权限申请结果（目前无需特殊处理，权限被拒则通知静默失败） */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     // 接收文件选择器返回的图片/文件，回传给 WebView 页面
