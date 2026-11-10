@@ -35,11 +35,24 @@
     }
 
     function resizeCanvas() {
-        if (!canvas) return;
+        if (!canvas || !ctx) return;
+        var dpr = window.devicePixelRatio || 1;
         var rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * (window.devicePixelRatio || 1);
-        canvas.height = rect.height * (window.devicePixelRatio || 1);
-        ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+        // modal 隐藏时 rect 为 0，跳过；等 modal 显示后再调用
+        if (rect.width === 0 || rect.height === 0) return;
+        // 先重置 transform，再设尺寸（设 width/height 会清空 transform）
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+    }
+
+    function getLogicalSize() {
+        var dpr = window.devicePixelRatio || 1;
+        return {
+            w: canvas.width / dpr,
+            h: canvas.height / dpr
+        };
     }
 
     function getPos(e) {
@@ -87,20 +100,21 @@
 
     function clearCanvas() {
         if (!ctx || !canvas) return;
+        var s = getLogicalSize();
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, s.w, s.h);
         history = [];
     }
 
     function undo() {
         if (history.length === 0 || !ctx) return;
         var last = history.pop();
+        var s = getLogicalSize();
         var img = new Image();
         img.onload = function () {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width / (window.devicePixelRatio || 1), canvas.height / (window.devicePixelRatio || 1));
+            ctx.fillRect(0, 0, s.w, s.h);
+            ctx.drawImage(img, 0, 0, s.w, s.h);
         };
         img.src = last;
     }
@@ -133,7 +147,11 @@
         var modal = document.getElementById('handwriting-modal');
         if (modal && typeof window.showModal === 'function') {
             window.showModal(modal);
-            setTimeout(function () { ensureCanvas(); clearCanvas(); }, 100);
+            // modal 显示后 canvas 才有真实尺寸，必须重新 resize（ensureCanvas 有缓存，不会重新调）
+            setTimeout(function () {
+                resizeCanvas();
+                clearCanvas();
+            }, 100);
         }
     }
 
@@ -198,8 +216,9 @@
                 var data = canvas.toDataURL();
                 resizeCanvas();
                 clearCanvas();
+                var s = getLogicalSize();
                 var img = new Image();
-                img.onload = function () { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
+                img.onload = function () { ctx.drawImage(img, 0, 0, s.w, s.h); };
                 img.src = data;
             }
         });
