@@ -174,8 +174,24 @@ window.openEnvelopeAndViewReply = function(replyId) {
     }, 200);
 };
 
+// 回信内容的兜底句库：字卡库为空时也不会生成出 "undefined" 的信
+const ENVELOPE_FALLBACK_SENTENCES = [
+    '今天也在想你', '看到你的信，心里一下子暖了起来', '最近过得还好吗',
+    '要好好吃饭，好好休息', '我一直在', '想你的时候就看看天空',
+    '谢谢你写信给我', '每一天都很期待你的消息', '照顾好自己',
+    '有你在，日子就变得不一样了', '晚安，做个好梦', '记得多喝水'
+];
+
+function getEnvelopeSourcePool() {
+    let pool = [];
+    if (typeof customReplies !== 'undefined' && Array.isArray(customReplies)) pool = pool.concat(customReplies);
+    if (typeof sparkReplies !== 'undefined' && Array.isArray(sparkReplies)) pool = pool.concat(sparkReplies);
+    pool = pool.filter(s => typeof s === 'string' && s.trim());
+    return pool.length ? pool : ENVELOPE_FALLBACK_SENTENCES;
+}
+
 function generateEnvelopeReplyText() {
-    const sourcePool = [...customReplies];
+    const sourcePool = getEnvelopeSourcePool();
     // 使用自定义设置或默认值
     let minSentences = 8, maxSentences = 12;
     if (typeof settings !== 'undefined' && settings.envelopeCustomRuleEnabled) {
@@ -680,18 +696,17 @@ function handleSendEnvelope() {
         const scheduleDateStr = new Date(scheduleTime).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         showNotification(`信件已设定，将在 ${scheduleDateStr} 寄给 ${pName} ✉️`, 'success');
     } else {
-        showNotification(`信件已寄出，正在加急寄给 ${pName} ✉️`, 'success');
+        // 告诉用户预计多久能收到回信，避免误以为功能坏了
+        const etaHours = randomMs / (60 * 60 * 1000);
+        const etaText = etaHours >= 1 ? `约 ${etaHours.toFixed(1)} 小时后` : `约 ${Math.round(randomMs / 60000)} 分钟后`;
+        showNotification(`信件已寄出，${pName} ${etaText}回信 ✉️`, 'success');
     }
 }
 
 // 时空来信：系统随机写信给用户（使用回复库）
 function generateRandomEnvelopeLetter() {
-    // 使用回复库生成信件内容
-    const sourcePool = [...customReplies];
-    if (sourcePool.length === 0) {
-        console.warn('回复库为空，无法生成时空来信');
-        return;
-    }
+    // 使用回复库生成信件内容（含兜底）
+    const sourcePool = getEnvelopeSourcePool();
     
     // 随机选择 5-12 句话合成一段信件，统一使用句号
     const sentenceCount = Math.floor(Math.random() * 8) + 5;

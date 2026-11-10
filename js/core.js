@@ -577,6 +577,15 @@ const loadData = async () => {
             if (typeof manageMoyuAutoGenerateTimer === 'function') manageMoyuAutoGenerateTimer();
             if (typeof manageEnvelopeAutoSendTimer === 'function') manageEnvelopeAutoSendTimer();
             if (typeof checkEnvelopeStatus === 'function') checkEnvelopeStatus();
+            // 回信/时空来信周期检查：App 常开不重启时，到点的回信也能按时送达
+            if (!window._envelopeStatusTimer) {
+                window._envelopeStatusTimer = setInterval(() => {
+                    if (typeof checkEnvelopeStatus === 'function') checkEnvelopeStatus();
+                }, 60 * 1000);
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden && typeof checkEnvelopeStatus === 'function') checkEnvelopeStatus();
+                });
+            }
             if (typeof updateUI === 'function') updateUI();
             if (settings.customBubbleCss) {
                 try { applyCustomBubbleCss(settings.customBubbleCss); } catch(e) {}
