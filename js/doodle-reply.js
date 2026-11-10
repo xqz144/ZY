@@ -64,9 +64,11 @@
     // 等待手写字体加载完成（canvas 需要字体就绪才能正确渲染）
     function waitForFont() {
         if (document.fonts && document.fonts.ready) {
-            // 主动触发字体加载，避免首次使用时 fallback
-            var loadPromise = document.fonts.load('40px "Liu Jian Mao Cao"').catch(function () {});
-            return Promise.all([document.fonts.ready, loadPromise]);
+            // 主动加载三款手写字体，确保随机选中的那款已就绪
+            var loads = FONTS.map(function (f) {
+                return document.fonts.load('40px ' + f).catch(function () {});
+            });
+            return Promise.all([document.fonts.ready].concat(loads));
         }
         return Promise.resolve();
     }
