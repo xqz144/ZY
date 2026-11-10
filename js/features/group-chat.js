@@ -315,11 +315,6 @@ if (exportAllBtn) {
                             <span>摸鱼小记</span>
                         </label>
                         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;border:1px solid var(--border-color);border-radius:12px;background:var(--primary-bg);font-size:13px;color:var(--text-primary);">
-                            <input type="checkbox" id="_bk_shop" checked style="accent-color:var(--accent-color);width:15px;height:15px;">
-                            <i class="fas fa-shopping-bag" style="color:var(--accent-color);width:16px;text-align:center;"></i>
-                            <span>商城 / 礼物柜</span>
-                        </label>
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;border:1px solid var(--border-color);border-radius:12px;background:var(--primary-bg);font-size:13px;color:var(--text-primary);">
                             <input type="checkbox" id="_bk_moments" checked style="accent-color:var(--accent-color);width:15px;height:15px;">
                             <i class="fas fa-camera" style="color:var(--accent-color);width:16px;text-align:center;"></i>
                             <span>朋友圈 / 访客记录</span>

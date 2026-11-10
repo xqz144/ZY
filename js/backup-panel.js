@@ -136,14 +136,6 @@
             localStorageNeedles: []
         },
         {
-            id: 'shop',
-            label: '商城 / 礼物柜',
-            desc: '商城余额、商品、购物车、订单、礼物柜收藏',
-            incl: ['inclShop'],
-            indexedDBNeedles: [],
-            localStorageNeedles: ['shop_balance', 'shop_search_history', 'shop_gift_cabinet', 'shop_products', 'shop_cart', 'shop_orders']
-        },
-        {
             id: 'themes',
             label: '主题 / 外观 / 图库 / 头像',
             desc: '自定义主题、主题预设、聊天背景、头像、角色卡片',

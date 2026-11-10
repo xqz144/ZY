@@ -22,7 +22,6 @@
       }
       document.addEventListener('DOMContentLoaded', initLucideIcons);
     </script>
-    <link rel="stylesheet" href="css/shop.css">
     <link rel="icon" type="image/png" sizes="512x512" href="assets/app-icon-512.png">
     <link rel="apple-touch-icon" href="assets/app-icon-512.png">
     <link rel="manifest" href="./manifest.json" />
@@ -583,16 +582,6 @@
         <div class="apps-pager" id="apps-pager">
             <div class="apps-page active" id="apps-page-1">
                 <div class="apps-grid">
-                    <div class="app-item" onclick="openApp('shop')">
-                        <div class="app-icon" data-app="shop">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
-                                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                                <line x1="3" y1="6" x2="21" y2="6"/>
-                                <path d="M16 10a4 4 0 0 1-8 0"/>
-                            </svg>
-                        </div>
-                        <span class="app-name">商城</span>
-                    </div>
                     <div class="app-item" onclick="openApp('chat')">
                         <div class="app-icon" data-app="chat">
                             <i class="fas fa-comment-alt"></i>
@@ -610,18 +599,6 @@
                             <span class="app-badge" id="moyu-badge" style="display:none;"></span>
                         </div>
                         <span class="app-name">摸鱼小记</span>
-                    </div>
-                    <div class="app-item" onclick="window.GiftCabinetApp.open()">
-                        <div class="app-icon" data-app="gift-cabinet">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
-                                <polyline points="20 12 20 22 4 22 4 12"/>
-                                <rect x="2" y="7" width="20" height="5"/>
-                                <line x1="12" y1="22" x2="12" y2="7"/>
-                                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
-                                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                            </svg>
-                        </div>
-                        <span class="app-name">礼物柜</span>
                     </div>
                     <div class="app-item" onclick="openApp('stats')">
                         <div class="app-icon" data-app="stats"><i class="fas fa-chart-bar"></i></div>
@@ -710,287 +687,7 @@
         </div>
     </div>
 
-    <!-- ========== 商城模块 ========== -->
-    <div class="shop-container" id="shop-container" style="display:none;">
-        <div class="shop-header">
-            <button class="shop-back" onclick="window.ShopApp.hideShop()">← 返回</button>
-            <span class="shop-title" id="shop-page-title">商城</span>
-            <div class="shop-balance" onclick="window.ShopApp.showBalanceModal()">
-                <i class="fas fa-wallet"></i>
-                <span id="shop-balance-display">余额: ¥520.00</span>
-            </div>
-        </div>
-        <div class="search-bar" id="shop-search-bar">
-            <div class="search-wrapper">
-                <input type="text" class="search-input" id="shop-search-input" placeholder="搜索商品..." oninput="window.ShopApp.onSearchInput()" onfocus="window.ShopApp.showSearchDropdown()">
-                <button class="search-clear" id="shop-search-clear" onclick="window.ShopApp.clearSearch()">✕</button>
-                <div class="search-dropdown" id="shop-search-dropdown">
-                    <div class="search-dropdown-title">
-                        <span>搜索历史</span>
-                        <button onclick="window.ShopApp.clearSearchHistory()">清除</button>
-                    </div>
-                    <div class="search-dropdown-tags" id="shop-search-history"></div>
-                    <div class="search-dropdown-title"><span>热门搜索</span></div>
-                    <div class="search-dropdown-tags">
-                        <div class="search-dropdown-tag" onclick="window.ShopApp.quickSearch('耳机')">耳机</div>
-                        <div class="search-dropdown-tag" onclick="window.ShopApp.quickSearch('蛋糕')">蛋糕</div>
-                        <div class="search-dropdown-tag" onclick="window.ShopApp.quickSearch('对戒')">对戒</div>
-                    </div>
-                </div>
-            </div>
-            <button class="wish-btn" onclick="window.ShopApp.showWishModal()">
-                <i class="fas fa-magic"></i> 许愿
-            </button>
-        </div>
-        <div class="shop-tabs" id="shop-main-tabs">
-            <button class="shop-tab active" onclick="window.ShopApp.switchTab('recommend')">推荐</button>
-            <button class="shop-tab" onclick="window.ShopApp.switchTab('food')">外卖</button>
-        </div>
-        <div class="shop-content" id="shop-content">
-            <div id="shop-recommend-panel">
-                <div class="sub-tags-wrapper">
-                    <div class="sub-tags-toggle" onclick="window.ShopApp.toggleSubTags(this)">
-                        <i class="fas fa-chevron-right"></i>
-                        <span>全部</span>
-                    </div>
-                    <div class="sub-tags-content" id="shop-recommend-subtags">
-                        <div class="sub-tag active" onclick="window.ShopApp.filterSubTag(this)">全部</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">衣物</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">日用品</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">数码</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">计生用品</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">饰品</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">居家</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">美妆</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">文具</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">书籍</div>
-                        <div class="sub-tag-add" onclick="window.ShopApp.showAddTagModal('recommend')">+ 自定义</div>
-                    </div>
-                </div>
-                <div class="product-grid" id="shop-recommend-grid"></div>
-            </div>
-            <div id="shop-food-panel" style="display:none;">
-                <div class="sub-tags-wrapper">
-                    <div class="sub-tags-toggle" onclick="window.ShopApp.toggleSubTags(this)">
-                        <i class="fas fa-chevron-right"></i>
-                        <span>全部</span>
-                    </div>
-                    <div class="sub-tags-content" id="shop-food-subtags">
-                        <div class="sub-tag active" onclick="window.ShopApp.filterSubTag(this)">全部</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">奶茶</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">快餐</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">零食</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">水果</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">甜品</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">汤品</div>
-                        <div class="sub-tag" onclick="window.ShopApp.filterSubTag(this)">夜宵</div>
-                        <div class="sub-tag-add" onclick="window.ShopApp.showAddTagModal('food')">+ 自定义</div>
-                    </div>
-                </div>
-                <div class="product-grid" id="shop-food-grid"></div>
-            </div>
-            <div id="shop-cart-panel" style="display:none;">
-                <div class="cart-list" id="shop-cart-list"></div>
-            </div>
-            <div id="shop-order-panel" style="display:none;">
-                <div class="order-tabs">
-                    <button class="order-tab active" onclick="window.ShopApp.filterOrder(this,'all')">全部</button>
-                    <button class="order-tab" onclick="window.ShopApp.filterOrder(this,'pending')">待送达</button>
-                    <button class="order-tab" onclick="window.ShopApp.filterOrder(this,'completed')">已完成</button>
-                    <button class="order-tab" onclick="window.ShopApp.filterOrder(this,'cancelled')">已取消</button>
-                </div>
-                <div class="order-list" id="shop-order-list"></div>
-            </div>
-        </div>
-        <div class="cart-footer" id="shop-cart-footer">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <input type="checkbox" class="cart-checkbox" id="shop-cart-selectall" onchange="window.ShopApp.toggleSelectAll()">
-                <span style="font-size:0.8rem;color:var(--text-light);">全选</span>
-            </div>
-            <div style="flex:1;"></div>
-            <div class="cart-total">合计: <span id="shop-cart-total">¥0</span></div>
-            <button class="checkout-btn delete-selected-btn" onclick="window.ShopApp.deleteSelected()" style="background:var(--danger-color,#ff4757);">删除</button>
-            <button class="checkout-btn" onclick="window.ShopApp.checkout()">结算</button>
-        </div>
-        <div class="shop-bottom-nav">
-            <button class="shop-nav-item active" onclick="window.ShopApp.switchNav('shop', this)">
-                <i class="fas fa-store"></i>
-                <span>商城</span>
-            </button>
-            <button class="shop-nav-item" onclick="window.ShopApp.switchNav('cart', this)">
-                <i class="fas fa-shopping-cart"></i>
-                <span>购物车</span>
-            </button>
-            <button class="shop-nav-item" onclick="window.ShopApp.switchNav('order', this)">
-                <i class="fas fa-clipboard-list"></i>
-                <span>订单</span>
-            </button>
-        </div>
 
-    <!-- 商品详情弹窗 -->
-    <div class="shop-modal" id="shop-product-modal">
-        <button class="shop-modal-close" onclick="window.ShopApp.closeProductModal()">✕</button>
-        <button class="shop-modal-share-btn" onclick="window.ShopApp.shareProduct()">🔗</button>
-        <div class="shop-modal-content">
-            <div class="shop-modal-img" id="shop-modal-img"></div>
-            <div class="shop-modal-name" id="shop-modal-name"></div>
-            <div class="shop-modal-desc" id="shop-modal-desc"></div>
-            <div class="shop-modal-price" id="shop-modal-price"></div>
-            <div id="shop-modal-specs"></div>
-            <div class="spec-section">
-                <div class="spec-title">数量</div>
-                <div class="quantity-control">
-                    <button class="qty-btn" onclick="window.ShopApp.changeQty(-1)">-</button>
-                    <span class="qty-num" id="shop-modal-qty">1</span>
-                    <button class="qty-btn" onclick="window.ShopApp.changeQty(1)">+</button>
-                </div>
-            </div>
-            <div class="remark-section">
-                <div class="spec-title">订单备注</div>
-                <textarea class="remark-input" id="shop-modal-remark" placeholder="给TA留言，或备注特殊要求..."></textarea>
-            </div>
-            <div class="buy-options" id="shop-modal-buy-options">
-                <button class="buy-btn self" id="shop-modal-btn-cart" onclick="window.ShopApp.addToCartFromModal()">
-                    <i class="fas fa-cart-plus"></i> 加入购物车
-                </button>
-                <button class="buy-btn self" id="shop-modal-btn-self" onclick="window.ShopApp.buy('self')">
-                    <i class="fas fa-user"></i> 给自己买
-                </button>
-                <button class="buy-btn dream" id="shop-modal-btn-dream" onclick="window.ShopApp.buy('dream')">
-                    <i class="fas fa-heart"></i> 给梦角买
-                </button>
-            </div>
-            <button class="buy-btn wish" id="shop-modal-btn-booking" style="width:100%;margin-top:10px;" onclick="window.ShopApp.showBookingModal()">
-                <i class="fas fa-clock"></i> 预订送达
-            </button>
-            <button class="buy-btn pay-request-style" id="shop-modal-btn-pay" style="width:100%;margin-top:10px;" onclick="window.ShopApp.askTAPay()">
-                <i class="fas fa-hand-holding-heart"></i> 找TA代付
-            </button>
-        </div>
-    </div>
-
-    <!-- 许愿弹窗 -->
-    <div class="shop-modal wish-modal" id="shop-wish-modal">
-        <button class="shop-modal-close" onclick="window.ShopApp.closeWishModal()">✕</button>
-        <div class="shop-modal-content">
-            <div style="font-size:1.1rem;font-weight:700;margin-bottom:16px;text-align:center;">✨ 许愿商品</div>
-            <div class="wish-form-group">
-                <label class="wish-label">商品名称</label>
-                <input type="text" class="wish-input" id="wish-name" placeholder="输入商品名称...">
-            </div>
-            <div class="wish-form-group">
-                <label class="wish-label">价格 (¥)</label>
-                <input type="number" class="wish-input" id="wish-price" placeholder="0.00">
-            </div>
-            <div class="wish-form-group">
-                <label class="wish-label">分类</label>
-                <select class="wish-select" id="wish-category">
-                    <option value="recommend">推荐</option>
-                    <option value="food">外卖</option>
-                </select>
-            </div>
-            <div class="wish-form-group">
-                <label class="wish-label">小标签（用逗号分隔）</label>
-                <input type="text" class="wish-input" id="wish-tags" placeholder="如: 衣物, 新品, 限量">
-            </div>
-            <div class="wish-form-group">
-                <label class="wish-label">商品图标</label>
-                <div class="wish-icon-row">
-                    <input type="text" class="wish-input" id="wish-icon" placeholder="输入emoji 如: 👔 🧋 🎁" style="flex:1;">
-                    <span style="color:var(--text-light);font-size:0.8rem;">或</span>
-                    <label class="wish-img-upload">
-                        <input type="file" id="wish-img-input" accept="image/*" onchange="window.ShopApp.handleWishImgUpload(event)" style="display:none;">
-                        <span>📷 上传图片</span>
-                    </label>
-                </div>
-                <div class="wish-img-preview" id="wish-img-preview" style="display:none;"></div>
-            </div>
-            <div class="wish-form-group">
-                <label class="wish-label">商品描述</label>
-                <textarea class="wish-textarea" id="wish-desc" placeholder="输入商品详细描述..."></textarea>
-            </div>
-            <div class="wish-form-group">
-                <label class="wish-label">规格选项</label>
-                <div id="wish-specs"></div>
-                <button class="add-spec-btn" onclick="window.ShopApp.addWishSpec()">+ 添加规格</button>
-            </div>
-            <button class="buy-btn dream" style="width:100%;margin-top:10px;" onclick="window.ShopApp.submitWish()">
-                <i class="fas fa-magic"></i> 许愿上架
-            </button>
-        </div>
-    </div>
-
-    <!-- 余额设置弹窗 -->
-    <div class="shop-modal balance-modal" id="shop-balance-modal">
-        <button class="shop-modal-close" onclick="window.ShopApp.closeBalanceModal()">✕</button>
-        <div class="shop-modal-content" style="text-align:center;padding:30px 20px;">
-            <div style="font-size:1.1rem;font-weight:700;margin-bottom:10px;">💰 余额设置</div>
-            <div style="font-size:0.8rem;color:var(--text-light);margin-bottom:20px;">自定义你的购物预算</div>
-            <div class="balance-display" id="shop-balance-display">¥520.00</div>
-            <input type="number" class="balance-input" id="shop-balance-input" placeholder="输入新余额">
-            <button class="buy-btn dream" style="width:100%;" onclick="window.ShopApp.saveBalance()">
-                <i class="fas fa-check"></i> 确认修改
-            </button>
-        </div>
-    </div>
-
-    <!-- 查看回复弹窗 -->
-    <div class="shop-modal" id="shop-reply-modal">
-        <button class="shop-modal-close" onclick="window.ShopApp.closeReplyModal()">✕</button>
-        <div class="shop-modal-content">
-            <div style="font-size:1.1rem;font-weight:700;margin-bottom:16px;text-align:center;">💬 梦角的回复</div>
-            <div id="shop-reply-list"></div>
-        </div>
-    </div>
-
-    <!-- 自定义分类弹窗 -->
-    <div class="shop-modal" id="shop-addtag-modal">
-        <button class="shop-modal-close" onclick="window.ShopApp.closeAddTagModal()">✕</button>
-        <div class="shop-modal-content">
-            <div style="font-size:1.1rem;font-weight:700;margin-bottom:16px;text-align:center;">+ 自定义分类</div>
-            <div class="tag-input-row">
-                <input type="text" id="shop-newtag-input" placeholder="输入分类名称...">
-                <button class="tag-add-btn" onclick="window.ShopApp.addCustomTag()">添加</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 预订弹窗 -->
-    <div class="shop-modal" id="shop-booking-modal">
-        <button class="shop-modal-close" onclick="window.ShopApp.closeBookingModal()">✕</button>
-        <div class="shop-modal-content">
-            <div style="font-size:1.1rem;font-weight:700;margin-bottom:16px;text-align:center;">⏰ 预订送达</div>
-            <div class="wish-form-group">
-                <label class="wish-label">快捷选项</label>
-                <div class="spec-options">
-                    <div class="spec-option" onclick="window.ShopApp.selectBooking(this,5)">5分钟后</div>
-                    <div class="spec-option" onclick="window.ShopApp.selectBooking(this,30)">30分钟后</div>
-                    <div class="spec-option" onclick="window.ShopApp.selectBooking(this,60)">1小时后</div>
-                    <div class="spec-option" onclick="window.ShopApp.selectBooking(this,1440)">明天</div>
-                </div>
-            </div>
-            <div class="wish-form-group">
-                <label class="wish-label">自定义分钟数</label>
-                <input type="number" class="wish-input" id="shop-booking-minutes" placeholder="输入分钟数">
-            </div>
-            <div class="buy-options">
-                <button class="buy-btn self" style="flex:1;" onclick="window.ShopApp.bookingBuy('self')">给自己买</button>
-                <button class="buy-btn dream" style="flex:1;" onclick="window.ShopApp.bookingBuy('dream')">给梦角买</button>
-            </div>
-        </div>
-    </div>
-    </div><!-- shop-container end -->
-    <!-- 礼物柜弹窗 -->
-    <div class="center-modal" id="gift-cabinet-modal">
-        <div class="center-modal-overlay" onclick="window.GiftCabinetApp.close()"></div>
-        <div class="center-modal-box">
-            <button class="center-modal-close" onclick="window.GiftCabinetApp.close()">✕</button>
-            <div style="font-size:1.1rem;font-weight:700;margin-bottom:12px;text-align:center;">🎁 我的礼物柜</div>
-            <div id="gift-cabinet-list" style="max-height:60vh;overflow-y:auto;"></div>
-        </div>
-    </div>
-
-    <!-- ========== 商城模块结束 ========== -->
 
     <!-- 消息通知横幅 -->
     <div class="home-notification" id="home-notification">
@@ -1790,19 +1487,12 @@
                     </div>
                     <span class="ta-phone-app-name">朋友圈</span>
                 </div>
-                <div class="ta-phone-app" onclick="window.TaPhoneApp.showTaPhoneTab('gifts')">
-                    <div class="ta-phone-app-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-                    </div>
-                    <span class="ta-phone-app-name">礼物柜</span>
-                </div>
             </div>
             <!-- 内容列表 -->
             <div class="ta-phone-content" id="ta-phone-content" style="display:none;">
                 <div class="ta-phone-tabs">
                     <button class="ta-phone-tab" data-tab="chat" onclick="window.TaPhoneApp.showTaPhoneTab('chat')">聊天</button>
                     <button class="ta-phone-tab" data-tab="moments" onclick="window.TaPhoneApp.showTaPhoneTab('moments')">朋友圈</button>
-                    <button class="ta-phone-tab" data-tab="gifts" onclick="window.TaPhoneApp.showTaPhoneTab('gifts')">礼物柜</button>
                 </div>
                 <div id="ta-phone-sort-bar" style="display:none;gap:6px;padding:6px 12px;justify-content:flex-end;flex-wrap:wrap;">
                     <button class="ta-phone-sort-btn active" data-sort="collected" onclick="window.TaPhoneApp.setChatSortMode('collected')" style="background:none;border:1px solid var(--border-color,rgba(255,255,255,0.15));border-radius:12px;padding:3px 10px;font-size:0.7rem;color:var(--text-light,#aaa);cursor:pointer;">按收藏时间</button>
@@ -5379,8 +5069,6 @@
     <script src="js/app.js"></script>
     <!-- pet-game.js 改为懒加载：首次进入萌宠屋时才注入，见 home.js loadPetGameModule() -->
     <script src="js/ta-phone.js"></script>
-    <script src="js/shop.js"></script>
-    <script src="js/gift-cabinet.js"></script>
     <script src="js/moments-library.js"></script>
     <script src="js/moments.js"></script>
     <script src="js/spark.js"></script>

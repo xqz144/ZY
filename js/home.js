@@ -1927,24 +1927,6 @@
                     document.head.appendChild(script);
                 }
             },
-            'shop': () => {
-                if (typeof window.ShopApp !== 'undefined') {
-                    window.ShopApp.showShop();
-                } else {
-                    (window.showNotification || function(){})('商城加载中...', 'info');
-                    const script = document.createElement('script');
-                    var basePath = window.location.pathname.replace(/\/[^\/]*$/, '/') || '/';
-                    script.src = basePath + 'js/shop.js';
-                    script.onload = function() {
-                        if (typeof window.ShopApp !== 'undefined') window.ShopApp.showShop();
-                        else (window.showNotification || function(){})('商城加载失败', 'error');
-                    };
-                    script.onerror = function() {
-                        (window.showNotification || function(){})('商城加载失败', 'error');
-                    };
-                    document.head.appendChild(script);
-                }
-            },
             'map': () => {
                 if (typeof window.MapApp !== 'undefined') {
                     window.MapApp.show();
@@ -2936,14 +2918,7 @@
                     return true;
                 }
 
-                // 4) 商城页
-                if (isShown(document.getElementById('shop-container')) &&
-                    window.ShopApp && typeof window.ShopApp.hideShop === 'function') {
-                    window.ShopApp.hideShop();
-                    return true;
-                }
-
-                // 5) 地图页
+                // 4) 地图页
                 if (isShown(document.getElementById('map-app-overlay')) &&
                     window.MapApp && typeof window.MapApp.hide === 'function') {
                     window.MapApp.hide();

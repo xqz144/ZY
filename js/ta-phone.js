@@ -194,93 +194,6 @@
         return div.innerHTML;
     }
 
-    // 渲染礼物柜
-    function renderGiftCabinet() {
-        const listEl = document.getElementById('ta-phone-list');
-        if (!listEl) return;
-
-        // 优先从 ShopApp 获取（IndexedDB 数据）
-        let gifts = [];
-        if (window.ShopApp && typeof window.ShopApp.getGiftCabinet === 'function') {
-            gifts = window.ShopApp.getGiftCabinet();
-        }
-        // 兜底从 localStorage 读取
-        if (!gifts || gifts.length === 0) {
-            try {
-                const saved = localStorage.getItem('shop_gift_cabinet');
-                if (saved) gifts = JSON.parse(saved);
-            } catch(e) {}
-        }
-
-        if (!gifts || gifts.length === 0) {
-            listEl.innerHTML = '<div class="ta-phone-empty">礼物柜还是空的，快去商城给TA买礼物吧~</div>';
-            return;
-        }
-
-        listEl.innerHTML = gifts.map((item, idx) => {
-            const replyPreview = item.replies && item.replies.length > 0
-                ? `<div style="margin-top:8px;padding:8px;background:rgba(233,69,96,0.08);border-radius:8px;font-size:0.78rem;color:#c0392b;line-height:1.4;">${item.replies[0].text}</div>`
-                : '';
-            return `
-                <div class="ta-phone-item">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-                        <span style="font-size:1.5rem;">${item.icon || '📦'}</span>
-                        <div style="flex:1;">
-                            <div style="font-weight:600;font-size:0.9rem;">${item.name}</div>
-                            <div style="font-size:0.72rem;color:var(--text-light);">¥${item.price} x ${item.qty}</div>
-                        </div>
-                    </div>
-                    <div class="ta-phone-item-time">${formatTime(item.time)}</div>
-                    ${item.remark ? `<div style="font-size:0.78rem;color:#b37400;margin-top:4px;">备注: ${escapeHtml(item.remark)}</div>` : ''}
-                    ${replyPreview}
-                    ${item.replies && item.replies.length > 1 ? `<button style="margin-top:8px;background:none;border:none;color:var(--accent-color);font-size:0.75rem;cursor:pointer;" onclick="window.TaPhoneApp.showGiftReplies(${idx})">查看全部回复 (${item.replies.length}条)</button>` : ''}
-                </div>
-            `;
-        }).join('');
-    }
-
-    // 显示礼物柜中的回复
-    function showGiftReplies(idx) {
-        // 隐藏排序栏（礼物柜回复页面不需要）
-        const sortBar = document.getElementById('ta-phone-sort-bar');
-        if (sortBar) sortBar.style.display = 'none';
-
-        let gifts = [];
-        // 优先从 ShopApp 获取（与 renderGiftCabinet 保持一致）
-        if (window.ShopApp && typeof window.ShopApp.getGiftCabinet === 'function') {
-            gifts = window.ShopApp.getGiftCabinet();
-        }
-        if (!gifts || gifts.length === 0) {
-            try {
-                const saved = localStorage.getItem('shop_gift_cabinet');
-                if (saved) gifts = JSON.parse(saved);
-            } catch(e) {}
-        }
-        const item = gifts[idx];
-        if (!item || !item.replies) return;
-
-        const listEl = document.getElementById('ta-phone-list');
-        listEl.innerHTML = `
-            <div style="margin-bottom:12px;">
-                <button class="ta-phone-back" onclick="window.TaPhoneApp.showTaPhoneTab('gifts')" style="margin-bottom:10px;">← 返回礼物柜</button>
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:2rem;">${item.icon || '📦'}</span>
-                    <div>
-                        <div style="font-weight:700;">${item.name}</div>
-                        <div style="font-size:0.8rem;color:var(--text-light);">¥${item.price} x ${item.qty}</div>
-                    </div>
-                </div>
-            </div>
-            ${item.replies.map(r => `
-                <div style="background:var(--primary-bg);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--border-color);">
-                    <div style="font-size:0.72rem;color:var(--text-light);margin-bottom:6px;">${r.time || ''}</div>
-                    <div style="font-size:0.88rem;line-height:1.5;">${r.text || ''}</div>
-                    ${r.img ? `<img src="${r.img}" style="max-width:100%;border-radius:8px;margin-top:6px;">` : ''}
-                </div>
-            `).join('')}
-        `;
-    }
-
     // 显示TA的手机弹窗
     function showTaPhone() {
         const container = document.getElementById('ta-phone-container');
@@ -340,19 +253,12 @@
             tab.classList.toggle('active', tab.dataset.tab === type);
         });
 
-        if (type === 'gifts') {
-            updateTitle('礼物柜');
-            renderGiftCabinet();
-            const sortBar = document.getElementById('ta-phone-sort-bar');
-            if (sortBar) sortBar.style.display = 'none';
-        } else {
-            updateTitle(type === 'chat' ? '聊天' : '朋友圈');
-            renderList(type);
-            // 聊天页显示排序选项
-            const sortBar = document.getElementById('ta-phone-sort-bar');
-            if (sortBar) {
-                sortBar.style.display = type === 'chat' ? 'flex' : 'none';
-            }
+        updateTitle(type === 'chat' ? '聊天' : '朋友圈');
+        renderList(type);
+        // 聊天页显示排序选项
+        const sortBar = document.getElementById('ta-phone-sort-bar');
+        if (sortBar) {
+            sortBar.style.display = type === 'chat' ? 'flex' : 'none';
         }
     }
 
@@ -551,7 +457,6 @@
         deleteCollection,
         tryCollectChat,
         tryCollectMoment,
-        showGiftReplies,
         setChatSortMode
     };
 
