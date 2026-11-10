@@ -44,6 +44,16 @@ async function checkEnvelopeStatus() {
     let changed = false;
     let newReplyLetter = null;
 
+    // 旧版默认回信间隔是 10~24 小时，迁移：把还在 pending 但 replyTime 距今超过 2 小时的旧信
+    // 重设为 30 分钟~2 小时内回信，避免用户为旧信等太久
+    const maxWait = 2 * 60 * 60 * 1000;
+    envelopeData.outbox.forEach(letter => {
+        if (letter.status === 'pending' && letter.replyTime - now > maxWait) {
+            letter.replyTime = now + Math.random() * maxWait + 30 * 60 * 1000;
+            changed = true;
+        }
+    });
+
     // 先处理定时发送的信件
     envelopeData.outbox.forEach(letter => {
         if (letter.status === 'scheduled' && now >= letter.scheduleTime) {
@@ -263,7 +273,20 @@ function renderOutboxList() {
             statusIcon = isPending
                 ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
                 : `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
-            statusText = isPending ? `${statusIcon} 等待回信` : `${statusIcon} 已收到回信`;
+            if (isPending) {
+                // 显示具体预计回信时间
+                const eta = new Date(letter.replyTime);
+                const now = new Date();
+                const sameDay = eta.toDateString() === now.toDateString();
+                const nextDay = new Date(now.getTime() + 86400000).toDateString() === eta.toDateString();
+                let etaStr;
+                if (sameDay) etaStr = `预计今天 ${String(eta.getHours()).padStart(2,'0')}:${String(eta.getMinutes()).padStart(2,'0')} 回信`;
+                else if (nextDay) etaStr = `预计明天 ${String(eta.getHours()).padStart(2,'0')}:${String(eta.getMinutes()).padStart(2,'0')} 回信`;
+                else etaStr = `预计 ${eta.getMonth()+1}/${eta.getDate()} ${String(eta.getHours()).padStart(2,'0')}:${String(eta.getMinutes()).padStart(2,'0')} 回信`;
+                statusText = `${statusIcon} ${etaStr}`;
+            } else {
+                statusText = `${statusIcon} 已收到回信`;
+            }
         }
         const preview = letter.content.length > 38 ? letter.content.substring(0, 38) + '…' : letter.content;
         // 检查是否是回复某封信
@@ -403,6 +426,43 @@ window.viewEnvLetter = function(section, id) {
     const dateLine = document.getElementById('env-view-date-line');
     if (dateLine) dateLine.textContent = fullDateStr;
 
+    // 预计回信时间 / 实际收到回信时间
+    const etaEl = document.getElementById('env-view-reply-eta');
+    if (etaEl) {
+        if (section === 'outbox') {
+            if (letter.status === 'pending' && letter.replyTime) {
+                const eta = new Date(letter.replyTime);
+                const now = new Date();
+                const sameDay = eta.toDateString() === now.toDateString();
+                const nextDay = new Date(now.getTime() + 86400000).toDateString() === eta.toDateString();
+                const hh = String(eta.getHours()).padStart(2,'0');
+                const mm = String(eta.getMinutes()).padStart(2,'0');
+                let etaStr;
+                if (sameDay) etaStr = `今天 ${hh}:${mm}`;
+                else if (nextDay) etaStr = `明天 ${hh}:${mm}`;
+                else etaStr = `${eta.getMonth()+1}/${eta.getDate()} ${hh}:${mm}`;
+                etaEl.innerHTML = `⏳ 预计 ${etaStr} 收到回信`;
+                etaEl.style.display = 'block';
+            } else if (letter.status === 'replied') {
+                // 找到对应的回信，取实际收到时间
+                const reply = envelopeData.inbox.find(l => l.refId === letter.id);
+                if (reply && reply.receivedTime) {
+                    const rt = new Date(reply.receivedTime);
+                    const hh = String(rt.getHours()).padStart(2,'0');
+                    const mm = String(rt.getMinutes()).padStart(2,'0');
+                    etaEl.innerHTML = `✓ 已于 ${rt.getMonth()+1}/${rt.getDate()} ${hh}:${mm} 收到回信`;
+                    etaEl.style.display = 'block';
+                } else {
+                    etaEl.style.display = 'none';
+                }
+            } else {
+                etaEl.style.display = 'none';
+            }
+        } else {
+            etaEl.style.display = 'none';
+        }
+    }
+
     const toLine = document.getElementById('env-view-to-line');
     const greetingLine = document.getElementById('env-view-greeting-line');
     if (section === 'outbox') {
@@ -539,8 +599,8 @@ window.replyToEnvLetter = function() {
         const text = editInput.value.trim();
         if (!text) { showNotification('回复内容不能为空', 'warning'); return; }
 
-        // 使用自定义设置或默认值计算回信时间
-        let minMs = 10 * 60 * 60 * 1000, maxMs = 24 * 60 * 60 * 1000;
+        // 使用自定义设置或默认值（默认 30 分钟 ~ 2 小时，不长不短）
+        let minMs = 30 * 60 * 1000, maxMs = 2 * 60 * 60 * 1000;
         if (typeof settings !== 'undefined' && settings.envelopeCustomRuleEnabled) {
             const unitToMs = { minutes: 60 * 1000, hours: 60 * 60 * 1000, days: 24 * 60 * 60 * 1000 };
             const minVal = settings.envelopeReplyMinVal || 10;
@@ -654,8 +714,8 @@ function handleSendEnvelope() {
         addMessage({ id: Date.now(), sender: 'user', text: `【寄出的信】\n${text}`, timestamp: new Date(), status: 'sent', type: 'normal' });
     }
 
-    // 使用自定义设置或默认值
-    let minMs = 10 * 60 * 60 * 1000, maxMs = 24 * 60 * 60 * 1000;
+    // 使用自定义设置或默认值（默认 30 分钟 ~ 2 小时，不长不短）
+    let minMs = 30 * 60 * 1000, maxMs = 2 * 60 * 60 * 1000;
     if (typeof settings !== 'undefined' && settings.envelopeCustomRuleEnabled) {
         const unitToMs = { minutes: 60 * 1000, hours: 60 * 60 * 1000, days: 24 * 60 * 60 * 1000 };
         const minVal = settings.envelopeReplyMinVal || 10;
@@ -696,10 +756,18 @@ function handleSendEnvelope() {
         const scheduleDateStr = new Date(scheduleTime).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         showNotification(`信件已设定，将在 ${scheduleDateStr} 寄给 ${pName} ✉️`, 'success');
     } else {
-        // 告诉用户预计多久能收到回信，避免误以为功能坏了
-        const etaHours = randomMs / (60 * 60 * 1000);
-        const etaText = etaHours >= 1 ? `约 ${etaHours.toFixed(1)} 小时后` : `约 ${Math.round(randomMs / 60000)} 分钟后`;
-        showNotification(`信件已寄出，${pName} ${etaText}回信 ✉️`, 'success');
+        // 显示具体预计回信时间点
+        const eta = new Date(replyTime);
+        const now = new Date();
+        const sameDay = eta.toDateString() === now.toDateString();
+        const nextDay = new Date(now.getTime() + 86400000).toDateString() === eta.toDateString();
+        const hh = String(eta.getHours()).padStart(2,'0');
+        const mm = String(eta.getMinutes()).padStart(2,'0');
+        let etaStr;
+        if (sameDay) etaStr = `今天 ${hh}:${mm}`;
+        else if (nextDay) etaStr = `明天 ${hh}:${mm}`;
+        else etaStr = `${eta.getMonth()+1}/${eta.getDate()} ${hh}:${mm}`;
+        showNotification(`信件已寄出，预计 ${etaStr} 收到 ${pName} 的回信 ✉️`, 'success');
     }
 }
 
