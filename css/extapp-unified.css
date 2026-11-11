@@ -229,3 +229,49 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); color: var(--text-prima
 p, li, span, td, th, label, a, em, strong { font-family: var(--font-sans); color: var(--text-primary); }
 a { color: var(--accent-color); text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+/* ======= 八、锁屏不参与通用组件样式 ======= */
+/* 上面的 [class*="-sheet"] / [class*="-panel"] 会误伤锁屏的 .ls-sheet / .ls-panel，
+   把深色沉浸界面刷成白底深字，导致密码键盘"隐身" */
+#zy-lock-screen [class*="-sheet"],
+#zy-lock-screen [class*="-panel"],
+#zy-lock-screen [class*="-card"] {
+  font-family: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* p/span/label 的全局深色文字规则同样会污染锁屏 */
+#zy-lock-screen p,
+#zy-lock-screen span,
+#zy-lock-screen label,
+#zy-lock-screen a,
+#zy-lock-screen strong,
+#zy-lock-screen em {
+  color: inherit;
+}
+#zy-lock-screen .ls-panel-hint.ls-error { color: #ff7b7b; }
+
+/* 通用按钮 / 输入框规则带 !important，这里按锁屏原样恢复 */
+#zy-lock-screen .ls-key { border-radius: 50% !important; }
+#zy-lock-screen .ls-option { border-radius: 12px !important; }
+#zy-lock-screen .ls-btn-primary {
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #5b86e5, #7b5cf0) !important;
+  color: #fff !important;
+}
+#zy-lock-screen .ls-btn-ghost { border-radius: 12px !important; }
+
+#zy-lock-screen .ls-input,
+#zy-lock-screen .ls-textarea {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  font-family: inherit !important;
+}
+#zy-lock-screen .ls-input::placeholder { color: rgba(255, 255, 255, 0.42) !important; }

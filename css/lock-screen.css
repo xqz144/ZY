@@ -288,8 +288,18 @@
     flex-direction: column;
     padding: 64px 24px 32px;
     overflow-y: auto;
+    /* 锁屏根节点禁用了触摸手势，这里放行纵向滚动，小屏也能滑到键盘底部 */
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
 }
 .ls-sheet.ls-active { display: flex; }
+
+/* 密码 / 图案设置页：标题、圆点居中，键盘靠底部（更像真机） */
+.ls-sheet.ls-sheet-center .ls-sheet-title,
+.ls-sheet.ls-sheet-center .ls-sheet-desc { text-align: center; }
+.ls-sheet.ls-sheet-center .ls-pin-dots { justify-content: center; }
+.ls-sheet.ls-sheet-center .ls-keypad,
+.ls-sheet.ls-sheet-center .ls-pattern { align-self: center; }
 
 .ls-sheet-title {
     font-size: 24px;

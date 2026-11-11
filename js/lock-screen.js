@@ -460,6 +460,7 @@
     // ────────── 引导设置 ──────────
     function showSheet(html) {
         sheetEl.innerHTML = html;
+        sheetEl.classList.remove('ls-sheet-center');
         sheetEl.classList.add('ls-active');
         panelEl.classList.remove('ls-active');
     }
@@ -533,7 +534,7 @@
         var stage = step;
 
         sheetEl.innerHTML = '';
-        sheetEl.classList.add('ls-active');
+        sheetEl.classList.add('ls-active', 'ls-sheet-center');
         panelEl.classList.remove('ls-active');
 
         var title = el('div', 'ls-sheet-title', stage === 1 ? '设置密码' : '再次输入确认');
@@ -544,7 +545,8 @@
         hint.style.textAlign = 'center';
         hint.style.minHeight = '22px';
         var keypad = el('div', 'ls-keypad');
-        keypad.style.marginTop = '0';
+        keypad.style.marginTop = 'auto';
+        keypad.style.marginBottom = '40px';
 
         ['1','2','3','4','5','6','7','8','9','','0','del'].forEach(function (k) {
             var b = el('button', 'ls-key');
@@ -600,14 +602,14 @@
         var path = [];
 
         sheetEl.innerHTML = '';
-        sheetEl.classList.add('ls-active');
+        sheetEl.classList.add('ls-active', 'ls-sheet-center');
         panelEl.classList.remove('ls-active');
 
         var title = el('div', 'ls-sheet-title', stage === 1 ? '绘制解锁图案' : '再次绘制确认');
         title.style.marginBottom = '6px';
         var hint = el('div', 'ls-sheet-desc', '至少连接 4 个点');
         var wrap = el('div', 'ls-pattern');
-        wrap.style.margin = '18px auto';
+        wrap.style.margin = 'auto';
         for (var i = 0; i < 9; i++) {
             var row = Math.floor(i / 3), col = i % 3;
             var gap = (250 - 58) / 2;
