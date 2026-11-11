@@ -218,10 +218,226 @@
         renderHeroDays();
     }
 
+    // ========== 桌面小组件 ==========
+    const WIDGET_DEFS = { anniv: '纪念日', quote: '每日一句', pet: '萌宠状态', msgs: '今日消息' };
+    // 默认只开两个，避免把应用网格挤出首屏
+    let enabledWidgets = ['anniv', 'msgs'];
+
+    // 字卡库为空时的兜底句子
+    const FALLBACK_QUOTES = [
+        '今天也想和你一起浪费时间。',
+        '喜欢你这件事，藏不住的。',
+        '风很轻，想你的时候更轻。',
+        '把今天的好心情分你一半。',
+        '你是我平凡日子里的小惊喜。',
+        '想牵着你的手，走很远的路。',
+        '有你在，普通的一天也会发光。',
+        '晚安之前，再想你一遍。'
+    ];
+
+    /** 解析 YYYY-MM-DD（按本地时区，避免 UTC 偏移） */
+    function parseDateOnly(str) {
+        if (!str) return null;
+        const parts = String(str).split('-');
+        if (parts.length < 3) return null;
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    /** 读取每日一句（字卡库优先，聊天回复库次之，最后用兜底） */
+    function readQuotePool() {
+        const keys = ['mengjiao_card_replies', 'mengjiao_chat_replies'];
+        for (let i = 0; i < keys.length; i++) {
+            try {
+                const arr = JSON.parse(localStorage.getItem(keys[i]) || '[]');
+                if (Array.isArray(arr)) {
+                    const list = arr
+                        .map(item => typeof item === 'string' ? item : (item && (item.text || item.content)))
+                        .filter(t => typeof t === 'string' && t.trim());
+                    if (list.length > 0) return list;
+                }
+            } catch (e) {}
+        }
+        return FALLBACK_QUOTES;
+    }
+
+    /** 统计今天的聊天消息条数 */
+    function countTodayMessages() {
+        let arr = [];
+        try { arr = JSON.parse(localStorage.getItem('mengjiao_chat_messages') || '[]'); } catch (e) {}
+        if (!Array.isArray(arr)) return 0;
+        const now = new Date();
+        return arr.filter(m => {
+            if (!m || !m.ts) return false;
+            const d = new Date(m.ts);
+            return d.getFullYear() === now.getFullYear() &&
+                d.getMonth() === now.getMonth() &&
+                d.getDate() === now.getDate();
+        }).length;
+    }
+
+    /** 生成一张小组件卡片 */
+    function createWidget(key, icon, title, value, unit, sub, onClick) {
+        const card = document.createElement('div');
+        card.className = 'home-widget';
+        card.dataset.widget = key;
+
+        const head = document.createElement('div');
+        head.className = 'hw-head';
+        const iconEl = document.createElement('span');
+        iconEl.className = 'hw-icon';
+        iconEl.textContent = icon;
+        const titleEl = document.createElement('span');
+        titleEl.className = 'hw-title';
+        titleEl.textContent = title;
+        head.appendChild(iconEl);
+        head.appendChild(titleEl);
+
+        const valueEl = document.createElement('div');
+        valueEl.className = 'hw-value' + (key === 'quote' ? ' hw-value-quote' : '');
+        valueEl.textContent = value;
+        if (unit) {
+            const unitEl = document.createElement('span');
+            unitEl.className = 'hw-unit';
+            unitEl.textContent = ' ' + unit;
+            valueEl.appendChild(unitEl);
+        }
+
+        const subEl = document.createElement('div');
+        subEl.className = 'hw-sub';
+        subEl.textContent = sub || '';
+
+        card.appendChild(head);
+        card.appendChild(valueEl);
+        card.appendChild(subEl);
+        if (typeof onClick === 'function') card.addEventListener('click', onClick);
+        return card;
+    }
+
+    function buildAnnivWidget() {
+        const startDate = (profileData.me && profileData.me.startDate) || '';
+        const start = parseDateOnly(startDate);
+        if (!start) {
+            return createWidget('anniv', '🎂', '纪念日', '--', '', '点击设置在一起日期', () => {
+                if (typeof window.showProfile === 'function') window.showProfile('me');
+            });
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let next = new Date(today.getFullYear(), start.getMonth(), start.getDate());
+        if (next.getTime() < today.getTime()) {
+            next = new Date(today.getFullYear() + 1, start.getMonth(), start.getDate());
+        }
+        const diff = Math.round((next.getTime() - today.getTime()) / 86400000);
+        const years = next.getFullYear() - start.getFullYear();
+        const value = diff === 0 ? '就是今天' : String(diff);
+        const unit = diff === 0 ? '' : '天后';
+        const dateText = (next.getMonth() + 1) + '月' + next.getDate() + '日';
+        const sub = years > 0 ? (years + ' 周年 · ' + dateText) : dateText;
+        return createWidget('anniv', '🎂', '纪念日', value, unit, sub, () => {
+            window.openApp('sweet-new');
+        });
+    }
+
+    function buildQuoteWidget() {
+        const pool = readQuotePool();
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 0);
+        const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
+        const text = pool[Math.max(0, dayOfYear) % pool.length];
+        return createWidget('quote', '💌', '每日一句', text, '', '字卡库 · 点击查看', () => {
+            window.openApp('cards');
+        });
+    }
+
+    function buildPetWidget() {
+        let data = null;
+        try { data = JSON.parse(localStorage.getItem('pixelPetGame') || 'null'); } catch (e) {}
+        const pet = data && data.pets && data.currentPet ? data.pets[data.currentPet] : null;
+        if (!pet) {
+            return createWidget('pet', '🐾', '萌宠状态', '还没养', '', '点击去萌宠屋看看', () => {
+                window.openApp('pet');
+            });
+        }
+        const lv = pet.level || 1;
+        const mood = pet.stats && typeof pet.stats.mood === 'number' ? pet.stats.mood : 80;
+        const moodText = mood >= 85 ? '心情超好' : mood >= 60 ? '心情不错' : mood >= 35 ? '有点蔫' : '需要陪伴';
+        return createWidget('pet', '🐾', pet.name || '萌宠', 'Lv.' + lv, '', moodText, () => {
+            window.openApp('pet');
+        });
+    }
+
+    function buildMsgsWidget() {
+        const count = countTodayMessages();
+        return createWidget('msgs', '💬', '今日消息', String(count), '条',
+            count > 0 ? '今天和 TA 的对话' : '今天还没聊天', () => {
+                window.openApp('chat');
+            });
+    }
+
+    /** 按启用列表渲染小组件 */
+    function renderHomeWidgets() {
+        const box = document.getElementById('home-widgets');
+        if (!box) return;
+        while (box.firstChild) box.removeChild(box.firstChild);
+        if (enabledWidgets.length === 0) {
+            box.style.display = 'none';
+            return;
+        }
+        box.style.display = '';
+        enabledWidgets.forEach(key => {
+            if (key === 'anniv') box.appendChild(buildAnnivWidget());
+            else if (key === 'quote') box.appendChild(buildQuoteWidget());
+            else if (key === 'pet') box.appendChild(buildPetWidget());
+            else if (key === 'msgs') box.appendChild(buildMsgsWidget());
+        });
+    }
+
+    /** 读取开关状态并渲染 */
+    function loadWidgetSettings() {
+        const raw = localStorage.getItem('home_widgets');
+        if (raw) {
+            try {
+                const arr = JSON.parse(raw);
+                if (Array.isArray(arr)) {
+                    enabledWidgets = arr.filter(k => WIDGET_DEFS[k]);
+                }
+            } catch (e) {}
+        }
+        document.querySelectorAll('#widget-toggles [data-widget]').forEach(row => {
+            row.classList.toggle('active', enabledWidgets.indexOf(row.dataset.widget) !== -1);
+        });
+        renderHomeWidgets();
+    }
+
+    /** 开关某个小组件 */
+    window.toggleHomeWidget = function(key) {
+        if (!WIDGET_DEFS[key]) return;
+        const idx = enabledWidgets.indexOf(key);
+        if (idx === -1) enabledWidgets.push(key);
+        else enabledWidgets.splice(idx, 1);
+        try {
+            localStorage.setItem('home_widgets', JSON.stringify(enabledWidgets));
+        } catch (e) {}
+        const row = document.querySelector('#widget-toggles [data-widget="' + key + '"]');
+        if (row) row.classList.toggle('active', idx === -1);
+        renderHomeWidgets();
+    };
+
+    /** 60 秒节流刷新（跨天 / 数据变化） */
+    let _widgetTick = 0;
+    function refreshWidgetsIfNeeded() {
+        const now = Date.now();
+        if (now - _widgetTick < 60000) return;
+        _widgetTick = now;
+        renderHomeWidgets();
+    }
+
     // ========== 时间更新 ==========
     function updateTime() {
         // 每秒跑一次，这里顺带检查是否跨天（跨天时天数 +1）
         refreshHeroDaysIfNeeded();
+        refreshWidgetsIfNeeded();
 
         const timeEl = document.getElementById('home-time-display');
         const dateEl = document.getElementById('home-date-display');
@@ -310,6 +526,8 @@
         const welcomeAnimation = document.getElementById('welcome-animation');
         if (welcomeAnimation) welcomeAnimation.style.display = 'none';
 
+        // 回到首页时刷新小组件（今日消息数等可能已变化）
+        renderHomeWidgets();
         updateTime();
     };
 
@@ -1500,6 +1718,7 @@
         }
         // 昵称/在一起日期改完后同步刷新天数
         renderHeroDays();
+        renderHomeWidgets();
     }
 
     // ========== 消息通知横幅 ==========
@@ -2550,6 +2769,9 @@
         });
 
         updateHeroTitleFromProfiles();
+
+        // 桌面小组件：读开关状态并渲染
+        loadWidgetSettings();
 
         // 签名
         const savedSubtitle = homeGetItem('home_hero_subtitle');

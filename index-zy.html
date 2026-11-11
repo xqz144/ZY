@@ -585,6 +585,9 @@
             <div class="date-display" id="home-date-display">5月24日 周六</div>
         </div>
 
+        <!-- 桌面小组件（由 home.js 渲染） -->
+        <div class="home-widgets" id="home-widgets"></div>
+
         <!-- 功能网格（翻页容器） -->
         <div class="apps-pager" id="apps-pager">
             <div class="apps-page active" id="apps-page-1">
@@ -769,6 +772,49 @@
                     </div>
                     <div class="customize-toggle-switch">
                         <div class="customize-toggle-knob"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 桌面小组件 -->
+            <div class="customize-section">
+                <div class="customize-section-title">桌面小组件</div>
+                <div id="widget-toggles">
+                    <div class="customize-toggle-row" data-widget="anniv" onclick="toggleHomeWidget('anniv')">
+                        <div class="customize-toggle-info">
+                            <span class="customize-toggle-label">纪念日倒计时</span>
+                            <span class="customize-toggle-desc">距离下一个周年还有多少天</span>
+                        </div>
+                        <div class="customize-toggle-switch">
+                            <div class="customize-toggle-knob"></div>
+                        </div>
+                    </div>
+                    <div class="customize-toggle-row" data-widget="quote" onclick="toggleHomeWidget('quote')">
+                        <div class="customize-toggle-info">
+                            <span class="customize-toggle-label">每日一句</span>
+                            <span class="customize-toggle-desc">每天从字卡库里取一句甜甜的话</span>
+                        </div>
+                        <div class="customize-toggle-switch">
+                            <div class="customize-toggle-knob"></div>
+                        </div>
+                    </div>
+                    <div class="customize-toggle-row" data-widget="pet" onclick="toggleHomeWidget('pet')">
+                        <div class="customize-toggle-info">
+                            <span class="customize-toggle-label">萌宠状态</span>
+                            <span class="customize-toggle-desc">当前宠物的等级与心情</span>
+                        </div>
+                        <div class="customize-toggle-switch">
+                            <div class="customize-toggle-knob"></div>
+                        </div>
+                    </div>
+                    <div class="customize-toggle-row" data-widget="msgs" onclick="toggleHomeWidget('msgs')">
+                        <div class="customize-toggle-info">
+                            <span class="customize-toggle-label">今日消息</span>
+                            <span class="customize-toggle-desc">今天和 TA 聊了多少条</span>
+                        </div>
+                        <div class="customize-toggle-switch">
+                            <div class="customize-toggle-knob"></div>
+                        </div>
                     </div>
                 </div>
             </div>
