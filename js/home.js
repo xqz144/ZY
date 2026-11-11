@@ -1950,6 +1950,11 @@
                 }
             },
             'moments': () => {
+                // 优先打开覆盖式朋友圈页面（原底部导航栏的行为）
+                if (typeof window.showMomentsPage === 'function') {
+                    window.showMomentsPage();
+                    return;
+                }
                 // 显示朋友圈页面
                 if (typeof window.showMoments === 'function') {
                     window.showMoments();
@@ -1972,6 +1977,21 @@
                         })
                         .catch(err => console.error('加载朋友圈失败:', err));
                 }
+            },
+            // ========== 原底部导航栏功能，改为桌面图标入口 ==========
+            'appearance': () => {
+                if (typeof window.openCustomizePanel === 'function') window.openCustomizePanel();
+            },
+            'cards': () => {
+                const modal = document.getElementById('custom-replies-modal');
+                if (modal) {
+                    if (typeof renderReplyLibrary === 'function') renderReplyLibrary();
+                    homeShowModal(modal);
+                }
+            },
+            'chat-settings': () => {
+                const modal = document.getElementById('chat-modal');
+                if (modal) homeShowModal(modal);
             },
             // ========== 用户扩展功能：内嵌iframe，和参考站原有行为一致 ==========
             'spark-new':       () => window.showExtApp('spark-new'),

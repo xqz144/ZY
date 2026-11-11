@@ -4,7 +4,7 @@
  * 升级版本号（CACHE_NAME）即可触发用户端在下次打开时后台静默刷新缓存
  * —— 也就是"热更新"的基础。
  */
-const CACHE_NAME = 'mengjiao-v37';
+const CACHE_NAME = 'mengjiao-v38';
 
 const URLS_TO_CACHE = [
   // ======= 入口 =======
@@ -57,6 +57,7 @@ const URLS_TO_CACHE = [
   './css/extapp-unified.css',
   './css/glass.css',
   './css/home.css',
+  './css/lock-screen.css',
   './css/ledger.css',
   './css/map.css',
   './css/moments.css',
@@ -77,6 +78,7 @@ const URLS_TO_CACHE = [
   './js/features.js',
   './js/games.js',
   './js/home.js',
+  './js/lock-screen.js',
   './js/ledger.js',
   './js/listeners.js',
   './js/moments.js',
