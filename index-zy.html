@@ -546,8 +546,14 @@
     <div class="home-container" id="home-container">
         <!-- 顶部大卡片 - 背景覆盖整体 -->
         <div class="hero-card" id="hero-card" onclick="openCustomizePanel()">
-            <!-- 背景图（覆盖整个卡片） -->
-            <div class="hero-bg-full" id="hero-bg-inner"></div>
+            <!-- 在一起天数（原卡片背景图位置） -->
+            <div class="hero-days">
+                <div class="hero-days-main">
+                    <span class="hero-days-num" id="hero-days-num">1</span>
+                    <span class="hero-days-unit">天</span>
+                </div>
+                <div class="hero-days-label">在一起</div>
+            </div>
             <!-- 编辑提示 -->
             <div class="hero-edit-hint" id="hero-edit-hint">
                 <span>✏️ 点击自定义</span>
@@ -787,28 +793,6 @@
                     </button>
                 </div>
                 <input type="file" id="page-bg-upload-input" accept="image/*" style="display:none;" onchange="handlePageBgUpload(event)">
-            </div>
-
-            <!-- 卡片背景 -->
-            <div class="customize-section">
-                <div class="customize-section-title">卡片背景</div>
-                <div class="bg-presets" id="bg-presets">
-                    <div class="bg-preset active" data-bg="default" onclick="setCardBg('default')" style="background: linear-gradient(135deg, #f5f0f9, #faf8fb);"></div>
-                    <div class="bg-preset" data-bg="sunset" onclick="setCardBg('sunset')" style="background: linear-gradient(135deg, #ffecd2, #fcb69f);"></div>
-                    <div class="bg-preset" data-bg="ocean" onclick="setCardBg('ocean')" style="background: linear-gradient(135deg, #a8edea, #fed6e3);"></div>
-                    <div class="bg-preset" data-bg="lavender" onclick="setCardBg('lavender')" style="background: linear-gradient(135deg, #e8d5f5, #f5e6cc);"></div>
-                    <div class="bg-preset" data-bg="forest" onclick="setCardBg('forest')" style="background: linear-gradient(135deg, #d4fc79, #96e6a1);"></div>
-                    <div class="bg-preset" data-bg="night" onclick="setCardBg('night')" style="background: linear-gradient(135deg, #2c3e50, #4ca1af);"></div>
-                </div>
-                <div style="display:flex;gap:8px;margin-top:10px;">
-                    <button class="customize-upload-btn" onclick="uploadCardBg()" style="flex:1;">
-                        <span>📷</span> 上传卡片背景
-                    </button>
-                    <button class="customize-upload-btn" onclick="saveCardBgToPreset()" style="flex:1;background:var(--accent-color);color:#fff;border-color:var(--accent-color);">
-                        <span>💾</span> 存为预设
-                    </button>
-                </div>
-                <input type="file" id="bg-upload-input" accept="image/*" style="display:none;" onchange="handleBgUpload(event)">
             </div>
 
             <!-- 头像设置 -->

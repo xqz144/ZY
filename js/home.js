@@ -198,8 +198,31 @@
         return Math.max(0, diffDays + 1); // 至少为1天
     }
 
+    // ========== 主页卡片：在一起天数 ==========
+    let _heroDaysStamp = '';
+
+    /** 用「在一起日期」算出天数并渲染到卡片上 */
+    function renderHeroDays() {
+        const numEl = document.getElementById('hero-days-num');
+        if (!numEl) return;
+        const startDate = (profileData.me && profileData.me.startDate) || '';
+        numEl.textContent = calculateTogetherDays(startDate);
+    }
+
+    /** 跨天自动刷新（每天零点后打开或停留时都会更新） */
+    function refreshHeroDaysIfNeeded() {
+        const now = new Date();
+        const stamp = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+        if (stamp === _heroDaysStamp) return;
+        _heroDaysStamp = stamp;
+        renderHeroDays();
+    }
+
     // ========== 时间更新 ==========
     function updateTime() {
+        // 每秒跑一次，这里顺带检查是否跨天（跨天时天数 +1）
+        refreshHeroDaysIfNeeded();
+
         const timeEl = document.getElementById('home-time-display');
         const dateEl = document.getElementById('home-date-display');
         if (!timeEl || !dateEl) return;
@@ -1475,6 +1498,8 @@
         if (heroTitle) {
             heroTitle.textContent = `${profileData.me.name} & ${profileData.partner.name}`;
         }
+        // 昵称/在一起日期改完后同步刷新天数
+        renderHeroDays();
     }
 
     // ========== 消息通知横幅 ==========
@@ -2464,29 +2489,6 @@
             }
         } else if (savedPageBg && pageBgPresets[savedPageBg]) {
             window.setPageBg(savedPageBg);
-        }
-
-        // 卡片背景
-        const savedBg = homeGetItem('home_card_bg');
-        if (savedBg === 'custom') {
-            const customUrl = await homeGetLargeItem('home_card_bg_custom');
-            if (customUrl) {
-                const heroBg = document.getElementById('hero-bg-inner');
-                if (heroBg) heroBg.style.background = `url(${customUrl}) center center/cover no-repeat`;
-                // 自定义图片背景 → 白色+阴影文字
-                const titleEl = document.getElementById('hero-title');
-                const subEl = document.getElementById('hero-subtitle');
-                if (titleEl) {
-                    titleEl.style.color = 'rgba(255,255,255,0.98)';
-                    titleEl.style.textShadow = '0 2px 10px rgba(0,0,0,0.55), 0 0 3px rgba(0,0,0,0.35)';
-                }
-                if (subEl) {
-                    subEl.style.color = 'rgba(255,255,255,0.92)';
-                    subEl.style.textShadow = '0 1px 6px rgba(0,0,0,0.45)';
-                }
-            }
-        } else if (savedBg && bgPresets[savedBg]) {
-            window.setCardBg(savedBg);
         }
 
         // 加载个人资料数据（头像和昵称优先级最高）

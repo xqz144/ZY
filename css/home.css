@@ -39,12 +39,14 @@ body.home-active {
     display: flex;
 }
 
-/* ========== 顶部大卡片 - 背景覆盖整体 ========== */
-.hero-card {
+/* ========== 顶部大卡片 - 在一起天数 ========== */
+/* 用 ID 选择器提高优先级，避免被 extapp-unified.css 的 [class*="-card"] 通用皮肤覆盖 */
+#hero-card {
     border-radius: 24px;
     overflow: hidden;
-    min-height: 220px;
-    height: 240px; /* 固定高度，彻底避免内部元素造成"块"感 */
+    min-height: 200px;
+    height: 200px; /* 比原来略矮一点，配合天数显示更修长 */
+    background: rgba(var(--accent-color-rgb, 244, 166, 179), 0.12); /* 浅色纯色，跟随主题 */
     box-shadow:
 0 8px 32px rgba(0, 0, 0, 0.08),
 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
@@ -53,40 +55,54 @@ body.home-active {
     cursor: pointer;
 }
 
-/* 背景图 - 覆盖整个卡片，永远完整显示 */
-.hero-bg-full {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, #f5f0f9 0%, #faf8fb 50%, #f8f6f9 100%);
-    background-size: cover;
-    background-position: center center; /* 居中显示，不让顶部留白 */
-    z-index: 0;
-    transition: background 0.5s ease;
-}
-
-/* 统一的下半段渐变遮罩 —— 只在底部需要文字处提供柔和过渡，绝不挡图的主体部分 */
-.hero-card::after {
-    content: "";
+/* 在一起天数：占据原背景图的位置 */
+.hero-days {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0;
-    height: 48%;
-    background: linear-gradient(
-        180deg,
-        rgba(0, 0, 0, 0) 0%,
-        rgba(0, 0, 0, 0.12) 45%,
-        rgba(0, 0, 0, 0.42) 100%
-    );
+    top: 78px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    z-index: 3;
     pointer-events: none;
-    z-index: 2;
 }
 
-/* 双人头像 - 绝对定位到卡片竖直方向黄金分割点 */
+.hero-days-main {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.hero-days-num {
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 1px;
+    color: #3a3a3a;
+    font-variant-numeric: tabular-nums;
+}
+
+.hero-days-unit {
+    font-size: 15px;
+    font-weight: 500;
+    color: #6f6f6f;
+}
+
+.hero-days-label {
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: 3px;
+    color: #9a9a9a;
+    padding-left: 3px;
+}
+
+/* 双人头像 - 绝对定位到卡片上沿 */
 .hero-avatars-float {
     position: absolute;
     left: 50%;
-    top: 52px;
+    top: 16px;
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
@@ -94,26 +110,27 @@ body.home-active {
     z-index: 5;
 }
 
-/* 标题文字：绝对定位到底部，不使用任何容器块，背景完全靠 ::after 渐变 */
+/* 标题文字：绝对定位到底部，不使用任何容器块 */
 .hero-content-bottom {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 16px;
+    bottom: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     z-index: 3;
     pointer-events: none; /* 不挡住卡片的自定义点击（事件冒泡） */
 }
 
 .hero-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
+    line-height: 1.3;
     color: #3a3a3a; /* 默认：与 themePresets.default.title 一致 */
     letter-spacing: 1px;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
 }
 
 .hero-subtitle {
@@ -133,8 +150,8 @@ body.home-active {
 }
 
 .hero-avatar {
-    width: 72px;
-    height: 72px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     border: 4px solid white;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
