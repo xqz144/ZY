@@ -12,6 +12,7 @@
     'use strict';
 
     var CFG_KEY = 'zy_lock_config_v1';
+    var BG_KEY = 'zy_lock_bg_v1';
     var MAX_FAIL = 5;
     var RELOCK_AFTER = 60 * 1000; // 切后台超过 60 秒后重新锁屏
 
@@ -60,6 +61,66 @@
         return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + week;
     }
 
+    // 农历日期（基于浏览器内置中国农历日历，失败则不显示）
+    function lunarText() {
+        try {
+            var fmt = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', {
+                month: 'long',
+                day: 'numeric'
+            });
+            var parts = fmt.formatToParts(new Date());
+            var month = '', day = '';
+            for (var i = 0; i < parts.length; i++) {
+                if (parts[i].type === 'month') month = parts[i].value;
+                if (parts[i].type === 'day') day = parts[i].value;
+            }
+            if (!month || !day) return '';
+            return '农历' + month + day;
+        } catch (e) {
+            return '';
+        }
+    }
+
+    // 应用自定义锁屏背景
+    function applyBg() {
+        var data = null;
+        try { data = localStorage.getItem(BG_KEY); } catch (e) {}
+        if (data) {
+            root.style.backgroundImage = 'url(' + data + ')';
+            root.style.backgroundSize = 'cover';
+            root.style.backgroundPosition = 'center';
+            root.classList.add('ls-has-bg');
+        } else {
+            root.style.backgroundImage = '';
+            root.classList.remove('ls-has-bg');
+        }
+    }
+
+    // 图片压缩后返回 dataURL（避免 localStorage 撑爆）
+    function compressImage(file, maxW, quality) {
+        return new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var img = new Image();
+                img.onload = function () {
+                    var scale = Math.min(1, maxW / img.width);
+                    var w = Math.round(img.width * scale);
+                    var h = Math.round(img.height * scale);
+                    var canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', quality || 0.72));
+                };
+                img.onerror = reject;
+                img.src = reader.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
     // ────────── 构建 DOM ──────────
     function buildRoot() {
         root = el('div');
@@ -71,6 +132,7 @@
             '  <div class="ls-lock-icon"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>' +
             '  <div class="ls-time" id="lsTime">09:41</div>' +
             '  <div class="ls-date" id="lsDate">1月1日 周一</div>' +
+            '  <div class="ls-lunar" id="lsLunar"></div>' +
             '  <div class="ls-hint"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg><span>上滑解锁</span></div>' +
             '</div>' +
             '<div class="ls-panel" id="lsPanel"></div>' +
@@ -86,9 +148,11 @@
     function startClock() {
         var t = root.querySelector('#lsTime');
         var d = root.querySelector('#lsDate');
+        var l = root.querySelector('#lsLunar');
         function tick() {
             if (t) t.textContent = timeText();
             if (d) d.textContent = dateText();
+            if (l) l.textContent = lunarText();
         }
         tick();
         clockTimer = setInterval(tick, 1000);
@@ -755,6 +819,8 @@
         showSheet(
             '<div class="ls-sheet-title">锁屏设置</div>' +
             '<div class="ls-sheet-desc">当前解锁方式：' + typeText + '</div>' +
+            '<button class="ls-option" id="lsChangeBg"><span>更换锁屏背景<div class="ls-option-sub">从相册选一张图片</div></span><span class="ls-option-arrow">›</span></button>' +
+            '<button class="ls-option" id="lsResetBg"><span>恢复默认背景<div class="ls-option-sub">使用默认渐变</div></span><span class="ls-option-arrow">›</span></button>' +
             '<button class="ls-option" id="lsChangeType"><span>切换解锁方式<div class="ls-option-sub">数字密码 / 手势图案</div></span><span class="ls-option-arrow">›</span></button>' +
             '<button class="ls-option" id="lsChangePin"><span>修改密码</span><span class="ls-option-arrow">›</span></button>' +
             '<button class="ls-option" id="lsChangeSecurity"><span>修改密保问题<div class="ls-option-sub">' + (cfg && cfg.question ? '已设置' : '未设置') + '</div></span><span class="ls-option-arrow">›</span></button>' +
@@ -764,6 +830,36 @@
         sheetEl.querySelector('#lsSettingsClose').onclick = function () {
             hideSheet(true);
         };
+        sheetEl.querySelector('#lsChangeBg').onclick = function () {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+            input.onchange = function () {
+                var file = input.files && input.files[0];
+                if (!file) { input.remove(); return; }
+                compressImage(file, 1080, 0.72).then(function (dataUrl) {
+                    try {
+                        localStorage.setItem(BG_KEY, dataUrl);
+                    } catch (e) {
+                        alert('图片太大，请换一张稍小的图片');
+                    }
+                    applyBg();
+                    input.remove();
+                }).catch(function () {
+                    alert('图片读取失败，请重试');
+                    input.remove();
+                });
+            };
+            input.click();
+        };
+
+        sheetEl.querySelector('#lsResetBg').onclick = function () {
+            try { localStorage.removeItem(BG_KEY); } catch (e) {}
+            applyBg();
+        };
+
         sheetEl.querySelector('#lsChangeType').onclick = function () {
             setupData = { editing: true };
             var keep = { question: cfg.question, answer: cfg.answer };
@@ -826,6 +922,7 @@
     // ────────── 启动 ──────────
     function init() {
         buildRoot();
+        applyBg();
         startClock();
         bindSwipe();
         bindVisibility();

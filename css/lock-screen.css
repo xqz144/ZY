@@ -91,6 +91,35 @@
     opacity: 0.82;
 }
 
+/* 农历 */
+.ls-lunar {
+    margin-top: 6px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    opacity: 0.62;
+}
+
+/* 自定义背景：加深色遮罩保证文字可读 */
+#zy-lock-screen.ls-has-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.28) 0%, rgba(0, 0, 0, 0.16) 42%, rgba(0, 0, 0, 0.5) 100%);
+    z-index: 0;
+}
+
+#zy-lock-screen.ls-has-bg .ls-glow {
+    display: none;
+}
+
+#zy-lock-screen.ls-has-bg .ls-main,
+#zy-lock-screen.ls-has-bg .ls-panel,
+#zy-lock-screen.ls-has-bg .ls-sheet,
+#zy-lock-screen.ls-has-bg .ls-success-mark {
+    z-index: 1;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
 .ls-hint {
     position: absolute;
     bottom: 54px;
