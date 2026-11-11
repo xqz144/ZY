@@ -4466,4 +4466,268 @@ html[data-theme="dark"] .moments-container .visitor-panel {
 }
 .ms-lib-save:active { opacity: 0.85; }
 
+/* ============================================================
+   微信风格改造（v1.10.14）
+   1. 封面导航：左标题 + 右上角相机/更多
+   2. 底部功能栏移除，改为右上角「⋯」下拉菜单
+   3. 卡片操作改为「⋯」气泡（赞/评论/收藏）
+   ============================================================ */
+
+/* 旧底部栏彻底隐藏 */
+.moments-container .moments-bottom-bar {
+  display: none !important;
+}
+
+/* ===== 封面导航 ===== */
+/* 左侧留出「返回」胶囊的空间，避免标题被遮挡 */
+.moments-container .cover-nav {
+  padding-left: 96px;
+}
+
+.moments-container .cover-nav .cover-nav-title {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.moments-container .cover-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.moments-container .cover-nav-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.moments-container .cover-nav-btn:active {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.moments-container .cover-nav-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: #fff;
+  stroke: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* ===== 右上角「⋯」下拉菜单 ===== */
+.moments-more-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: transparent;
+  display: none;
+}
+
+.moments-more-mask.active {
+  display: block;
+}
+
+.moments-more-menu {
+  position: fixed;
+  top: 54px;
+  right: 12px;
+  z-index: 901;
+  min-width: 132px;
+  background: #4c4c4c;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.moments-more-menu.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.moments-more-menu .more-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 13px 18px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+}
+
+.moments-more-menu .more-menu-item + .more-menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 0.5px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.moments-more-menu .more-menu-item:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.moments-more-menu .visitor-badge {
+  position: static;
+  margin-left: auto;
+}
+
+/* ===== 卡片「⋯」操作按钮 ===== */
+.moments-container .moment-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 2px 0 0 52px;
+  position: relative;
+}
+
+.moments-container .action-more-btn {
+  width: 30px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: #f7f7f7;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.moments-container .action-more-btn:active {
+  background: #ebebeb;
+}
+
+.moments-container .action-more-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: #576b95;
+}
+
+/* 气泡菜单 */
+.moments-container .action-popup {
+  position: absolute;
+  right: 0;
+  bottom: 26px;
+  display: none;
+  flex-direction: row;
+  background: #4c4c4c;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  z-index: 20;
+}
+
+.moments-container .action-popup-item {
+  padding: 8px 15px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+}
+
+.moments-container .action-popup-item + .action-popup-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 0.5px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.moments-container .action-popup-item:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ===== 微信细节微调 ===== */
+.moments-container .moment-card {
+  padding: 14px 16px;
+}
+
+.moments-container .moment-card::after {
+  background: #ededed;
+  height: 0.5px;
+}
+
+.moments-container .moment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+}
+
+.moments-container .moment-nickname {
+  color: #576b95;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.moments-container .moment-text {
+  color: #191919;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.moments-container .moment-content {
+  padding-left: 50px;
+}
+
+.moments-container .nine-grid {
+  gap: 3px;
+}
+
+.moments-container .interaction-area {
+  padding-left: 50px;
+}
+
+.moments-container .interaction-bubble {
+  background: #f7f7f7;
+  border-radius: 3px;
+}
+
+.moments-container .like-section {
+  border-bottom-color: #ececec;
+}
+
+/* 深色模式 */
+html[data-theme="dark"] .moments-container .action-more-btn {
+  background: #3a3a3a;
+}
+html[data-theme="dark"] .moments-container .action-more-btn svg {
+  fill: #7d9bc9;
+}
+html[data-theme="dark"] .moments-container .interaction-bubble {
+  background: #333;
+}
+html[data-theme="dark"] .moments-container .moment-card::after {
+  background: #333;
+}
+html[data-theme="dark"] .moments-container .moment-text {
+  color: #ddd;
+}
+
+
 

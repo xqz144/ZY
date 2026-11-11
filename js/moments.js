@@ -663,9 +663,6 @@
       </div>
     ` : '';
 
-    const likedClass = m.likedByMe ? 'liked' : '';
-    const collectedClass = m.collected ? 'collected' : '';
-
     const mentionsHtml = m.mentions && m.mentions.length > 0 ? `
       <div class="moment-mentions">提到了：${m.mentions.join('、')}</div>
     ` : '';
@@ -698,15 +695,14 @@
           ${stickerHtml}
         </div>
         <div class="moment-actions">
-          <button class="action-btn ${likedClass}" data-like-btn="${m.id}">
-            <svg class="heart-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          <button class="action-more-btn" onclick="MomentsApp.toggleActionPopup(${m.id}, event)" aria-label="操作">
+            <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
           </button>
-          <button class="action-btn" data-comment-btn="${m.id}">
-            <svg class="comment-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z"/></svg>
-          </button>
-          <button class="action-btn ${collectedClass}" data-collect-btn="${m.id}">
-            <svg class="star-icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          </button>
+          <div class="action-popup" id="actionPopup-${m.id}" style="display:none;" onclick="event.stopPropagation()">
+            <button class="action-popup-item" data-like-btn="${m.id}">${m.likedByMe ? '取消' : '赞'}</button>
+            <button class="action-popup-item" data-comment-btn="${m.id}">评论</button>
+            <button class="action-popup-item" data-collect-btn="${m.id}">${m.collected ? '取消收藏' : '收藏'}</button>
+          </div>
         </div>
         ${interactionHtml}
       </div>
@@ -926,6 +922,41 @@
       editMentions = [...selected];
       renderEditMentions();
     };
+  }
+
+  // ========== 卡片「⋯」操作气泡（微信式） ==========
+  function closeAllActionPopups() {
+    document.querySelectorAll('.action-popup').forEach(p => { p.style.display = 'none'; });
+  }
+
+  function toggleActionPopup(momentId, event) {
+    if (event) event.stopPropagation();
+    const popup = document.getElementById('actionPopup-' + momentId);
+    if (!popup) return;
+    const isOpen = popup.style.display !== 'none';
+    closeAllActionPopups();
+    if (!isOpen) {
+      popup.style.display = 'flex';
+      // 点击气泡外部时关闭
+      setTimeout(() => {
+        document.addEventListener('click', closeAllActionPopups, { once: true });
+      }, 0);
+    }
+  }
+
+  // ========== 右上角「⋯」菜单 ==========
+  function openMoreMenu() {
+    const menu = document.getElementById('momentsMoreMenu');
+    const mask = document.getElementById('momentsMoreMask');
+    if (menu) menu.classList.add('active');
+    if (mask) mask.classList.add('active');
+  }
+
+  function closeMoreMenu() {
+    const menu = document.getElementById('momentsMoreMenu');
+    const mask = document.getElementById('momentsMoreMask');
+    if (menu) menu.classList.remove('active');
+    if (mask) mask.classList.remove('active');
   }
 
   // ========== Long Press Setup ==========
@@ -4550,6 +4581,9 @@
     
     // 交互
     toggleTextExpand,
+    toggleActionPopup,
+    openMoreMenu,
+    closeMoreMenu,
     toggleLike,
     toggleComment,
     toggleCollect,
