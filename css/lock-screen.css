@@ -301,6 +301,35 @@
 .ls-sheet.ls-sheet-center .ls-keypad,
 .ls-sheet.ls-sheet-center .ls-pattern { align-self: center; }
 
+/* 设置页左上角返回键 */
+.ls-sheet-back {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+    -webkit-tap-highlight-color: transparent;
+}
+.ls-sheet-back:active { background: rgba(255, 255, 255, 0.26); }
+.ls-sheet-back svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .ls-sheet-title {
     font-size: 24px;
     font-weight: 500;

@@ -28,6 +28,7 @@
     var patternPath = [];
     var drawing = false;
     var pendingAction = 'unlock'; // unlock | settings
+    var sheetFrom = 'unlock';     // unlock | external：锁屏设置是从解锁界面进的，还是从 App 外观设置进的
     var setupData = null;
     var isUnlocked = false;
     var hiddenAt = 0;
@@ -81,10 +82,43 @@
         }
     }
 
-    // 应用自定义锁屏背景
-    function applyBg() {
-        var data = null;
-        try { data = localStorage.getItem(BG_KEY); } catch (e) {}
+    // ────────── 锁屏背景存储 ──────────
+    // localStorage 只有约 5MB，App 里聊天等数据占满后图片就写不进去（报"图片太大"），
+    // 所以背景图改为优先存 IndexedDB，localStorage 仅用于兼容旧版本已存的图片。
+    var BG_DB = 'zy_lock_bg_db';
+    var BG_STORE = 'bg';
+
+    function idbOpen() {
+        return new Promise(function (resolve, reject) {
+            if (!window.indexedDB) { reject(new Error('no-indexeddb')); return; }
+            var req = indexedDB.open(BG_DB, 1);
+            req.onupgradeneeded = function () {
+                if (!req.result.objectStoreNames.contains(BG_STORE)) {
+                    req.result.createObjectStore(BG_STORE);
+                }
+            };
+            req.onsuccess = function () { resolve(req.result); };
+            req.onerror = function () { reject(req.error); };
+        });
+    }
+
+    function idbRun(mode, fn) {
+        return idbOpen().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var tx = db.transaction(BG_STORE, mode);
+                var req = fn(tx.objectStore(BG_STORE));
+                tx.oncomplete = function () { db.close(); resolve(req ? req.result : undefined); };
+                tx.onerror = function () { db.close(); reject(tx.error); };
+                tx.onabort = function () { db.close(); reject(tx.error); };
+            });
+        });
+    }
+
+    function idbGet(key) { return idbRun('readonly', function (s) { return s.get(key); }); }
+    function idbSet(key, val) { return idbRun('readwrite', function (s) { return s.put(val, key); }); }
+    function idbDel(key) { return idbRun('readwrite', function (s) { return s.delete(key); }); }
+
+    function paintBg(data) {
         if (data) {
             root.style.backgroundImage = 'url(' + data + ')';
             root.style.backgroundSize = 'cover';
@@ -96,7 +130,32 @@
         }
     }
 
-    // 图片压缩后返回 dataURL（避免 localStorage 撑爆）
+    // 应用自定义锁屏背景（先同步取旧数据，再异步读 IndexedDB）
+    function applyBg() {
+        var legacy = null;
+        try { legacy = localStorage.getItem(BG_KEY); } catch (e) {}
+        paintBg(legacy);
+        idbGet('bg').then(function (big) {
+            if (big) paintBg(big);
+        }).catch(function () {});
+    }
+
+    // 保存背景：优先 IndexedDB，失败再退回 localStorage
+    function saveBg(dataUrl) {
+        return idbSet('bg', dataUrl).then(function () {
+            try { localStorage.removeItem(BG_KEY); } catch (e) {}
+        }).catch(function () {
+            try { localStorage.setItem(BG_KEY, dataUrl); }
+            catch (e) { throw new Error('bg-quota'); }
+        });
+    }
+
+    function clearBg() {
+        try { localStorage.removeItem(BG_KEY); } catch (e) {}
+        idbDel('bg').catch(function () {});
+    }
+
+    // 图片压缩后返回 dataURL（避免存储体积过大）
     function compressImage(file, maxW, quality) {
         return new Promise(function (resolve, reject) {
             var reader = new FileReader();
@@ -433,6 +492,7 @@
     function handleVerified() {
         if (pendingAction === 'settings') {
             pendingAction = 'unlock';
+            sheetFrom = 'unlock';
             renderSettingsSheet();
             return;
         }
@@ -465,7 +525,7 @@
         panelEl.classList.remove('ls-active');
     }
     function hideSheet(restore) {
-        sheetEl.classList.remove('ls-active');
+        sheetEl.classList.remove('ls-active', 'ls-sheet-center');
         sheetEl.innerHTML = '';
         // 取消类操作返回解锁界面
         if (restore && !isUnlocked) {
@@ -475,6 +535,35 @@
                 else renderPinPanel();
             }
         }
+    }
+
+    // 设置页左上角返回键
+    function addSheetBack(handler) {
+        var btn = el('button', 'ls-sheet-back');
+        btn.setAttribute('aria-label', '返回');
+        btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>';
+        btn.onclick = function (e) {
+            if (e) { e.stopPropagation(); e.preventDefault(); }
+            handler();
+        };
+        sheetEl.appendChild(btn);
+    }
+
+    // 从「锁屏设置」退出：外部入口直接回到 App，解锁入口则回到密码盘
+    function closeSettingsSheet() {
+        if (sheetFrom === 'external') {
+            hideSheet();
+            unlockSuccess();
+        } else {
+            hideSheet(true);
+        }
+    }
+
+    // 设置流程里「返回上一步」的落点（首次引导 / 锁屏设置）
+    function setupBackTarget() {
+        if (setupData && setupData.editing) return renderSettingsSheet;
+        if (!cfg || !cfg.enabled) return renderSetupWelcome;
+        return function () { hideSheet(true); };
     }
 
     function renderSetupWelcome() {
@@ -510,6 +599,7 @@
                 else renderSetupPattern(1);
             };
         });
+        addSheetBack(setupBackTarget());
     }
 
     function renderSetupPinLength() {
@@ -525,6 +615,7 @@
                 renderSetupPinInput(1, '', 0);
             };
         });
+        addSheetBack(renderSetupType);
     }
 
     // 数字密码设置（step 1=首次输入, 2=确认输入, 3=重设）
@@ -594,6 +685,15 @@
         sheetEl.appendChild(dots);
         sheetEl.appendChild(hint);
         sheetEl.appendChild(keypad);
+        addSheetBack(function () {
+            if (stage === 2) {
+                renderSetupPinInput(1, '', pinLen);
+            } else if (setupData && setupData.editing) {
+                renderSettingsSheet();
+            } else {
+                renderSetupPinLength();
+            }
+        });
     }
 
     // 手势设置
@@ -628,6 +728,15 @@
         sheetEl.appendChild(title);
         sheetEl.appendChild(hint);
         sheetEl.appendChild(wrap);
+        addSheetBack(function () {
+            if (stage === 2) {
+                renderSetupPattern(1);
+            } else if (setupData && setupData.editing) {
+                renderSettingsSheet();
+            } else {
+                renderSetupType();
+            }
+        });
 
         // 复用绘图交互
         var localDrawing = false;
@@ -743,6 +852,10 @@
                 renderSetupAnswer();
             };
         });
+        addSheetBack(function () {
+            if (setupData && setupData.editing) renderSettingsSheet();
+            else hideSheet(true);
+        });
     }
 
     function renderSetupAnswer() {
@@ -775,6 +888,7 @@
             hideSheet();
             unlockSuccess();
         };
+        addSheetBack(renderSetupSecurity);
     }
 
     // ────────── 找回密码 ──────────
@@ -830,8 +944,9 @@
             '<button class="ls-btn-ghost" id="lsSettingsClose">完成</button>'
         );
         sheetEl.querySelector('#lsSettingsClose').onclick = function () {
-            hideSheet(true);
+            closeSettingsSheet();
         };
+        addSheetBack(closeSettingsSheet);
         sheetEl.querySelector('#lsChangeBg').onclick = function () {
             var input = document.createElement('input');
             input.type = 'file';
@@ -841,25 +956,37 @@
             input.onchange = function () {
                 var file = input.files && input.files[0];
                 if (!file) { input.remove(); return; }
-                compressImage(file, 1080, 0.72).then(function (dataUrl) {
-                    try {
-                        localStorage.setItem(BG_KEY, dataUrl);
-                    } catch (e) {
-                        alert('图片太大，请换一张稍小的图片');
-                    }
-                    applyBg();
-                    input.remove();
-                }).catch(function () {
-                    alert('图片读取失败，请重试');
-                    input.remove();
-                });
+                // 先按高画质压缩；万一存储仍失败，再降一档重试，避免直接弹"图片太大"
+                compressImage(file, 1280, 0.78)
+                    .then(function (dataUrl) {
+                        return saveBg(dataUrl).then(function () { return dataUrl; })
+                            .catch(function () {
+                                return compressImage(file, 720, 0.5).then(function (small) {
+                                    return saveBg(small).then(function () { return small; });
+                                });
+                            });
+                    })
+                    .then(function (dataUrl) {
+                        paintBg(dataUrl);
+                        input.remove();
+                        if (typeof window.showNotification === 'function') {
+                            window.showNotification('锁屏背景已更新', 'success');
+                        }
+                    })
+                    .catch(function () {
+                        alert('图片保存失败，请换一张稍小的图片');
+                        input.remove();
+                    });
             };
             input.click();
         };
 
         sheetEl.querySelector('#lsResetBg').onclick = function () {
-            try { localStorage.removeItem(BG_KEY); } catch (e) {}
-            applyBg();
+            clearBg();
+            paintBg(null);
+            if (typeof window.showNotification === 'function') {
+                window.showNotification('已恢复默认背景', 'success');
+            }
         };
 
         sheetEl.querySelector('#lsChangeType').onclick = function () {
@@ -892,6 +1019,7 @@
                 unlockSuccess();
             };
             sheetEl.querySelector('#lsDisableCancel').onclick = function () { renderSettingsSheet(); };
+            addSheetBack(renderSettingsSheet);
         };
     }
 
@@ -950,6 +1078,8 @@
     window.ZyLock = {
         isEnabled: function () { return !!(cfg && cfg.enabled); },
         openSettings: function () {
+            // 从 App 外观设置进来：返回键应直接回到 App，而不是回到密码盘
+            sheetFrom = 'external';
             // 确保锁屏层可见
             isUnlocked = false;
             root.classList.remove('ls-hidden', 'ls-unlocking');
