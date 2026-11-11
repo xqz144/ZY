@@ -227,8 +227,9 @@ body.home-active {
 .apps-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    padding: 4px 0;
+    /* 图标之间留点呼吸感，不贴着挤在一起 */
+    gap: 18px 14px;
+    padding: 6px 0;
 }
 
 /* ========== 翻页容器 ========== */

@@ -1619,19 +1619,24 @@
     };
 
     // 触摸滑动翻页
+    // 绑定在整个桌面容器上（而不是只绑图标区），这样页面下方的空白区域也能翻页
     (function() {
-        const pager = document.getElementById('apps-pager');
-        if (!pager) return;
+        const swipeArea = document.getElementById('home-container');
+        if (!swipeArea) return;
         let startX = 0;
-        pager.addEventListener('touchstart', (e) => {
+        let startY = 0;
+        swipeArea.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
         }, { passive: true });
-        pager.addEventListener('touchend', (e) => {
+        swipeArea.addEventListener('touchend', (e) => {
             // 拖拽排序 / 建文件夹期间不触发翻页
             if (_dragIsDragging || _suppressClick) return;
-            const diff = startX - e.changedTouches[0].clientX;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) window.switchAppsPage(currentAppsPage + 1);
+            const dx = startX - e.changedTouches[0].clientX;
+            const dy = startY - e.changedTouches[0].clientY;
+            // 横向位移明显大于纵向时才算翻页，避免上下滚动页面时误触发
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+                if (dx > 0) window.switchAppsPage(currentAppsPage + 1);
                 else window.switchAppsPage(currentAppsPage - 1);
             }
         }, { passive: true });
