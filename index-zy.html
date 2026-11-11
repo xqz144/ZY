@@ -2181,6 +2181,7 @@
                 </div>
             </div>
             <div class="header-actions">
+                <button id="gameBtn" class="action-btn" title="小游戏" aria-label="小游戏"><i class="fas fa-gamepad"></i></button>
                 <button id="home-btn" class="action-btn" title="主页" onclick="showHomePage()"><i class="fas fa-home"></i></button>
                 <button id="moyu-btn" class="action-btn" title="摸鱼小记"><i class="fas fa-fish"></i></button>
                 <button id="session-manager-btn" class="action-btn" title="会话管理"><i class="fas fa-comments"></i></button>
@@ -5109,6 +5110,40 @@
     <script src="js/state.js"></script>
     <script src="js/core.js"></script>
     <script src="js/home.js"></script>
+
+    <!-- == 聊天小游戏：把游戏结果写进主聊天 == -->
+    <script>
+      (function () {
+        function partnerName() {
+          return (settings && settings.partnerName) || '梦角';
+        }
+        function push(sender, text, status, type) {
+          if (!text || typeof addMessage !== 'function') return;
+          addMessage({
+            id: Date.now() + Math.random(),
+            sender: sender,
+            text: text,
+            timestamp: new Date(),
+            status: status,
+            favorited: false,
+            note: null,
+            type: type || 'normal'
+          });
+        }
+        window.ChatGamesBridge = {
+          getNames: function () {
+            return {
+              partner: partnerName(),
+              me: (settings && settings.myName) || '我'
+            };
+          },
+          partnerSay: function (text) { push(partnerName(), text, 'received'); },
+          userSay: function (text) { push('user', text, 'sent'); },
+          systemSay: function (text) { push(null, text, 'received', 'system'); }
+        };
+      })();
+    </script>
+    <script src="js/chat-games.js"></script>
 
     <!-- == 功能模块 == -->
     <script src="js/features/mood.js"></script>
