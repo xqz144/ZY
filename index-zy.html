@@ -618,7 +618,7 @@
                         <span class="app-name">萌宠屋</span>
                     </div>
                     <div class="app-item" onclick="openApp('spark-new')" data-spark-app>
-                        <div class="app-icon" data-spark-app-icon>
+                        <div class="app-icon" data-app="spark-new" data-spark-app-icon>
                             <svg data-spark-app-icon-inner viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6.5.5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
                             </svg>
@@ -626,7 +626,7 @@
                         <span class="app-name" data-spark-app-label>小火人</span>
                     </div>
                     <div class="app-item" onclick="openApp('sweet-new')">
-                        <div class="app-icon" style="background: linear-gradient(145deg, #f7a8c4, #e8759f);">
+                        <div class="app-icon" data-app="sweet-new" style="background: linear-gradient(145deg, #f7a8c4, #e8759f);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                             </svg>
@@ -634,7 +634,7 @@
                         <span class="app-name">甜蜜轨迹</span>
                     </div>
                     <div class="app-item" onclick="openApp('ledger-new')">
-                        <div class="app-icon" style="background: linear-gradient(145deg, #fdd86f, #f3a845);">
+                        <div class="app-icon" data-app="ledger-new" style="background: linear-gradient(145deg, #fdd86f, #f3a845);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 2V4l-4 2-4-2-4 2-4-2-2 2z"/>
                                 <path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/>
@@ -643,7 +643,7 @@
                         <span class="app-name">喵喵账本</span>
                     </div>
                     <div class="app-item" onclick="openApp('plan-new')">
-                        <div class="app-icon" style="background: linear-gradient(145deg, #ffb199, #ff8a5c);">
+                        <div class="app-icon" data-app="plan-new" style="background: linear-gradient(145deg, #ffb199, #ff8a5c);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <rect x="3" y="4" width="18" height="16" rx="2" ry="2"/>
                                 <line x1="3" y1="10" x2="21" y2="10"/>
@@ -656,7 +656,7 @@
                     </div>
                     <!-- 原底部导航栏功能，改为桌面图标 -->
                     <div class="app-item" onclick="openApp('appearance')">
-                        <div class="app-icon" style="background: linear-gradient(145deg, #a18cd1, #fbc2eb);">
+                        <div class="app-icon" data-app="appearance" style="background: linear-gradient(145deg, #a18cd1, #fbc2eb);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <circle cx="12" cy="12" r="9"/>
                                 <circle cx="8.5" cy="9.5" r="1.2" fill="currentColor" stroke="none"/>
@@ -668,7 +668,7 @@
                         <span class="app-name">外观设置</span>
                     </div>
                     <div class="app-item" onclick="openApp('cards')">
-                        <div class="app-icon" style="background: linear-gradient(145deg, #4facfe, #00f2fe);">
+                        <div class="app-icon" data-app="cards" style="background: linear-gradient(145deg, #4facfe, #00f2fe);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <rect x="3" y="5" width="18" height="14" rx="2.5"/>
                                 <path d="M7 9h7"/><path d="M7 12.5h10"/><path d="M7 16h5"/>
@@ -677,7 +677,7 @@
                         <span class="app-name">字卡库</span>
                     </div>
                     <div class="app-item" onclick="openApp('chat-settings')">
-                        <div class="app-icon" style="background: linear-gradient(145deg, #a1c4fd, #c2e9fb);">
+                        <div class="app-icon" data-app="chat-settings" style="background: linear-gradient(145deg, #a1c4fd, #c2e9fb);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <circle cx="12" cy="12" r="3"/>
                                 <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/>
@@ -686,7 +686,7 @@
                         <span class="app-name">聊天设置</span>
                     </div>
                     <div class="app-item" onclick="openApp('moments')">
-                        <div class="app-icon" style="background: linear-gradient(145deg, #43e97b, #38f9d7);">
+                        <div class="app-icon" data-app="moments" style="background: linear-gradient(145deg, #43e97b, #38f9d7);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
                                 <circle cx="12" cy="12" r="9"/>
                                 <path d="M12 3a9 9 0 0 1 0 18"/>
@@ -697,6 +697,22 @@
                         </div>
                         <span class="app-name">朋友圈</span>
                     </div>
+                </div>
+            </div>
+            <!-- 桌面分页点（由 home.js 动态渲染） -->
+            <div class="apps-dots" id="apps-dots"></div>
+        </div>
+
+        <!-- 文件夹弹层 -->
+        <div class="folder-overlay" id="folder-overlay">
+            <div class="folder-panel">
+                <div class="folder-header">
+                    <input class="folder-name-input" id="folder-name-input" type="text" maxlength="8" value="文件夹">
+                    <button class="folder-edit-btn" id="folder-edit-btn" type="button">编辑</button>
+                </div>
+                <div class="folder-apps-grid" id="folder-apps-grid"></div>
+                <div class="folder-footer">
+                    <button class="folder-dissolve-btn" id="folder-dissolve-btn" type="button">解散文件夹</button>
                 </div>
             </div>
         </div>
