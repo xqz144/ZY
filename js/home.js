@@ -2502,6 +2502,14 @@
                     (window.showNotification || function(){})('小游戏加载中...', 'info');
                 }
             },
+            'weibo': () => {
+                // 微博：热搜榜 + 话题广场
+                if (window.ZyWeibo && typeof window.ZyWeibo.open === 'function') {
+                    window.ZyWeibo.open();
+                } else {
+                    (window.showNotification || function(){})('微博加载中...', 'info');
+                }
+            },
             'ta-phone': () => {
                 if (typeof window.TaPhoneApp !== 'undefined') {
                     window.TaPhoneApp.showTaPhone();
@@ -3009,11 +3017,121 @@
             dotsContainer.appendChild(dot);
         }
 
+        // 最后一页：微博热搜卡片
+        renderWeiboBoardPage();
+
         if (currentAppsPage >= totalPages) {
             currentAppsPage = totalPages - 1;
         }
         window.switchAppsPage(currentAppsPage);
     }
+
+    // ========== 桌面「微博热搜」页 ==========
+    function renderWeiboBoardPage() {
+        const pager = document.getElementById('apps-pager');
+        const dotsContainer = document.getElementById('apps-dots');
+        if (!pager || !dotsContainer) return;
+
+        const old = document.getElementById('apps-page-weibo');
+        if (old) old.remove();
+        const oldDot = document.getElementById('apps-dot-weibo');
+        if (oldDot) oldDot.remove();
+
+        let hot = [];
+        if (window.ZyWeibo && typeof window.ZyWeibo.getHot === 'function') {
+            hot = window.ZyWeibo.getHot() || [];
+        }
+        if (!hot.length) {
+            // 微博模块尚未加载时，直接读本地热搜缓存
+            try {
+                const raw = localStorage.getItem('zy_weibo_hot');
+                if (raw) {
+                    const arr = JSON.parse(raw);
+                    if (Array.isArray(arr)) hot = arr;
+                }
+            } catch (e) {}
+        }
+        hot = hot.slice(0, 6);
+
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'apps-page';
+        pageDiv.id = 'apps-page-weibo';
+
+        const board = document.createElement('div');
+        board.id = 'weibo-board';
+
+        const head = document.createElement('div');
+        head.className = 'wbb-head';
+        const title = document.createElement('div');
+        title.className = 'wbb-title';
+        title.textContent = '微博 · 实时热搜';
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'wbb-edit';
+        editBtn.textContent = '编辑';
+        editBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            if (window.ZyWeibo) window.ZyWeibo.editHot();
+        });
+        head.appendChild(title);
+        head.appendChild(editBtn);
+        board.appendChild(head);
+
+        const list = document.createElement('div');
+        list.className = 'wbb-list';
+        if (!hot.length) {
+            const empty = document.createElement('div');
+            empty.className = 'wbb-empty';
+            empty.textContent = '还没有热搜，点「编辑」添加';
+            list.appendChild(empty);
+        }
+        hot.forEach((h, i) => {
+            const row = document.createElement('div');
+            row.className = 'wbb-row';
+            const rank = document.createElement('span');
+            rank.className = 'wbb-rank' + (i < 3 ? ' top' : '');
+            rank.textContent = String(i + 1);
+            const txt = document.createElement('span');
+            txt.className = 'wbb-txt';
+            txt.textContent = h.title;
+            row.appendChild(rank);
+            row.appendChild(txt);
+            if (h.tag) {
+                const badge = document.createElement('span');
+                badge.className = 'wbb-badge';
+                badge.textContent = h.tag;
+                row.appendChild(badge);
+            }
+            row.addEventListener('click', () => {
+                if (window.ZyWeibo) window.ZyWeibo.openTopic(h.title);
+            });
+            list.appendChild(row);
+        });
+        board.appendChild(list);
+
+        const foot = document.createElement('button');
+        foot.type = 'button';
+        foot.className = 'wbb-more';
+        foot.textContent = '查看完整榜单 ›';
+        foot.addEventListener('click', () => {
+            if (window.ZyWeibo) window.ZyWeibo.openHot();
+        });
+        board.appendChild(foot);
+
+        pageDiv.appendChild(board);
+        pager.insertBefore(pageDiv, dotsContainer);
+
+        const dot = document.createElement('span');
+        dot.className = 'apps-dot';
+        dot.id = 'apps-dot-weibo';
+        dot.onclick = () => window.switchAppsPage(document.querySelectorAll('.apps-page').length - 1);
+        dotsContainer.appendChild(dot);
+    }
+
+    // 热搜被编辑后，桌面卡片同步刷新
+    window.addEventListener('zyWeiboHotUpdated', () => renderWeiboBoardPage());
+    // 所有脚本加载完成后补渲染一次（防止微博模块晚于首页初始化）
+    window.addEventListener('load', () => renderWeiboBoardPage());
 
     // ========== 初始化 ==========
     window.initHomePage = async function() {
