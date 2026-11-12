@@ -59,8 +59,9 @@
 
   /* ========== 状态 ========== */
   var state = {
-    tab: 'feed',        // feed | hot | topic | editor
+    tab: 'feed',        // feed | hot | topic | editor | profile | follow
     topic: '',
+    profileUid: 'me',
     prevTab: 'feed',
     posts: [],
     hot: [],
@@ -214,19 +215,75 @@
     return String(n);
   }
 
+  /* ========== 个人资料 / 关注 ========== */
+  var LS_PROFILES = 'zy_weibo_profiles';
+  var LS_FOLLOW = 'zy_weibo_following';
+
+  function readOverrides() {
+    try {
+      var raw = localStorage.getItem(LS_PROFILES);
+      if (raw) return JSON.parse(raw) || {};
+    } catch (e) {}
+    return {};
+  }
+
+  function saveOverrides(o) {
+    try { localStorage.setItem(LS_PROFILES, JSON.stringify(o)); } catch (e) {}
+  }
+
+  function getFollowing() {
+    var arr = null;
+    try { arr = JSON.parse(localStorage.getItem(LS_FOLLOW) || 'null'); } catch (e) {}
+    if (!Array.isArray(arr)) {
+      arr = NETS.map(function (n) { return n.id; }).concat(['partner']);
+    }
+    return arr;
+  }
+
+  function setFollowing(arr) {
+    try { localStorage.setItem(LS_FOLLOW, JSON.stringify(arr)); } catch (e) {}
+  }
+
+  function isFollowing(id) { return getFollowing().indexOf(id) !== -1; }
+
+  function toggleFollow(id) {
+    var arr = getFollowing();
+    var i = arr.indexOf(id);
+    if (i === -1) { arr.push(id); setFollowing(arr); return true; }
+    arr.splice(i, 1);
+    setFollowing(arr);
+    return false;
+  }
+
+  function fansOf(uidv) {
+    if (uidv === 'me') return 1286 + getFollowing().length * 7;
+    if (uidv === 'partner') return 976;
+    var n = parseInt(String(uidv).replace(/\D/g, ''), 10) || 3;
+    return 120 + n * 137;
+  }
+
   function userOf(uidv) {
+    var u;
     if (uidv === 'me') {
       var m = readProfile('me');
-      return { id: 'me', name: m.name, color: '#ff8200', avatar: m.avatar };
-    }
-    if (uidv === 'partner') {
+      u = { id: 'me', name: m.name, color: '#ff8200', avatar: m.avatar };
+    } else if (uidv === 'partner') {
       var p = readProfile('partner');
-      return { id: 'partner', name: p.name, color: '#eb7350', avatar: p.avatar };
+      u = { id: 'partner', name: p.name, color: '#eb7350', avatar: p.avatar };
+    } else {
+      u = { id: uidv, name: '网友', color: '#c9c9c9' };
+      for (var i = 0; i < NETS.length; i++) {
+        if (NETS[i].id === uidv) { u = { id: NETS[i].id, name: NETS[i].name, color: NETS[i].color, avatar: '' }; break; }
+      }
     }
-    for (var i = 0; i < NETS.length; i++) {
-      if (NETS[i].id === uidv) return NETS[i];
+    var ov = readOverrides()[uidv];
+    if (ov) {
+      if (ov.name) u.name = ov.name;
+      u.bio = ov.bio || '';
+    } else {
+      u.bio = '';
     }
-    return { id: uidv, name: '网友', color: '#c9c9c9' };
+    return u;
   }
 
   function avatarEl(uidv, size) {
@@ -373,7 +430,31 @@
       '#zy-weibo .wb-cmt-bar input{flex:1;border:1px solid #e6e6e6;border-radius:18px;padding:9px 14px;font-size:13.5px;outline:none;background:#fafafa;font-family:inherit;}',
       '#zy-weibo .wb-send{border:none;background:#ff8200;color:#fff;border-radius:18px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;}',
       '#zy-weibo .wb-toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;font-size:13px;padding:8px 16px;border-radius:16px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9;max-width:80%;text-align:center;}',
-      '#zy-weibo .wb-toast.show{opacity:1;}'
+      '#zy-weibo .wb-toast.show{opacity:1;}',
+      '#zy-weibo .wb-more{width:30px;height:30px;flex-shrink:0;border:none;background:none;color:#b0b0b0;font-size:17px;line-height:1;letter-spacing:1px;cursor:pointer;border-radius:50%;}',
+      '#zy-weibo .wb-more:active{background:#f4f4f4;}',
+      '#zy-weibo .wb-menu-row{width:100%;text-align:center;padding:14px 0;border:none;background:#fff;border-bottom:1px solid #f4f4f4;font-size:15px;color:#333;cursor:pointer;font-family:inherit;}',
+      '#zy-weibo .wb-menu-row:last-child{border-bottom:none;}',
+      '#zy-weibo .wb-menu-row.danger{color:#ff5050;}',
+      '#zy-weibo .wb-prof{background:#fff;padding:18px 14px 14px;margin-bottom:8px;}',
+      '#zy-weibo .wb-prof-top{display:flex;gap:14px;align-items:flex-start;}',
+      '#zy-weibo .wb-prof-info{flex:1;min-width:0;}',
+      '#zy-weibo .wb-prof-name{font-size:17px;font-weight:700;color:#222;display:flex;align-items:center;gap:6px;}',
+      '#zy-weibo .wb-prof-bio{font-size:12.5px;color:#939393;line-height:1.6;margin-top:6px;}',
+      '#zy-weibo .wb-prof-stats{display:flex;gap:24px;margin-top:14px;}',
+      '#zy-weibo .wb-prof-stat{font-size:12.5px;color:#939393;cursor:pointer;}',
+      '#zy-weibo .wb-prof-stat b{font-size:15px;color:#333;font-weight:700;margin-right:1px;}',
+      '#zy-weibo .wb-prof-btns{margin-top:14px;display:flex;gap:10px;}',
+      '#zy-weibo .wb-prof-btn{flex:1;padding:8px 0;border-radius:18px;border:1px solid #dcdcdc;background:#fff;color:#666;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;}',
+      '#zy-weibo .wb-prof-btn.main{background:#ff8200;border-color:#ff8200;color:#fff;}',
+      '#zy-weibo .wb-prof-sec{background:#fff;padding:12px 14px 10px;font-size:14px;font-weight:700;border-top:1px solid #f4f4f4;}',
+      '#zy-weibo .wb-follow-row{display:flex;align-items:center;gap:10px;background:#fff;padding:11px 14px;border-bottom:1px solid #f6f6f6;cursor:pointer;}',
+      '#zy-weibo .wb-follow-main{flex:1;min-width:0;}',
+      '#zy-weibo .wb-follow-name{font-size:14px;font-weight:600;color:#333;}',
+      '#zy-weibo .wb-follow-bio{font-size:11.5px;color:#a0a0a0;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+      '#zy-weibo .wb-follow-btn{flex-shrink:0;border:1px solid #ff8200;background:#ff8200;color:#fff;border-radius:14px;padding:5px 14px;font-size:12.5px;cursor:pointer;font-family:inherit;}',
+      '#zy-weibo .wb-follow-btn.off{background:#fff;color:#999;border-color:#ddd;}',
+      '#zy-weibo .wb-form-label{font-size:12.5px;color:#939393;margin:12px 0 6px;}'
     ].join('');
     var style = document.createElement('style');
     style.id = STYLE_ID;
@@ -403,6 +484,14 @@
     head.appendChild(back);
     head.appendChild(headTitleEl);
     head.appendChild(searchBtn);
+
+    var meBtn = el('button', 'wb-head-btn');
+    meBtn.type = 'button';
+    meBtn.setAttribute('aria-label', '我的主页');
+    meBtn.style.padding = '4px';
+    meBtn.appendChild(avatarEl('me', 28));
+    meBtn.addEventListener('click', function () { openProfile('me'); });
+    head.appendChild(meBtn);
 
     tabsEl = el('div', 'wb-tabs');
     [['feed', '首页'], ['hot', '热搜']].forEach(function (t) {
@@ -495,6 +584,8 @@
       fabEl.style.display = state.tab === 'topic' ? '' : 'none';
       if (state.tab === 'topic') headTitleEl.textContent = '话题';
       else if (state.tab === 'editor') headTitleEl.textContent = '编辑热搜';
+      else if (state.tab === 'profile') headTitleEl.textContent = '个人主页';
+      else if (state.tab === 'follow') headTitleEl.textContent = '关注';
     }
 
     clear(listEl);
@@ -502,6 +593,8 @@
     else if (state.tab === 'hot') renderHot();
     else if (state.tab === 'topic') renderTopic();
     else if (state.tab === 'editor') renderEditor();
+    else if (state.tab === 'profile') renderProfile();
+    else if (state.tab === 'follow') renderFollow();
   }
 
   function sortedPosts() {
@@ -509,7 +602,9 @@
   }
 
   function renderFeed() {
-    var posts = sortedPosts();
+    var posts = sortedPosts().filter(function (p) {
+      return p.uid === 'me' || isFollowing(p.uid);
+    });
     if (!posts.length) {
       listEl.appendChild(el('div', 'wb-empty', '还没有微博，点右下角发第一条吧'));
       return;
@@ -522,7 +617,9 @@
     var u = userOf(p.uid);
 
     var top = el('div', 'wb-post-top');
-    top.appendChild(avatarEl(p.uid, 40));
+    var tapAva = avatarEl(p.uid, 40);
+    tapAva.style.cursor = 'pointer';
+    top.appendChild(tapAva);
     var who = el('div', 'wb-post-who');
     var nm = el('div', 'wb-name', u.name);
     if (p.uid === 'me' || p.uid === 'partner') {
@@ -533,6 +630,18 @@
     who.appendChild(nm);
     who.appendChild(el('div', 'wb-time', timeText(p.ts) + ' · 来自 iPhone 客户端'));
     top.appendChild(who);
+
+    var moreBtn = el('button', 'wb-more', '···');
+    moreBtn.type = 'button';
+    moreBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openPostMenu(p);
+    });
+    top.appendChild(moreBtn);
+
+    var goProfile = function () { openProfile(p.uid); };
+    tapAva.addEventListener('click', goProfile);
+    nm.addEventListener('click', goProfile);
     card.appendChild(top);
 
     var text = el('div', 'wb-text');
@@ -607,6 +716,66 @@
     return card;
   }
 
+  /* ========== 微博的编辑 / 删除 ========== */
+  function openPostMenu(p) {
+    openPop('微博操作', function (body) {
+      function mk(label, danger, fn) {
+        var b = el('button', 'wb-menu-row' + (danger ? ' danger' : ''), label);
+        b.type = 'button';
+        b.addEventListener('click', function () {
+          closePop();
+          fn();
+        });
+        body.appendChild(b);
+      }
+      mk('查看个人主页', false, function () { openProfile(p.uid); });
+      mk('编辑这条微博', false, function () { openEditPost(p); });
+      mk('删除这条微博', true, function () {
+        var i = state.posts.indexOf(p);
+        if (i !== -1) state.posts.splice(i, 1);
+        savePosts();
+        render();
+        toast('已删除');
+      });
+    });
+  }
+
+  function openEditPost(p) {
+    openPop('编辑微博', function (body) {
+      var ta = el('textarea', 'wb-ta');
+      ta.value = p.text || '';
+      body.appendChild(ta);
+
+      body.appendChild(el('div', 'wb-form-label', '所属话题'));
+      var sel = el('select', 'wb-tag-sel');
+      sel.style.width = '100%';
+      sel.style.padding = '9px 8px';
+      var opts = [''].concat(getHot().map(function (h) { return h.title; }));
+      if (p.topic && opts.indexOf(p.topic) === -1) opts.push(p.topic);
+      opts.forEach(function (t) {
+        var o = el('option', null, t ? '#' + t + '#' : '不参与话题');
+        o.value = t;
+        if ((p.topic || '') === t) o.selected = true;
+        sel.appendChild(o);
+      });
+      body.appendChild(sel);
+
+      var save = el('button', 'wb-pub', '保存修改');
+      save.type = 'button';
+      save.addEventListener('click', function () {
+        var txt = (ta.value || '').trim();
+        if (!txt && !(p.imgs && p.imgs.length)) { toast('内容不能为空'); return; }
+        p.text = txt;
+        p.topic = sel.value || '';
+        savePosts();
+        closePop();
+        render();
+        toast('已保存');
+      });
+      body.appendChild(save);
+    });
+  }
+
   function renderHot() {
     var hot = getHot();
     var head = el('div', 'wb-board-head');
@@ -662,6 +831,163 @@
       return;
     }
     posts.forEach(function (p) { listEl.appendChild(buildPostCard(p)); });
+  }
+
+  /* ========== 个人主页 / 关注列表 ========== */
+  function openProfile(uidv) {
+    state.profileUid = uidv;
+    state.prevTab = (state.tab === 'profile' || state.tab === 'follow') ? state.prevTab : state.tab;
+    state.tab = 'profile';
+    render();
+    if (listEl) listEl.scrollTop = 0;
+  }
+
+  function renderProfile() {
+    var uidv = state.profileUid;
+    var u = userOf(uidv);
+    var posts = sortedPosts().filter(function (p) { return p.uid === uidv; });
+    var followCnt = (uidv === 'me' || uidv === 'partner') ? 128 : 36;
+    var bio = u.bio || (uidv === 'me' ? '记录和 TA 的每一个小日常。'
+      : uidv === 'partner' ? '在微博上偷偷存一些关于你的句子。'
+      : '一个爱在微博冲浪的普通网友。');
+
+    var hero = el('div', 'wb-prof');
+    var topRow = el('div', 'wb-prof-top');
+    topRow.appendChild(avatarEl(uidv, 64));
+    var info = el('div', 'wb-prof-info');
+    var nameRow = el('div', 'wb-prof-name', u.name);
+    if (uidv === 'me' || uidv === 'partner') nameRow.appendChild(el('span', 'wb-verified', '互关'));
+    info.appendChild(nameRow);
+    info.appendChild(el('div', 'wb-prof-bio', bio));
+    topRow.appendChild(info);
+    hero.appendChild(topRow);
+
+    var stats = el('div', 'wb-prof-stats');
+    var stFollow = el('div', 'wb-prof-stat');
+    stFollow.appendChild(el('b', null, String(followCnt)));
+    stFollow.appendChild(el('span', null, ' 关注'));
+    stFollow.addEventListener('click', function () {
+      state.prevTab = 'profile';
+      state.tab = 'follow';
+      render();
+    });
+    var stFans = el('div', 'wb-prof-stat');
+    stFans.appendChild(el('b', null, String(fansOf(uidv))));
+    stFans.appendChild(el('span', null, ' 粉丝'));
+    var stPosts = el('div', 'wb-prof-stat');
+    stPosts.appendChild(el('b', null, String(posts.length)));
+    stPosts.appendChild(el('span', null, ' 微博'));
+    stats.appendChild(stFollow);
+    stats.appendChild(stFans);
+    stats.appendChild(stPosts);
+    hero.appendChild(stats);
+
+    var btns = el('div', 'wb-prof-btns');
+    if (uidv === 'me') {
+      var editBtn = el('button', 'wb-prof-btn main', '编辑资料');
+      editBtn.type = 'button';
+      editBtn.addEventListener('click', function () { openEditProfile(uidv); });
+      btns.appendChild(editBtn);
+    } else if (uidv === 'partner') {
+      var chatBtn = el('button', 'wb-prof-btn main', '发微博给 TA');
+      chatBtn.type = 'button';
+      chatBtn.addEventListener('click', function () {
+        openCompose('');
+      });
+      btns.appendChild(chatBtn);
+    } else {
+      var followBtn = el('button', 'wb-prof-btn' + (isFollowing(uidv) ? '' : ' main'), isFollowing(uidv) ? '已关注' : '关注');
+      followBtn.type = 'button';
+      followBtn.addEventListener('click', function () {
+        var now = toggleFollow(uidv);
+        followBtn.textContent = now ? '已关注' : '关注';
+        followBtn.className = 'wb-prof-btn' + (now ? '' : ' main');
+        toast(now ? '已关注 ' + u.name : '已取消关注');
+      });
+      btns.appendChild(followBtn);
+    }
+    hero.appendChild(btns);
+    listEl.appendChild(hero);
+
+    var secTitle = el('div', 'wb-prof-sec', 'TA的微博');
+    if (uidv === 'me') secTitle.textContent = '我的微博';
+    listEl.appendChild(secTitle);
+
+    if (!posts.length) {
+      listEl.appendChild(el('div', 'wb-empty', '还没有微博'));
+      return;
+    }
+    posts.forEach(function (p) { listEl.appendChild(buildPostCard(p)); });
+  }
+
+  function renderFollow() {
+    var tip = el('div', 'wb-edit-row');
+    tip.style.background = '#fffaf2';
+    tip.style.color = '#b4864a';
+    tip.style.fontSize = '12px';
+    tip.textContent = '关注后 TA 的微博会出现在首页；点「已关注」可取消。';
+    listEl.appendChild(tip);
+
+    NETS.forEach(function (net) {
+      var row = el('div', 'wb-follow-row');
+      row.appendChild(avatarEl(net.id, 40));
+      var main = el('div', 'wb-follow-main');
+      main.appendChild(el('div', 'wb-follow-name', userOf(net.id).name));
+      main.appendChild(el('div', 'wb-follow-bio', userOf(net.id).bio || '爱冲浪的普通网友'));
+      row.appendChild(main);
+
+      var btn = el('button', 'wb-follow-btn', isFollowing(net.id) ? '已关注' : '关注');
+      btn.type = 'button';
+      if (isFollowing(net.id)) btn.classList.add('off');
+      btn.addEventListener('click', function () {
+        var now = toggleFollow(net.id);
+        btn.textContent = now ? '已关注' : '关注';
+        btn.classList.toggle('off', now);
+        toast(now ? '已关注 ' + net.name : '已取消关注');
+      });
+      row.appendChild(btn);
+      row.addEventListener('click', function (e) {
+        if (e.target === btn) return;
+        openProfile(net.id);
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  function openEditProfile(uidv) {
+    var u = userOf(uidv);
+    openPop('编辑资料', function (body) {
+      var label1 = el('div', 'wb-form-label', '昵称');
+      var nameInp = el('input', 'wb-inp');
+      nameInp.type = 'text';
+      nameInp.value = u.name;
+      nameInp.maxLength = 16;
+      var label2 = el('div', 'wb-form-label', '简介');
+      var bioInp = el('textarea', 'wb-ta');
+      bioInp.style.minHeight = '70px';
+      bioInp.value = u.bio || '';
+      bioInp.placeholder = '介绍一下自己…';
+      bioInp.maxLength = 60;
+
+      var save = el('button', 'wb-pub', '保存');
+      save.type = 'button';
+      save.addEventListener('click', function () {
+        var ov = readOverrides();
+        ov[uidv] = ov[uidv] || {};
+        ov[uidv].name = (nameInp.value || '').trim() || u.name;
+        ov[uidv].bio = (bioInp.value || '').trim();
+        saveOverrides(ov);
+        closePop();
+        render();
+        toast('资料已更新');
+      });
+
+      body.appendChild(label1);
+      body.appendChild(nameInp);
+      body.appendChild(label2);
+      body.appendChild(bioInp);
+      body.appendChild(save);
+    });
   }
 
   function renderEditor() {
@@ -983,7 +1309,12 @@
 
   function onBack() {
     if (popEl && popEl.classList.contains('show')) { closePop(); return; }
-    if (state.tab === 'topic' || state.tab === 'editor') {
+    if (state.tab === 'follow') {
+      state.tab = 'profile';
+      render();
+      return;
+    }
+    if (state.tab === 'topic' || state.tab === 'editor' || state.tab === 'profile') {
       state.tab = state.prevTab || 'feed';
       render();
       return;
