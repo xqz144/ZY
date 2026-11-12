@@ -706,6 +706,18 @@
                         </div>
                         <span class="app-name">朋友圈</span>
                     </div>
+                    <div class="app-item" onclick="openApp('games')">
+                        <div class="app-icon" data-app="games" style="background: linear-gradient(145deg, #c3a6ff, #8f7dff);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
+                                <rect x="2" y="6" width="20" height="12" rx="6"/>
+                                <line x1="6" y1="12" x2="10" y2="12"/>
+                                <line x1="8" y1="10" x2="8" y2="14"/>
+                                <circle cx="15.5" cy="13" r="0.9"/>
+                                <circle cx="18" cy="10.5" r="0.9"/>
+                            </svg>
+                        </div>
+                        <span class="app-name">小游戏</span>
+                    </div>
                 </div>
             </div>
             <!-- 桌面分页点（由 home.js 动态渲染） -->
@@ -2181,7 +2193,6 @@
                 </div>
             </div>
             <div class="header-actions">
-                <button id="gameBtn" class="action-btn" title="小游戏" aria-label="小游戏"><i class="fas fa-gamepad"></i></button>
                 <button id="home-btn" class="action-btn" title="主页" onclick="showHomePage()"><i class="fas fa-home"></i></button>
                 <button id="moyu-btn" class="action-btn" title="摸鱼小记"><i class="fas fa-fish"></i></button>
                 <button id="session-manager-btn" class="action-btn" title="会话管理"><i class="fas fa-comments"></i></button>
@@ -5110,39 +5121,6 @@
     <script src="js/state.js"></script>
     <script src="js/core.js"></script>
     <script src="js/home.js"></script>
-
-    <!-- == 聊天小游戏：把游戏结果写进主聊天 == -->
-    <script>
-      (function () {
-        function partnerName() {
-          return (settings && settings.partnerName) || '梦角';
-        }
-        function push(sender, text, status, type) {
-          if (!text || typeof addMessage !== 'function') return;
-          addMessage({
-            id: Date.now() + Math.random(),
-            sender: sender,
-            text: text,
-            timestamp: new Date(),
-            status: status,
-            favorited: false,
-            note: null,
-            type: type || 'normal'
-          });
-        }
-        window.ChatGamesBridge = {
-          getNames: function () {
-            return {
-              partner: partnerName(),
-              me: (settings && settings.myName) || '我'
-            };
-          },
-          partnerSay: function (text) { push(partnerName(), text, 'received'); },
-          userSay: function (text) { push('user', text, 'sent'); },
-          systemSay: function (text) { push(null, text, 'received', 'system'); }
-        };
-      })();
-    </script>
     <script src="js/chat-games.js"></script>
 
     <!-- == 功能模块 == -->

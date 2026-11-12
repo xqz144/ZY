@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String HOST = "appassets.mengjiao.local";
     private static final String PREFIX_PUBLIC = "/public/";
     private static final String PREFIX_HOT = "/hot/";
-    private static final String APP_VERSION = "1.10.23";
+    private static final String APP_VERSION = "1.10.24";
     private static final int FILE_CHOOSER_REQUEST_CODE = 51426;
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 51427;
     private static final String CHANNEL_MSG = "mengjiao_msg";

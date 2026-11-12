@@ -2434,6 +2434,14 @@
                 // 切换到萌宠屋页面（内嵌，非跳转）
                 window.showPetPage();
             },
+            'games': () => {
+                // 桌面小游戏：面板内独立运行，不写入聊天
+                if (window.ChatGames && typeof window.ChatGames.open === 'function') {
+                    window.ChatGames.open();
+                } else {
+                    (window.showNotification || function(){})('小游戏加载中...', 'info');
+                }
+            },
             'ta-phone': () => {
                 if (typeof window.TaPhoneApp !== 'undefined') {
                     window.TaPhoneApp.showTaPhone();
