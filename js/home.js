@@ -178,7 +178,8 @@
     function calculateTogetherDays(startDate) {
         let start;
         if (startDate) {
-            start = new Date(startDate);
+            // 按本地时区解析，避免 'YYYY-MM-DD' 被当成 UTC 导致每天 8 点才 +1
+            start = parseDateOnly(startDate) || new Date(startDate);
         } else {
             // 默认从会话开始第一天计算（从全局获取 sessionList）
             const sessions = typeof window.sessionList !== 'undefined' ? window.sessionList : 
@@ -192,29 +193,31 @@
                 start = new Date(); // 如果没有会话，从今天开始
             }
         }
+        // 统一按「本地零点」比较，跨天才会准确 +1
+        const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
         const today = new Date();
-        const diffTime = today - start;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        return Math.max(0, diffDays + 1); // 至少为1天
+        const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const diffDays = Math.round((todayDay - startDay) / 86400000);
+        return Math.max(1, diffDays + 1);
     }
 
     // ========== 主页卡片：在一起天数 ==========
-    let _heroDaysStamp = '';
+    let _heroDaysValue = '';
 
     /** 用「在一起日期」算出天数并渲染到卡片上 */
     function renderHeroDays() {
         const numEl = document.getElementById('hero-days-num');
         if (!numEl) return;
         const startDate = (profileData.me && profileData.me.startDate) || '';
-        numEl.textContent = calculateTogetherDays(startDate);
+        const days = String(calculateTogetherDays(startDate));
+        // 只有数字变了才写 DOM，跨天时立刻更新
+        if (days === _heroDaysValue) return;
+        _heroDaysValue = days;
+        numEl.textContent = days;
     }
 
-    /** 跨天自动刷新（每天零点后打开或停留时都会更新） */
+    /** 每次时钟刷新都重算（内部已判重，不会频繁写 DOM） */
     function refreshHeroDaysIfNeeded() {
-        const now = new Date();
-        const stamp = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
-        if (stamp === _heroDaysStamp) return;
-        _heroDaysStamp = stamp;
         renderHeroDays();
     }
 
@@ -244,36 +247,89 @@
         return isNaN(d.getTime()) ? null : d;
     }
 
-    /** 读取每日一句（字卡库优先，聊天回复库次之，最后用兜底） */
-    function readQuotePool() {
-        const keys = ['mengjiao_card_replies', 'mengjiao_chat_replies'];
-        for (let i = 0; i < keys.length; i++) {
-            try {
-                const arr = JSON.parse(localStorage.getItem(keys[i]) || '[]');
-                if (Array.isArray(arr)) {
-                    const list = arr
-                        .map(item => typeof item === 'string' ? item : (item && (item.text || item.content)))
-                        .filter(t => typeof t === 'string' && t.trim());
-                    if (list.length > 0) return list;
-                }
-            } catch (e) {}
-        }
-        return FALLBACK_QUOTES;
+    // ========== 聊天数据（字卡库 / 消息）异步读取 ==========
+    // 聊天数据存在 localforage（IndexedDB），键为 `${APP_PREFIX}${SESSION_ID}_xxx`
+    let _quotePool = FALLBACK_QUOTES;
+    let _todayMsgCount = 0;
+    let _chatDataAt = 0;
+    let _chatDataBusy = null;
+
+    /** 拼出当前会话的 localforage 键；SESSION_ID 未就绪时扫描兜底 */
+    async function readChatKey(base) {
+        const prefix = window.APP_PREFIX || 'CHAT_APP_V3_';
+        if (window.SESSION_ID) return prefix + window.SESSION_ID + '_' + base;
+        if (typeof localforage === 'undefined') return null;
+        try {
+            const keys = await localforage.keys();
+            const matched = keys.filter(k => typeof k === 'string' && k.slice(-(base.length + 1)) === '_' + base);
+            return matched.length ? matched[matched.length - 1] : null;
+        } catch (e) { return null; }
     }
 
-    /** 统计今天的聊天消息条数 */
-    function countTodayMessages() {
-        let arr = [];
-        try { arr = JSON.parse(localStorage.getItem('mengjiao_chat_messages') || '[]'); } catch (e) {}
-        if (!Array.isArray(arr)) return 0;
+    /** 按本地日期统计今天发了多少条消息 */
+    function countSameDayMessages(arr) {
         const now = new Date();
         return arr.filter(m => {
-            if (!m || !m.ts) return false;
-            const d = new Date(m.ts);
+            if (!m) return false;
+            const t = m.timestamp || m.ts || m.time;
+            if (!t) return false;
+            const d = new Date(t);
+            if (isNaN(d.getTime())) return false;
             return d.getFullYear() === now.getFullYear() &&
                 d.getMonth() === now.getMonth() &&
                 d.getDate() === now.getDate();
         }).length;
+    }
+
+    /** 重新读取字卡库与今日消息（60 秒内走缓存），完成后自动重渲染 */
+    function refreshChatData(force) {
+        if (typeof localforage === 'undefined') return Promise.resolve();
+        if (!force && Date.now() - _chatDataAt < 60000) return Promise.resolve();
+        if (_chatDataBusy) return _chatDataBusy;
+
+        _chatDataBusy = (async () => {
+            // 1) 每日一句：取字卡库
+            let replies = Array.isArray(window._customReplies) && window._customReplies.length
+                ? window._customReplies : null;
+            if (!replies) {
+                const key = await readChatKey('customReplies');
+                if (key) { try { replies = await localforage.getItem(key); } catch (e) {} }
+            }
+            if (Array.isArray(replies)) {
+                const list = replies
+                    .map(item => typeof item === 'string' ? item : (item && (item.text || item.content)))
+                    .filter(t => typeof t === 'string' && t.trim());
+                if (list.length > 0) _quotePool = list;
+            }
+
+            // 2) 今日消息：以当前会话聊天记录为准
+            let msgs = null;
+            const msgKey = await readChatKey('chatMessages');
+            if (msgKey) {
+                try {
+                    const stored = await localforage.getItem(msgKey);
+                    if (Array.isArray(stored)) msgs = stored;
+                } catch (e) {}
+            }
+            if (!msgs && Array.isArray(window.messages)) msgs = window.messages;
+            if (Array.isArray(msgs)) _todayMsgCount = countSameDayMessages(msgs);
+
+            if (window.SESSION_ID) _chatDataAt = Date.now();
+        })().catch(() => {}).then(() => {
+            _chatDataBusy = null;
+            renderHomeWidgets();
+        });
+        return _chatDataBusy;
+    }
+
+    /** 读取每日一句（来自字卡库，空则用兜底） */
+    function readQuotePool() {
+        return _quotePool && _quotePool.length ? _quotePool : FALLBACK_QUOTES;
+    }
+
+    /** 统计今天的聊天消息条数 */
+    function countTodayMessages() {
+        return _todayMsgCount;
     }
 
     /** 生成一张小组件卡片 */
@@ -408,6 +464,8 @@
             row.classList.toggle('active', enabledWidgets.indexOf(row.dataset.widget) !== -1);
         });
         renderHomeWidgets();
+        // 小组件的字卡库 / 今日消息来自 localforage，需异步读取后再重渲染
+        refreshChatData(true);
     }
 
     /** 开关某个小组件 */
@@ -431,6 +489,7 @@
         if (now - _widgetTick < 60000) return;
         _widgetTick = now;
         renderHomeWidgets();
+        refreshChatData();
     }
 
     // ========== 时间更新 ==========
@@ -528,6 +587,7 @@
 
         // 回到首页时刷新小组件（今日消息数等可能已变化）
         renderHomeWidgets();
+        refreshChatData(true);
         updateTime();
     };
 
