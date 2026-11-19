@@ -728,6 +728,35 @@
                         </div>
                         <span class="app-name">微博</span>
                     </div>
+                    <div class="app-item" onclick="openApp('xstatus')">
+                        <div class="app-icon" data-app="xstatus" style="background: linear-gradient(145deg, #ff9ec7, #b07bff);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
+                                <path d="M12 20.3S4.2 16 4.2 9.8c0-2.9 2-4.6 4.4-4.6 1.6 0 2.8.8 3.4 2 .7-1.2 1.8-2 3.5-2 2.3 0 4.3 1.7 4.3 4.6 0 6.2-7.8 10.5-7.8 10.5z"/>
+                                <path d="M3 12h2M19 12h2"/>
+                            </svg>
+                        </div>
+                        <span class="app-name">X状态</span>
+                    </div>
+                    <div class="app-item" onclick="openApp('xcompanion')">
+                        <div class="app-icon" data-app="xcompanion" style="background: linear-gradient(145deg, #b49aff, #6a4bd6);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
+                                <path d="M20 14.5A7.5 7.5 0 1 1 9.5 4a6 6 0 0 0 10.5 10.5z"/>
+                                <circle cx="17" cy="6" r="0.8" fill="currentColor"/>
+                                <circle cx="19.5" cy="9" r="0.6" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <span class="app-name">X陪伴</span>
+                    </div>
+                    <div class="app-item" onclick="openApp('xdating')">
+                        <div class="app-icon" data-app="xdating" style="background: linear-gradient(145deg, #ff8fa3, #e0569a);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
+                                <rect x="3" y="5" width="18" height="16" rx="2"/>
+                                <path d="M3 9h18M8 3v4M16 3v4"/>
+                                <path d="M12 13c-1.2-1-3 0-3 1.3 0 1 1.5 2 3 2.7 1.5-.7 3-1.7 3-2.7 0-1.3-1.8-2.3-3-1.3z" fill="currentColor" stroke="none"/>
+                            </svg>
+                        </div>
+                        <span class="app-name">X约会</span>
+                    </div>
                 </div>
             </div>
             <!-- 桌面分页点（由 home.js 动态渲染） -->
@@ -5133,6 +5162,9 @@
     <script src="js/home.js"></script>
     <script src="js/chat-games.js"></script>
     <script src="js/weibo.js"></script>
+    <script src="js/x-status.js"></script>
+    <script src="js/x-companion.js"></script>
+    <script src="js/x-dating.js"></script>
 
     <!-- == 功能模块 == -->
     <script src="js/features/mood.js"></script>

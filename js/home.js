@@ -2510,6 +2510,30 @@
                     (window.showNotification || function(){})('微博加载中...', 'info');
                 }
             },
+            'xstatus': () => {
+                // X状态：此刻状态 + 连接氛围
+                if (window.XStatus && typeof window.XStatus.open === 'function') {
+                    window.XStatus.open();
+                } else {
+                    (window.showNotification || function(){})('X状态加载中...', 'info');
+                }
+            },
+            'xcompanion': () => {
+                // X陪伴：治愈陪伴空间
+                if (window.XCompanion && typeof window.XCompanion.open === 'function') {
+                    window.XCompanion.open();
+                } else {
+                    (window.showNotification || function(){})('X陪伴加载中...', 'info');
+                }
+            },
+            'xdating': () => {
+                // X约会：本地约会生成 + 约会簿
+                if (window.XDating && typeof window.XDating.open === 'function') {
+                    window.XDating.open();
+                } else {
+                    (window.showNotification || function(){})('X约会加载中...', 'info');
+                }
+            },
             'ta-phone': () => {
                 if (typeof window.TaPhoneApp !== 'undefined') {
                     window.TaPhoneApp.showTaPhone();
@@ -3019,6 +3043,8 @@
 
         // 最后一页：微博热搜卡片
         renderWeiboBoardPage();
+        // 倒数第二页：X状态 卡片
+        renderXStatusCardPage();
 
         if (currentAppsPage >= totalPages) {
             currentAppsPage = totalPages - 1;
@@ -3124,7 +3150,12 @@
         const dot = document.createElement('span');
         dot.className = 'apps-dot';
         dot.id = 'apps-dot-weibo';
-        dot.onclick = () => window.switchAppsPage(document.querySelectorAll('.apps-page').length - 1);
+        dot.onclick = () => {
+            const pages = document.querySelectorAll('.apps-page');
+            let idx = -1;
+            pages.forEach((p, i) => { if (p.id === 'apps-page-weibo') idx = i; });
+            if (idx >= 0) window.switchAppsPage(idx);
+        };
         dotsContainer.appendChild(dot);
     }
 
@@ -3132,6 +3163,111 @@
     window.addEventListener('zyWeiboHotUpdated', () => renderWeiboBoardPage());
     // 所有脚本加载完成后补渲染一次（防止微博模块晚于首页初始化）
     window.addEventListener('load', () => renderWeiboBoardPage());
+
+    // ========== 桌面「X状态」页 ==========
+    (function injectXStatusCardStyle() {
+        if (document.getElementById('xstatus-card-style')) return;
+        const css = [
+            '.xsc-board{background:linear-gradient(160deg,#2d1b4e,#3a1f5c);border-radius:18px;padding:14px;color:#f3ecff;}',
+            '.xsc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}',
+            '.xsc-title{font-size:14px;font-weight:600;}',
+            '.xsc-shuffle{border:none;background:rgba(255,255,255,.15);color:#fff;font-size:11px;padding:5px 10px;border-radius:12px;cursor:pointer;}',
+            '.xsc-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1);}',
+            '.xsc-row:last-of-type{border-bottom:none;}',
+            '.xsc-ico{font-size:16px;width:22px;text-align:center;}',
+            '.xsc-l{font-size:11px;color:#c9b8e8;}',
+            '.xsc-v{font-size:14px;font-weight:600;color:#fff;}',
+            '.xsc-hearts{text-align:center;margin:10px 0 4px;letter-spacing:3px;font-size:18px;}',
+            '.xsc-hearts .on{color:#ff7eb6;}',
+            '.xsc-hearts .off{color:rgba(255,255,255,.2);}',
+            '.xsc-more{display:block;width:100%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:12px;padding:8px;border-radius:12px;cursor:pointer;margin-top:6px;}',
+            '.xsc-empty{text-align:center;font-size:12px;color:#c9b8e8;padding:16px;}'
+        ].join('');
+        const s = document.createElement('style');
+        s.id = 'xstatus-card-style'; s.textContent = css;
+        document.head.appendChild(s);
+    })();
+
+    function renderXStatusCardPage() {
+        const pager = document.getElementById('apps-pager');
+        const dotsContainer = document.getElementById('apps-dots');
+        if (!pager || !dotsContainer) return;
+
+        const old = document.getElementById('apps-page-xstatus');
+        if (old) old.remove();
+        const oldDot = document.getElementById('apps-dot-xstatus');
+        if (oldDot) oldDot.remove();
+
+        let t = null;
+        try {
+            if (window.XStatus && typeof window.XStatus.getToday === 'function') {
+                t = window.XStatus.getToday();
+            }
+        } catch (e) {}
+
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'apps-page';
+        pageDiv.id = 'apps-page-xstatus';
+
+        const board = document.createElement('div');
+        board.className = 'xsc-board';
+        board.id = 'xstatus-board';
+
+        if (!t) {
+            board.innerHTML = '<div class="xsc-empty">X 状态加载中…点击刷新</div>';
+            board.addEventListener('click', () => { renderXStatusCardPage(); });
+        } else {
+            const name = t.name || 'TA';
+            const heartHtml = Array.from({ length: 5 }, (_, i) =>
+                '<span class="' + (i < t.heart ? 'on' : 'off') + '">♥</span>'
+            ).join('');
+            board.innerHTML =
+                '<div class="xsc-head"><span class="xsc-title">💗 ' + name + ' 此刻状态</span>' +
+                '<button class="xsc-shuffle" type="button">换一换</button></div>' +
+                '<div class="xsc-row"><span class="xsc-ico">☁️</span><div><div class="xsc-l">今天状态</div><div class="xsc-v"></div></div></div>' +
+                '<div class="xsc-row"><span class="xsc-ico">🌙</span><div><div class="xsc-l">心情</div><div class="xsc-v"></div></div></div>' +
+                '<div class="xsc-row"><span class="xsc-ico">💗</span><div><div class="xsc-l">离你有多近</div><div class="xsc-v"></div></div></div>' +
+                '<div class="xsc-hearts">' + heartHtml + '</div>' +
+                '<button class="xsc-more" type="button">查看完整状态与连接氛围 ›</button>';
+            const vs = board.querySelectorAll('.xsc-v');
+            vs[0].textContent = t.his.today.value;
+            vs[1].textContent = t.his.mood.value;
+            vs[2].textContent = t.his.closeness.value;
+            const openFull = () => { if (window.XStatus) window.XStatus.open(); };
+            board.querySelectorAll('.xsc-row, .xsc-more').forEach(el => el.addEventListener('click', openFull));
+            board.querySelector('.xsc-shuffle').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (window.XStatus) {
+                    window.XStatus.refresh();
+                    renderXStatusCardPage();
+                }
+            });
+        }
+
+        pageDiv.appendChild(board);
+        // 插到微博页之前，保证微博仍在最后
+        const weiboPage = document.getElementById('apps-page-weibo');
+        if (weiboPage) pager.insertBefore(pageDiv, weiboPage);
+        else pager.insertBefore(pageDiv, dotsContainer);
+
+        const dot = document.createElement('span');
+        dot.className = 'apps-dot';
+        dot.id = 'apps-dot-xstatus';
+        const weiboDot = document.getElementById('apps-dot-weibo');
+        if (weiboDot) dotsContainer.insertBefore(dot, weiboDot);
+        else dotsContainer.appendChild(dot);
+        dot.onclick = () => {
+            const pages = document.querySelectorAll('.apps-page');
+            let idx = -1;
+            pages.forEach((p, i) => { if (p.id === 'apps-page-xstatus') idx = i; });
+            if (idx >= 0) window.switchAppsPage(idx);
+        };
+    }
+
+    // 状态被换一换/编辑后，桌面卡片同步刷新
+    window.addEventListener('zyXStatusUpdated', () => renderXStatusCardPage());
+    // 所有脚本加载完成后补渲染一次（防止 X状态模块晚于首页初始化）
+    window.addEventListener('load', () => renderXStatusCardPage());
 
     // ========== 初始化 ==========
     window.initHomePage = async function() {
