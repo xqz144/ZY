@@ -105,7 +105,7 @@
     var custom = {};
     try { custom = JSON.parse(localStorage.getItem(LS_OPTIONS) || '{}') || {}; } catch (e) {}
     custom[key] = arr.filter(function (v) { return v && String(v).trim(); }).map(function (v) { return String(v).trim(); });
-    localStorage.setItem(LS_OPTIONS, JSON.stringify(custom));
+    try { localStorage.setItem(LS_OPTIONS, JSON.stringify(custom)); } catch (e) {}
   }
 
   /* 匹配度：同天同选择稳定，可再摇 */

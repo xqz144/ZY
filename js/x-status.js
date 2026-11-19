@@ -99,6 +99,10 @@
   };
 
   /* ========== 工具 ========== */
+  // localStorage 在部分手机上配额满 / 被禁用会抛异常，统一兜住，避免 open() 中断
+  function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+
   function todayStr() {
     var d = new Date();
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
@@ -142,7 +146,7 @@
     var overrides = {};
     try { overrides = JSON.parse(localStorage.getItem(LS_POOLS) || '{}') || {}; } catch (e) {}
     overrides[key] = values.filter(function (v) { return v && String(v).trim(); }).map(function (v) { return String(v).trim(); });
-    localStorage.setItem(LS_POOLS, JSON.stringify(overrides));
+    safeSet(LS_POOLS, JSON.stringify(overrides));
   }
 
   function pickOne(rng, pool) {
@@ -179,13 +183,13 @@
     var date = todayStr();
     var stored = null;
     try { stored = JSON.parse(localStorage.getItem(LS_PICKS) || 'null'); } catch (e) {}
-    if (!stored || stored.date !== date) {
+    if (!stored || stored.date !== date || !stored.his || !stored.link) {
       stored = generatePicks(date, 0);
-      localStorage.setItem(LS_PICKS, JSON.stringify(stored));
+      safeSet(LS_PICKS, JSON.stringify(stored));
     }
     return stored;
   }
-  function savePicks(picks) { localStorage.setItem(LS_PICKS, JSON.stringify(picks)); }
+  function savePicks(picks) { safeSet(LS_PICKS, JSON.stringify(picks)); }
 
   function getToday() {
     var picks = loadPicks();
@@ -417,12 +421,20 @@
   }
 
   function open() {
-    if (!root) buildRoot();
-    loadPicks();
+    if (!root) {
+      try { buildRoot(); } catch (e) { console.error('[XStatus] buildRoot failed:', e); return; }
+    }
     state.tab = 'view';
+    // 先让界面显示出来，再渲染内容，避免任何数据异常导致"点了没反应"
     root.classList.add('show');
     document.body.style.overflow = 'hidden';
-    render();
+    try {
+      render();
+    } catch (e) {
+      console.error('[XStatus] render failed:', e);
+      var body = root.querySelector('#xst-body');
+      if (body) body.innerHTML = '<div class="xst-date">加载出错了，请退出重进 App 再试一次</div>';
+    }
   }
   function close() {
     if (!root) return;

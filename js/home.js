@@ -2410,6 +2410,26 @@
     })();
 
     // ========== 功能导航 ==========
+    // 模块未加载时（版本切换 / 缓存不一致），动态拉取脚本后再打开，避免"点了没反应"。
+    // 带时间戳参数可绕过 Service Worker 的 Cache First，拿到最新文件。
+    function zyOpenOrLoadScript(globalName, scriptPath, label) {
+        var mod = window[globalName];
+        if (mod && typeof mod.open === 'function') { mod.open(); return; }
+        (window.showNotification || function(){}) (label + '加载中…', 'info');
+        var basePath = window.location.pathname.replace(/\/[^\/]*$/, '/') || '/';
+        var s = document.createElement('script');
+        s.src = basePath + scriptPath + '?v=' + Date.now();
+        s.onload = function () {
+            var m = window[globalName];
+            if (m && typeof m.open === 'function') m.open();
+            else (window.showNotification || function(){})(label + '加载失败，请重装最新版', 'error');
+        };
+        s.onerror = function () {
+            (window.showNotification || function(){})(label + '加载失败，请检查网络后重试', 'error');
+        };
+        document.head.appendChild(s);
+    }
+
     window.openApp = function(app) {
         const appActions = {
             'chat': () => {
@@ -2512,27 +2532,15 @@
             },
             'xstatus': () => {
                 // X状态：此刻状态 + 连接氛围
-                if (window.XStatus && typeof window.XStatus.open === 'function') {
-                    window.XStatus.open();
-                } else {
-                    (window.showNotification || function(){})('X状态加载中...', 'info');
-                }
+                zyOpenOrLoadScript('XStatus', 'js/x-status.js', 'X状态');
             },
             'xcompanion': () => {
                 // X陪伴：治愈陪伴空间
-                if (window.XCompanion && typeof window.XCompanion.open === 'function') {
-                    window.XCompanion.open();
-                } else {
-                    (window.showNotification || function(){})('X陪伴加载中...', 'info');
-                }
+                zyOpenOrLoadScript('XCompanion', 'js/x-companion.js', 'X陪伴');
             },
             'xdating': () => {
                 // X约会：本地约会生成 + 约会簿
-                if (window.XDating && typeof window.XDating.open === 'function') {
-                    window.XDating.open();
-                } else {
-                    (window.showNotification || function(){})('X约会加载中...', 'info');
-                }
+                zyOpenOrLoadScript('XDating', 'js/x-dating.js', 'X约会');
             },
             'ta-phone': () => {
                 if (typeof window.TaPhoneApp !== 'undefined') {
