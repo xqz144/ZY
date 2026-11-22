@@ -79,94 +79,96 @@
   function injectStyle() {
     if (document.getElementById(STYLE_ID)) return;
     var css = [
-      '#zy-bead{position:fixed;inset:0;z-index:99990;display:none;flex-direction:column;background:linear-gradient(165deg,#2b1a3d 0%,#3d2050 42%,#1b1030 100%);color:#f6edff;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;}',
+      '#zy-bead{position:fixed;inset:0;z-index:99990;display:none;flex-direction:column;background:radial-gradient(60% 40% at 10% 0%,#FBE6EA 0%,rgba(251,230,234,0) 60%),radial-gradient(50% 40% at 95% 8%,#DDE9F7 0%,rgba(221,233,247,0) 62%),linear-gradient(165deg,#F9F2EC 0%,#EDF2F8 52%,#E9F1EB 100%);color:#3A3540;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;}',
       '#zy-bead.show{display:flex;}',
       '#zy-bead .bd-shell{width:100%;max-width:600px;margin:0 auto;flex:1;min-height:0;display:flex;flex-direction:column;}',
       '#zy-bead .bd-head{height:50px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 10px;}',
-      '#zy-bead .bd-back{width:36px;height:36px;border:none;background:transparent;color:#f6edff;font-size:22px;cursor:pointer;line-height:1;}',
-      '#zy-bead .bd-title{flex:1;font-size:17px;font-weight:600;}',
-      '#zy-bead .bd-hbtn{border:none;background:rgba(255,255,255,.13);color:#fff;font-size:13px;padding:7px 12px;border-radius:16px;cursor:pointer;}',
+      '#zy-bead .bd-back{width:36px;height:36px;border:none;background:transparent;color:#3A3540;font-size:22px;cursor:pointer;line-height:1;}',
+      '#zy-bead .bd-title{flex:1;font-size:17px;font-weight:600;color:#2B2A2E;}',
+      '#zy-bead .bd-hbtn{border:1px solid rgba(255,255,255,.8);background:rgba(255,255,255,.55);color:#3A3540;font-size:13px;padding:7px 12px;border-radius:16px;cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 14px rgba(58,62,86,.06);}',
       '#zy-bead .bd-body{flex:1;min-height:0;overflow-y:auto;padding:10px 16px 26px;}',
       '#zy-bead .bd-hero{text-align:center;padding:26px 8px 14px;}',
-      '#zy-bead .bd-hero .big{font-size:24px;font-weight:700;letter-spacing:1px;margin-bottom:8px;}',
-      '#zy-bead .bd-hero .sub{font-size:13px;line-height:1.8;color:#d7c6e8;}',
-      '#zy-bead .bd-cta{display:block;width:100%;max-width:280px;margin:20px auto 0;border:none;background:linear-gradient(135deg,#ff8fc0,#a97bff);color:#fff;font-size:16px;font-weight:600;padding:14px;border-radius:24px;cursor:pointer;box-shadow:0 6px 20px rgba(169,123,255,.42);}',
-      '#zy-bead .bd-cta.ghost{background:rgba(255,255,255,.12);box-shadow:none;font-weight:500;}',
-      '#zy-bead .bd-tile{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px;margin-bottom:12px;}',
-      '#zy-bead .bd-tile h4{margin:0 0 10px;font-size:14px;color:#fff;}',
+      '#zy-bead .bd-hero .big{font-size:24px;font-weight:600;letter-spacing:1px;margin-bottom:8px;color:#2B2A2E;}',
+      '#zy-bead .bd-hero .sub{font-size:13px;line-height:1.8;color:#6E6A70;}',
+      '#zy-bead .bd-cta{display:block;width:100%;max-width:280px;margin:20px auto 0;border:none;background:linear-gradient(135deg,#F5D3DC,#E8AAB9);color:#6B4651;font-size:16px;font-weight:600;padding:14px;border-radius:24px;cursor:pointer;box-shadow:0 10px 24px rgba(232,170,185,.32);}',
+      '#zy-bead .bd-cta.ghost{background:rgba(255,255,255,.52);border:1px solid rgba(255,255,255,.75);color:#6B4651;box-shadow:none;font-weight:500;}',
+      '#zy-bead .bd-tile{background:rgba(255,255,255,.52);border:1px solid rgba(255,255,255,.75);border-radius:22px;padding:14px;margin-bottom:12px;box-shadow:0 10px 30px rgba(58,62,86,.07);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);}',
+      '#zy-bead .bd-tile h4{margin:0 0 10px;font-size:14px;color:#2B2A2E;}',
       '#zy-bead .bd-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}',
       '#zy-bead .bd-row:last-child{margin-bottom:0;}',
-      '#zy-bead .bd-lbl{font-size:12px;color:#cbb8e0;min-width:62px;}',
-      '#zy-bead .bd-row input[type=range]{flex:1;accent-color:#ff9ec7;}',
-      '#zy-bead .bd-val{font-size:12px;color:#fff;min-width:38px;text-align:right;}',
+      '#zy-bead .bd-lbl{font-size:12px;color:#6E6A70;min-width:62px;}',
+      '#zy-bead .bd-row input[type=range]{flex:1;accent-color:#E8AAB9;}',
+      '#zy-bead .bd-val{font-size:12px;color:#2B2A2E;min-width:38px;text-align:right;}',
       '#zy-bead .bd-chips{display:flex;flex-wrap:wrap;gap:7px;}',
-      '#zy-bead .bd-chip{border:1px solid rgba(255,255,255,.2);background:transparent;color:#e8dbf5;font-size:13px;padding:7px 13px;border-radius:15px;cursor:pointer;}',
-      '#zy-bead .bd-chip.on{background:linear-gradient(135deg,rgba(255,143,192,.32),rgba(169,123,255,.32));border-color:#ff9ec7;color:#fff;}',
+      '#zy-bead .bd-chip{border:1px solid rgba(58,62,86,.14);background:rgba(255,255,255,.45);color:#6E6A70;font-size:13px;padding:7px 13px;border-radius:15px;cursor:pointer;}',
+      '#zy-bead .bd-chip.on{background:linear-gradient(135deg,rgba(245,211,220,.9),rgba(232,170,185,.72));border-color:#E8AAB9;color:#6B4651;}',
       '#zy-bead .bd-cvwrap{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:6px 0;}',
-      '#zy-bead .bd-cvwrap canvas{border-radius:12px;background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.35);touch-action:none;max-width:100%;height:auto;}',
+      '#zy-bead .bd-cvwrap canvas{border-radius:14px;background:#fff;box-shadow:0 10px 30px rgba(58,62,86,.14);touch-action:none;max-width:100%;height:auto;}',
       '#zy-bead .bd-playwrap canvas{background:transparent;box-shadow:none;}',
       '#zy-bead .bd-cvwrap.zoom canvas{max-width:none;width:auto;}',
       '#zy-bead .bd-palette{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0 4px;}',
       '#zy-bead .bd-sw{width:30px;height:30px;border-radius:8px;border:2px solid transparent;cursor:pointer;position:relative;}',
-      '#zy-bead .bd-sw.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,158,199,.9);}',
-      '#zy-bead .bd-sw i{position:absolute;right:-3px;bottom:-3px;font-size:9px;background:rgba(0,0,0,.6);color:#fff;border-radius:6px;padding:0 3px;font-style:normal;line-height:12px;}',
+      '#zy-bead .bd-sw.on{border-color:#fff;box-shadow:0 0 0 2px rgba(232,170,185,.9);}',
+      '#zy-bead .bd-sw i{position:absolute;right:-3px;bottom:-3px;font-size:9px;background:rgba(58,62,86,.65);color:#fff;border-radius:6px;padding:0 3px;font-style:normal;line-height:12px;}',
       '#zy-bead .bd-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:6px 0 2px;}',
-      '#zy-bead .bd-btn{border:none;background:linear-gradient(135deg,#ff8fc0,#a97bff);color:#fff;font-size:13px;font-weight:600;padding:10px 18px;border-radius:19px;cursor:pointer;}',
-      '#zy-bead .bd-btn.ghost{background:rgba(255,255,255,.13);font-weight:500;}',
+      '#zy-bead .bd-btn{border:none;background:linear-gradient(135deg,#F5D3DC,#E8AAB9);color:#6B4651;font-size:13px;font-weight:600;padding:10px 18px;border-radius:19px;cursor:pointer;box-shadow:0 8px 20px rgba(232,170,185,.28);}',
+      '#zy-bead .bd-btn.ghost{background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.75);color:#6B4651;box-shadow:none;font-weight:500;}',
       '#zy-bead .bd-btn:disabled{opacity:.45;}',
-      '#zy-bead .bd-prog{height:8px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden;margin:6px 0 10px;}',
-      '#zy-bead .bd-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff8fc0,#a97bff);transition:width .25s;}',
-      '#zy-bead .bd-bubble{display:flex;gap:8px;align-items:flex-start;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;margin-bottom:10px;font-size:13px;line-height:1.6;}',
-      '#zy-bead .bd-bubble .av{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#ff9ec7,#a97bff);display:flex;align-items:center;justify-content:center;font-size:13px;}',
-      '#zy-bead .bd-sheet{position:absolute;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:flex-end;justify-content:center;z-index:3;}',
-      '#zy-bead .bd-sheet-in{width:100%;max-width:600px;max-height:78%;overflow-y:auto;background:#241536;border-radius:20px 20px 0 0;padding:16px 16px 26px;}',
-      '#zy-bead .bd-sheet-in h3{margin:0 0 12px;font-size:16px;}',
-      '#zy-bead .bd-mat-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px;}',
+      '#zy-bead .bd-prog{height:8px;border-radius:4px;background:rgba(255,255,255,.6);overflow:hidden;margin:6px 0 10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7);}',
+      '#zy-bead .bd-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#F5D3DC,#E8AAB9);transition:width .25s;}',
+      '#zy-bead .bd-bubble{display:flex;gap:8px;align-items:flex-start;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.75);border-radius:18px;padding:10px 12px;margin-bottom:10px;font-size:13px;line-height:1.6;color:#3A3540;box-shadow:0 6px 20px rgba(58,62,86,.06);}',
+      '#zy-bead .bd-bubble .av{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#F5D3DC,#E8AAB9);color:#6B4651;display:flex;align-items:center;justify-content:center;font-size:13px;}',
+      '#zy-bead .bd-bubble .av svg{width:14px;height:14px;}',
+      '#zy-bead .bd-sheet{position:absolute;inset:0;background:rgba(52,50,64,.26);display:flex;align-items:flex-end;justify-content:center;z-index:3;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}',
+      '#zy-bead .bd-sheet-in{width:100%;max-width:600px;max-height:78%;overflow-y:auto;background:#FBF7F8;border:1px solid rgba(255,255,255,.8);border-radius:26px 26px 0 0;padding:16px 16px 26px;box-shadow:0 -10px 40px rgba(58,62,86,.12);}',
+      '#zy-bead .bd-sheet-in h3{margin:0 0 12px;font-size:16px;color:#2B2A2E;}',
+      '#zy-bead .bd-mat-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(58,62,86,.08);font-size:13px;}',
       '#zy-bead .bd-mat-row:last-child{border-bottom:none;}',
-      '#zy-bead .bd-dot{width:22px;height:22px;border-radius:6px;flex-shrink:0;border:1px solid rgba(255,255,255,.25);}',
-      '#zy-bead .bd-mat-name{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#e2d3f2;}',
-      '#zy-bead .bd-mat-num{font-weight:600;color:#fff;}',
+      '#zy-bead .bd-dot{width:22px;height:22px;border-radius:6px;flex-shrink:0;border:1px solid rgba(58,62,86,.14);}',
+      '#zy-bead .bd-mat-name{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#6E6A70;}',
+      '#zy-bead .bd-mat-num{font-weight:600;color:#2B2A2E;}',
       '#zy-bead .bd-preview{width:100%;border-radius:12px;background:#fff;display:block;}',
       '#zy-bead .bd-works{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}',
       '#zy-bead .bd-works .it{position:relative;border-radius:10px;overflow:hidden;background:#fff;aspect-ratio:1;cursor:pointer;}',
       '#zy-bead .bd-works .it img{width:100%;height:100%;object-fit:cover;display:block;}',
-      '#zy-bead .bd-works .it span{position:absolute;left:0;right:0;bottom:0;font-size:10px;color:#fff;background:rgba(0,0,0,.45);padding:2px 4px;text-align:center;}',
+      '#zy-bead .bd-works .it span{position:absolute;left:0;right:0;bottom:0;font-size:10px;color:#fff;background:rgba(58,62,86,.45);padding:2px 4px;text-align:center;}',
       '#zy-bead .bd-iron{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2;}',
-      '#zy-bead .bd-iron .beam{position:absolute;top:0;bottom:0;width:34%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:bdsweep 2.6s linear forwards;}',
+      '#zy-bead .bd-iron .beam{position:absolute;top:0;bottom:0;width:34%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:bdsweep 2.6s linear forwards;}',
       '@keyframes bdsweep{from{left:-40%}to{left:106%}}',
-      '#zy-bead .bd-iron .ir{position:absolute;top:50%;font-size:34px;transform:translate(-50%,-50%);animation:bdmove 2.6s linear forwards;}',
+      '#zy-bead .bd-iron .ir{position:absolute;top:50%;color:#6B4651;transform:translate(-50%,-50%);animation:bdmove 2.6s linear forwards;}',
+      '#zy-bead .bd-iron .ir svg{width:34px;height:34px;display:block;}',
       '@keyframes bdmove{from{left:0}to{left:100%}}',
-      '#zy-bead .bd-center{text-align:center;padding:40px 10px;font-size:14px;color:#d7c6e8;}',
-      '#zy-bead .bd-big{font-size:20px;font-weight:600;color:#fff;margin-bottom:6px;}',
+      '#zy-bead .bd-center{text-align:center;padding:40px 10px;font-size:14px;color:#6E6A70;}',
+      '#zy-bead .bd-big{font-size:20px;font-weight:600;color:#2B2A2E;margin-bottom:6px;}',
       /* ---- 摆豆板 + 镊子拖拽 ---- */
       '#zy-bead .bd-playwrap{padding:0 0 4px;position:relative;}',
       '#zy-bead .bd-playwrap.shake{animation:bdshake .34s ease;}',
       '@keyframes bdshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}',
       '#zy-bead .bd-traywrap{flex-shrink:0;}',
-      '#zy-bead .bd-trayhint{font-size:11px;color:#c9b6dd;text-align:center;margin:2px 0 5px;}',
+      '#zy-bead .bd-trayhint{font-size:11px;color:#6E6A70;text-align:center;margin:2px 0 5px;}',
       '#zy-bead .bd-tray{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 8px;touch-action:pan-x;}',
-      '#zy-bead .bd-traycol{flex:0 0 auto;position:relative;width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);padding:0;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;display:flex;align-items:center;justify-content:center;}',
-      '#zy-bead .bd-traycol i{width:23px;height:23px;border-radius:50%;box-shadow:inset 0 -2px 4px rgba(0,0,0,.28),0 1px 3px rgba(0,0,0,.35);position:relative;}',
+      '#zy-bead .bd-traycol{flex:0 0 auto;position:relative;width:42px;height:42px;border-radius:50%;border:2px solid rgba(58,62,86,.12);background:rgba(255,255,255,.55);padding:0;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;display:flex;align-items:center;justify-content:center;}',
+      '#zy-bead .bd-traycol i{width:23px;height:23px;border-radius:50%;box-shadow:inset 0 -2px 4px rgba(0,0,0,.18),0 1px 3px rgba(58,62,86,.18);position:relative;}',
       '#zy-bead .bd-traycol i:after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.7);}',
-      '#zy-bead .bd-traycol b{position:absolute;right:-3px;bottom:-3px;font-size:10px;font-weight:600;background:rgba(0,0,0,.62);color:#fff;border-radius:8px;padding:0 4px;line-height:14px;}',
-      '#zy-bead .bd-traycol.on{border-color:#fff;box-shadow:0 0 0 3px rgba(255,158,199,.55);}',
+      '#zy-bead .bd-traycol b{position:absolute;right:-3px;bottom:-3px;font-size:10px;font-weight:600;background:rgba(58,62,86,.7);color:#fff;border-radius:8px;padding:0 4px;line-height:14px;}',
+      '#zy-bead .bd-traycol.on{border-color:#E8AAB9;box-shadow:0 0 0 3px rgba(232,170,185,.45);}',
       '#zy-bead .bd-traycol.done{opacity:.26;}',
-      '#zy-bead .bd-ghost{position:fixed;left:0;top:0;z-index:99999;width:34px;height:34px;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 8px rgba(0,0,0,.45));}',
-      '#zy-bead .bd-ghost .bead{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 -3px 5px rgba(0,0,0,.3);}',
+      '#zy-bead .bd-ghost{position:fixed;left:0;top:0;z-index:99999;width:34px;height:34px;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 8px rgba(58,62,86,.28));}',
+      '#zy-bead .bd-ghost .bead{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 -3px 5px rgba(0,0,0,.2);}',
       '#zy-bead .bd-ghost .bead:after{content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:rgba(255,255,255,.78);}',
-      '#zy-bead .bd-ghost .tw{position:absolute;left:50%;top:-25px;width:3px;height:30px;border-radius:2px;background:linear-gradient(180deg,#f4f4fa,#a6a6ba);transform-origin:bottom center;}',
+      '#zy-bead .bd-ghost .tw{position:absolute;left:50%;top:-25px;width:3px;height:30px;border-radius:2px;background:linear-gradient(180deg,#fff,#C9C6CF);transform-origin:bottom center;}',
       '#zy-bead .bd-ghost .tw1{transform:translateX(-50%) rotate(-11deg);}',
       '#zy-bead .bd-ghost .tw2{transform:translateX(-50%) rotate(11deg);}',
       '#zy-bead .bd-cvwrap.bigboard{justify-content:flex-start;}',
       '#zy-bead .bd-cvwrap.bigboard canvas{max-width:none;width:760px;height:760px;touch-action:pan-x pan-y;}',
       /* ---- 我的作品 ---- */
       '#zy-bead .bd-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:2px 0 8px;}',
-      '#zy-bead .bd-wcard{border-radius:12px;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);cursor:pointer;}',
+      '#zy-bead .bd-wcard{border-radius:14px;overflow:hidden;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.75);cursor:pointer;box-shadow:0 6px 18px rgba(58,62,86,.06);}',
       '#zy-bead .bd-wcard img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#fff;}',
-      '#zy-bead .bd-wcard .meta{display:flex;flex-direction:column;padding:5px 7px 6px;font-size:10px;color:#c9b6dd;line-height:1.4;}',
-      '#zy-bead .bd-wcard .meta b{font-size:11px;color:#fff;font-weight:600;}',
-      '#zy-bead .bd-wmeta{display:flex;gap:14px;justify-content:center;font-size:12px;color:#c9b6dd;margin:8px 0 12px;flex-wrap:wrap;}',
-      '#zy-bead .bd-wmeta b{color:#fff;font-weight:600;}'
+      '#zy-bead .bd-wcard .meta{display:flex;flex-direction:column;padding:5px 7px 6px;font-size:10px;color:#6E6A70;line-height:1.4;}',
+      '#zy-bead .bd-wcard .meta b{font-size:11px;color:#2B2A2E;font-weight:600;}',
+      '#zy-bead .bd-wmeta{display:flex;gap:14px;justify-content:center;font-size:12px;color:#6E6A70;margin:8px 0 12px;flex-wrap:wrap;}',
+      '#zy-bead .bd-wmeta b{color:#2B2A2E;font-weight:600;}'
     ].join('');
     var s = document.createElement('style');
     s.id = STYLE_ID; s.textContent = css;
@@ -270,7 +272,7 @@
     var worksHtml =
       '<div class="bd-tile">' +
         '<h4 style="display:flex;align-items:center;justify-content:space-between;">' +
-          '<span>我的作品</span><span style="font-size:12px;font-weight:400;color:#c9b6dd;">' + st.works.length + ' 件</span>' +
+          '<span>我的作品</span><span style="font-size:12px;font-weight:400;color:#6E6A70;">' + st.works.length + ' 件</span>' +
         '</h4>' +
         (st.works.length
           ? '<div class="bd-works" id="bd-works">' +
@@ -278,12 +280,12 @@
                 return '<div class="it" data-id="' + w.id + '"><img src="' + w.thumb + '"><span>' + esc(w.date || '') + '</span></div>';
               }).join('') +
             '</div>'
-          : '<div style="font-size:13px;color:#b9a4ce;padding:4px 0 10px;">还没有作品，拼完一幅就会自动收进这里</div>') +
+          : '<div style="font-size:13px;color:#8A858C;padding:4px 0 10px;">还没有作品，拼完一幅就会自动收进这里</div>') +
         '<button class="bd-btn ghost" id="bd-more-works" type="button" style="width:100%;margin-top:10px;">进入作品集</button>' +
       '</div>';
     b.innerHTML =
       '<div class="bd-hero">' +
-        '<div class="big">🧩 拼豆工坊</div>' +
+        '<div class="big">拼豆工坊</div>' +
         '<div class="sub">把一张图片变成可以真的拼出来的拼豆图纸，<br>再和 ' + esc(name) + ' 一起一颗一颗把它拼出来。</div>' +
         '<button class="bd-cta" id="bd-pick" type="button">上传图片做图纸</button>' +
         '<button class="bd-cta ghost" id="bd-demo" type="button">先看看示例图纸</button>' +
@@ -346,7 +348,7 @@
         '</div></div>' +
       '</div>' +
       '<div class="bd-bar"><button class="bd-btn" id="bd-gen" type="button">生成图纸</button></div>' +
-      '<div style="text-align:center;font-size:11px;color:#b9a4ce;margin-top:8px;">拖动画面可以移动位置</div>';
+      '<div style="text-align:center;font-size:11px;color:#8A858C;margin-top:8px;">拖动画面可以移动位置</div>';
 
     var wrap = b.querySelector('#bd-cropwrap');
     wrap.appendChild(cvCrop);
@@ -778,7 +780,7 @@
 
     st.previewDataUrl = out.toDataURL('image/png');
     var sh = openSheet('图纸已生成', '<img class="bd-preview" src="' + st.previewDataUrl + '">' +
-      '<div style="font-size:12px;color:#cbb8e0;text-align:center;margin-top:10px;">点按钮保存，或长按图片保存到相册</div>' +
+      '<div style="font-size:12px;color:#8A858C;text-align:center;margin-top:10px;">点按钮保存，或长按图片保存到相册</div>' +
       '<div class="bd-bar" style="margin-top:12px"><button class="bd-btn" id="bd-save-img" type="button">保存到相册</button>' +
       '<button class="bd-btn ghost" id="bd-share-img" type="button">分享</button>' +
       '<button class="bd-btn ghost" id="bd-print" type="button">打印</button></div>');
@@ -919,7 +921,7 @@
     setTitle('和' + partnerName() + '一起拼豆');
     var name = partnerName();
     b.innerHTML =
-      '<div class="bd-bubble"><div class="av">🌙</div><div id="bd-say">' + esc(name) + '：拿镊子夹起豆子，拖到板上对应的圆点试试～</div></div>' +
+      '<div class="bd-bubble"><div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A7.5 7.5 0 1 1 9.5 4a6 6 0 0 0 10.5 10.5z"/></svg></div><div id="bd-say">' + esc(name) + '：拿镊子夹起豆子，拖到板上对应的圆点试试～</div></div>' +
       '<div class="bd-row" style="justify-content:space-between"><span class="bd-lbl" style="min-width:0">进度</span>' +
         '<span class="bd-val" id="bd-progtxt" style="min-width:0">0 / ' + totalCells() + '</span></div>' +
       '<div class="bd-prog"><i id="bd-progbar"></i></div>';
@@ -932,7 +934,7 @@
     var trayWrap = document.createElement('div');
     trayWrap.className = 'bd-traywrap';
     trayWrap.innerHTML =
-      '<div class="bd-trayhint">🥢 按住一种颜色，拖到板上的圆点 · 直接点格子也能放</div>' +
+      '<div class="bd-trayhint">按住一种颜色，拖到板上的圆点 · 直接点格子也能放</div>' +
       '<div class="bd-tray" id="bd-tray"></div>';
     b.appendChild(trayWrap);
 
@@ -1320,7 +1322,7 @@
     wrap.appendChild(cv);
     var fx = document.createElement('div');
     fx.className = 'bd-iron';
-    fx.innerHTML = '<div class="beam"></div><div class="ir">🔥</div>';
+    fx.innerHTML = '<div class="beam"></div><div class="ir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6.5.5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>';
     wrap.appendChild(fx);
     b.appendChild(wrap);
     var tip = document.createElement('div');
@@ -1403,7 +1405,7 @@
     if (!w) { b.innerHTML = '<div class="bd-center">还没有成品</div>'; return; }
     b.innerHTML =
       '<div class="bd-hero" style="padding:18px 8px 8px">' +
-        '<div class="big">✨ 拼好啦</div>' +
+        '<div class="big">拼好啦</div>' +
         '<div class="sub">' + w.w + '×' + w.h + ' · ' + w.colors + ' 色 · ' + w.total + ' 颗豆子</div>' +
       '</div>' +
       '<div class="bd-tile" style="padding:10px;"><img class="bd-preview" src="' + w.thumb + '"></div>' +
@@ -1415,7 +1417,7 @@
         '<button class="bd-btn ghost" id="bd-myw" type="button">我的作品</button>' +
         '<button class="bd-btn ghost" id="bd-again" type="button">再做一张</button>' +
       '</div>' +
-      '<div style="text-align:center;font-size:12px;color:#b9a4ce;margin-top:10px;">成品会自动收进「我的作品」，也可以长按图片保存</div>';
+      '<div style="text-align:center;font-size:12px;color:#8A858C;margin-top:10px;">成品会自动收进「我的作品」，也可以长按图片保存</div>';
     b.querySelector('#bd-save').addEventListener('click', function () {
       saveImage(w.thumb, stampName('拼豆成品'));
     });
@@ -1440,7 +1442,7 @@
     b.innerHTML =
       '<div class="bd-row" style="justify-content:space-between;margin-bottom:6px;">' +
         '<span class="bd-lbl" style="min-width:0">共 ' + st.works.length + ' 件作品</span>' +
-        '<span class="bd-val" style="min-width:0;color:#b9a4ce;">点开可保存 / 分享 / 删除</span>' +
+        '<span class="bd-val" style="min-width:0;color:#8A858C;">点开可保存 / 分享 / 删除</span>' +
       '</div>' +
       '<div class="bd-gallery">' +
         st.works.map(function (w) {

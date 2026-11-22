@@ -332,6 +332,15 @@
         return _todayMsgCount;
     }
 
+    /** 小组件线性图标（替换 emoji） */
+    const hwSvg = (paths) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+    const HW_ICONS = {
+        anniv: hwSvg('<path d="M4 20h16"/><path d="M5 20v-5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v5"/><path d="M12 13V9"/><path d="M12 9c1 0 1.5-.7 1.5-1.5S12 5 12 5s-1.5 1-1.5 2.5S11 9 12 9Z"/>'),
+        quote: hwSvg('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>'),
+        pet: hwSvg('<circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/>'),
+        msgs: hwSvg('<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>')
+    };
+
     /** 生成一张小组件卡片 */
     function createWidget(key, icon, title, value, unit, sub, onClick) {
         const card = document.createElement('div');
@@ -342,7 +351,7 @@
         head.className = 'hw-head';
         const iconEl = document.createElement('span');
         iconEl.className = 'hw-icon';
-        iconEl.textContent = icon;
+        iconEl.innerHTML = icon;
         const titleEl = document.createElement('span');
         titleEl.className = 'hw-title';
         titleEl.textContent = title;
@@ -374,7 +383,7 @@
         const startDate = (profileData.me && profileData.me.startDate) || '';
         const start = parseDateOnly(startDate);
         if (!start) {
-            return createWidget('anniv', '🎂', '纪念日', '--', '', '点击设置在一起日期', () => {
+            return createWidget('anniv', HW_ICONS.anniv, '纪念日', '--', '', '点击设置在一起日期', () => {
                 if (typeof window.showProfile === 'function') window.showProfile('me');
             });
         }
@@ -390,7 +399,7 @@
         const unit = diff === 0 ? '' : '天后';
         const dateText = (next.getMonth() + 1) + '月' + next.getDate() + '日';
         const sub = years > 0 ? (years + ' 周年 · ' + dateText) : dateText;
-        return createWidget('anniv', '🎂', '纪念日', value, unit, sub, () => {
+        return createWidget('anniv', HW_ICONS.anniv, '纪念日', value, unit, sub, () => {
             window.openApp('sweet-new');
         });
     }
@@ -401,7 +410,7 @@
         const startOfYear = new Date(now.getFullYear(), 0, 0);
         const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / 86400000);
         const text = pool[Math.max(0, dayOfYear) % pool.length];
-        return createWidget('quote', '💌', '每日一句', text, '', '字卡库 · 点击查看', () => {
+        return createWidget('quote', HW_ICONS.quote, '每日一句', text, '', '字卡库 · 点击查看', () => {
             window.openApp('cards');
         });
     }
@@ -411,21 +420,21 @@
         try { data = JSON.parse(localStorage.getItem('pixelPetGame') || 'null'); } catch (e) {}
         const pet = data && data.pets && data.currentPet ? data.pets[data.currentPet] : null;
         if (!pet) {
-            return createWidget('pet', '🐾', '萌宠状态', '还没养', '', '点击去萌宠屋看看', () => {
+            return createWidget('pet', HW_ICONS.pet, '萌宠状态', '还没养', '', '点击去萌宠屋看看', () => {
                 window.openApp('pet');
             });
         }
         const lv = pet.level || 1;
         const mood = pet.stats && typeof pet.stats.mood === 'number' ? pet.stats.mood : 80;
         const moodText = mood >= 85 ? '心情超好' : mood >= 60 ? '心情不错' : mood >= 35 ? '有点蔫' : '需要陪伴';
-        return createWidget('pet', '🐾', pet.name || '萌宠', 'Lv.' + lv, '', moodText, () => {
+        return createWidget('pet', HW_ICONS.pet, pet.name || '萌宠', 'Lv.' + lv, '', moodText, () => {
             window.openApp('pet');
         });
     }
 
     function buildMsgsWidget() {
         const count = countTodayMessages();
-        return createWidget('msgs', '💬', '今日消息', String(count), '条',
+        return createWidget('msgs', HW_ICONS.msgs, '今日消息', String(count), '条',
             count > 0 ? '今天和 TA 的对话' : '今天还没聊天', () => {
                 window.openApp('chat');
             });
