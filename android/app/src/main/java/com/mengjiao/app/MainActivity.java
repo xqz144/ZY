@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String HOST = "appassets.mengjiao.local";
     private static final String PREFIX_PUBLIC = "/public/";
     private static final String PREFIX_HOT = "/hot/";
-    private static final String APP_VERSION = "1.10.30";
+    private static final String APP_VERSION = "1.10.31";
     private static final int FILE_CHOOSER_REQUEST_CODE = 51426;
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 51427;
     private static final String CHANNEL_MSG = "mengjiao_msg";
@@ -134,6 +134,12 @@ public class MainActivity extends AppCompatActivity {
 
         // 注册原生文件保存接口（JS 调用 window.AndroidFileSaver.saveBase64File）
         mWebView.addJavascriptInterface(new FileSaverInterface(), "AndroidFileSaver");
+
+        // 注册相册保存接口（JS 调用 window.AndroidGallery.saveImage(name, base64)）
+        mWebView.addJavascriptInterface(new GalleryInterface(), "AndroidGallery");
+
+        // 注册系统分享接口（JS 调用 window.AndroidShare.shareImage(name, base64, text)）
+        mWebView.addJavascriptInterface(new ShareInterface(), "AndroidShare");
 
         // 注册原生通知接口（JS 调用 window.AndroidNotify.notify(title, text, tag)）
         mWebView.addJavascriptInterface(new NotificationInterface(), "AndroidNotify");
@@ -383,6 +389,97 @@ public class MainActivity extends AppCompatActivity {
         @android.webkit.JavascriptInterface
         public boolean isAvailable() {
             return true;
+        }
+    }
+
+    // ────────────── 相册保存 ──────────────
+
+    /**
+     * 把 base64 PNG 写入系统相册（Pictures/MengJiao）。Android 10+ 无需权限。
+     * JS 调用：window.AndroidGallery.saveImage(fileName, base64Data) → true/false
+     */
+    private class GalleryInterface {
+        @android.webkit.JavascriptInterface
+        public boolean saveImage(final String fileName, final String base64Data) {
+            try {
+                byte[] bytes = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT);
+                Uri uri = insertImageToGallery(fileName, bytes);
+                if (uri == null) return false;
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "已保存到相册（MengJiao）", Toast.LENGTH_SHORT).show());
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        public boolean isAvailable() {
+            return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+        }
+    }
+
+    // ────────────── 系统分享 ──────────────
+
+    /**
+     * 写进相册后直接拉起系统分享面板（WebView 里 navigator.share 不可用）。
+     * JS 调用：window.AndroidShare.shareImage(fileName, base64Data, text) → true 表示已处理
+     */
+    private class ShareInterface {
+        @android.webkit.JavascriptInterface
+        public boolean shareImage(final String fileName, final String base64Data, final String text) {
+            try {
+                byte[] bytes = android.util.Base64.decode(base64Data, android.util.Base64.DEFAULT);
+                final Uri uri = insertImageToGallery(fileName, bytes);
+                if (uri == null) return false;
+                runOnUiThread(() -> {
+                    try {
+                        Intent send = new Intent(Intent.ACTION_SEND);
+                        send.setType("image/png");
+                        send.putExtra(Intent.EXTRA_STREAM, uri);
+                        if (text != null && !text.isEmpty()) send.putExtra(Intent.EXTRA_TEXT, text);
+                        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(send, "分享拼豆作品"));
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "没有可用的分享应用", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+    }
+
+    /** 写入系统相册，成功返回 content Uri；Android 10 以下返回 null（由前端改走 Downloads 通道） */
+    private Uri insertImageToGallery(String fileName, byte[] data) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null;
+        Uri uri = null;
+        try {
+            ContentResolver resolver = getContentResolver();
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/MengJiao");
+            values.put(MediaStore.Images.Media.IS_PENDING, 1);
+            uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) return null;
+            try (OutputStream os = resolver.openOutputStream(uri)) {
+                if (os == null) {
+                    resolver.delete(uri, null, null);
+                    return null;
+                }
+                os.write(data);
+                os.flush();
+            }
+            ContentValues done = new ContentValues();
+            done.put(MediaStore.Images.Media.IS_PENDING, 0);
+            resolver.update(uri, done, null, null);
+            return uri;
+        } catch (Exception e) {
+            if (uri != null) {
+                try { getContentResolver().delete(uri, null, null); } catch (Exception ignored) { }
+            }
+            return null;
         }
     }
 

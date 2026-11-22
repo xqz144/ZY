@@ -64,6 +64,7 @@
     playing: false,
     placed: null,      // Uint8Array
     placedCount: 0,
+    playColor: -1,     // 摆豆时镊子夹着的颜色索引
     helper: true,
     helperTimer: null,
     anim: {},          // 放置动画 {idx: startTime}
@@ -133,7 +134,36 @@
       '#zy-bead .bd-iron .ir{position:absolute;top:50%;font-size:34px;transform:translate(-50%,-50%);animation:bdmove 2.6s linear forwards;}',
       '@keyframes bdmove{from{left:0}to{left:100%}}',
       '#zy-bead .bd-center{text-align:center;padding:40px 10px;font-size:14px;color:#d7c6e8;}',
-      '#zy-bead .bd-big{font-size:20px;font-weight:600;color:#fff;margin-bottom:6px;}'
+      '#zy-bead .bd-big{font-size:20px;font-weight:600;color:#fff;margin-bottom:6px;}',
+      /* ---- 摆豆板 + 镊子拖拽 ---- */
+      '#zy-bead .bd-playwrap{padding:0 0 4px;position:relative;}',
+      '#zy-bead .bd-playwrap.shake{animation:bdshake .34s ease;}',
+      '@keyframes bdshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}',
+      '#zy-bead .bd-traywrap{flex-shrink:0;}',
+      '#zy-bead .bd-trayhint{font-size:11px;color:#c9b6dd;text-align:center;margin:2px 0 5px;}',
+      '#zy-bead .bd-tray{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 8px;touch-action:pan-x;}',
+      '#zy-bead .bd-traycol{flex:0 0 auto;position:relative;width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);padding:0;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;display:flex;align-items:center;justify-content:center;}',
+      '#zy-bead .bd-traycol i{width:23px;height:23px;border-radius:50%;box-shadow:inset 0 -2px 4px rgba(0,0,0,.28),0 1px 3px rgba(0,0,0,.35);position:relative;}',
+      '#zy-bead .bd-traycol i:after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.7);}',
+      '#zy-bead .bd-traycol b{position:absolute;right:-3px;bottom:-3px;font-size:10px;font-weight:600;background:rgba(0,0,0,.62);color:#fff;border-radius:8px;padding:0 4px;line-height:14px;}',
+      '#zy-bead .bd-traycol.on{border-color:#fff;box-shadow:0 0 0 3px rgba(255,158,199,.55);}',
+      '#zy-bead .bd-traycol.done{opacity:.26;}',
+      '#zy-bead .bd-ghost{position:fixed;left:0;top:0;z-index:99999;width:34px;height:34px;pointer-events:none;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 8px rgba(0,0,0,.45));}',
+      '#zy-bead .bd-ghost .bead{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 -3px 5px rgba(0,0,0,.3);}',
+      '#zy-bead .bd-ghost .bead:after{content:"";position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:rgba(255,255,255,.78);}',
+      '#zy-bead .bd-ghost .tw{position:absolute;left:50%;top:-25px;width:3px;height:30px;border-radius:2px;background:linear-gradient(180deg,#f4f4fa,#a6a6ba);transform-origin:bottom center;}',
+      '#zy-bead .bd-ghost .tw1{transform:translateX(-50%) rotate(-11deg);}',
+      '#zy-bead .bd-ghost .tw2{transform:translateX(-50%) rotate(11deg);}',
+      '#zy-bead .bd-cvwrap.bigboard{justify-content:flex-start;}',
+      '#zy-bead .bd-cvwrap.bigboard canvas{max-width:none;width:760px;height:760px;touch-action:pan-x pan-y;}',
+      /* ---- 我的作品 ---- */
+      '#zy-bead .bd-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:2px 0 8px;}',
+      '#zy-bead .bd-wcard{border-radius:12px;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);cursor:pointer;}',
+      '#zy-bead .bd-wcard img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#fff;}',
+      '#zy-bead .bd-wcard .meta{display:flex;flex-direction:column;padding:5px 7px 6px;font-size:10px;color:#c9b6dd;line-height:1.4;}',
+      '#zy-bead .bd-wcard .meta b{font-size:11px;color:#fff;font-weight:600;}',
+      '#zy-bead .bd-wmeta{display:flex;gap:14px;justify-content:center;font-size:12px;color:#c9b6dd;margin:8px 0 12px;flex-wrap:wrap;}',
+      '#zy-bead .bd-wmeta b{color:#fff;font-weight:600;}'
     ].join('');
     var s = document.createElement('style');
     s.id = STYLE_ID; s.textContent = css;
@@ -184,6 +214,9 @@
     ctxCrop = cvCrop.getContext('2d');
     cv = document.createElement('canvas');
     ctx = cv.getContext('2d');
+    // 拼豆画布的点按/滑动放豆（画布复用，只绑一次）
+    cv.addEventListener('pointerdown', onPlayPointerDown);
+    cv.addEventListener('pointermove', onPlayPointerMove);
 
     root.querySelector('.bd-back').addEventListener('click', onBack);
     root.querySelector('#bd-file').addEventListener('change', onFilePicked);
@@ -199,6 +232,7 @@
     if (st.screen === 'play') { if (confirmExitPlay()) go('grid'); return; }
     if (st.screen === 'iron') { return; }
     if (st.screen === 'done') { go('home'); return; }
+    if (st.screen === 'works') { go('home'); return; }
   }
   function confirmExitPlay() {
     if (st.placedCount === 0) return true;
@@ -208,6 +242,7 @@
   function go(screen) {
     st.screen = screen;
     stopHelper();
+    endDrag();
     render();
   }
 
@@ -222,21 +257,27 @@
     else if (st.screen === 'play') renderPlay(b);
     else if (st.screen === 'iron') renderIron(b);
     else if (st.screen === 'done') renderDone(b);
+    else if (st.screen === 'works') renderWorks(b);
   }
 
   /* ---------- 首页 ---------- */
   function renderHome(b) {
     setTitle('拼豆工坊');
     var name = partnerName();
-    var worksHtml = '';
-    if (st.works.length) {
-      worksHtml =
-        '<div class="bd-tile"><h4>我的作品</h4><div class="bd-works" id="bd-works">' +
-        st.works.slice(0, 9).map(function (w) {
-          return '<div class="it" data-id="' + w.id + '"><img src="' + w.thumb + '"><span>' + esc(w.date || '') + '</span></div>';
-        }).join('') +
-        '</div></div>';
-    }
+    var worksHtml =
+      '<div class="bd-tile">' +
+        '<h4 style="display:flex;align-items:center;justify-content:space-between;">' +
+          '<span>我的作品</span><span style="font-size:12px;font-weight:400;color:#c9b6dd;">' + st.works.length + ' 件</span>' +
+        '</h4>' +
+        (st.works.length
+          ? '<div class="bd-works" id="bd-works">' +
+              st.works.slice(0, 6).map(function (w) {
+                return '<div class="it" data-id="' + w.id + '"><img src="' + w.thumb + '"><span>' + esc(w.date || '') + '</span></div>';
+              }).join('') +
+            '</div>'
+          : '<div style="font-size:13px;color:#b9a4ce;padding:4px 0 10px;">还没有作品，拼完一幅就会自动收进这里</div>') +
+        '<button class="bd-btn ghost" id="bd-more-works" type="button" style="width:100%;margin-top:10px;">进入作品集</button>' +
+      '</div>';
     b.innerHTML =
       '<div class="bd-hero">' +
         '<div class="big">🧩 拼豆工坊</div>' +
@@ -247,10 +288,11 @@
       worksHtml;
     b.querySelector('#bd-pick').addEventListener('click', function () { root.querySelector('#bd-file').click(); });
     b.querySelector('#bd-demo').addEventListener('click', makeDemo);
+    b.querySelector('#bd-more-works').addEventListener('click', function () { go('works'); });
     var worksEl = b.querySelector('#bd-works');
     if (worksEl) {
       worksEl.querySelectorAll('.it').forEach(function (el) {
-        el.addEventListener('click', function () { openWork(el.getAttribute('data-id')); });
+        el.addEventListener('click', function () { openWorkSheet(el.getAttribute('data-id')); });
       });
     }
   }
@@ -523,6 +565,7 @@
   }
 
   function onGridPointerDown(e) {
+    if (st.screen !== 'grid') return;
     var hit = hitTest(e, cv);
     if (!hit) return;
     var idx = hit.row * st.gridW + hit.col;
@@ -709,12 +752,16 @@
 
     st.previewDataUrl = out.toDataURL('image/png');
     var sh = openSheet('图纸已生成', '<img class="bd-preview" src="' + st.previewDataUrl + '">' +
-      '<div style="font-size:12px;color:#cbb8e0;text-align:center;margin-top:10px;">长按图片可保存到相册</div>' +
-      '<div class="bd-bar" style="margin-top:12px"><button class="bd-btn" id="bd-share-img" type="button">分享</button>' +
+      '<div style="font-size:12px;color:#cbb8e0;text-align:center;margin-top:10px;">点按钮保存，或长按图片保存到相册</div>' +
+      '<div class="bd-bar" style="margin-top:12px"><button class="bd-btn" id="bd-save-img" type="button">保存到相册</button>' +
+      '<button class="bd-btn ghost" id="bd-share-img" type="button">分享</button>' +
       '<button class="bd-btn ghost" id="bd-print" type="button">打印</button></div>');
+    sh.querySelector('#bd-save-img').addEventListener('click', function () {
+      saveImage(st.previewDataUrl, stampName('拼豆图纸'));
+    });
     var shareBtn = sh.querySelector('#bd-share-img');
     if (shareBtn) {
-      shareBtn.addEventListener('click', function () { shareImage(st.previewDataUrl); });
+      shareBtn.addEventListener('click', function () { shareImage(st.previewDataUrl, '我的拼豆图纸'); });
     }
     sh.querySelector('#bd-print').addEventListener('click', function () {
       var w = window.open('', '_blank');
@@ -724,23 +771,85 @@
     });
   }
 
-  function shareImage(dataUrl) {
+  /* ---------- 保存 / 分享 ---------- */
+  function dataUrlToBase64(dataUrl) {
+    var s = String(dataUrl || '');
+    var i = s.indexOf(',');
+    return i >= 0 ? s.slice(i + 1) : '';
+  }
+  function stampName(prefix) {
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return (prefix || '拼豆') + '_' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
+      '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + '.png';
+  }
+  /**
+   * 保存图片：
+   *   1) App 内 → 原生桥 AndroidGallery 写入系统相册（Pictures/MengJiao）
+   *   2) 旧版 App → AndroidFileSaver 写入 Downloads/MengJiao
+   *   3) 浏览器 → <a download>
+   * 返回 true 表示已经交给某个通道处理。
+   */
+  function saveImage(dataUrl, filename, quiet) {
+    var base64 = dataUrlToBase64(dataUrl);
+    var name = filename || stampName('拼豆');
+    if (!base64) { if (!quiet) notify('图片还没准备好，请稍后再试'); return false; }
+    if (window.AndroidGallery && typeof window.AndroidGallery.saveImage === 'function') {
+      try {
+        if (window.AndroidGallery.saveImage(name, base64)) {
+          if (!quiet) notify('已保存到相册');
+          return true;
+        }
+      } catch (e) {}
+    }
+    if (window.AndroidFileSaver && typeof window.AndroidFileSaver.saveBase64File === 'function') {
+      try {
+        window.AndroidFileSaver.saveBase64File(name, base64, 'image/png');
+        if (!quiet) notify('已保存到手机');
+        return true;
+      } catch (e) {}
+    }
     try {
-      if (navigator.share) {
-        var arr = dataUrl.split(',');
-        var mime = arr[0].match(/:(.*?);/)[1];
-        var bin = atob(arr[1]);
+      var a = document.createElement('a');
+      a.href = dataUrl; a.download = name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      if (!quiet) notify('已开始下载');
+      return true;
+    } catch (e) {}
+    if (!quiet) notify('保存失败，请长按图片保存');
+    return false;
+  }
+
+  function shareImage(dataUrl, title) {
+    var base64 = dataUrlToBase64(dataUrl);
+    var name = stampName('拼豆');
+    var text = title || ('我在梦角拼了一幅拼豆～');
+    // 1) App 原生分享
+    if (window.AndroidShare && typeof window.AndroidShare.shareImage === 'function') {
+      try {
+        if (window.AndroidShare.shareImage(name, base64, text)) return;
+      } catch (e) {}
+    }
+    // 2) 浏览器 Web Share
+    try {
+      if (navigator.share && base64) {
+        var mime = 'image/png';
+        var bin = atob(base64);
         var u8 = new Uint8Array(bin.length);
         for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-        var blob = new Blob([u8], { type: mime });
-        var file = new File([blob], '拼豆图纸.png', { type: mime });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: '拼豆图纸' });
+        var file = new File([u8], name, { type: mime });
+        if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: text });
           return;
         }
       }
+    } catch (e) {}
+    // 3) 兜底：先存到相册，再去相册分享
+    if (saveImage(dataUrl, name, true)) {
+      notify('已保存到相册，可在相册里分享');
+    } else {
       notify('长按图片可以保存或分享');
-    } catch (e) { notify('长按图片可以保存或分享'); }
+    }
   }
 
   /* ---------- 一起拼豆：开始 ---------- */
@@ -749,36 +858,77 @@
     st.placed = new Uint8Array(W * H);
     st.placedCount = 0;
     st.anim = {};
+    st.playColor = -1;
     cv.width = W * CELL; cv.height = H * CELL;
+    buildBoardCache();
     go('play');
   }
 
   function totalCells() { return st.gridW * st.gridH; }
 
+  function remainCounts() {
+    var n = new Array(st.palette.length);
+    for (var i = 0; i < n.length; i++) n[i] = 0;
+    if (!st.placed) return n;
+    var total = totalCells();
+    for (var j = 0; j < total; j++) if (!st.placed[j]) n[st.cells[j]]++;
+    return n;
+  }
+  function firstRemainColor() {
+    var r = remainCounts();
+    for (var i = 0; i < r.length; i++) if (r[i] > 0) return i;
+    return 0;
+  }
+  function refreshTray() {
+    var tray = root.querySelector('#bd-tray');
+    if (!tray) return;
+    var r = remainCounts();
+    tray.innerHTML = st.palette.map(function (hex, i) {
+      return '<button class="bd-traycol' + (i === st.playColor ? ' on' : '') + (r[i] ? '' : ' done') +
+        '" data-ci="' + i + '" type="button"><i style="background:' + hex + '"></i><b>' + r[i] + '</b></button>';
+    }).join('');
+  }
+
   function renderPlay(b) {
     setTitle('和' + partnerName() + '一起拼豆');
     var name = partnerName();
     b.innerHTML =
-      '<div class="bd-bubble"><div class="av">🌙</div><div id="bd-say">' + esc(name) + '：我们一起把这幅拼完吧，我先帮你放几颗～</div></div>' +
+      '<div class="bd-bubble"><div class="av">🌙</div><div id="bd-say">' + esc(name) + '：拿镊子夹起豆子，拖到板上对应的圆点试试～</div></div>' +
       '<div class="bd-row" style="justify-content:space-between"><span class="bd-lbl" style="min-width:0">进度</span>' +
         '<span class="bd-val" id="bd-progtxt" style="min-width:0">0 / ' + totalCells() + '</span></div>' +
       '<div class="bd-prog"><i id="bd-progbar"></i></div>';
     var wrap = document.createElement('div');
-    wrap.className = 'bd-cvwrap';
+    wrap.className = 'bd-cvwrap bd-playwrap';
     wrap.id = 'bd-playwrap';
     wrap.appendChild(cv);
     b.appendChild(wrap);
+
+    var trayWrap = document.createElement('div');
+    trayWrap.className = 'bd-traywrap';
+    trayWrap.innerHTML =
+      '<div class="bd-trayhint">🥢 按住一种颜色，拖到板上的圆点 · 直接点格子也能放</div>' +
+      '<div class="bd-tray" id="bd-tray"></div>';
+    b.appendChild(trayWrap);
+
     var bar = document.createElement('div');
     bar.className = 'bd-bar';
     bar.innerHTML =
       '<button class="bd-btn" id="bd-helper" type="button">' + (st.helper ? '梦角正在帮你拼' : '让梦角帮我拼') + '</button>' +
+      '<button class="bd-btn ghost" id="bd-zoomplay" type="button">放大板子</button>' +
       '<button class="bd-btn ghost" id="bd-autofill" type="button">一键拼完</button>' +
       '<button class="bd-btn ghost" id="bd-ironbtn" type="button">我去熨烫</button>';
     b.appendChild(bar);
 
-    cv.addEventListener('pointerdown', onPlayPointerDown);
-    cv.addEventListener('pointermove', onPlayPointerMove);
+    if (st.playColor < 0 || !remainCounts()[st.playColor]) st.playColor = firstRemainColor();
+    refreshTray();
+    updateProg();
 
+    b.querySelector('#bd-zoomplay').addEventListener('click', function () {
+      var on = wrap.classList.toggle('bigboard');
+      this.textContent = on ? '缩小板子' : '放大板子';
+    });
+
+    b.querySelector('#bd-tray').addEventListener('pointerdown', onTrayDown);
     b.querySelector('#bd-helper').addEventListener('click', function () {
       st.helper = !st.helper;
       var btn = b.querySelector('#bd-helper');
@@ -788,17 +938,19 @@
     b.querySelector('#bd-autofill').addEventListener('click', autoFill);
     b.querySelector('#bd-ironbtn').addEventListener('click', goIron);
 
-    drawPlay(0);
+    drawPlay(performance.now());
     if (st.helper) startHelper();
   }
 
+  /* 点/划画布：直接放当前格子的颜色（快捷方式） */
   var playDrag = { on: false };
   function onPlayPointerDown(e) {
+    if (st.screen !== 'play' || drag.on) return;
     playDrag.on = true;
     placeByEvent(e);
   }
   function onPlayPointerMove(e) {
-    if (!playDrag.on) return;
+    if (st.screen !== 'play' || !playDrag.on || drag.on) return;
     placeByEvent(e);
   }
   function placeByEvent(e) {
@@ -807,6 +959,83 @@
     placeCell(hit.col, hit.row, true);
   }
   document.addEventListener('pointerup', function () { playDrag.on = false; });
+
+  /* ---- 镊子拖拽 ---- */
+  var drag = { on: false, color: -1, target: null, ghost: null };
+  function onTrayDown(e) {
+    var el = e.target;
+    while (el && el !== root && !(el.getAttribute && el.getAttribute('data-ci') != null)) el = el.parentNode;
+    if (!el || el === root) return;
+    var ci = parseInt(el.getAttribute('data-ci'), 10);
+    if (isNaN(ci)) return;
+    e.preventDefault();
+    var r = remainCounts();
+    st.playColor = ci;
+    refreshTray();
+    if (!r[ci]) { notify('这个颜色已经放完啦'); return; }
+    startDrag(e, ci);
+  }
+  function startDrag(e, ci) {
+    endDrag(null, true);
+    playDrag.on = false;
+    drag.on = true;
+    drag.color = ci;
+    drag.target = null;
+    var g = document.createElement('div');
+    g.className = 'bd-ghost';
+    g.innerHTML = '<span class="tw tw1"></span><span class="tw tw2"></span>' +
+      '<span class="bead" style="background:' + st.palette[ci] + '"></span>';
+    g.style.left = e.clientX + 'px';
+    g.style.top = e.clientY + 'px';
+    root.appendChild(g);
+    drag.ghost = g;
+    drag.target = hitTest(e, cv);
+    drawPlay(performance.now());
+  }
+  function moveDrag(e) {
+    if (drag.ghost) {
+      drag.ghost.style.left = e.clientX + 'px';
+      drag.ghost.style.top = e.clientY + 'px';
+    }
+    drag.target = hitTest(e, cv);
+  }
+  function endDrag(e, cancel) {
+    if (!drag.on) return;
+    drag.on = false;
+    var t = drag.target, ci = drag.color;
+    if (drag.ghost && drag.ghost.parentNode) drag.ghost.parentNode.removeChild(drag.ghost);
+    drag.ghost = null;
+    drag.target = null;
+    if (!cancel && t) {
+      var idx = t.row * st.gridW + t.col;
+      if (!st.placed[idx]) {
+        if (st.cells[idx] === ci) {
+          placeCell(t.col, t.row, true);
+        } else {
+          popSound(240);
+          sayLine('这颗不是这里的颜色哦，再找找位置～');
+          shakeBoard();
+        }
+      }
+    }
+    if (st.screen === 'play') drawPlay(performance.now());
+  }
+  function shakeBoard() {
+    var wrap = root.querySelector('#bd-playwrap');
+    if (!wrap) return;
+    wrap.classList.remove('shake');
+    void wrap.offsetWidth;
+    wrap.classList.add('shake');
+    setTimeout(function () { wrap.classList.remove('shake'); }, 400);
+  }
+  document.addEventListener('pointermove', function (e) { if (drag.on) moveDrag(e); }, { passive: true });
+  document.addEventListener('pointerup', function (e) { if (drag.on) endDrag(e); });
+  document.addEventListener('pointercancel', function () { if (drag.on) endDrag(null, true); });
+
+  function sayLine(text) {
+    var el = root.querySelector('#bd-say');
+    if (el) el.textContent = partnerName() + '：' + text;
+  }
 
   function placeCell(col, row, byUser) {
     if (!st.placed) return;
@@ -817,6 +1046,7 @@
     st.anim[idx] = performance.now();
     popSound(560 + Math.random() * 260);
     updateProg();
+    refreshTray();
     drawPlay(performance.now());
     if (st.placedCount >= totalCells()) {
       stopHelper();
@@ -831,26 +1061,65 @@
     if (bar) bar.style.width = (st.placedCount / totalCells() * 100).toFixed(1) + '%';
   }
 
-  function drawPlay(now) {
-    if (!st.placed) return;
+  /* 摆豆板底图缓存：凹槽 + 目标色淡影 + 凸点，避免每帧重画上千个圆 */
+  var boardCv = null;
+  function buildBoardCache() {
+    if (!boardCv) boardCv = document.createElement('canvas');
     var W = st.gridW, H = st.gridH;
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    // 底：淡色提示
+    boardCv.width = W * CELL; boardCv.height = H * CELL;
+    var o = boardCv.getContext('2d');
+    o.fillStyle = '#f8f2fb';
+    o.fillRect(0, 0, boardCv.width, boardCv.height);
+    var g = o.createLinearGradient(0, 0, boardCv.width, boardCv.height);
+    g.addColorStop(0, 'rgba(255,255,255,.85)');
+    g.addColorStop(1, 'rgba(223,206,238,.55)');
+    o.fillStyle = g;
+    o.fillRect(0, 0, boardCv.width, boardCv.height);
+    // 板格线
+    o.strokeStyle = 'rgba(120,95,150,.09)';
+    o.lineWidth = 1;
+    for (var gx = 0; gx <= W; gx++) { o.beginPath(); o.moveTo(gx * CELL + .5, 0); o.lineTo(gx * CELL + .5, boardCv.height); o.stroke(); }
+    for (var gy = 0; gy <= H; gy++) { o.beginPath(); o.moveTo(0, gy * CELL + .5); o.lineTo(boardCv.width, gy * CELL + .5); o.stroke(); }
+    // 每格：凹槽 + 目标色淡影 + 白色凸点
     for (var y = 0; y < H; y++) {
       for (var x = 0; x < W; x++) {
         var i = y * W + x;
-        var hex = st.palette[st.cells[i]];
-        var rgb = hex2rgb(hex);
-        ctx.fillStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.16)';
-        ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        var cx = x * CELL + CELL / 2, cy = y * CELL + CELL / 2;
+        o.beginPath(); o.arc(cx, cy, CELL * 0.37, 0, Math.PI * 2);
+        o.fillStyle = 'rgba(120,95,150,.055)'; o.fill();
+        var rgb = hex2rgb(st.palette[st.cells[i]] || '#ffffff');
+        o.beginPath(); o.arc(cx, cy, CELL * 0.22, 0, Math.PI * 2);
+        o.fillStyle = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.30)'; o.fill();
+        o.beginPath(); o.arc(cx, cy, CELL * 0.07, 0, Math.PI * 2);
+        o.fillStyle = 'rgba(255,255,255,.95)'; o.fill();
       }
     }
-    // 网格
-    ctx.strokeStyle = 'rgba(120,90,150,.10)';
-    ctx.lineWidth = 1;
-    for (var gx = 0; gx <= W; gx++) { ctx.beginPath(); ctx.moveTo(gx * CELL + .5, 0); ctx.lineTo(gx * CELL + .5, cv.height); ctx.stroke(); }
-    for (var gy = 0; gy <= H; gy++) { ctx.beginPath(); ctx.moveTo(0, gy * CELL + .5); ctx.lineTo(cv.width, gy * CELL + .5); ctx.stroke(); }
-    // 已放豆子
+  }
+
+  function drawPlay(now) {
+    if (!st.placed || !boardCv) return;
+    now = now || performance.now();
+    var W = st.gridW, H = st.gridH;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(boardCv, 0, 0);
+
+    // 当前颜色的位置呼吸提示
+    var pulse = 0.5 + 0.5 * Math.sin(now / 300);
+    if (st.playColor >= 0) {
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = 'rgba(255,143,192,' + (0.30 + 0.45 * pulse).toFixed(3) + ')';
+      for (var y = 0; y < H; y++) {
+        for (var x = 0; x < W; x++) {
+          var i = y * W + x;
+          if (st.placed[i] || st.cells[i] !== st.playColor) continue;
+          ctx.beginPath();
+          ctx.arc(x * CELL + CELL / 2, y * CELL + CELL / 2, CELL * 0.34, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // 已放好的豆子
     for (var py = 0; py < H; py++) {
       for (var px = 0; px < W; px++) {
         var pi = py * W + px;
@@ -865,10 +1134,22 @@
         drawBead(px * CELL, py * CELL, st.palette[st.cells[pi]], scale);
       }
     }
-    // 有动画时继续帧
+
+    // 拖拽落点提示
+    if (drag.on && drag.target) {
+      var ti = drag.target.row * W + drag.target.col;
+      var ok = !st.placed[ti] && st.cells[ti] === drag.color;
+      ctx.beginPath();
+      ctx.arc(drag.target.col * CELL + CELL / 2, drag.target.row * CELL + CELL / 2, CELL * 0.5, 0, Math.PI * 2);
+      ctx.strokeStyle = ok ? 'rgba(80,220,150,.95)' : 'rgba(255,110,130,.95)';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+    }
+
+    // 有动画 / 拖拽中继续帧
     var hasAnim = false;
     for (var key in st.anim) { if (st.anim.hasOwnProperty(key)) { hasAnim = true; break; } }
-    if (hasAnim && st.screen === 'play') {
+    if ((hasAnim || drag.on) && st.screen === 'play') {
       cancelAnimationFrame(st.rafId);
       st.rafId = requestAnimationFrame(drawPlay);
     }
@@ -1031,7 +1312,7 @@
       cells: st.cells.slice()
     };
     st.works.unshift(work);
-    st.works = st.works.slice(0, 24);
+    st.works = st.works.slice(0, 60);
     saveWorks();
     st.currentWork = work;
     go('done');
@@ -1048,23 +1329,92 @@
       '</div>' +
       '<div class="bd-tile" style="padding:10px;"><img class="bd-preview" src="' + w.thumb + '"></div>' +
       '<div class="bd-bar">' +
-        '<button class="bd-btn" id="bd-save" type="button">保存成品</button>' +
+        '<button class="bd-btn" id="bd-save" type="button">保存到相册</button>' +
         '<button class="bd-btn ghost" id="bd-share2" type="button">分享</button>' +
+      '</div>' +
+      '<div class="bd-bar" style="margin-top:8px">' +
+        '<button class="bd-btn ghost" id="bd-myw" type="button">我的作品</button>' +
         '<button class="bd-btn ghost" id="bd-again" type="button">再做一张</button>' +
       '</div>' +
-      '<div style="text-align:center;font-size:12px;color:#b9a4ce;margin-top:10px;">长按图片可保存到相册</div>';
-    b.querySelector('#bd-save').addEventListener('click', function () { downloadDataUrl(w.thumb, '拼豆成品.png'); });
-    b.querySelector('#bd-share2').addEventListener('click', function () { shareImage(w.thumb); });
+      '<div style="text-align:center;font-size:12px;color:#b9a4ce;margin-top:10px;">成品会自动收进「我的作品」，也可以长按图片保存</div>';
+    b.querySelector('#bd-save').addEventListener('click', function () {
+      saveImage(w.thumb, stampName('拼豆成品'));
+    });
+    b.querySelector('#bd-share2').addEventListener('click', function () {
+      shareImage(w.thumb, '我在梦角拼了一幅拼豆～');
+    });
+    b.querySelector('#bd-myw').addEventListener('click', function () { go('works'); });
     b.querySelector('#bd-again').addEventListener('click', function () { go('home'); });
   }
 
-  function downloadDataUrl(dataUrl, filename) {
-    try {
-      var a = document.createElement('a');
-      a.href = dataUrl; a.download = filename || 'mengjiao.png';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      notify('已保存到下载目录');
-    } catch (e) { notify('长按图片可保存到相册'); }
+  /* ---------- 我的作品（作品集） ---------- */
+  function renderWorks(b) {
+    setTitle('我的作品');
+    if (!st.works.length) {
+      b.innerHTML =
+        '<div class="bd-center"><div class="bd-big">还没有作品</div>' +
+        '拼完一幅就会自动收进这里<br><br>' +
+        '<button class="bd-btn" id="bd-back-home" type="button">去做一张</button></div>';
+      b.querySelector('#bd-back-home').addEventListener('click', function () { go('home'); });
+      return;
+    }
+    b.innerHTML =
+      '<div class="bd-row" style="justify-content:space-between;margin-bottom:6px;">' +
+        '<span class="bd-lbl" style="min-width:0">共 ' + st.works.length + ' 件作品</span>' +
+        '<span class="bd-val" style="min-width:0;color:#b9a4ce;">点开可保存 / 分享 / 删除</span>' +
+      '</div>' +
+      '<div class="bd-gallery">' +
+        st.works.map(function (w) {
+          return '<div class="bd-wcard" data-id="' + w.id + '">' +
+            '<img src="' + w.thumb + '" alt="">' +
+            '<div class="meta"><b>' + w.w + '×' + w.h + '</b><span>' + esc(w.date || '') + ' · ' + w.colors + '色</span></div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    b.querySelectorAll('.bd-wcard').forEach(function (el) {
+      el.addEventListener('click', function () { openWorkSheet(el.getAttribute('data-id')); });
+    });
+  }
+
+  function findWork(id) {
+    var w = null;
+    st.works.forEach(function (it) { if (it.id === id) w = it; });
+    return w;
+  }
+
+  function openWorkSheet(id) {
+    var w = findWork(id);
+    if (!w) return;
+    var sh = openSheet('作品 · ' + (w.date || ''), 
+      '<img class="bd-preview" src="' + w.thumb + '" alt="">' +
+      '<div class="bd-wmeta"><span><b>' + w.w + '×' + w.h + '</b> 尺寸</span>' +
+        '<span><b>' + w.colors + '</b> 色</span><span><b>' + w.total + '</b> 颗</span></div>' +
+      '<div class="bd-bar"><button class="bd-btn" id="bd-w-save" type="button">保存到相册</button>' +
+        '<button class="bd-btn ghost" id="bd-w-share" type="button">分享</button></div>' +
+      '<div class="bd-bar" style="margin-top:8px"><button class="bd-btn ghost" id="bd-w-open" type="button">查看大图</button>' +
+        '<button class="bd-btn ghost" id="bd-w-del" type="button" style="color:#ff9db0;">删除</button></div>');
+    sh.querySelector('#bd-w-save').addEventListener('click', function () {
+      saveImage(w.thumb, stampName('拼豆成品'));
+    });
+    sh.querySelector('#bd-w-share').addEventListener('click', function () {
+      shareImage(w.thumb, '我在梦角拼了一幅拼豆～');
+    });
+    sh.querySelector('#bd-w-open').addEventListener('click', function () {
+      sh.remove();
+      st.currentWork = w;
+      st.gridW = w.w; st.gridH = w.h;
+      st.palette = w.palette.slice(); st.cells = w.cells.slice();
+      go('done');
+    });
+    sh.querySelector('#bd-w-del').addEventListener('click', function () {
+      if (!window.confirm('删除这幅作品吗？删除后无法恢复。')) return;
+      st.works = st.works.filter(function (it) { return it.id !== w.id; });
+      if (st.currentWork && st.currentWork.id === w.id) st.currentWork = null;
+      saveWorks();
+      sh.remove();
+      notify('已删除');
+      render();
+    });
   }
 
   /* ---------- 作品存储 ---------- */
@@ -1077,17 +1427,6 @@
   function saveWorks() {
     if (typeof localforage === 'undefined') return;
     localforage.setItem(LB_WORKS, st.works).catch(function () {});
-  }
-  function openWork(id) {
-    var w = null;
-    st.works.forEach(function (it) { if (it.id === id) w = it; });
-    if (!w) return;
-    st.gridW = w.w; st.gridH = w.h;
-    st.palette = w.palette.slice(); st.cells = w.cells.slice();
-    st.counts = new Array(st.palette.length).fill(0);
-    st.cells.forEach(function (ci) { st.counts[ci] = (st.counts[ci] || 0) + 1; });
-    st.currentWork = w;
-    go('done');
   }
 
   /* ---------- 示例图纸 ---------- */
@@ -1135,6 +1474,7 @@
   }
   function close() {
     if (!root) return;
+    endDrag(null, true);
     stopHelper();
     cancelAnimationFrame(st.rafId);
     root.classList.remove('show');
