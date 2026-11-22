@@ -65,6 +65,8 @@
     placed: null,      // Uint8Array
     placedCount: 0,
     playColor: -1,     // 摆豆时镊子夹着的颜色索引
+    tilt: 0,           // 摆豆板 3D 倾斜（0 平面 / 1 全倾斜，带动画）
+    tiltTarget: 0,
     helper: true,
     helperTimer: null,
     anim: {},          // 放置动画 {idx: startTime}
@@ -102,6 +104,7 @@
       '#zy-bead .bd-chip.on{background:linear-gradient(135deg,rgba(255,143,192,.32),rgba(169,123,255,.32));border-color:#ff9ec7;color:#fff;}',
       '#zy-bead .bd-cvwrap{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:6px 0;}',
       '#zy-bead .bd-cvwrap canvas{border-radius:12px;background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.35);touch-action:none;max-width:100%;height:auto;}',
+      '#zy-bead .bd-playwrap canvas{background:transparent;box-shadow:none;}',
       '#zy-bead .bd-cvwrap.zoom canvas{max-width:none;width:auto;}',
       '#zy-bead .bd-palette{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0 4px;}',
       '#zy-bead .bd-sw{width:30px;height:30px;border-radius:8px;border:2px solid transparent;cursor:pointer;position:relative;}',
@@ -627,11 +630,34 @@
     }
   }
 
+  // 摆豆板 3D 视角的仿射矩阵（画布像素空间，绘制与命中检测共用，保证一致）
+  function tiltMatrix(w, h) {
+    var t = st.tilt;
+    var S = 1 - 0.14 * t;          // 整体缩小，倾斜后板角不超出画布
+    var sq = 1 - 0.28 * t;         // 纵向压缩
+    var sh = 0.14 * t;             // 横向切变
+    return {
+      a: S,
+      c: S * sh,
+      d: S * sq,
+      e: (1 - S) * w / 2 - S * sh * h / 2,
+      f: h * (1 - S * sq) / 2,
+      sq: sq,
+      sh: sh
+    };
+  }
+
   function hitTest(e, canvas) {
     var rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return null;
     var x = (e.clientX - rect.left) * (canvas.width / rect.width);
     var y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    // 3D 视角下画布带仿射变换，需按逆矩阵反解回板面坐标
+    if (st.screen === 'play' && st.tilt > 0.001) {
+      var m = tiltMatrix(canvas.width, canvas.height);
+      y = (y - m.f) / m.d;
+      x = (x - m.c * y - m.e) / m.a;
+    }
     var col = Math.floor(x / CELL), row = Math.floor(y / CELL);
     if (col < 0 || row < 0 || col >= st.gridW || row >= st.gridH) return null;
     return { col: col, row: row };
@@ -915,6 +941,7 @@
     bar.innerHTML =
       '<button class="bd-btn" id="bd-helper" type="button">' + (st.helper ? '梦角正在帮你拼' : '让梦角帮我拼') + '</button>' +
       '<button class="bd-btn ghost" id="bd-zoomplay" type="button">放大板子</button>' +
+      '<button class="bd-btn ghost" id="bd-tilt" type="button">' + (st.tiltTarget ? '平面视角' : '3D 视角') + '</button>' +
       '<button class="bd-btn ghost" id="bd-autofill" type="button">一键拼完</button>' +
       '<button class="bd-btn ghost" id="bd-ironbtn" type="button">我去熨烫</button>';
     b.appendChild(bar);
@@ -926,6 +953,12 @@
     b.querySelector('#bd-zoomplay').addEventListener('click', function () {
       var on = wrap.classList.toggle('bigboard');
       this.textContent = on ? '缩小板子' : '放大板子';
+    });
+
+    b.querySelector('#bd-tilt').addEventListener('click', function () {
+      st.tiltTarget = st.tiltTarget ? 0 : 1;
+      this.textContent = st.tiltTarget ? '平面视角' : '3D 视角';
+      drawPlay(performance.now());
     });
 
     b.querySelector('#bd-tray').addEventListener('pointerdown', onTrayDown);
@@ -1100,7 +1133,35 @@
     if (!st.placed || !boardCv) return;
     now = now || performance.now();
     var W = st.gridW, H = st.gridH;
-    ctx.clearRect(0, 0, cv.width, cv.height);
+    // 3D 视角：倾斜数值平滑过渡
+    var tiltAnim = false;
+    if (Math.abs(st.tiltTarget - st.tilt) > 0.002) {
+      st.tilt += (st.tiltTarget - st.tilt) * 0.16;
+      if (Math.abs(st.tiltTarget - st.tilt) <= 0.004) st.tilt = st.tiltTarget;
+      tiltAnim = true;
+    }
+    var cw = cv.width, ch = cv.height;
+    var mt = tiltMatrix(cw, ch);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cw, ch);
+    // 倾斜时板下投影，避免板子像悬空
+    if (st.tilt > 0.02) {
+      var gy = ch * (1 + mt.d) / 2;
+      ctx.save();
+      ctx.translate(cw / 2, gy);
+      ctx.scale(1, 0.2);
+      var shg = ctx.createRadialGradient(0, 0, 0, 0, 0, cw * 0.5);
+      shg.addColorStop(0, 'rgba(8,3,16,' + (0.55 * st.tilt).toFixed(3) + ')');
+      shg.addColorStop(1, 'rgba(8,3,16,0)');
+      ctx.beginPath();
+      ctx.arc(0, 0, cw * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = shg;
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.save();
+    // 透视感：整体缩小 + 纵向压缩 + 横向切变，形成俯视斜板
+    ctx.transform(mt.a, 0, mt.c, mt.d, mt.e, mt.f);
     ctx.drawImage(boardCv, 0, 0);
 
     // 当前颜色的位置呼吸提示
@@ -1131,7 +1192,7 @@
           if (el < 1) scale = 1.25 - 0.25 * el;
           else delete st.anim[pi];
         }
-        drawBead(px * CELL, py * CELL, st.palette[st.cells[pi]], scale);
+        drawBead(px * CELL, py * CELL, st.palette[st.cells[pi]], scale, st.tilt);
       }
     }
 
@@ -1145,34 +1206,52 @@
       ctx.lineWidth = 2.4;
       ctx.stroke();
     }
+    ctx.restore();
 
-    // 有动画 / 拖拽中继续帧
+    // 有动画 / 拖拽中 / 倾角过渡时继续帧
     var hasAnim = false;
     for (var key in st.anim) { if (st.anim.hasOwnProperty(key)) { hasAnim = true; break; } }
-    if ((hasAnim || drag.on) && st.screen === 'play') {
+    if ((hasAnim || drag.on || tiltAnim) && st.screen === 'play') {
       cancelAnimationFrame(st.rafId);
       st.rafId = requestAnimationFrame(drawPlay);
     }
   }
 
-  function drawBead(x, y, hex, scale) {
+  function drawBead(x, y, hex, scale, thick) {
     scale = scale || 1;
+    thick = thick || 0;
     var rgb = hex2rgb(hex);
     var cx = x + CELL / 2, cy = y + CELL / 2;
     var r = (CELL / 2 - 1.2) * scale;
+    var flat = 1 - 0.16 * thick;   // 倾斜时豆子顶部略压扁
+    if (thick > 0.05) {
+      var dk = 'rgb(' + Math.round(rgb.r * 0.6) + ',' + Math.round(rgb.g * 0.6) + ',' + Math.round(rgb.b * 0.6) + ')';
+      // 板面投影
+      ctx.beginPath();
+      ctx.ellipse(cx + 0.8, cy + 2.2 + 4.2 * thick, r * 0.98, r * 0.66, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(30,12,48,' + (0.10 + 0.20 * thick).toFixed(3) + ')';
+      ctx.fill();
+      // 豆子侧壁（厚度）
+      var ty = 1.4 + 4.4 * thick;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + ty, r, r * flat, 0, 0, Math.PI * 2);
+      ctx.fillStyle = dk;
+      ctx.fill();
+      ctx.fillRect(cx - r, cy, r * 2, ty);   // 上下椭圆之间的柱身
+    }
     // 主体
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, r, r * flat, 0, 0, Math.PI * 2);
     ctx.fillStyle = 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')';
     ctx.fill();
     // 中央孔
     ctx.beginPath();
-    ctx.arc(cx, cy, Math.max(1, r * 0.22), 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, Math.max(1, r * 0.22), Math.max(1, r * 0.22 * flat), 0, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255,255,255,.55)';
     ctx.fill();
     // 高光
     ctx.beginPath();
-    ctx.arc(cx - r * 0.28, cy - r * 0.28, Math.max(0.8, r * 0.26), 0, Math.PI * 2);
+    ctx.ellipse(cx - r * 0.28, cy - r * 0.28, Math.max(0.8, r * 0.26), Math.max(0.8, r * 0.26 * flat), 0, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255,255,255,.45)';
     ctx.fill();
   }
