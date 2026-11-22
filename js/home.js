@@ -2542,6 +2542,10 @@
                 // X约会：本地约会生成 + 约会簿
                 zyOpenOrLoadScript('XDating', 'js/x-dating.js', 'X约会');
             },
+            'bead': () => {
+                // 拼豆工坊：图纸生成 + 一起拼豆小游戏
+                zyOpenOrLoadScript('XBead', 'js/bead.js', '拼豆工坊');
+            },
             'ta-phone': () => {
                 if (typeof window.TaPhoneApp !== 'undefined') {
                     window.TaPhoneApp.showTaPhone();
