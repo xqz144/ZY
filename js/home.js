@@ -2555,6 +2555,10 @@
                 // 拼豆工坊：图纸生成 + 一起拼豆小游戏
                 zyOpenOrLoadScript('XBead', 'js/bead.js', '拼豆工坊');
             },
+            'food': () => {
+                // 饮食日记：拍照识别（本地模拟）+ 记录 + 周报
+                zyOpenOrLoadScript('XFood', 'js/food.js', '饮食日记');
+            },
             'ta-phone': () => {
                 if (typeof window.TaPhoneApp !== 'undefined') {
                     window.TaPhoneApp.showTaPhone();
